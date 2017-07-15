@@ -1,25 +1,26 @@
 {
   "name": "reason-react",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "exit 0",
+    "build": "bsb -make-world",
     "start": "bsb -make-world -w",
-    "clean": "bsb -clean-world"
+    "clean": "bsb -clean-world",
+    "test": "exit 0"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/reasonml/reason-react.git"
   },
   "devDependencies": {
-    "bs-platform": "^1.8.0"
+    "bs-platform": "^1.9.2"
   },
-  "peerDependencies": {
-    "react": "^15.0.0",
-    "react-dom": "^15.0.0"
+  "dependencies": {
+    "react": ">=15.0.0",
+    "react-dom": ">=15.0.0"
   }
 }

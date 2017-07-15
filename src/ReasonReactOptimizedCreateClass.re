@@ -1,3 +1,6 @@
+let _assign = Js.Obj.assign;
+let emptyObject = Js.Obj.empty ();
+
 [%%bs.raw {|
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -9,16 +12,16 @@
  *
  */
 
-'use strict';
+// 'use strict';
 
-var _assign = require('object-assign');
+// var _assign = require('object-assign');
 
-var emptyObject = require('fbjs/lib/emptyObject');
-var _invariant = require('fbjs/lib/invariant');
+// var emptyObject = require('emptyObject');
+// var _invariant = require('invariant');
 
-if (process.env.NODE_ENV !== 'production') {
-  var warning = require('fbjs/lib/warning');
-}
+// if (process.env.NODE_ENV !== 'production') {
+//   var warning = require('fbjs/lib/warning');
+// }
 
 var MIXINS_KEY = 'mixins';
 
@@ -29,15 +32,15 @@ function identity(fn) {
 }
 
 var ReactPropTypeLocationNames;
-if (process.env.NODE_ENV !== 'production') {
-  ReactPropTypeLocationNames = {
-    prop: 'prop',
-    context: 'context',
-    childContext: 'child context'
-  };
-} else {
+// if (process.env.NODE_ENV !== 'production') {
+//   ReactPropTypeLocationNames = {
+//     prop: 'prop',
+//     context: 'context',
+//     childContext: 'child context'
+//   };
+// } else {
   ReactPropTypeLocationNames = {};
-}
+// }
 |}];
 let factory = [%bs.raw
   {|
@@ -311,9 +314,9 @@ function factory(ReactComponent, isValidElement, ReactNoopUpdateQueue) {
       }
     },
     childContextTypes: function(Constructor, childContextTypes) {
-      if (process.env.NODE_ENV !== 'production') {
-        validateTypeDef(Constructor, childContextTypes, 'childContext');
-      }
+      // if (process.env.NODE_ENV !== 'production') {
+      //   validateTypeDef(Constructor, childContextTypes, 'childContext');
+      // }
       Constructor.childContextTypes = _assign(
         {},
         Constructor.childContextTypes,
@@ -321,9 +324,9 @@ function factory(ReactComponent, isValidElement, ReactNoopUpdateQueue) {
       );
     },
     contextTypes: function(Constructor, contextTypes) {
-      if (process.env.NODE_ENV !== 'production') {
-        validateTypeDef(Constructor, contextTypes, 'context');
-      }
+      // if (process.env.NODE_ENV !== 'production') {
+      //   validateTypeDef(Constructor, contextTypes, 'context');
+      // }
       Constructor.contextTypes = _assign(
         {},
         Constructor.contextTypes,
@@ -345,9 +348,9 @@ function factory(ReactComponent, isValidElement, ReactNoopUpdateQueue) {
       }
     },
     propTypes: function(Constructor, propTypes) {
-      if (process.env.NODE_ENV !== 'production') {
-        validateTypeDef(Constructor, propTypes, 'prop');
-      }
+      // if (process.env.NODE_ENV !== 'production') {
+      //   validateTypeDef(Constructor, propTypes, 'prop');
+      // }
       Constructor.propTypes = _assign({}, Constructor.propTypes, propTypes);
     },
     statics: function(Constructor, statics) {
@@ -358,20 +361,20 @@ function factory(ReactComponent, isValidElement, ReactNoopUpdateQueue) {
 
   function validateTypeDef(Constructor, typeDef, location) {
     for (var propName in typeDef) {
-      if (typeDef.hasOwnProperty(propName)) {
-        // use a warning instead of an _invariant so components
-        // don't show up in prod but only in __DEV__
-        if (process.env.NODE_ENV !== 'production') {
-          warning(
-            typeof typeDef[propName] === 'function',
-            '%s: %s type `%s` is invalid; it must be a function, usually from ' +
-              'React.PropTypes.',
-            Constructor.displayName || 'ReactClass',
-            ReactPropTypeLocationNames[location],
-            propName
-          );
-        }
-      }
+      // if (typeDef.hasOwnProperty(propName)) {
+      //   // use a warning instead of an _invariant so components
+      //   // don't show up in prod but only in __DEV__
+      //   // if (process.env.NODE_ENV !== 'production') {
+      //   //   warning(
+      //   //     typeof typeDef[propName] === 'function',
+      //   //     '%s: %s type `%s` is invalid; it must be a function, usually from ' +
+      //   //       'React.PropTypes.',
+      //   //     Constructor.displayName || 'ReactClass',
+      //   //     ReactPropTypeLocationNames[location],
+      //   //     propName
+      //   //   );
+      //   // }
+      // }
     }
   }
 
@@ -382,24 +385,24 @@ function factory(ReactComponent, isValidElement, ReactNoopUpdateQueue) {
 
     // Disallow overriding of base class methods unless explicitly allowed.
     if (ReactClassMixin.hasOwnProperty(name)) {
-      _invariant(
-        specPolicy === 'OVERRIDE_BASE',
-        'ReactClassInterface: You are attempting to override ' +
-          '`%s` from your class specification. Ensure that your method names ' +
-          'do not overlap with React methods.',
-        name
-      );
+      // _invariant(
+      //   specPolicy === 'OVERRIDE_BASE',
+      //   'ReactClassInterface: You are attempting to override ' +
+      //     '`%s` from your class specification. Ensure that your method names ' +
+      //     'do not overlap with React methods.',
+      //   name
+      // );
     }
 
     // Disallow defining methods more than once unless explicitly allowed.
     if (isAlreadyDefined) {
-      _invariant(
-        specPolicy === 'DEFINE_MANY' || specPolicy === 'DEFINE_MANY_MERGED',
-        'ReactClassInterface: You are attempting to define ' +
-          '`%s` on your component more than once. This conflict may be due ' +
-          'to a mixin.',
-        name
-      );
+      // _invariant(
+      //   specPolicy === 'DEFINE_MANY' || specPolicy === 'DEFINE_MANY_MERGED',
+      //   'ReactClassInterface: You are attempting to define ' +
+      //     '`%s` on your component more than once. This conflict may be due ' +
+      //     'to a mixin.',
+      //   name
+      // );
     }
   }
 
@@ -409,37 +412,37 @@ function factory(ReactComponent, isValidElement, ReactNoopUpdateQueue) {
    */
   function mixSpecIntoComponent(Constructor, spec) {
     if (!spec) {
-      if (process.env.NODE_ENV !== 'production') {
-        var typeofSpec = typeof spec;
-        var isMixinValid = typeofSpec === 'object' && spec !== null;
-
-        if (process.env.NODE_ENV !== 'production') {
-          warning(
-            isMixinValid,
-            "%s: You're attempting to include a mixin that is either null " +
-              'or not an object. Check the mixins included by the component, ' +
-              'as well as any mixins they include themselves. ' +
-              'Expected object but got %s.',
-            Constructor.displayName || 'ReactClass',
-            spec === null ? null : typeofSpec
-          );
-        }
-      }
+      // if (process.env.NODE_ENV !== 'production') {
+      //   var typeofSpec = typeof spec;
+      //   var isMixinValid = typeofSpec === 'object' && spec !== null;
+      //
+      //   if (process.env.NODE_ENV !== 'production') {
+      //     warning(
+      //       isMixinValid,
+      //       "%s: You're attempting to include a mixin that is either null " +
+      //         'or not an object. Check the mixins included by the component, ' +
+      //         'as well as any mixins they include themselves. ' +
+      //         'Expected object but got %s.',
+      //       Constructor.displayName || 'ReactClass',
+      //       spec === null ? null : typeofSpec
+      //     );
+      //   }
+      // }
 
       return;
     }
 
-    _invariant(
-      typeof spec !== 'function',
-      "ReactClass: You're attempting to " +
-        'use a component class or function as a mixin. Instead, just use a ' +
-        'regular object.'
-    );
-    _invariant(
-      !isValidElement(spec),
-      "ReactClass: You're attempting to " +
-        'use a component as a mixin. Instead, just use a regular object.'
-    );
+    // _invariant(
+    //   typeof spec !== 'function',
+    //   "ReactClass: You're attempting to " +
+    //     'use a component class or function as a mixin. Instead, just use a ' +
+    //     'regular object.'
+    // );
+    // _invariant(
+    //   !isValidElement(spec),
+    //   "ReactClass: You're attempting to " +
+    //     'use a component as a mixin. Instead, just use a regular object.'
+    // );
 
     var proto = Constructor.prototype;
     var autoBindPairs = proto.__reactAutoBindPairs;
@@ -488,15 +491,15 @@ function factory(ReactComponent, isValidElement, ReactNoopUpdateQueue) {
             var specPolicy = ReactClassInterface[name];
 
             // These cases should already be caught by validateMethodOverride.
-            _invariant(
-              isReactClassMethod &&
-                (specPolicy === 'DEFINE_MANY_MERGED' ||
-                  specPolicy === 'DEFINE_MANY'),
-              'ReactClass: Unexpected spec policy %s for key %s ' +
-                'when mixing in component specs.',
-              specPolicy,
-              name
-            );
+            // _invariant(
+            //   isReactClassMethod &&
+            //     (specPolicy === 'DEFINE_MANY_MERGED' ||
+            //       specPolicy === 'DEFINE_MANY'),
+            //   'ReactClass: Unexpected spec policy %s for key %s ' +
+            //     'when mixing in component specs.',
+            //   specPolicy,
+            //   name
+            // );
 
             // For methods which are defined more than once, call the existing
             // methods before calling the new property, merging if appropriate.
@@ -507,13 +510,13 @@ function factory(ReactComponent, isValidElement, ReactNoopUpdateQueue) {
             }
           } else {
             proto[name] = property;
-            if (process.env.NODE_ENV !== 'production') {
-              // Add verbose displayName to the function, which helps when looking
-              // at profiling tools.
-              if (typeof property === 'function' && spec.displayName) {
-                proto[name].displayName = spec.displayName + '_' + name;
-              }
-            }
+            // if (process.env.NODE_ENV !== 'production') {
+            //   // Add verbose displayName to the function, which helps when looking
+            //   // at profiling tools.
+            //   if (typeof property === 'function' && spec.displayName) {
+            //     proto[name].displayName = spec.displayName + '_' + name;
+            //   }
+            // }
           }
         }
       }
@@ -531,23 +534,23 @@ function factory(ReactComponent, isValidElement, ReactNoopUpdateQueue) {
       }
 
       var isReserved = name in RESERVED_SPEC_KEYS;
-      _invariant(
-        !isReserved,
-        'ReactClass: You are attempting to define a reserved ' +
-          'property, `%s`, that shouldn\'t be on the "statics" key. Define it ' +
-          'as an instance property instead; it will still be accessible on the ' +
-          'constructor.',
-        name
-      );
+      // _invariant(
+      //   !isReserved,
+      //   'ReactClass: You are attempting to define a reserved ' +
+      //     'property, `%s`, that shouldn\'t be on the "statics" key. Define it ' +
+      //     'as an instance property instead; it will still be accessible on the ' +
+      //     'constructor.',
+      //   name
+      // );
 
       var isInherited = name in Constructor;
-      _invariant(
-        !isInherited,
-        'ReactClass: You are attempting to define ' +
-          '`%s` on your component more than once. This conflict may be ' +
-          'due to a mixin.',
-        name
-      );
+      // _invariant(
+      //   !isInherited,
+      //   'ReactClass: You are attempting to define ' +
+      //     '`%s` on your component more than once. This conflict may be ' +
+      //     'due to a mixin.',
+      //   name
+      // );
       Constructor[name] = property;
     }
   }
@@ -560,22 +563,22 @@ function factory(ReactComponent, isValidElement, ReactNoopUpdateQueue) {
    * @return {object} one after it has been mutated to contain everything in two.
    */
   function mergeIntoWithNoDuplicateKeys(one, two) {
-    _invariant(
-      one && two && typeof one === 'object' && typeof two === 'object',
-      'mergeIntoWithNoDuplicateKeys(): Cannot merge non-objects.'
-    );
+    // _invariant(
+    //   one && two && typeof one === 'object' && typeof two === 'object',
+    //   'mergeIntoWithNoDuplicateKeys(): Cannot merge non-objects.'
+    // );
 
     for (var key in two) {
       if (two.hasOwnProperty(key)) {
-        _invariant(
-          one[key] === undefined,
-          'mergeIntoWithNoDuplicateKeys(): ' +
-            'Tried to merge two objects with the same key: `%s`. This conflict ' +
-            'may be due to a mixin; in particular, this may be caused by two ' +
-            'getInitialState() or getDefaultProps() methods returning objects ' +
-            'with clashing keys.',
-          key
-        );
+        // _invariant(
+        //   one[key] === undefined,
+        //   'mergeIntoWithNoDuplicateKeys(): ' +
+        //     'Tried to merge two objects with the same key: `%s`. This conflict ' +
+        //     'may be due to a mixin; in particular, this may be caused by two ' +
+        //     'getInitialState() or getDefaultProps() methods returning objects ' +
+        //     'with clashing keys.',
+        //   key
+        // );
         one[key] = two[key];
       }
     }
@@ -630,54 +633,54 @@ function factory(ReactComponent, isValidElement, ReactNoopUpdateQueue) {
    */
   function bindAutoBindMethod(component, method) {
     var boundMethod = method.bind(component);
-    if (process.env.NODE_ENV !== 'production') {
-      boundMethod.__reactBoundContext = component;
-      boundMethod.__reactBoundMethod = method;
-      boundMethod.__reactBoundArguments = null;
-      var componentName = component.constructor.displayName;
-      var _bind = boundMethod.bind;
-      boundMethod.bind = function(newThis) {
-        for (
-          var _len = arguments.length,
-            args = Array(_len > 1 ? _len - 1 : 0),
-            _key = 1;
-          _key < _len;
-          _key++
-        ) {
-          args[_key - 1] = arguments[_key];
-        }
-
-        // User is trying to bind() an autobound method; we effectively will
-        // ignore the value of "this" that the user is trying to use, so
-        // let's warn.
-        if (newThis !== component && newThis !== null) {
-          if (process.env.NODE_ENV !== 'production') {
-            warning(
-              false,
-              'bind(): React component methods may only be bound to the ' +
-                'component instance. See %s',
-              componentName
-            );
-          }
-        } else if (!args.length) {
-          if (process.env.NODE_ENV !== 'production') {
-            warning(
-              false,
-              'bind(): You are binding a component method to the component. ' +
-                'React does this for you automatically in a high-performance ' +
-                'way, so you can safely remove this call. See %s',
-              componentName
-            );
-          }
-          return boundMethod;
-        }
-        var reboundMethod = _bind.apply(boundMethod, arguments);
-        reboundMethod.__reactBoundContext = component;
-        reboundMethod.__reactBoundMethod = method;
-        reboundMethod.__reactBoundArguments = args;
-        return reboundMethod;
-      };
-    }
+    // if (process.env.NODE_ENV !== 'production') {
+    //   boundMethod.__reactBoundContext = component;
+    //   boundMethod.__reactBoundMethod = method;
+    //   boundMethod.__reactBoundArguments = null;
+    //   var componentName = component.constructor.displayName;
+    //   var _bind = boundMethod.bind;
+    //   boundMethod.bind = function(newThis) {
+    //     for (
+    //       var _len = arguments.length,
+    //         args = Array(_len > 1 ? _len - 1 : 0),
+    //         _key = 1;
+    //       _key < _len;
+    //       _key++
+    //     ) {
+    //       args[_key - 1] = arguments[_key];
+    //     }
+    //
+    //     // User is trying to bind() an autobound method; we effectively will
+    //     // ignore the value of "this" that the user is trying to use, so
+    //     // let's warn.
+    //     if (newThis !== component && newThis !== null) {
+    //       if (process.env.NODE_ENV !== 'production') {
+    //         warning(
+    //           false,
+    //           'bind(): React component methods may only be bound to the ' +
+    //             'component instance. See %s',
+    //           componentName
+    //         );
+    //       }
+    //     } else if (!args.length) {
+    //       if (process.env.NODE_ENV !== 'production') {
+    //         warning(
+    //           false,
+    //           'bind(): You are binding a component method to the component. ' +
+    //             'React does this for you automatically in a high-performance ' +
+    //             'way, so you can safely remove this call. See %s',
+    //           componentName
+    //         );
+    //       }
+    //       return boundMethod;
+    //     }
+    //     var reboundMethod = _bind.apply(boundMethod, arguments);
+    //     reboundMethod.__reactBoundContext = component;
+    //     reboundMethod.__reactBoundMethod = method;
+    //     reboundMethod.__reactBoundArguments = args;
+    //     return reboundMethod;
+    //   };
+    // }
     return boundMethod;
   }
 
@@ -727,18 +730,18 @@ function factory(ReactComponent, isValidElement, ReactNoopUpdateQueue) {
      * @final
      */
     isMounted: function() {
-      if (process.env.NODE_ENV !== 'production') {
-        warning(
-          this.__didWarnIsMounted,
-          '%s: isMounted is deprecated. Instead, make sure to clean up ' +
-            'subscriptions and pending requests in componentWillUnmount to ' +
-            'prevent memory leaks.',
-          (this.constructor && this.constructor.displayName) ||
-            this.name ||
-            'Component'
-        );
-        this.__didWarnIsMounted = true;
-      }
+      // if (process.env.NODE_ENV !== 'production') {
+      //   warning(
+      //     this.__didWarnIsMounted,
+      //     '%s: isMounted is deprecated. Instead, make sure to clean up ' +
+      //       'subscriptions and pending requests in componentWillUnmount to ' +
+      //       'prevent memory leaks.',
+      //     (this.constructor && this.constructor.displayName) ||
+      //       this.name ||
+      //       'Component'
+      //   );
+      //   this.__didWarnIsMounted = true;
+      // }
       return !!this.__isMounted;
     }
   };
@@ -766,13 +769,13 @@ function factory(ReactComponent, isValidElement, ReactNoopUpdateQueue) {
       // This constructor gets overridden by mocks. The argument is used
       // by mocks to assert on what gets mounted.
 
-      if (process.env.NODE_ENV !== 'production') {
-        warning(
-          this instanceof Constructor,
-          'Something is calling a React component directly. Use a factory or ' +
-            'JSX instead. See: https://fb.me/react-legacyfactory'
-        );
-      }
+      // if (process.env.NODE_ENV !== 'production') {
+      //   warning(
+      //     this instanceof Constructor,
+      //     'Something is calling a React component directly. Use a factory or ' +
+      //       'JSX instead. See: https://fb.me/react-legacyfactory'
+      //   );
+      // }
 
       // Wire up auto-binding
       if (this.__reactAutoBindPairs.length) {
@@ -790,22 +793,22 @@ function factory(ReactComponent, isValidElement, ReactNoopUpdateQueue) {
       // getInitialState and componentWillMount methods for initialization.
 
       var initialState = this.getInitialState ? this.getInitialState() : null;
-      if (process.env.NODE_ENV !== 'production') {
-        // We allow auto-mocks to proceed as if they're returning null.
-        if (
-          initialState === undefined &&
-          this.getInitialState._isMockFunction
-        ) {
-          // This is probably bad practice. Consider warning here and
-          // deprecating this convenience.
-          initialState = null;
-        }
-      }
-      _invariant(
-        typeof initialState === 'object' && !Array.isArray(initialState),
-        '%s.getInitialState(): must return an object or null',
-        Constructor.displayName || 'ReactCompositeComponent'
-      );
+      // if (process.env.NODE_ENV !== 'production') {
+      //   // We allow auto-mocks to proceed as if they're returning null.
+      //   if (
+      //     initialState === undefined &&
+      //     this.getInitialState._isMockFunction
+      //   ) {
+      //     // This is probably bad practice. Consider warning here and
+      //     // deprecating this convenience.
+      //     initialState = null;
+      //   }
+      // }
+      // _invariant(
+      //   typeof initialState === 'object' && !Array.isArray(initialState),
+      //   '%s.getInitialState(): must return an object or null',
+      //   Constructor.displayName || 'ReactCompositeComponent'
+      // );
 
       this.state = initialState;
     });
@@ -824,40 +827,40 @@ function factory(ReactComponent, isValidElement, ReactNoopUpdateQueue) {
       Constructor.defaultProps = Constructor.getDefaultProps();
     }
 
-    if (process.env.NODE_ENV !== 'production') {
-      // This is a tag to indicate that the use of these method names is ok,
-      // since it's used with createClass. If it's not, then it's likely a
-      // mistake so we'll warn you to use the static property, property
-      // initializer or constructor respectively.
-      if (Constructor.getDefaultProps) {
-        Constructor.getDefaultProps.isReactClassApproved = {};
-      }
-      if (Constructor.prototype.getInitialState) {
-        Constructor.prototype.getInitialState.isReactClassApproved = {};
-      }
-    }
+    // if (process.env.NODE_ENV !== 'production') {
+    //   // This is a tag to indicate that the use of these method names is ok,
+    //   // since it's used with createClass. If it's not, then it's likely a
+    //   // mistake so we'll warn you to use the static property, property
+    //   // initializer or constructor respectively.
+    //   if (Constructor.getDefaultProps) {
+    //     Constructor.getDefaultProps.isReactClassApproved = {};
+    //   }
+    //   if (Constructor.prototype.getInitialState) {
+    //     Constructor.prototype.getInitialState.isReactClassApproved = {};
+    //   }
+    // }
 
-    _invariant(
-      Constructor.prototype.render,
-      'createClass(...): Class specification must implement a `render` method.'
-    );
+    // _invariant(
+    //   Constructor.prototype.render,
+    //   'createClass(...): Class specification must implement a `render` method.'
+    // );
 
-    if (process.env.NODE_ENV !== 'production') {
-      warning(
-        !Constructor.prototype.componentShouldUpdate,
-        '%s has a method called ' +
-          'componentShouldUpdate(). Did you mean shouldComponentUpdate()? ' +
-          'The name is phrased as a question because the function is ' +
-          'expected to return a value.',
-        spec.displayName || 'A component'
-      );
-      warning(
-        !Constructor.prototype.componentWillRecieveProps,
-        '%s has a method called ' +
-          'componentWillRecieveProps(). Did you mean componentWillReceiveProps()?',
-        spec.displayName || 'A component'
-      );
-    }
+    // if (process.env.NODE_ENV !== 'production') {
+    //   warning(
+    //     !Constructor.prototype.componentShouldUpdate,
+    //     '%s has a method called ' +
+    //       'componentShouldUpdate(). Did you mean shouldComponentUpdate()? ' +
+    //       'The name is phrased as a question because the function is ' +
+    //       'expected to return a value.',
+    //     spec.displayName || 'A component'
+    //   );
+    //   warning(
+    //     !Constructor.prototype.componentWillRecieveProps,
+    //     '%s has a method called ' +
+    //       'componentWillRecieveProps(). Did you mean componentWillReceiveProps()?',
+    //     spec.displayName || 'A component'
+    //   );
+    // }
 
     // Reduce time spent doing lookups by setting these on the prototype.
     for (var methodName in ReactClassInterface) {

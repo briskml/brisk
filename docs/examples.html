@@ -24,7 +24,7 @@
 
 # Examples
 
-See https://github.com/chenglou/reason-react-example for examples you can clone and run. This page copy pastes a few from there for ease of reading.
+See https://github.com/reasonml-community/reason-react-example for examples you can clone and run. This page copy pastes a few from there for ease of reading.
 
 ## Simple
 
@@ -57,26 +57,27 @@ ReactDOMRe.renderToElementWithId (make message::"Hello!" [||]) "index";
 Demonstrates calling an async "setState" in idiomatic ReasonReact
 
 ```reason
+type action =
+  | Tick;
+
 type state = {
   count: int,
-  timerId: option Js.Global.intervalId
+  timerId: ref (option Js.Global.intervalId)
 };
 
-let increaseCount _id {ReasonReact.state: state} =>
-  ReasonReact.Update {...state, count: state.count + 1};
-
-let component = ReasonReact.statefulComponent "Counter";
+let component = ReasonReact.reducerComponent "Counter";
 
 let make _children => {
   ...component,
-  initialState: fun () => {count: 0, timerId: None},
-  didMount: fun {state, update} =>
-    ReasonReact.SilentUpdate {
-      ...state,
-      timerId: Some (Js.Global.setInterval (update increaseCount) 1000)
-      /* if you're not used to currying, this form is clearer: */
-      /* Js.Global.setInterval (fun id => self.update increaseCount id) */
+  initialState: fun () => {count: 0, timerId: ref None},
+  reducer: fun action state =>
+    switch action {
+    | Tick => ReasonReact.Update {...state, count: state.count + 1}
     },
+  didMount: fun self => {
+    self.state.timerId := Some (Js.Global.setInterval (self.reduce (fun _ => Tick)) 1000);
+    ReasonReact.NoUpdate
+  },
   render: fun {state} => <div> (ReasonReact.stringToElement (string_of_int state.count)) </div>
 };
 ```
@@ -168,7 +169,7 @@ let jsComponent =
       fun jsProps =>
         make
           message::jsProps##message
-          extraGreeting::?(Js.Null_undefined.to_opt jsProps##extraGreeting)
+          extraGreeting::?(Js.Nullable.to_opt jsProps##extraGreeting)
           [||]
     );
 ```
@@ -196,7 +197,7 @@ var PageReason = require('path/to/pageReason.js').jsComponent;
   <!-- Meta -->
   <meta content="Reason: JS Workflow" name="description">
   <meta content="Reason: JS Workflow" property="og:description">
-  <meta content="https://facebook.github.io/reason/images/logoMini.png" property="og:image">
+  <meta content="https://reasonml.github.io/reason-react/images/logoMini.png" property="og:image">
   </head>
 <body role='flatdoc' class='big-h3 large-brief no-literate'>
 

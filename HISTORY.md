@@ -1,12 +1,78 @@
+# 0.2.4
+
+**Major update**, but again with **no** breaking changes, and _again_ with a convenience [migration script](https://github.com/reasonml/reason-react/blob/master/migrateFrom02xTo024.js)! =)
+
+The big change in this release is the deprecation of `statefulComponent` and `statefulComponentWithRetainedProps`. `statelessComponent` stays the same.
+
+## Prerequisites
+
+**Please first read the [blog post](https://reasonml.github.io/reason-react/blog.html#reducers-are-here)**.
+
+**After** reading this migration guide, use the migration script (or not) like so: `node node_modules/reason-react/migrateFrom02xTo024.js myReasonFile.re`.
+
+## Migrate From StatefulComponent to ReducerComponent
+
+There's no more need for `ReasonReact.statefulComponent`. Every state change is now controlled through a dedicated, centralized, react-fiber-ready, component-local mechanism called "reducer" (aka, the hype word for "state machine").
+
+[Reason-react-example](https://github.com/reasonml-community/reason-react-example) is updated too. Go check the examples afterward!
+
+In short:
+
+- Replace all `ReasonReact.statefulComponent` with `ReasonReact.reducerComponent`.
+- Replace e.g. `self.update handleClick` (where `handleClick` is `fun self => ReasonReact.Update {...self.state, foo: bar}`) with `self.reduce (fun _ => Click)`. `Click` is just a variant constructor you've defined. Let's call it "action".
+- Add a `reducer` function to the body of your `...component` spread:
+
+```reason
+reducer: fun action state =>
+  switch action {
+  | Click => ReasonReact.Update {...state, foo: bar}
+  }
+```
+
+We've also exposed new `ReasonReact.SideEffects` (aka `ReasonReact.NoUpdate`, with side-effect) and `ReasonReact.UpdateWithSideEffects` (`ReasonReact.Update` + side-effect).
+
+The relevant section on actions, reducers and the new update additions are [in the main docs](https://reasonml.github.io/reason-react/#reason-react-component-creation-state-actions-reducer).
+
+**If everything goes alright, we will be deprecating `statefulComponent` in the future**
+
+## InstanceVars/React Ref Usage Changed
+
+Before, we used to recommend using `ReasonReact.SilentUpdate` to deal with ReactJS' instance variables pattern (e.g. attaching properties onto the component class itself, like timer IDs, subscriptions, refs, etc.). Now we've moved to using a Reason `ref` cell (not the React ref, the [mutative Reason `ref`](https://reasonml.github.io/guide/language/mutation)). See the updated [instance variables section](https://reasonml.github.io/reason-react/#reason-react-component-creation-instance-variables).
+
+The new recommendation also solves a corner-case bug with assigning more than one refs in the render.
+
+## LifeCycle: Future `didMount` and `willReceiveProps` Signature Change
+
+The future ReactJS Fiber in ReasonReact won't work well with lifecycle events that return the new state, aka:
+
+- `didMount`'s `ReasonReact.Update {...state, foo: bar}`
+- `willReceiveProps` `state`.
+
+Please return `ReasonReact.NoUpdate` for the former (can't do much for the latter, `willReceiveProps`, for now. Keep it as it is). If you really need to trigger a state change, before the return, use a `self.reduce (fun () => Bar) ()`, aka immediately apply a reduce.
+
+**We will make all lifecycles return `unit` in the future; it'll be an easy codemod to change `ReasonReact.NoUpdate` to nothing**.
+
+## Miscellaneous Changes
+
+- Add `defaultChecked`, `loop` and others to DOM attribute (#29, #37, #44, #50).
+- Fix `cloneElement` binding (#49).
+- Fix stateless components's `willReceiveProps`'s return value. It's now `unit` again.
+- Fix wrong version of `retainedProps` in `willReceiveProps`.
+- Remove the dependency on `create-react-class`. Now we're back to being dependency-free!
+- Bump react/react-dom to 16.
+- React/react-dom are now dependencies, rather than peerDependencies. This follows the Reason/BS idiom of making the bound library an implementation detail. NPM/Yarn will still dedupe multiple versions of react/react-dom correctly; no worries about that.
+
+Enjoy!
+
 # 0.2.1
 
 Breaking update (sorry!)
 
 **We've finally removed `ReactRe`**. It's been deprecated since 0.1.4. And we've offered a comprehensive migration in the 0.1.4 section below.
 
-We've given folks a bit of breathing room in terms of breaking changes; now we're shipping another one, this time with a small migration script. **After installing reason-react**, use `node node_modules/reason-react/migrateFrom015To020.js myReasonFile.re`
+We've given folks a bit of breathing room in terms of breaking changes; now we're shipping another one, this time with a small migration script. **After installing reason-react**, use `node node_modules/reason-react/oldScriptCarefulMigrateFrom015To020.js myReasonFile.re`
 
-- Instead of `fun state self => ...`, we've now rolled `state` into `self`, and now, you have `fun {state, self} => ...`. Feel free to destructure and get whatever you need!
+- Instead of `fun state self => ...`, we've now rolled `state` into `self`, and now, you have `fun {state, handle} => ...`. The whole record is `self`. Feel free to destructure and get whatever you need!
 - `self` now contains a new prop, `retainedProps`. This is a new (non-breaking) feature that solves the previous slightly inconvenient way of forwarding props to state, as described in the old API's lifecycle methods. Now there's a dedicated API for it! The docs describes this in detail.
 
 # 0.1.5
@@ -118,7 +184,7 @@ Before:
 external myJSReactClass : ReasonReact.reactClass = "myJSReactClass" [@@bs.module];
 
 let createElement name::(name: string) age::(age: option int)=? =>
-  ReactRe.wrapPropsShamelessly myJSReactClass {"name": name, "age": Js.Null_undefined.from_opt age};
+  ReactRe.wrapPropsShamelessly myJSReactClass {"name": name, "age": Js.Nullable.from_opt age};
 ```
 
 After:
@@ -129,7 +195,7 @@ external myJSReactClass : ReasonReact.reactClass = "myJSReactClass" [@@bs.module
 let make name::(name: string) age::(age: option int)=? children =>
   ReasonReact.wrapJsForReason
     reactClass::myJSReactClass
-    props::{"name": name, "age": Js.Null_undefined.from_opt age}
+    props::{"name": name, "age": Js.Nullable.from_opt age}
     children;
 ```
 
@@ -145,7 +211,7 @@ let make ...;
 let comp =
   ReasonReact.wrapReasonForJs
     ::component
-    (fun jsProps => make name::jsProps##name age::?(Js.Null_undefined.to_opt jsProps##age) [||]);
+    (fun jsProps => make name::jsProps##name age::?(Js.Nullable.to_opt jsProps##age) [||]);
 ```
 
 The function takes in the labeled reason `component`, and a function that, given the js props, asks you to call `make` while passing in the correctly converted parameters.
@@ -153,7 +219,7 @@ The function takes in the labeled reason `component`, and a function that, given
 **Aaaand that's it**! Enjoy!
 
 # 0.1.3
-DOM ref is now typed as `Js.null Dom.element`, instead of just `Dom.element` (https://github.com/reasonml/reason-react/commit/6f2a75b). Trivial migration: https://github.com/chenglou/reason-react-example/commit/b44587a
+DOM ref is now typed as `Js.null Dom.element`, instead of just `Dom.element` (https://github.com/reasonml/reason-react/commit/6f2a75b). Trivial migration: https://github.com/reasonml-community/reason-react-example/commit/b44587a
 
 # 0.1.2
 Add `defaultValue` prop for input DOM component (https://github.com/reasonml/reason-react/commit/c293c6e)

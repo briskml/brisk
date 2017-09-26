@@ -1,0 +1,20 @@
+machine:
+  node:
+    version: 8.5
+
+test:
+  override:
+    - "true"
+
+dependencies:
+  pre:
+    - wget https://artifacts.crowdin.com/repo/deb/crowdin.deb -O crowdin.deb && sudo dpkg -i crowdin.deb
+
+deployment:
+  website:
+    branch: master
+    commands:
+      - git config --global user.email "rickyvetter@users.noreply.github.com"
+      - git config --global user.name "Temporary Ricky Bot"
+      - echo "machine github.com login rickyvetter" > ~/.netrc
+      - cd website && yarn --pure-lockfile && yarn crowdin-download && GIT_USER=rickyvetter USE_SSH=true yarn publish-gh-pages

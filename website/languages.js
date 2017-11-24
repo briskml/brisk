@@ -1,6 +1,6 @@
 const languages = [
   {
-    enabled: false,
+    enabled: true,
     name: "日本語",
     tag: "ja"
   },
@@ -90,7 +90,7 @@ const languages = [
     tag: "af"
   },
   {
-    enabled: false,
+    enabled: true,
     name: "한국어",
     tag: "ko"
   },
@@ -170,9 +170,9 @@ const languages = [
     tag: "zh-CN"
   },
   {
-    enabled: false,
+    enabled: true,
     name: "繁體中文",
-    tag: "zh-TW"
+    tag: "zh-Hant"
   },
   {
     enabled: false,

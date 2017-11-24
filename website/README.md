@@ -10,13 +10,17 @@ Don't use `npm build` for now.
 
 In the end, we spit out normal HTML, with all the JS dependencies (barring a few critical ones) removed, including ReactJS itself. It's a full, static website, super lightweight, portable, unfancy but good looking.
 
-During your development, most changes will be picked up at each browser refresh. If you change `siteConfig.js`, you need to restart the server for changes to take effect.
+Two special files:
+
+- `sidebars.json`: lists the sections.
+
+- `siteConfig.json`: some header and i18n configs.
+
+During your development, most changes will be picked up at each browser refresh. If you touch these two files or `blog/`, however, you'll have to restart the server to see the changes.
 
 ## Translations
 
-The entire site can be translated via the [Crowdin project](https://crowdin.com/project/reason-react). This repo only has the canonical english documentation. Don't manually editor things in `i18n/`.
-
-For repo maintainers: to have the new translated strings appear in prod, run `yarn crowin-upload`. This assumes you have `crowdin` installed, through https://support.crowdin.com/cli-tool/.
+The entire site can be translated via the [Crowdin project](https://crowdin.com/project/reason-react). This repo only has the canonical english documentation. Don't manually edit things in `i18n/`.
 
 ## Debugging
 

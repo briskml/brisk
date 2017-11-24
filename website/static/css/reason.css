@@ -1,5 +1,23 @@
-/* These are styles that should be global to all Reason-ecosystem sites
- * but which we have no current plans to upstream to Docusaurus. */
+/* These should be upstreamed to Docusaurus */
+
+table {
+  border: 1px solid #eee
+}
+
+table thead {
+  border-bottom: 1px solid #eee;
+}
+
+table tr:nth-of-type(odd) {
+  background: $codeColor;
+}
+
+table tr th, table tr td {
+  border-right: 1px solid #eee;
+}
+
+/* Below are styles that should be global to all Reason-ecosystem sites
+ but which we have no current plans to upstream to Docusaurus. */
 
 /* 1. Independent scrolling of docs sidebar menu (requires pjax) */
 @media only screen and (min-width: 1024px) {
@@ -20,15 +38,6 @@
 
 /* 2. Custom code block styling */
 /* code */
-code {
-  color: inherit;
-  background-color: rgba(243, 136, 136, 0.1);
-  border-radius: .3em;
-  box-shadow: 2px 0 rgba(243, 136, 136, 0.1), -2px 0 rgba(243, 136, 136, 0.1);
-  padding: 2px 0;
-  /* avoids scale issues on mobile */
-  word-break: break-word;
-}
 pre code {
   background-color: unset;
   box-shadow: none;

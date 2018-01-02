@@ -1,0 +1,1 @@
+depends: ["ocaml-ios" "reason" "jbuilder"]

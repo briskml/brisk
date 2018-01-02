@@ -1,0 +1,9 @@
+.DS_Store
+/node_modules*
+finalOutput/*.js
+.merlin
+/lib/bs/
+/lib/ocaml/
+*.log
+.bsb.lock
+

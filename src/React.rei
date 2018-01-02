@@ -1,3 +1,5 @@
+module NativeView: {type t; let addToWindow: t => t;};
+
 module GlobalState: {
   let debug: ref(bool);
   let reset: unit => unit;
@@ -81,10 +83,20 @@ type stateless = unit;
 
 type actionless = unit;
 
-let statelessComponent: (~useDynamicKey: bool=?, string) => component(stateless, actionless);
+type nativeComponent = {
+  name: string,
+  make: int => NativeView.t,
+  setProps: NativeView.t => unit,
+  children: reactElement,
+  nativeKey: int
+};
+
+let statelessComponent:
+  (~useDynamicKey: bool=?, string) => component(stateless, actionless);
 
 let statefulComponent:
-  (~useDynamicKey: bool=?, string) => componentSpec('state, stateless, actionless);
+  (~useDynamicKey: bool=?, string) =>
+  componentSpec('state, stateless, actionless);
 
 let reducerComponent:
   (~useDynamicKey: bool=?, string) => componentSpec('state, stateless, 'action);
@@ -95,7 +107,7 @@ let arrayToElement: array(reactElement) => reactElement;
 
 let listToElement: list(reactElement) => reactElement;
 
-let stringToElement: string => reactElement;
+let nativeElement: (~key: Key.t=?, nativeComponent) => reactElement;
 
 let logString: string => unit;
 
@@ -123,20 +135,20 @@ module RenderedElement: {
 
 
 /***
- * Imperative trees obtained from rendered elements.
- * Can be updated in-place by applying an update log.
- * Can return a new tree if toplevel rendering is required.
- */
-module OutputTree: {
-  type t;
-  let fromRenderedElement: RenderedElement.t => t;
-  let applyUpdateLog: (UpdateLog.t, t) => t;
-  let print: t => string;
-};
-
+  * Imperative trees obtained from rendered elements.
+  * Can be updated in-place by applying an update log.
+  * Can return a new tree if toplevel rendering is required.
+ module OutputTree: {
+   type t;
+   let fromRenderedElement: RenderedElement.t => t;
+   let applyUpdateLog: (UpdateLog.t, t) => t;
+   let print: t => string;
+ };
+  */
 module ReactDOMRe: {
   type reactDOMProps;
-  let createElement: (string, ~props: reactDOMProps=?, array(reactElement)) => reactElement;
+  let createElement:
+    (string, ~props: reactDOMProps=?, array(reactElement)) => reactElement;
 };
 
 
@@ -158,3 +170,15 @@ module RemoteAction: {
   /*** Perform an action on the subscribed component. */
   let act: (t('action), ~action: 'action) => unit;
 };
+
+type layoutElement;
+
+module View: {
+  let make:
+    (~x: float, ~y: float, ~width: float, ~height: float, reactElement) =>
+    nativeComponent;
+};
+
+let mountRenderedTree: RenderedElement.t => list(layoutElement);
+
+let displayLayoutElements: list(layoutElement) => list(NativeView.t);

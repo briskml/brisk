@@ -39,6 +39,13 @@ module Callback = {
   };
 };
 
+module NativeView = {
+  type t;
+  external makeInstance : int => t = "View_newView";
+  external addToWindow : t => t = "View_addToWindow";
+  external addChild : (t, t) => t = "View_addChild";
+};
+
 type reduce('payload, 'action) = ('payload => 'action) => Callback.t('payload);
 
 type update('state, 'action) =
@@ -56,13 +63,20 @@ and self('state, 'action) = {
  */
 and element =
   | Element(component('state, 'action)): element
-  | String(string): element
+  | HostElement(nativeComponent): element
 /***
  * We will want to replace this with a more efficient data structure.
  */
 and reactElement =
   | Flat(list(element))
   | Nested(string, list(reactElement))
+and nativeComponent = {
+  name: string,
+  make: int => NativeView.t,
+  setProps: NativeView.t => unit,
+  children: reactElement,
+  nativeKey: int
+}
 and renderedElement =
   | IFlat(list(opaqueInstance))
   | INested(string, list(renderedElement))
@@ -139,7 +153,9 @@ let defaultDidUpdate = (_oldNewSef) => ();
 
 let defaultDidMount = (_self) => ();
 
-let basicComponent = (~useDynamicKey=false, debugName) : componentSpec(_, stateless, _) => {
+let basicComponent =
+    (~useDynamicKey=false, debugName)
+    : componentSpec(_, stateless, _) => {
   let key = useDynamicKey ? Key.first : Key.none;
   {
     debugName,
@@ -175,7 +191,8 @@ module ListTR = {
     useTailRecursion(list) ? aux([], list) : List.concat(list)
   };
   let map = (f, list) =>
-    useTailRecursion(list) ? List.rev_map(f, List.rev(list)) : List.map(f, list);
+    useTailRecursion(list) ?
+      List.rev_map(f, List.rev(list)) : List.map(f, list);
   let rev_map3 = (f, list1, list2, list3) => {
     let rec aux = (acc) =>
       fun
@@ -216,27 +233,31 @@ module Render = {
       logString("Calling reduce on " ++ instance.component.debugName);
       let action = payloadToAction(payload);
       let stateUpdate = instance.component.reducer(action);
-      instance.pendingStateUpdates := [stateUpdate, ...instance.pendingStateUpdates^]
+      instance.pendingStateUpdates :=
+        [stateUpdate, ...instance.pendingStateUpdates^]
     },
     act: (action) => {
       logString("Calling act on " ++ instance.component.debugName);
       let stateUpdate = instance.component.reducer(action);
-      instance.pendingStateUpdates := [stateUpdate, ...instance.pendingStateUpdates^]
+      instance.pendingStateUpdates :=
+        [stateUpdate, ...instance.pendingStateUpdates^]
     }
   };
   let createInstance = (~component, ~element, ~instanceSubTree, ~subElements) => {
     let iState = component.initialState();
     let id = GlobalState.instanceIdCounter^;
     incr(GlobalState.instanceIdCounter);
-    {component, element, iState, instanceSubTree, subElements, pendingStateUpdates: ref([]), id}
+    {
+      component,
+      element,
+      iState,
+      instanceSubTree,
+      subElements,
+      pendingStateUpdates: ref([]),
+      id
+    }
   };
-  let defaultStringInstance =
-    createInstance(
-      ~component=basicComponent("String"),
-      ~element=String(""),
-      ~instanceSubTree=IFlat([]),
-      ~subElements=Flat([])
-    );
+  let defaultHostComponent = basicComponent("Host");
   let rec flattenReactElement =
     fun
     | Flat(l) => l
@@ -271,7 +292,8 @@ module Render = {
     };
     let createPositionTable = (opaqueInstances) => {
       let posTable = Hashtbl.create(1);
-      let add = (i, opaqueInstance) => Hashtbl.add(posTable, i, opaqueInstance);
+      let add = (i, opaqueInstance) =>
+        Hashtbl.add(posTable, i, opaqueInstance);
       List.iteri(add, opaqueInstances);
       posTable
     };
@@ -299,27 +321,39 @@ module Render = {
       | Not_found => None
       };
   };
+  let getOpaqueInstance = (~useKeyTable, element) =>
+    switch useKeyTable {
+    | None => None
+    | Some(keyTable) =>
+      OpaqueInstanceHash.lookupKey(
+        keyTable,
+        switch element {
+        | Element(component) => component.key
+        | HostElement(component) => component.nativeKey
+        }
+      )
+    };
 
   /***
    * Initial render of an Element. Recurses to produce the entire tree of
    * instances.
    */
   let rec renderElement = (~useKeyTable=?, element) : opaqueInstance =>
-    switch element {
-    | Element(component) =>
-      let opaqueInstanceFromKey =
-        switch useKeyTable {
-        | None => None
-        | Some(keyTable) => OpaqueInstanceHash.lookupKey(keyTable, component.key)
-        };
-      switch opaqueInstanceFromKey {
-      | Some(opaqueInstance) =>
-        /* Throwaway update log: this is a render so no need to keep an update log. */
-        let updateLog = UpdateLog.create();
-        update(~updateLog, opaqueInstance, element)
-      | None =>
+    switch (getOpaqueInstance(useKeyTable, element)) {
+    | Some(opaqueInstance) =>
+      /* Throwaway update log: this is a render so no need to keep an update log. */
+      let updateLog = UpdateLog.create();
+      update(~updateLog, opaqueInstance, element)
+    | None =>
+      switch element {
+      | Element(component) =>
         let instance =
-          createInstance(~component, ~element, ~instanceSubTree=IFlat([]), ~subElements=Flat([]));
+          createInstance(
+            ~component,
+            ~element,
+            ~instanceSubTree=IFlat([]),
+            ~subElements=Flat([])
+          );
         let self = createSelf(~instance);
         let reactElement = component.render(self);
         if (component.didMount !== defaultDidMount) {
@@ -340,8 +374,17 @@ module Render = {
         );
         let instanceSubTree = renderReactElement(reactElement);
         Instance({...instance, instanceSubTree, subElements: reactElement})
+      | HostElement({children}) as element =>
+        let instance =
+          createInstance(
+            ~component=defaultHostComponent,
+            ~element,
+            ~instanceSubTree=IFlat([]),
+            ~subElements=Flat([])
+          );
+        let instanceSubTree = renderReactElement(children);
+        Instance({...instance, instanceSubTree, subElements: children})
       }
-    | String(s) => Instance({...defaultStringInstance, element: String(s)})
     }
   and renderReactElement = (~useKeyTable=?, reactElement) : renderedElement =>
     mapReactElement(renderElement(~useKeyTable?), reactElement)
@@ -379,12 +422,15 @@ module Render = {
     let bailOut = {
       let Instance({element, component}) = opaqueInstance;
       let log = () => {
-        logString("Bailing Out Early Due To Memoization on " ++ component.debugName);
+        logString(
+          "Bailing Out Early Due To Memoization on " ++ component.debugName
+        );
         true
       };
       stateNotUpdated && element === nextElement && log()
     };
-    let logUpdate = (~componentChanged, ~stateChanged, ~subTreeChanged, newOpaqueInstance) => {
+    let logUpdate =
+        (~componentChanged, ~stateChanged, ~subTreeChanged, newOpaqueInstance) => {
       let Instance({id}) = opaqueInstance;
       let Instance({id: newId}) = newOpaqueInstance;
       let comp = componentChanged ? " component" : "";
@@ -416,7 +462,9 @@ module Render = {
     if (bailOut) {
       opaqueInstance
     } else {
-      let Instance({component, instanceSubTree, subElements} as updatedInstance) = updatedOpaqueInstance;
+      let Instance(
+            {component, instanceSubTree, subElements} as updatedInstance
+          ) = updatedOpaqueInstance;
       switch nextElement {
       | Element(nextComponent) =>
         component.handedOffInstance := Some(updatedInstance);
@@ -428,7 +476,11 @@ module Render = {
           /* DO NOT FORGET TO RESET HANDEDOFFINSTANCE */
           component.handedOffInstance := None;
           logString("Updating " ++ nextComponent.debugName);
-          let instance = {...updatedInstance, component: nextComponent, element: nextElement};
+          let instance = {
+            ...updatedInstance,
+            component: nextComponent,
+            element: nextElement
+          };
           let oldSelf = createSelf(~instance);
           let newState = nextComponent.willReceiveProps(oldSelf);
           let newInstance = {...instance, iState: newState};
@@ -465,7 +517,12 @@ module Render = {
               let Instance({instanceSubTree}) = opaqueInstance;
               nextInstanceSubTree !== instanceSubTree
             };
-            logUpdate(~componentChanged=false, ~stateChanged, ~subTreeChanged, newOpaqueInstance);
+            logUpdate(
+              ~componentChanged=false,
+              ~stateChanged,
+              ~subTreeChanged,
+              newOpaqueInstance
+            );
             newOpaqueInstance
           } else {
             let newOpaqueInstance = Instance(newInstance);
@@ -518,7 +575,8 @@ module Render = {
           );
           newOpaqueInstance
         }
-      | String(s) => Instance({...defaultStringInstance, element: String(s)})
+      | HostElement(_) => assert false
+      /* Instance({...defaultHostInstance, element})*/
       }
     }
   }
@@ -538,13 +596,20 @@ module Render = {
      * If the component has an explicit key, match the instance with the same key.
      * Note: components are matched for key across the entire reactElement structure.
      */
-    let processElement = (~keyTable, ~posTable, position, element) : opaqueInstance =>
+    let processElement =
+        (~keyTable, ~posTable, position, element)
+        : opaqueInstance =>
       switch element {
       | Element(component) when component.key !== Key.none =>
         switch (OpaqueInstanceHash.lookupKey(keyTable, component.key)) {
         | Some(subOpaqueInstance) =>
           /* instance tree with the same component id */
-          update(~updateOpaqueInstanceState?, ~updateLog, subOpaqueInstance, element)
+          update(
+            ~updateOpaqueInstanceState?,
+            ~updateLog,
+            subOpaqueInstance,
+            element
+          )
         | None =>
           /* not found: render a new instance */
           renderElement(element)
@@ -553,12 +618,17 @@ module Render = {
         switch (OpaqueInstanceHash.lookupPosition(posTable, position)) {
         | Some(subOpaqueInstance) =>
           /* instance tree at the corresponding position */
-          update(~updateOpaqueInstanceState?, ~updateLog, subOpaqueInstance, element)
+          update(
+            ~updateOpaqueInstanceState?,
+            ~updateLog,
+            subOpaqueInstance,
+            element
+          )
         | None =>
           /* not found: render a new instance */
           renderElement(element)
         }
-      | String(_) => renderElement(element)
+      | HostElement(_) => renderElement(element)
       };
     switch (oldRenderedElement, oldReactElement, nextReactElement) {
     | (
@@ -568,7 +638,10 @@ module Render = {
       )
         when nextReactElements === oldReactElements && GlobalState.useTailHack^ =>
       /* Detected that nextReactElement was obtained by adding one element  */
-      INested(iName, [renderReactElement(nextReactElement), ...instanceSubTrees])
+      INested(
+        iName,
+        [renderReactElement(nextReactElement), ...instanceSubTrees]
+      )
     | (
         INested(oldName, oldRenderedElements),
         Nested(_, oldReactElements),
@@ -584,12 +657,17 @@ module Render = {
         };
       let newRenderedElements =
         ListTR.map3(
-          updateRenderedElement(~updateOpaqueInstanceState?, ~updateLog, ~useKeyTable=keyTable),
+          updateRenderedElement(
+            ~updateOpaqueInstanceState?,
+            ~updateLog,
+            ~useKeyTable=keyTable
+          ),
           oldRenderedElements,
           oldReactElements,
           nextReactElements
         );
-      let changed = List.exists2((!==), oldRenderedElements, newRenderedElements);
+      let changed =
+        List.exists2((!==), oldRenderedElements, newRenderedElements);
       let newRenderedElement =
         changed ? INested(oldName, newRenderedElements) : oldRenderedElement;
       if (topLevelUpdate && changed) {
@@ -602,11 +680,17 @@ module Render = {
         | None => OpaqueInstanceHash.createKeyTable(IFlat(oldOpaqueInstances))
         | Some(keyTable) => keyTable
         };
-      let posTable = OpaqueInstanceHash.createPositionTable(oldOpaqueInstances);
+      let posTable =
+        OpaqueInstanceHash.createPositionTable(oldOpaqueInstances);
       let newOpaqueInstances =
-        List.mapi(processElement(~keyTable, ~posTable), flattenReactElement(nextReactElement));
-      let changed = List.exists2((!==), oldOpaqueInstances, newOpaqueInstances);
-      let newRenderedElement = changed ? IFlat(newOpaqueInstances) : oldRenderedElement;
+        List.mapi(
+          processElement(~keyTable, ~posTable),
+          flattenReactElement(nextReactElement)
+        );
+      let changed =
+        List.exists2((!==), oldOpaqueInstances, newOpaqueInstances);
+      let newRenderedElement =
+        changed ? IFlat(newOpaqueInstances) : oldRenderedElement;
       if (topLevelUpdate && changed) {
         UpdateLog.add(updateLog, NewRenderedElement(newRenderedElement))
       };
@@ -617,7 +701,8 @@ module Render = {
         | None => OpaqueInstanceHash.createKeyTable(oldRenderedElement)
         | Some(keyTable) => keyTable
         };
-      let newRenderedElement = renderReactElement(~useKeyTable=keyTable, nextReactElement);
+      let newRenderedElement =
+        renderReactElement(~useKeyTable=keyTable, nextReactElement);
       if (topLevelUpdate) {
         UpdateLog.add(updateLog, NewRenderedElement(newRenderedElement))
       };
@@ -646,7 +731,8 @@ module Render = {
     let pendingUpdates = List.rev(instance.pendingStateUpdates^);
     instance.pendingStateUpdates := [];
     let nextState = executeUpdates(~state=instance.iState, pendingUpdates);
-    instance.iState === nextState ? opaqueInstance : Instance({...instance, iState: nextState})
+    instance.iState === nextState ?
+      opaqueInstance : Instance({...instance, iState: nextState})
   };
 
   /***
@@ -670,7 +756,8 @@ module RenderedElement = {
    * Rendering produces a list of instance trees.
    */
   type t = renderedElement;
-  let listToRenderedElement = (renderedElements) => INested("List", renderedElements);
+  let listToRenderedElement = (renderedElements) =>
+    INested("List", renderedElements);
   let render = (reactElement) : t => Render.renderReactElement(reactElement);
   let update = (renderedElement: t, reactElement) : (t, UpdateLog.t) => {
     let updateLog = UpdateLog.create();
@@ -690,7 +777,10 @@ module RenderedElement = {
   let flushPendingUpdates = (renderedElement: t) : (t, UpdateLog.t) => {
     let updateLog = UpdateLog.create();
     let newRenderedElement =
-      Render.mapRenderedElement(Render.flushPendingUpdates(~updateLog), renderedElement);
+      Render.mapRenderedElement(
+        Render.flushPendingUpdates(~updateLog),
+        renderedElement
+      );
     (newRenderedElement, updateLog)
   };
 };
@@ -703,170 +793,187 @@ let statelessComponent = (~useDynamicKey=?, debugName) => {
 let statefulComponent = (~useDynamicKey=?, debugName) =>
   basicComponent(~useDynamicKey?, debugName);
 
-let reducerComponent = (~useDynamicKey=?, debugName) => basicComponent(~useDynamicKey?, debugName);
+let reducerComponent = (~useDynamicKey=?, debugName) =>
+  basicComponent(~useDynamicKey?, debugName);
 
 let element = (~key as argumentKey=Key.none, component) => {
   let key =
-    argumentKey != Key.none ? argumentKey : component.key == Key.none ? Key.none : Key.create();
+    argumentKey != Key.none ?
+      argumentKey : component.key == Key.none ? Key.none : Key.create();
   let componentWithKey = key == Key.none ? component : {...component, key};
   Flat([Element(componentWithKey)])
 };
 
-let arrayToElement = (a: array(reactElement)) : reactElement => Nested("Array", Array.to_list(a));
+let arrayToElement = (a: array(reactElement)) : reactElement =>
+  Nested("Array", Array.to_list(a));
 
 let listToElement = (l) => Nested("List", l);
 
-let stringToElement = (s) : reactElement => Flat([String(s)]);
+/* TODO: don't make this public
+ * Instead, wrap every nativeElement in a stateless/statefulComponent.
+ * In willReceiveProps/didReceiveProps invoke the side effect (prop mutation)
+ */
+let nativeElement = (~key as argumentKey=Key.none, component) => {
+  let key =
+    argumentKey != Key.none ?
+      argumentKey : component.nativeKey == Key.none ? Key.none : Key.create();
+  let componentWithKey =
+    key == Key.none ? component : {...component, nativeKey: key};
+  Flat([HostElement(componentWithKey)])
+};
 
 module ReactDOMRe = {
   type reactDOMProps;
-  let createElement = (name, ~props as _props=?, elementArray: array(reactElement)) : reactElement =>
+  let createElement =
+      (name, ~props as _props=?, elementArray: array(reactElement))
+      : reactElement =>
     Nested(name, Array.to_list(elementArray));
 };
 
-module OutputTree = {
-  type tree =
-    | S(string)
-    | N(node)
-  and node = {
-    mutable id: int,
-    mutable name: string,
-    mutable state: string,
-    mutable sub: list(tree)
-  };
-  type forest = list(tree);
-  type t = forest;
-  let rec fromOpaqueInstance = (Instance({component, element, iState, instanceSubTree, id})) : tree =>
-    switch element {
-    | String(s) => S(s)
-    | Element(_) =>
-      let state = component.printState(iState);
-      let name = component.debugName;
-      let subTreeInstances = Render.flattenRenderedElement(instanceSubTree);
-      let sub = ListTR.map(fromOpaqueInstance, subTreeInstances);
-      N({id, name, state, sub})
-    };
-  let fromRenderedElement = (renderedElement) =>
-    ListTR.map(fromOpaqueInstance, Render.flattenRenderedElement(renderedElement));
-  let applyUpdateLog = (updateLog, forest) => {
-    open UpdateLog;
-    let rec applyEntryTree = (t, entry) : option(tree) =>
-      switch entry {
-      | NewRenderedElement(_) => assert false
-      | UpdateInstance({
-          oldId,
-          newId,
-          oldOpaqueInstance,
-          newOpaqueInstance,
-          componentChanged,
-          stateChanged,
-          subTreeChanged
-        }) =>
-        switch t {
-        | S(_) => None
-        | N(n) =>
-          if (n.id === oldId) {
-            if (oldId !== newId) {
-              n.id = newId
-            };
-            let Instance({component, iState, instanceSubTree}) = newOpaqueInstance;
-            if (componentChanged) {
-              n.name = component.debugName
-            };
-            if (stateChanged) {
-              n.state = component.printState(iState)
-            };
-            if (subTreeChanged) {
-              let Instance({instanceSubTree: oldInstanceSubTree}) = oldOpaqueInstance;
-              let sub =
-                switch (instanceSubTree, oldInstanceSubTree) {
-                | (
-                    INested(_, [nextRenderedElement, ...nextRenderedElements]),
-                    INested(_, oldRenderedElements)
-                  )
-                    when nextRenderedElements === oldRenderedElements =>
-                  let headTrees = fromRenderedElement(nextRenderedElement);
-                  List.rev_append(List.rev(headTrees), n.sub)
-                | _ =>
-                  let subTreeInstances = Render.flattenRenderedElement(instanceSubTree);
-                  ListTR.map(fromOpaqueInstance, subTreeInstances)
-                };
-              n.sub = sub
-            };
-            Some(t)
-          } else {
-            switch (applyEntryForest(n.sub, entry)) {
-            | None => None
-            | Some(newSub) =>
-              if (n.sub !== newSub) {
-                n.sub = newSub
-              };
-              Some(t)
-            }
-          }
-        }
-      }
-    and applyEntryForest = (f, entry) : option(forest) =>
-      switch f {
-      | [] => None
-      | [t, ...nextF] =>
-        switch (applyEntryTree(t, entry)) {
-        | None =>
-          switch (applyEntryForest(nextF, entry)) {
-          | None => None
-          | Some(newForest) => Some([t, ...newForest])
-          }
-        | Some(newT) => Some([newT, ...nextF])
-        }
-      };
-    let applyEntryForestToplevel = (f, entry) =>
-      switch entry {
-      | NewRenderedElement(renderedElement) => Some(fromRenderedElement(renderedElement))
-      | UpdateInstance(_) => applyEntryForest(f, entry)
-      };
-    List.fold_left(
-      (f, entry) =>
-        switch (applyEntryForestToplevel(f, entry)) {
-        | None => f
-        | Some(newF) => newF
-        },
-      forest,
-      updateLog^
-    )
-  };
-  let arrayStr = (lst) => String.concat(",", lst);
-  let printTree = (tree) => {
-    let rec pp = (~indent) =>
-      fun
-      | N({id, name, state, sub}) => {
-          let nextIndent = "  " ++ indent;
-          Printf.sprintf(
-            "\n%s{%s\n%sid:%d\n%s\"%s.subtree\": %s\n%s}",
-            indent,
-            state == "" ? "" : Printf.sprintf("\n%s\"%s.state\": %s,", nextIndent, name, state),
-            nextIndent,
-            id,
-            nextIndent,
-            name,
-            ListTR.map(pp(~indent=nextIndent), sub) |> arrayStr,
-            indent
-          )
-        }
-      | S(s) => s;
-    ();
-    pp(~indent="", tree)
-  };
-  let print = (treeList: forest) => {
-    let arrayStr = (lst) => String.concat(",", lst);
-    let l: list(string) =
-      List.mapi(
-        (i, tree) => "Tree #" ++ (string_of_int(i) ++ (" " ++ arrayStr([printTree(tree)]))),
-        treeList
-      );
-    String.concat("\n", l)
-  };
-};
-
+/*
+ module OutputTree = {
+   type tree =
+     | S(string)
+     | N(node)
+   and node = {
+     mutable id: int,
+     mutable name: string,
+     mutable state: string,
+     mutable sub: list(tree)
+   };
+   type forest = list(tree);
+   type t = forest;
+   let rec fromOpaqueInstance = (Instance({component, element, iState, instanceSubTree, id})) : tree =>
+     switch element {
+     | HostElement(Host(s)) => S(s)
+     | Element(_) =>
+       let state = component.printState(iState);
+       let name = component.debugName;
+       let subTreeInstances = Render.flattenRenderedElement(instanceSubTree);
+       let sub = ListTR.map(fromOpaqueInstance, subTreeInstances);
+       N({id, name, state, sub})
+     };
+   let fromRenderedElement = (renderedElement) =>
+     ListTR.map(fromOpaqueInstance, Render.flattenRenderedElement(renderedElement));
+   let applyUpdateLog = (updateLog, forest) => {
+     open UpdateLog;
+     let rec applyEntryTree = (t, entry) : option(tree) =>
+       switch entry {
+       | NewRenderedElement(_) => assert false
+       | UpdateInstance({
+           oldId,
+           newId,
+           oldOpaqueInstance,
+           newOpaqueInstance,
+           componentChanged,
+           stateChanged,
+           subTreeChanged
+         }) =>
+         switch t {
+         | S(_) => None
+         | N(n) =>
+           if (n.id === oldId) {
+             if (oldId !== newId) {
+               n.id = newId
+             };
+             let Instance({component, iState, instanceSubTree}) = newOpaqueInstance;
+             if (componentChanged) {
+               n.name = component.debugName
+             };
+             if (stateChanged) {
+               n.state = component.printState(iState)
+             };
+             if (subTreeChanged) {
+               let Instance({instanceSubTree: oldInstanceSubTree}) = oldOpaqueInstance;
+               let sub =
+                 switch (instanceSubTree, oldInstanceSubTree) {
+                 | (
+                     INested(_, [nextRenderedElement, ...nextRenderedElements]),
+                     INested(_, oldRenderedElements)
+                   )
+                     when nextRenderedElements === oldRenderedElements =>
+                   let headTrees = fromRenderedElement(nextRenderedElement);
+                   List.rev_append(List.rev(headTrees), n.sub)
+                 | _ =>
+                   let subTreeInstances = Render.flattenRenderedElement(instanceSubTree);
+                   ListTR.map(fromOpaqueInstance, subTreeInstances)
+                 };
+               n.sub = sub
+             };
+             Some(t)
+           } else {
+             switch (applyEntryForest(n.sub, entry)) {
+             | None => None
+             | Some(newSub) =>
+               if (n.sub !== newSub) {
+                 n.sub = newSub
+               };
+               Some(t)
+             }
+           }
+         }
+       }
+     and applyEntryForest = (f, entry) : option(forest) =>
+       switch f {
+       | [] => None
+       | [t, ...nextF] =>
+         switch (applyEntryTree(t, entry)) {
+         | None =>
+           switch (applyEntryForest(nextF, entry)) {
+           | None => None
+           | Some(newForest) => Some([t, ...newForest])
+           }
+         | Some(newT) => Some([newT, ...nextF])
+         }
+       };
+     let applyEntryForestToplevel = (f, entry) =>
+       switch entry {
+       | NewRenderedElement(renderedElement) => Some(fromRenderedElement(renderedElement))
+       | UpdateInstance(_) => applyEntryForest(f, entry)
+       };
+     List.fold_left(
+       (f, entry) =>
+         switch (applyEntryForestToplevel(f, entry)) {
+         | None => f
+         | Some(newF) => newF
+         },
+       forest,
+       updateLog^
+     )
+   };
+   let arrayStr = (lst) => String.concat(",", lst);
+   let printTree = (tree) => {
+     let rec pp = (~indent) =>
+       fun
+       | N({id, name, state, sub}) => {
+           let nextIndent = "  " ++ indent;
+           Printf.sprintf(
+             "\n%s{%s\n%sid:%d\n%s\"%s.subtree\": %s\n%s}",
+             indent,
+             state == "" ? "" : Printf.sprintf("\n%s\"%s.state\": %s,", nextIndent, name, state),
+             nextIndent,
+             id,
+             nextIndent,
+             name,
+             ListTR.map(pp(~indent=nextIndent), sub) |> arrayStr,
+             indent
+           )
+         }
+       | S(s) => s;
+     ();
+     pp(~indent="", tree)
+   };
+   let print = (treeList: forest) => {
+     let arrayStr = (lst) => String.concat(",", lst);
+     let l: list(string) =
+       List.mapi(
+         (i, tree) => "Tree #" ++ (string_of_int(i) ++ (" " ++ arrayStr([printTree(tree)]))),
+         treeList
+       );
+     String.concat("\n", l)
+   };
+ };
+ */
 module RemoteAction = {
   type t('action) = {mutable act: 'action => unit};
   let actDefault = (_action) => ();
@@ -877,3 +984,62 @@ module RemoteAction = {
     };
   let act = (x, ~action) => x.act(action);
 };
+
+module View = {
+  include NativeView;
+  external setFrame : (float, float, float, float, t) => t = "View_setFrame";
+  external getInstance : int => option(t) = "View_getInstance";
+  let make:
+    (~x: float, ~y: float, ~width: float, ~height: float, reactElement) =>
+    nativeComponent =
+    (~x, ~y, ~width, ~height, children) => {
+      name: "View",
+      make: (id) => makeInstance(id) |> setFrame(x, y, width, height),
+      setProps: (_) => (),
+      children,
+      nativeKey: Key.none
+    };
+};
+
+type layoutElement =
+  | Container(list(layoutElement))
+  | Concrete(View.t, list(layoutElement));
+
+let rec mountRenderedTreeNested = (Instance({element, id, instanceSubTree})) => {
+  let children = mountRenderedTree(instanceSubTree);
+  switch element {
+  | HostElement(nativeComponent) =>
+    switch (View.getInstance(id)) {
+    | Some(x) => Concrete(x, children)
+    | None => Concrete(nativeComponent.make(id), children)
+    }
+  | Element({debugName}) => Container(children)
+  }
+}
+and mountRenderedTree: RenderedElement.t => list(layoutElement) =
+  (rendered) =>
+    switch rendered {
+    | IFlat(instances) => List.map(mountRenderedTreeNested, instances)
+    | INested(_, instances) =>
+      List.flatten(List.map(mountRenderedTree, instances))
+    };
+
+let rootID = 999_999_999; /* This is obviously error prone */
+
+let rec displayLayoutElements: list(layoutElement) => list(View.t) =
+  (layoutElements) =>
+    List.flatten(
+      List.map(
+        (layoutElement) =>
+          switch layoutElement {
+          | Container(children) => displayLayoutElements(children)
+          | Concrete(view, children) =>
+            List.iter(
+              (child) => ignore(View.addChild(view, child)),
+              displayLayoutElements(children)
+            );
+            [view]
+          },
+        layoutElements
+      )
+    );

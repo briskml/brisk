@@ -1,0 +1,352 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 48;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		C9445F101FCAF17400280399 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = C9445F0F1FCAF17400280399 /* AppDelegate.m */; };
+		C9445F131FCAF17400280399 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = C9445F121FCAF17400280399 /* ViewController.m */; };
+		C9445F161FCAF17400280399 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C9445F141FCAF17400280399 /* Main.storyboard */; };
+		C9445F181FCAF17400280399 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C9445F171FCAF17400280399 /* Assets.xcassets */; };
+		C9445F1B1FCAF17400280399 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C9445F191FCAF17400280399 /* LaunchScreen.storyboard */; };
+		C9445F1E1FCAF17400280399 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = C9445F1D1FCAF17400280399 /* main.m */; };
+		C9445F2E1FCAF90900280399 /* libasmrun.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C9445F2D1FCAF90200280399 /* libasmrun.a */; };
+		C9C25B651FFBA2D60093E2F7 /* react_ios.complete.o in Frameworks */ = {isa = PBXBuildFile; fileRef = C9C25B621FFB68560093E2F7 /* react_ios.complete.o */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		C9445F0B1FCAF17400280399 /* OCaml.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OCaml.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C9445F0E1FCAF17400280399 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
+		C9445F0F1FCAF17400280399 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+		C9445F111FCAF17400280399 /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
+		C9445F121FCAF17400280399 /* ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
+		C9445F151FCAF17400280399 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		C9445F171FCAF17400280399 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		C9445F1A1FCAF17400280399 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		C9445F1C1FCAF17400280399 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		C9445F1D1FCAF17400280399 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		C9445F2D1FCAF90200280399 /* libasmrun.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libasmrun.a; path = "../../../../../../.opam/4.04.0_ios/ios-sysroot/lib/ocaml/libasmrun.a"; sourceTree = "<group>"; };
+		C9C25B5D1FFAE98F0093E2F7 /* react_ios.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = react_ios.a; path = ../_build/default.ios/src/react_ios.a; sourceTree = "<group>"; };
+		C9C25B601FFAEA720093E2F7 /* react_ios.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; name = react_ios.o; path = ../_build/default.ios/src/react_ios.o; sourceTree = "<group>"; };
+		C9C25B621FFB68560093E2F7 /* react_ios.complete.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; name = react_ios.complete.o; path = ../_build/default.ios/src/react_ios.complete.o; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		C9445F081FCAF17400280399 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C9445F2E1FCAF90900280399 /* libasmrun.a in Frameworks */,
+				C9C25B651FFBA2D60093E2F7 /* react_ios.complete.o in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		C9445F021FCAF17400280399 = {
+			isa = PBXGroup;
+			children = (
+				C9445F0D1FCAF17400280399 /* OCaml */,
+				C9445F0C1FCAF17400280399 /* Products */,
+				C9C25B5C1FFAE98F0093E2F7 /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		C9445F0C1FCAF17400280399 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				C9445F0B1FCAF17400280399 /* OCaml.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		C9445F0D1FCAF17400280399 /* OCaml */ = {
+			isa = PBXGroup;
+			children = (
+				C9445F2D1FCAF90200280399 /* libasmrun.a */,
+				C9445F0E1FCAF17400280399 /* AppDelegate.h */,
+				C9445F0F1FCAF17400280399 /* AppDelegate.m */,
+				C9445F111FCAF17400280399 /* ViewController.h */,
+				C9445F121FCAF17400280399 /* ViewController.m */,
+				C9445F141FCAF17400280399 /* Main.storyboard */,
+				C9445F171FCAF17400280399 /* Assets.xcassets */,
+				C9445F191FCAF17400280399 /* LaunchScreen.storyboard */,
+				C9445F1C1FCAF17400280399 /* Info.plist */,
+				C9445F1D1FCAF17400280399 /* main.m */,
+			);
+			path = OCaml;
+			sourceTree = "<group>";
+		};
+		C9C25B5C1FFAE98F0093E2F7 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				C9C25B621FFB68560093E2F7 /* react_ios.complete.o */,
+				C9C25B601FFAEA720093E2F7 /* react_ios.o */,
+				C9C25B5D1FFAE98F0093E2F7 /* react_ios.a */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		C9445F0A1FCAF17400280399 /* OCaml */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C9445F211FCAF17400280399 /* Build configuration list for PBXNativeTarget "OCaml" */;
+			buildPhases = (
+				C9445F071FCAF17400280399 /* Sources */,
+				C9445F081FCAF17400280399 /* Frameworks */,
+				C9445F091FCAF17400280399 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = OCaml;
+			productName = OCaml;
+			productReference = C9445F0B1FCAF17400280399 /* OCaml.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		C9445F031FCAF17400280399 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0900;
+				ORGANIZATIONNAME = wokalski;
+				TargetAttributes = {
+					C9445F0A1FCAF17400280399 = {
+						CreatedOnToolsVersion = 9.0;
+					};
+				};
+			};
+			buildConfigurationList = C9445F061FCAF17400280399 /* Build configuration list for PBXProject "OCaml" */;
+			compatibilityVersion = "Xcode 8.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = C9445F021FCAF17400280399;
+			productRefGroup = C9445F0C1FCAF17400280399 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				C9445F0A1FCAF17400280399 /* OCaml */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		C9445F091FCAF17400280399 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C9445F1B1FCAF17400280399 /* LaunchScreen.storyboard in Resources */,
+				C9445F181FCAF17400280399 /* Assets.xcassets in Resources */,
+				C9445F161FCAF17400280399 /* Main.storyboard in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		C9445F071FCAF17400280399 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C9445F131FCAF17400280399 /* ViewController.m in Sources */,
+				C9445F1E1FCAF17400280399 /* main.m in Sources */,
+				C9445F101FCAF17400280399 /* AppDelegate.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		C9445F141FCAF17400280399 /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				C9445F151FCAF17400280399 /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+		C9445F191FCAF17400280399 /* LaunchScreen.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				C9445F1A1FCAF17400280399 /* Base */,
+			);
+			name = LaunchScreen.storyboard;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		C9445F1F1FCAF17400280399 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+			};
+			name = Debug;
+		};
+		C9445F201FCAF17400280399 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = iphoneos;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		C9445F221FCAF17400280399 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				DEVELOPMENT_TEAM = 25UJHK4C3S;
+				HEADER_SEARCH_PATHS = /usr/local/lib/ocaml/;
+				INFOPLIST_FILE = OCaml/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LIBRARY_SEARCH_PATHS = "/Users/wczekalski/.opam/4.04.0_ios/ios-sysroot/lib/ocaml";
+				OTHER_LDFLAGS = "";
+				PRODUCT_BUNDLE_IDENTIFIER = com.wokalski.OCaml;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		C9445F231FCAF17400280399 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				DEVELOPMENT_TEAM = 25UJHK4C3S;
+				HEADER_SEARCH_PATHS = /usr/local/lib/ocaml/;
+				INFOPLIST_FILE = OCaml/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LIBRARY_SEARCH_PATHS = "/Users/wczekalski/.opam/4.04.0_ios/ios-sysroot/lib/ocaml";
+				OTHER_LDFLAGS = "";
+				PRODUCT_BUNDLE_IDENTIFIER = com.wokalski.OCaml;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		C9445F061FCAF17400280399 /* Build configuration list for PBXProject "OCaml" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C9445F1F1FCAF17400280399 /* Debug */,
+				C9445F201FCAF17400280399 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C9445F211FCAF17400280399 /* Build configuration list for PBXNativeTarget "OCaml" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C9445F221FCAF17400280399 /* Debug */,
+				C9445F231FCAF17400280399 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = C9445F031FCAF17400280399 /* Project object */;
+}

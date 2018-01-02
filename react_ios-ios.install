@@ -1,0 +1,25 @@
+lib: [
+  "_build/install/default.ios/lib/react_ios/META" {"../../ios-sysroot/lib/react_ios/META"}
+  "_build/install/default.ios/lib/react_ios/opam" {"../../ios-sysroot/lib/react_ios/opam"}
+  "_build/install/default.ios/lib/react_ios/react_ios.complete.o" {"../../ios-sysroot/lib/react_ios/react_ios.complete.o"}
+  "_build/install/default.ios/lib/react_ios/react_ios__Main.cmi" {"../../ios-sysroot/lib/react_ios/react_ios__Main.cmi"}
+  "_build/install/default.ios/lib/react_ios/react_ios__Main.cmx" {"../../ios-sysroot/lib/react_ios/react_ios__Main.cmx"}
+  "_build/install/default.ios/lib/react_ios/react_ios__Main.cmt" {"../../ios-sysroot/lib/react_ios/react_ios__Main.cmt"}
+  "_build/install/default.ios/lib/react_ios/Main.re" {"../../ios-sysroot/lib/react_ios/Main.re"}
+  "_build/install/default.ios/lib/react_ios/react_ios__React.cmi" {"../../ios-sysroot/lib/react_ios/react_ios__React.cmi"}
+  "_build/install/default.ios/lib/react_ios/react_ios__React.cmx" {"../../ios-sysroot/lib/react_ios/react_ios__React.cmx"}
+  "_build/install/default.ios/lib/react_ios/react_ios__React.cmt" {"../../ios-sysroot/lib/react_ios/react_ios__React.cmt"}
+  "_build/install/default.ios/lib/react_ios/react_ios__React.cmti" {"../../ios-sysroot/lib/react_ios/react_ios__React.cmti"}
+  "_build/install/default.ios/lib/react_ios/React.rei" {"../../ios-sysroot/lib/react_ios/React.rei"}
+  "_build/install/default.ios/lib/react_ios/react_ios.cmi" {"../../ios-sysroot/lib/react_ios/react_ios.cmi"}
+  "_build/install/default.ios/lib/react_ios/react_ios.cmx" {"../../ios-sysroot/lib/react_ios/react_ios.cmx"}
+  "_build/install/default.ios/lib/react_ios/react_ios.cmt" {"../../ios-sysroot/lib/react_ios/react_ios.cmt"}
+  "_build/install/default.ios/lib/react_ios/react_ios.ml-gen" {"../../ios-sysroot/lib/react_ios/react_ios.ml-gen"}
+  "_build/install/default.ios/lib/react_ios/react_ios__Test_ios.cmi" {"../../ios-sysroot/lib/react_ios/react_ios__Test_ios.cmi"}
+  "_build/install/default.ios/lib/react_ios/react_ios__Test_ios.cmx" {"../../ios-sysroot/lib/react_ios/react_ios__Test_ios.cmx"}
+  "_build/install/default.ios/lib/react_ios/react_ios__Test_ios.cmt" {"../../ios-sysroot/lib/react_ios/react_ios__Test_ios.cmt"}
+  "_build/install/default.ios/lib/react_ios/Test_ios.re" {"../../ios-sysroot/lib/react_ios/Test_ios.re"}
+  "_build/install/default.ios/lib/react_ios/react_ios.cma" {"../../ios-sysroot/lib/react_ios/react_ios.cma"}
+  "_build/install/default.ios/lib/react_ios/react_ios.cmxa" {"../../ios-sysroot/lib/react_ios/react_ios.cmxa"}
+  "_build/install/default.ios/lib/react_ios/react_ios.a" {"../../ios-sysroot/lib/react_ios/react_ios.a"}
+]

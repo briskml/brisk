@@ -13,8 +13,10 @@
 
 - (void)viewDidAppear:(BOOL)animated {
     [super viewDidAppear:animated];
-    char* args[] = {NULL};
-    caml_startup(args);
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        char* args[] = {NULL};
+        caml_startup(args);
+    });
 }
 
 - (void)didReceiveMemoryWarning {

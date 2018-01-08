@@ -13,17 +13,79 @@
 #include <caml/bigarray.h>
 #include <caml/custom.h>
 #include <caml/fail.h>
+#include <caml/callback.h>
+
+typedef void (^ActionBlock)();
+
+@interface UIBlockButton : UIButton {
+    ActionBlock _actionBlock;
+}
+
+-(void) handleControlEvent:(UIControlEvents)event
+                 withBlock:(ActionBlock) action;
+@end
+
+@implementation UIBlockButton
+
+-(void) handleControlEvent:(UIControlEvents)event
+                 withBlock:(ActionBlock) action
+{
+    _actionBlock = action;
+    [self addTarget:self action:@selector(callActionBlock:) forControlEvents:event];
+}
+
+-(void) callActionBlock:(id)sender{
+    _actionBlock();
+}
+@end
 
 static NSMutableDictionary *PSM_Views;
 
+
+
 CAMLprim value View_newView(value id_) {
     int _id = Int_val(id_);
-    UIView *view = [UIView new];
-    view.backgroundColor = [UIColor redColor];
-    [view setFrame:CGRectMake(10, 10, 100, 100 )];
-    view.layer.borderWidth = 10;
-    view.layer.borderColor = [[UIColor blueColor] CGColor];
+    UIView __block *view = nil;
+    dispatch_sync(dispatch_get_main_queue(), ^{
+        view = [UIView new];
+        view.backgroundColor = [UIColor redColor];
+        [view setFrame:CGRectMake(10, 10, 100, 100 )];
+        view.layer.borderWidth = 10;
+        view.layer.borderColor = [[UIColor blueColor] CGColor];
+    });
     [PSM_Views setObject:view forKey:@(_id)];
+    return (value) view;
+}
+
+CAMLprim value Button_makeInstance(value id_) {
+    int _id = Int_val(id_);
+    UIView __block *view = nil;
+    dispatch_sync(dispatch_get_main_queue(), ^{
+        view = [UIBlockButton new];
+        view.backgroundColor = [UIColor redColor];
+        [view setFrame:CGRectMake(10, 10, 100, 100 )];
+        view.layer.borderWidth = 10;
+        view.layer.borderColor = [[UIColor blueColor] CGColor];
+    });
+    [PSM_Views setObject:view forKey:@(_id)];
+    return (value) view;
+}
+
+CAMLprim value Button_setText(value text, UIBlockButton *view) {
+    char *string = String_val(text);
+    dispatch_sync(dispatch_get_main_queue(), ^{
+        NSString *str = [NSString stringWithFormat:@"%s", string];
+        [view setTitle:str forState:UIControlStateNormal];
+    });
+    return (value) view;
+}
+
+CAMLprim value Button_setCallback(value c, UIBlockButton *view) {
+    dispatch_sync(dispatch_get_main_queue(), ^{
+        [view handleControlEvent:UIControlEventTouchDown withBlock:^{
+            caml_callback(c, 0);
+        }];
+    });
     return (value) view;
 }
 
@@ -46,17 +108,41 @@ CAMLprim value View_setFrame(value x, value y, value width, value height, UIView
     double y_C = Double_val(y);
     double width_C = Double_val(width);
     double height_C = Double_val(height);
-    [view setFrame:CGRectMake(x_C, y_C, width_C, height_C)];
+    dispatch_sync(dispatch_get_main_queue(), ^{
+        [view setFrame:CGRectMake(x_C, y_C, width_C, height_C)];
+    });
     return (value) view;
 }
 
-CAMLprim value View_addToWindow(UIView *view) {
-    [[[[UIApplication sharedApplication] windows] firstObject] addSubview:view];
-    return (value) view;
+CAMLprim value View_getWindow() {
+    UIWindow __block *windows;
+    dispatch_sync(dispatch_get_main_queue(), ^{
+        windows = [[[UIApplication sharedApplication] windows] firstObject];
+    });
+    return (value) windows;
 }
 
 CAMLprim value View_addChild(UIView *self, UIView *child /* array of UIViews */ ) {
-    [self addSubview: child];
+
+        dispatch_sync(dispatch_get_main_queue(), ^{
+            [self addSubview: child];
+        });
+    return (value) self;
+}
+
+CAMLprim value View_removeChild(UIView *self, UIView *child /* array of UIViews */ ) {
+    if ([NSThread isMainThread])
+    {
+        NSLog(@"MAIN");
+        [child removeFromSuperview];
+    }
+    else
+    {
+        dispatch_sync(dispatch_get_main_queue(), ^{
+            NSLog(@"NOT MAIN");
+            [child removeFromSuperview];
+        });
+    }
     return (value) self;
 }
 

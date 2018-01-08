@@ -41,9 +41,11 @@ module Callback = {
 
 module NativeView = {
   type t;
+  external getWindow : unit => t = "View_getWindow";
   external makeInstance : int => t = "View_newView";
-  external addToWindow : t => t = "View_addToWindow";
   external addChild : (t, t) => t = "View_addChild";
+  external removeChild : (t, t) => t = "View_removeChild";
+  external getInstance : int => option(t) = "View_getInstance";
 };
 
 type reduce('payload, 'action) = ('payload => 'action) => Callback.t('payload);
@@ -575,8 +577,7 @@ module Render = {
           );
           newOpaqueInstance
         }
-      | HostElement(_) => assert false
-      /* Instance({...defaultHostInstance, element})*/
+      | HostElement(_) => opaqueInstance
       }
     }
   }
@@ -830,150 +831,201 @@ module ReactDOMRe = {
     Nested(name, Array.to_list(elementArray));
 };
 
-/*
- module OutputTree = {
-   type tree =
-     | S(string)
-     | N(node)
-   and node = {
-     mutable id: int,
-     mutable name: string,
-     mutable state: string,
-     mutable sub: list(tree)
-   };
-   type forest = list(tree);
-   type t = forest;
-   let rec fromOpaqueInstance = (Instance({component, element, iState, instanceSubTree, id})) : tree =>
-     switch element {
-     | HostElement(Host(s)) => S(s)
-     | Element(_) =>
-       let state = component.printState(iState);
-       let name = component.debugName;
-       let subTreeInstances = Render.flattenRenderedElement(instanceSubTree);
-       let sub = ListTR.map(fromOpaqueInstance, subTreeInstances);
-       N({id, name, state, sub})
-     };
-   let fromRenderedElement = (renderedElement) =>
-     ListTR.map(fromOpaqueInstance, Render.flattenRenderedElement(renderedElement));
-   let applyUpdateLog = (updateLog, forest) => {
-     open UpdateLog;
-     let rec applyEntryTree = (t, entry) : option(tree) =>
-       switch entry {
-       | NewRenderedElement(_) => assert false
-       | UpdateInstance({
-           oldId,
-           newId,
-           oldOpaqueInstance,
-           newOpaqueInstance,
-           componentChanged,
-           stateChanged,
-           subTreeChanged
-         }) =>
-         switch t {
-         | S(_) => None
-         | N(n) =>
-           if (n.id === oldId) {
-             if (oldId !== newId) {
-               n.id = newId
-             };
-             let Instance({component, iState, instanceSubTree}) = newOpaqueInstance;
+module OutputTree = {
+  type tree =
+    | Container(node)
+    | Concrete(NativeView.t, node)
+  and node = {
+    mutable sub: list(tree),
+    mutable id: int,
+    mutable nearestParentView: NativeView.t
+  };
+  type viewHierarchy = {
+    view: NativeView.t,
+    children: list(viewHierarchy)
+  };
+  type sideEffect;
+  type forest = list(tree);
+  let rec unmountForest = (tree) =>
+    switch tree {
+    | [] => ()
+    | l =>
+      List.iter(
+        (node) =>
+          switch node {
+          | Container(node) => unmountForest(node.sub)
+          | Concrete(view, node) =>
+            print_endline("Unmounting a concrete view");
+            ignore(NativeView.removeChild(node.nearestParentView, view))
+          },
+        l
+      )
+    };
+  let rec mountForest = (tree) =>
+    switch tree {
+    | [] => ()
+    | l =>
+      List.iter(
+        (node) =>
+          switch node {
+          | Container(node) =>
+            print_endline("Mounting a node lol");
+            mountForest(node.sub)
+          | Concrete(view, node) =>
+            print_endline("Mounting a concrete view");
+            mountForest(node.sub);
+            ignore(NativeView.addChild(node.nearestParentView, view))
+          },
+        l
+      )
+    };
+  type t = forest;
+  let rec fromOpaqueInstance =
+          (
+            nearestParentView,
+            Instance({component, element, iState, instanceSubTree, id})
+          )
+          : tree => {
+    let subTreeInstances = Render.flattenRenderedElement(instanceSubTree);
+    switch element {
+    | HostElement(nativeComponent) =>
+      let view =
+        switch (NativeView.getInstance(id)) {
+        | Some(x) => x
+        | None => nativeComponent.make(id)
+        };
+      let sub = ListTR.map(fromOpaqueInstance(view), subTreeInstances);
+      let node = {id, sub, nearestParentView};
+      Concrete(view, node)
+    | Element(_) =>
+      let sub =
+        ListTR.map(fromOpaqueInstance(nearestParentView), subTreeInstances);
+      let node = {id, sub, nearestParentView};
+      Container(node)
+    }
+  };
+  let fromRenderedElement = (nearestParentView, renderedElement) =>
+    ListTR.map(
+      fromOpaqueInstance(nearestParentView),
+      Render.flattenRenderedElement(renderedElement)
+    );
+  let applyUpdateLog = (updateLog, forest, parent) => {
+    open UpdateLog;
+    let rec applyEntryTree = (t, entry) : option(tree) =>
+      switch entry {
+      | NewRenderedElement(_) => assert false
+      | UpdateInstance({
+          oldId,
+          newId,
+          oldOpaqueInstance,
+          newOpaqueInstance,
+          componentChanged,
+          stateChanged,
+          subTreeChanged
+        }) =>
+        switch t {
+        | Concrete(_, n)
+        | Container(n) =>
+          if (n.id === oldId) {
+            /* The same instance ? */
+            if (oldId !== newId) {
+              n.id =
+                newId
+                /*
+                    Update ID
+                 */
+            };
+            let Instance({component, iState, instanceSubTree}) = newOpaqueInstance;
+            /*
              if (componentChanged) {
                n.name = component.debugName
+               willUnmount
              };
              if (stateChanged) {
                n.state = component.printState(iState)
              };
-             if (subTreeChanged) {
-               let Instance({instanceSubTree: oldInstanceSubTree}) = oldOpaqueInstance;
-               let sub =
-                 switch (instanceSubTree, oldInstanceSubTree) {
-                 | (
-                     INested(_, [nextRenderedElement, ...nextRenderedElements]),
-                     INested(_, oldRenderedElements)
-                   )
-                     when nextRenderedElements === oldRenderedElements =>
-                   let headTrees = fromRenderedElement(nextRenderedElement);
-                   List.rev_append(List.rev(headTrees), n.sub)
-                 | _ =>
-                   let subTreeInstances = Render.flattenRenderedElement(instanceSubTree);
-                   ListTR.map(fromOpaqueInstance, subTreeInstances)
-                 };
-               n.sub = sub
-             };
-             Some(t)
-           } else {
-             switch (applyEntryForest(n.sub, entry)) {
-             | None => None
-             | Some(newSub) =>
-               if (n.sub !== newSub) {
-                 n.sub = newSub
-               };
-               Some(t)
-             }
-           }
-         }
-       }
-     and applyEntryForest = (f, entry) : option(forest) =>
-       switch f {
-       | [] => None
-       | [t, ...nextF] =>
-         switch (applyEntryTree(t, entry)) {
-         | None =>
-           switch (applyEntryForest(nextF, entry)) {
-           | None => None
-           | Some(newForest) => Some([t, ...newForest])
-           }
-         | Some(newT) => Some([newT, ...nextF])
-         }
-       };
-     let applyEntryForestToplevel = (f, entry) =>
-       switch entry {
-       | NewRenderedElement(renderedElement) => Some(fromRenderedElement(renderedElement))
-       | UpdateInstance(_) => applyEntryForest(f, entry)
-       };
-     List.fold_left(
-       (f, entry) =>
-         switch (applyEntryForestToplevel(f, entry)) {
-         | None => f
-         | Some(newF) => newF
-         },
-       forest,
-       updateLog^
-     )
-   };
-   let arrayStr = (lst) => String.concat(",", lst);
-   let printTree = (tree) => {
-     let rec pp = (~indent) =>
-       fun
-       | N({id, name, state, sub}) => {
-           let nextIndent = "  " ++ indent;
-           Printf.sprintf(
-             "\n%s{%s\n%sid:%d\n%s\"%s.subtree\": %s\n%s}",
-             indent,
-             state == "" ? "" : Printf.sprintf("\n%s\"%s.state\": %s,", nextIndent, name, state),
-             nextIndent,
-             id,
-             nextIndent,
-             name,
-             ListTR.map(pp(~indent=nextIndent), sub) |> arrayStr,
-             indent
-           )
-         }
-       | S(s) => s;
-     ();
-     pp(~indent="", tree)
-   };
-   let print = (treeList: forest) => {
-     let arrayStr = (lst) => String.concat(",", lst);
-     let l: list(string) =
-       List.mapi(
-         (i, tree) => "Tree #" ++ (string_of_int(i) ++ (" " ++ arrayStr([printTree(tree)]))),
-         treeList
-       );
-     String.concat("\n", l)
-   };
- };
- */
+             */
+            if (subTreeChanged) {
+              let Instance({instanceSubTree: oldInstanceSubTree}) = oldOpaqueInstance;
+              let sub =
+                switch (instanceSubTree, oldInstanceSubTree) {
+                | (
+                    INested(_, [nextRenderedElement, ...nextRenderedElements]),
+                    INested(_, oldRenderedElements)
+                  )
+                    when nextRenderedElements === oldRenderedElements =>
+                  let headTrees =
+                    fromRenderedElement(
+                      n.nearestParentView,
+                      nextRenderedElement
+                    );
+                  /* Add single headTrees */
+                  mountForest(headTrees);
+                  List.rev_append(List.rev(headTrees), n.sub)
+                | _ =>
+                  let subTreeInstances =
+                    Render.flattenRenderedElement(instanceSubTree);
+                  /*Remove all that were here, mount new ones */
+                  let forest =
+                    ListTR.map(
+                      fromOpaqueInstance(n.nearestParentView),
+                      subTreeInstances
+                    );
+                  unmountForest(n.sub);
+                  mountForest(forest);
+                  forest
+                };
+              n.sub = sub
+            };
+            Some(t)
+          } else {
+            switch (applyEntryForest(n.sub, entry)) {
+            | None => None
+            | Some(newSub) =>
+              if (n.sub !== newSub) {
+                /* Remove all that were here and mount new ones */
+                unmountForest(n.sub);
+                n.sub = newSub
+              };
+              Some(t)
+            }
+          }
+        }
+      }
+    and applyEntryForest = (f, entry) : option(forest) =>
+      switch f {
+      | [] => None
+      | [t, ...nextF] =>
+        switch (applyEntryTree(t, entry)) {
+        | None =>
+          switch (applyEntryForest(nextF, entry)) {
+          | None => None
+          | Some(newForest) => Some([t, ...newForest])
+          }
+        | Some(newT) => Some([newT, ...nextF])
+        }
+      };
+    let applyEntryForestToplevel = (f, entry, parent) =>
+      switch entry {
+      | NewRenderedElement(renderedElement) =>
+        /* Mount new rendered element */
+        let forest = fromRenderedElement(parent, renderedElement);
+        mountForest(forest);
+        Some(forest)
+      | UpdateInstance(_) => applyEntryForest(f, entry)
+      };
+    List.fold_left(
+      (f, entry) =>
+        switch (applyEntryForestToplevel(f, entry, parent)) {
+        | None => f
+        | Some(newF) => newF
+        },
+      forest,
+      updateLog^
+    )
+  };
+};
+
 module RemoteAction = {
   type t('action) = {mutable act: 'action => unit};
   let actDefault = (_action) => ();
@@ -986,60 +1038,41 @@ module RemoteAction = {
 };
 
 module View = {
-  include NativeView;
+  type t = NativeView.t;
   external setFrame : (float, float, float, float, t) => t = "View_setFrame";
-  external getInstance : int => option(t) = "View_getInstance";
   let make:
     (~x: float, ~y: float, ~width: float, ~height: float, reactElement) =>
     nativeComponent =
     (~x, ~y, ~width, ~height, children) => {
       name: "View",
-      make: (id) => makeInstance(id) |> setFrame(x, y, width, height),
+      make: (id) =>
+        NativeView.makeInstance(id) |> setFrame(x, y, width, height),
       setProps: (_) => (),
       children,
       nativeKey: Key.none
     };
 };
 
-type layoutElement =
-  | Container(list(layoutElement))
-  | Concrete(View.t, list(layoutElement));
-
-let rec mountRenderedTreeNested = (Instance({element, id, instanceSubTree})) => {
-  let children = mountRenderedTree(instanceSubTree);
-  switch element {
-  | HostElement(nativeComponent) =>
-    switch (View.getInstance(id)) {
-    | Some(x) => Concrete(x, children)
-    | None => Concrete(nativeComponent.make(id), children)
-    }
-  | Element({debugName}) => Container(children)
-  }
-}
-and mountRenderedTree: RenderedElement.t => list(layoutElement) =
-  (rendered) =>
-    switch rendered {
-    | IFlat(instances) => List.map(mountRenderedTreeNested, instances)
-    | INested(_, instances) =>
-      List.flatten(List.map(mountRenderedTree, instances))
-    };
-
-let rootID = 999_999_999; /* This is obviously error prone */
-
-let rec displayLayoutElements: list(layoutElement) => list(View.t) =
-  (layoutElements) =>
-    List.flatten(
-      List.map(
-        (layoutElement) =>
-          switch layoutElement {
-          | Container(children) => displayLayoutElements(children)
-          | Concrete(view, children) =>
-            List.iter(
-              (child) => ignore(View.addChild(view, child)),
-              displayLayoutElements(children)
-            );
-            [view]
-          },
-        layoutElements
-      )
-    );
+module Button = {
+  type t = NativeView.t;
+  external makeInstance : int => NativeView.t = "Button_makeInstance";
+  [@noalloc] external setFrame : (float, float, float, float, t) => t =
+    "View_setFrame";
+  external setText : (string, t) => t = "Button_setText";
+  [@noalloc] external setCallback : (unit => unit, t) => t =
+    "Button_setCallback";
+  let make = (~x, ~y, ~width, ~height, ~text, ~callback=?, children) => {
+    name: "View",
+    make: (id) => {
+      let instance =
+        makeInstance(id) |> setFrame(x, y, width, height) |> setText(text);
+      switch callback {
+      | Some(callback) => setCallback(callback, instance)
+      | None => instance
+      }
+    },
+    setProps: (_) => (),
+    children,
+    nativeKey: Key.none
+  };
+};

@@ -1,4 +1,4 @@
-module NativeView: {type t; let addToWindow: t => t;};
+module NativeView: {type t; let getWindow: unit => t;};
 
 module GlobalState: {
   let debug: ref(bool);
@@ -135,16 +135,17 @@ module RenderedElement: {
 
 
 /***
-  * Imperative trees obtained from rendered elements.
-  * Can be updated in-place by applying an update log.
-  * Can return a new tree if toplevel rendering is required.
- module OutputTree: {
-   type t;
-   let fromRenderedElement: RenderedElement.t => t;
-   let applyUpdateLog: (UpdateLog.t, t) => t;
-   let print: t => string;
- };
-  */
+ * Imperative trees obtained from rendered elements.
+ * Can be updated in-place by applying an update log.
+ * Can return a new tree if toplevel rendering is required.
+ */
+module OutputTree: {
+  type t;
+  let mountForest: t => unit;
+  let fromRenderedElement: (NativeView.t, RenderedElement.t) => t;
+  let applyUpdateLog: (UpdateLog.t, t, NativeView.t) => t;
+};
+
 module ReactDOMRe: {
   type reactDOMProps;
   let createElement:
@@ -171,14 +172,22 @@ module RemoteAction: {
   let act: (t('action), ~action: 'action) => unit;
 };
 
-type layoutElement;
-
 module View: {
   let make:
     (~x: float, ~y: float, ~width: float, ~height: float, reactElement) =>
     nativeComponent;
 };
 
-let mountRenderedTree: RenderedElement.t => list(layoutElement);
-
-let displayLayoutElements: list(layoutElement) => list(NativeView.t);
+module Button: {
+  let make:
+    (
+      ~x: float,
+      ~y: float,
+      ~width: float,
+      ~height: float,
+      ~text: string,
+      ~callback: unit => unit=?,
+      reactElement
+    ) =>
+    nativeComponent;
+};

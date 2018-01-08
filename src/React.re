@@ -46,6 +46,22 @@ module NativeView = {
   external addChild : (t, t) => t = "View_addChild";
   external removeChild : (t, t) => t = "View_removeChild";
   external getInstance : int => option(t) = "View_getInstance";
+  [@noalloc] external setFrame : (int, int, int, int, t) => t =
+    "View_setFrame";
+};
+
+module Node = {
+  type context =
+    | View(NativeView.t)
+    | Container;
+  let nullContext = Container;
+};
+
+module Layout = {
+  include Layout.Create(Node, FloatEncoding);
+  include LayoutSupport.LayoutTypes;
+  type t = LayoutSupport.LayoutTypes.node;
+  let defaultStyle = LayoutSupport.defaultStyle;
 };
 
 type reduce('payload, 'action) = ('payload => 'action) => Callback.t('payload);
@@ -65,7 +81,7 @@ and self('state, 'action) = {
  */
 and element =
   | Element(component('state, 'action)): element
-  | HostElement(nativeComponent): element
+  | HostElement(nativeComponent, Layout.LayoutSupport.LayoutTypes.cssStyle): element
 /***
  * We will want to replace this with a more efficient data structure.
  */
@@ -331,7 +347,7 @@ module Render = {
         keyTable,
         switch element {
         | Element(component) => component.key
-        | HostElement(component) => component.nativeKey
+        | HostElement(component, _) => component.nativeKey
         }
       )
     };
@@ -376,7 +392,7 @@ module Render = {
         );
         let instanceSubTree = renderReactElement(reactElement);
         Instance({...instance, instanceSubTree, subElements: reactElement})
-      | HostElement({children}) as element =>
+      | HostElement({children}, _) as element =>
         let instance =
           createInstance(
             ~component=defaultHostComponent,
@@ -814,13 +830,21 @@ let listToElement = (l) => Nested("List", l);
  * Instead, wrap every nativeElement in a stateless/statefulComponent.
  * In willReceiveProps/didReceiveProps invoke the side effect (prop mutation)
  */
-let nativeElement = (~key as argumentKey=Key.none, component) => {
+let nativeElement = (~key as argumentKey=Key.none, ~style=?, component) => {
   let key =
     argumentKey != Key.none ?
       argumentKey : component.nativeKey == Key.none ? Key.none : Key.create();
   let componentWithKey =
     key == Key.none ? component : {...component, nativeKey: key};
-  Flat([HostElement(componentWithKey)])
+  Flat([
+    HostElement(
+      componentWithKey,
+      switch style {
+      | Some(style) => style
+      | None => Layout.LayoutSupport.defaultStyle
+      }
+    )
+  ])
 };
 
 module ReactDOMRe = {
@@ -834,7 +858,7 @@ module ReactDOMRe = {
 module OutputTree = {
   type tree =
     | Container(node)
-    | Concrete(NativeView.t, node)
+    | Concrete(NativeView.t, Layout.LayoutSupport.LayoutTypes.cssStyle, node)
   and node = {
     mutable sub: list(tree),
     mutable id: int,
@@ -854,7 +878,7 @@ module OutputTree = {
         (node) =>
           switch node {
           | Container(node) => unmountForest(node.sub)
-          | Concrete(view, node) =>
+          | Concrete(view, _, node) =>
             print_endline("Unmounting a concrete view");
             ignore(NativeView.removeChild(node.nearestParentView, view))
           },
@@ -871,7 +895,7 @@ module OutputTree = {
           | Container(node) =>
             print_endline("Mounting a node lol");
             mountForest(node.sub)
-          | Concrete(view, node) =>
+          | Concrete(view, _, node) =>
             print_endline("Mounting a concrete view");
             mountForest(node.sub);
             ignore(NativeView.addChild(node.nearestParentView, view))
@@ -888,7 +912,7 @@ module OutputTree = {
           : tree => {
     let subTreeInstances = Render.flattenRenderedElement(instanceSubTree);
     switch element {
-    | HostElement(nativeComponent) =>
+    | HostElement(nativeComponent, style) =>
       let view =
         switch (NativeView.getInstance(id)) {
         | Some(x) => x
@@ -896,7 +920,7 @@ module OutputTree = {
         };
       let sub = ListTR.map(fromOpaqueInstance(view), subTreeInstances);
       let node = {id, sub, nearestParentView};
-      Concrete(view, node)
+      Concrete(view, style, node)
     | Element(_) =>
       let sub =
         ListTR.map(fromOpaqueInstance(nearestParentView), subTreeInstances);
@@ -924,7 +948,7 @@ module OutputTree = {
           subTreeChanged
         }) =>
         switch t {
-        | Concrete(_, n)
+        | Concrete(_, _, n)
         | Container(n) =>
           if (n.id === oldId) {
             /* The same instance ? */
@@ -1026,6 +1050,60 @@ module OutputTree = {
   };
 };
 
+module LayoutTest = {
+  open Layout;
+  open OutputTree;
+  let rec make = (tree) =>
+    switch tree {
+    | Container(node) =>
+      LayoutSupport.createNode(
+        ~withChildren=Array.of_list(List.map(make, node.sub)),
+        ~andStyle=LayoutSupport.defaultStyle,
+        Container
+      )
+    | Concrete(view, style, node) =>
+      LayoutSupport.createNode(
+        ~withChildren=Array.of_list(List.map(make, node.sub)),
+        ~andStyle=style,
+        View(view)
+      )
+    };
+  let make = (~root, ~outputTree as forest, ~width, ~height) => {
+    let children =
+      List.fold_left((t, element) => [make(element), ...t], [], forest);
+    LayoutSupport.createNode(
+      ~withChildren=Array.of_list(children),
+      ~andStyle={...LayoutSupport.defaultStyle, width, height},
+      View(root)
+    )
+  };
+  let performLayout = (root) => {
+    Layout.layoutNode(
+      root,
+      FixedEncoding.cssUndefined,
+      FixedEncoding.cssUndefined,
+      Ltr
+    );
+    let rec traverseLayout = (node: Layout.LayoutSupport.LayoutTypes.node) => {
+      Array.iter(traverseLayout, node.children);
+      switch node.context {
+      | Container => ()
+      | View(view) =>
+        ignore(
+          NativeView.setFrame(
+            node.layout.left,
+            node.layout.top,
+            node.layout.width,
+            node.layout.height,
+            view
+          )
+        )
+      }
+    };
+    traverseLayout(root)
+  };
+};
+
 module RemoteAction = {
   type t('action) = {mutable act: 'action => unit};
   let actDefault = (_action) => ();
@@ -1039,33 +1117,25 @@ module RemoteAction = {
 
 module View = {
   type t = NativeView.t;
-  external setFrame : (float, float, float, float, t) => t = "View_setFrame";
-  let make:
-    (~x: float, ~y: float, ~width: float, ~height: float, reactElement) =>
-    nativeComponent =
-    (~x, ~y, ~width, ~height, children) => {
-      name: "View",
-      make: (id) =>
-        NativeView.makeInstance(id) |> setFrame(x, y, width, height),
-      setProps: (_) => (),
-      children,
-      nativeKey: Key.none
-    };
+  let make = (children) => {
+    name: "View",
+    make: (id) => NativeView.makeInstance(id),
+    setProps: (_) => (),
+    children,
+    nativeKey: Key.none
+  };
 };
 
 module Button = {
   type t = NativeView.t;
   external makeInstance : int => NativeView.t = "Button_makeInstance";
-  [@noalloc] external setFrame : (float, float, float, float, t) => t =
-    "View_setFrame";
   external setText : (string, t) => t = "Button_setText";
   [@noalloc] external setCallback : (unit => unit, t) => t =
     "Button_setCallback";
-  let make = (~x, ~y, ~width, ~height, ~text, ~callback=?, children) => {
+  let make = (~text, ~callback=?, children) => {
     name: "View",
     make: (id) => {
-      let instance =
-        makeInstance(id) |> setFrame(x, y, width, height) |> setText(text);
+      let instance = makeInstance(id) |> setText(text);
       switch callback {
       | Some(callback) => setCallback(callback, instance)
       | None => instance

@@ -7,6 +7,13 @@
 (rule
  ((targets (react_ios.complete.o))
   (deps (
+         react_ios__HardCodedEncoding.cmx
+         react_ios__FloatEncoding.cmx
+         react_ios__FixedEncoding.cmx
+         react_ios__LayoutTypes.cmx
+         react_ios__LayoutSupport.cmx
+         react_ios__LayoutPrint.cmx
+         react_ios__Layout.cmx
          react_ios__React.cmx 
          react_ios__Main.cmx
          ))

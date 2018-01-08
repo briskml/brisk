@@ -40,6 +40,7 @@ typedef void (^ActionBlock)();
 @end
 
 static NSMutableDictionary *PSM_Views;
+UIView *rootView;
 
 
 
@@ -48,10 +49,8 @@ CAMLprim value View_newView(value id_) {
     UIView __block *view = nil;
     dispatch_sync(dispatch_get_main_queue(), ^{
         view = [UIView new];
-        view.backgroundColor = [UIColor redColor];
-        [view setFrame:CGRectMake(10, 10, 100, 100 )];
-        view.layer.borderWidth = 10;
-        view.layer.borderColor = [[UIColor blueColor] CGColor];
+        view.layer.borderWidth = 0.5;
+        view.layer.borderColor = [[UIColor blackColor] CGColor];
     });
     [PSM_Views setObject:view forKey:@(_id)];
     return (value) view;
@@ -59,13 +58,9 @@ CAMLprim value View_newView(value id_) {
 
 CAMLprim value Button_makeInstance(value id_) {
     int _id = Int_val(id_);
-    UIView __block *view = nil;
+    UIButton __block *view = nil;
     dispatch_sync(dispatch_get_main_queue(), ^{
-        view = [UIBlockButton new];
-        view.backgroundColor = [UIColor redColor];
-        [view setFrame:CGRectMake(10, 10, 100, 100 )];
-        view.layer.borderWidth = 10;
-        view.layer.borderColor = [[UIColor blueColor] CGColor];
+        view = [UIBlockButton buttonWithType:UIButtonTypeSystem];
     });
     [PSM_Views setObject:view forKey:@(_id)];
     return (value) view;
@@ -82,7 +77,7 @@ CAMLprim value Button_setText(value text, UIBlockButton *view) {
 
 CAMLprim value Button_setCallback(value c, UIBlockButton *view) {
     dispatch_sync(dispatch_get_main_queue(), ^{
-        [view handleControlEvent:UIControlEventTouchDown withBlock:^{
+        [view handleControlEvent:UIControlEventTouchUpInside withBlock:^{
             caml_callback(c, 0);
         }];
     });
@@ -104,10 +99,10 @@ CAMLprim value View_getInstance(value id_) {
 }
 
 CAMLprim value View_setFrame(value x, value y, value width, value height, UIView *view) {
-    double x_C = Double_val(x);
-    double y_C = Double_val(y);
-    double width_C = Double_val(width);
-    double height_C = Double_val(height);
+    double x_C = Int_val(x);
+    double y_C = Int_val(y);
+    double width_C = Int_val(width);
+    double height_C = Int_val(height);
     dispatch_sync(dispatch_get_main_queue(), ^{
         [view setFrame:CGRectMake(x_C, y_C, width_C, height_C)];
     });
@@ -115,11 +110,7 @@ CAMLprim value View_setFrame(value x, value y, value width, value height, UIView
 }
 
 CAMLprim value View_getWindow() {
-    UIWindow __block *windows;
-    dispatch_sync(dispatch_get_main_queue(), ^{
-        windows = [[[UIApplication sharedApplication] windows] firstObject];
-    });
-    return (value) windows;
+    return (value) rootView;
 }
 
 CAMLprim value View_addChild(UIView *self, UIView *child /* array of UIViews */ ) {
@@ -146,11 +137,36 @@ CAMLprim value View_removeChild(UIView *self, UIView *child /* array of UIViews 
     return (value) self;
 }
 
+@interface BlockHolder : NSObject
+@property (nonatomic, copy) void (^blockName)(void);
+- (void)invokeBlock;
+@end
+
+@implementation BlockHolder
+- (void)invokeBlock {
+    self.blockName();
+}
+@end
+
+CAMLprim value CA_registerLoop(value c) {
+    BlockHolder *holder = [BlockHolder new];
+    holder.blockName = ^{
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+            caml_callback(c, 0);
+        });
+    };
+    CADisplayLink *link = [CADisplayLink displayLinkWithTarget:holder selector:@selector(invokeBlock)];
+    [link addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSDefaultRunLoopMode];
+    return (value) 0;
+}
+
 @implementation AppDelegate
 
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     PSM_Views = [NSMutableDictionary new];
+    rootView = [UIView new];
+    [PSM_Views setObject:rootView forKey:@"ROOT"];
     // Override point for customization after application launch.
     return YES;
 }

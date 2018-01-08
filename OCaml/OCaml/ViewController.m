@@ -8,11 +8,13 @@
 
 #import "ViewController.h"
 #import <caml/callback.h>
+#import "AppDelegate.h"
 
 @implementation ViewController
 
 - (void)viewDidAppear:(BOOL)animated {
     [super viewDidAppear:animated];
+    [self.view addSubview:rootView];
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         char* args[] = {NULL};
         caml_startup(args);

@@ -9,9 +9,8 @@
   (deps (
          react_ios__React.cmx 
          react_ios__Main.cmx
-         react_ios__Test_ios.cmx
          ))
-  (action (run ocamlfind -toolchain ios ocamlopt -output-complete-obj ${!^} -o react_ios.complete.o))))
+  (action (run ocamlfind -toolchain ios ocamlopt -package unix -linkpkg -output-complete-obj ${!^} -o react_ios.complete.o))))
 
 (install (
   (package react_ios)

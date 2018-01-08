@@ -1,48 +1,82 @@
-let otherComponent = React.statelessComponent("Other");
+let otherComponent = React.reducerComponent("Other");
+
+module View = {
+  let createElement = React.View.make;
+};
 
 let other = () => {
   ...otherComponent,
-  render: (_) =>
-    React.(
-      nativeElement(
-        View.make(
-          ~x=0.,
-          ~y=0.,
-          ~width=300.,
-          ~height=300.,
-          listToElement([
-            nativeElement(
-              View.make(
-                ~x=20.,
-                ~y=20.,
-                ~width=100.,
-                ~height=100.,
-                listToElement([])
+  initialState: (_) => false,
+  reducer: (x, _) => React.Update(x),
+  render: ({state, reduce}) =>
+    if (state) {
+      React.(
+        nativeElement(
+          View.make(
+            ~x=0.,
+            ~y=0.,
+            ~width=300.,
+            ~height=300.,
+            listToElement([
+              nativeElement(
+                View.make(
+                  ~x=20.,
+                  ~y=20.,
+                  ~width=100.,
+                  ~height=100.,
+                  listToElement([])
+                )
+              ),
+              nativeElement(
+                View.make(
+                  ~x=140.,
+                  ~y=20.,
+                  ~width=100.,
+                  ~height=100.,
+                  listToElement([])
+                )
               )
-            ),
-            nativeElement(
-              View.make(
-                ~x=140.,
-                ~y=20.,
-                ~width=100.,
-                ~height=100.,
-                listToElement([])
-              )
-            )
-          ])
+            ])
+          )
         )
       )
-    )
+    } else {
+      React.(
+        nativeElement(
+          View.make(
+            ~x=0.,
+            ~y=0.,
+            ~width=300.,
+            ~height=300.,
+            listToElement([
+              nativeElement(
+                Button.make(
+                  ~x=140.,
+                  ~y=20.,
+                  ~width=100.,
+                  ~height=100.,
+                  ~text="HELLO",
+                  ~callback=reduce(() => ! state),
+                  listToElement([])
+                )
+              )
+            ])
+          )
+        )
+      )
+    }
 };
 
-let component = React.statelessComponent("My component");
+let window = React.NativeView.getWindow();
 
-let make = () => {...component, render: (_) => React.element(other())};
+let rendered = React.RenderedElement.render(React.element(other()));
 
-let rendered = React.RenderedElement.render(React.element(make()));
+let outputTree = React.OutputTree.fromRenderedElement(window, rendered);
 
-let view = React.mountRenderedTree(rendered);
+React.OutputTree.mountForest(outputTree);
 
-let r = React.displayLayoutElements(view);
+Unix.sleep(5);
 
-List.iter((view) => ignore(React.NativeView.addToWindow(view)), r);
+let (_, updateLog) = React.RenderedElement.flushPendingUpdates(rendered);
+
+ignore(React.OutputTree.applyUpdateLog(updateLog, outputTree, window));

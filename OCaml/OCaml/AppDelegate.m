@@ -13,6 +13,7 @@
 #include <caml/bigarray.h>
 #include <caml/custom.h>
 #include <caml/fail.h>
+#include <caml/threads.h>
 #include <caml/callback.h>
 
 typedef void (^ActionBlock)();
@@ -41,10 +42,12 @@ typedef void (^ActionBlock)();
 
 static NSMutableDictionary *PSM_Views;
 UIView *rootView;
+dispatch_queue_t q;
 
 
 
 CAMLprim value View_newView(value id_) {
+    CAMLparam1(id_);
     int _id = Int_val(id_);
     UIView __block *view = nil;
     dispatch_sync(dispatch_get_main_queue(), ^{
@@ -53,52 +56,58 @@ CAMLprim value View_newView(value id_) {
         view.layer.borderColor = [[UIColor blackColor] CGColor];
     });
     [PSM_Views setObject:view forKey:@(_id)];
-    return (value) view;
+    CAMLreturn((long) view);
 }
 
 CAMLprim value Button_makeInstance(value id_) {
+    CAMLparam1(id_);
     int _id = Int_val(id_);
     UIButton __block *view = nil;
     dispatch_sync(dispatch_get_main_queue(), ^{
         view = [UIBlockButton buttonWithType:UIButtonTypeSystem];
     });
     [PSM_Views setObject:view forKey:@(_id)];
-    return (value) view;
+    CAMLreturn((long)view);
 }
 
 CAMLprim value Button_setText(value text, UIBlockButton *view) {
+    CAMLparam1(text);
     char *string = String_val(text);
     dispatch_sync(dispatch_get_main_queue(), ^{
         NSString *str = [NSString stringWithFormat:@"%s", string];
         [view setTitle:str forState:UIControlStateNormal];
     });
-    return (value) view;
+    CAMLreturn((long) view);
 }
 
 CAMLprim value Button_setCallback(value c, UIBlockButton *view) {
+    CAMLparam1(c);
+    value __block callback_ = c;
+    caml_register_generational_global_root(&callback_);
     dispatch_sync(dispatch_get_main_queue(), ^{
         [view handleControlEvent:UIControlEventTouchUpInside withBlock:^{
-            caml_callback(c, 0);
+            caml_callback(callback_, Val_unit);
         }];
     });
-    return (value) view;
+    CAMLreturn((long)view);
 }
 
 CAMLprim value View_getInstance(value id_) {
+    CAMLparam1(id_);
     int _id = Int_val(id_);
     UIView *view = [PSM_Views objectForKey:@(_id)];
     if (view) {
-        CAMLparam0();
         CAMLlocal1( some );
         some = caml_alloc(1, 0);
         Store_field( some, 0, (long) view );
         CAMLreturn( some );
     } else {
-        return Val_int(0);
+        CAMLreturn(Val_int(0));
     }
 }
 
 CAMLprim value View_setFrame(value x, value y, value width, value height, UIView *view) {
+    CAMLparam4(x, y, width, height);
     double x_C = Int_val(x);
     double y_C = Int_val(y);
     double width_C = Int_val(width);
@@ -106,7 +115,7 @@ CAMLprim value View_setFrame(value x, value y, value width, value height, UIView
     dispatch_sync(dispatch_get_main_queue(), ^{
         [view setFrame:CGRectMake(x_C, y_C, width_C, height_C)];
     });
-    return (value) view;
+    CAMLreturn((long) view);
 }
 
 CAMLprim value View_getWindow() {
@@ -148,16 +157,21 @@ CAMLprim value View_removeChild(UIView *self, UIView *child /* array of UIViews 
 }
 @end
 
-CAMLprim value CA_registerLoop(value c) {
+static value callback_;
+
+void CA_registerLoop(value c) {
+    CAMLparam1(c);
+    callback_ = c;
+    caml_register_global_root(&callback_);
     BlockHolder *holder = [BlockHolder new];
     holder.blockName = ^{
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-            caml_callback(c, 0);
+        dispatch_async(q, ^{
+            caml_callback(callback_, 0);
         });
     };
     CADisplayLink *link = [CADisplayLink displayLinkWithTarget:holder selector:@selector(invokeBlock)];
     [link addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSDefaultRunLoopMode];
-    return (value) 0;
+    CAMLreturn0;
 }
 
 @implementation AppDelegate
@@ -166,6 +180,7 @@ CAMLprim value CA_registerLoop(value c) {
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     PSM_Views = [NSMutableDictionary new];
     rootView = [UIView new];
+    q = dispatch_queue_create(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
     [PSM_Views setObject:rootView forKey:@"ROOT"];
     // Override point for customization after application launch.
     return YES;

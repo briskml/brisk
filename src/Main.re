@@ -1,6 +1,6 @@
 let otherComponent = React.reducerComponent("Other");
 
-[@noalloc] external registerLoop : (unit => unit) => unit = "CA_registerLoop";
+external registerLoop : (unit => unit) => unit = "CA_registerLoop";
 
 module View = {
   let createElement = (~style=?, ~children, ()) =>

@@ -9,6 +9,7 @@
 #import <UIKit/UIKit.h>
 
 extern UIView *rootView;
+extern dispatch_queue_t q;
 
 @interface AppDelegate : UIResponder <UIApplicationDelegate>
 

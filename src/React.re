@@ -439,13 +439,7 @@ module Render = {
     let stateNotUpdated = opaqueInstance === updatedOpaqueInstance;
     let bailOut = {
       let Instance({element, component}) = opaqueInstance;
-      let log = () => {
-        logString(
-          "Bailing Out Early Due To Memoization on " ++ component.debugName
-        );
-        true
-      };
-      stateNotUpdated && element === nextElement && log()
+      stateNotUpdated && element === nextElement
     };
     let logUpdate =
         (~componentChanged, ~stateChanged, ~subTreeChanged, newOpaqueInstance) => {

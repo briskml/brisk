@@ -83,7 +83,7 @@ CAMLprim value Button_setText(value text, UIBlockButton *view) {
 CAMLprim value Button_setCallback(value c, UIBlockButton *view) {
     CAMLparam1(c);
     value __block callback_ = c;
-    caml_register_generational_global_root(&callback_);
+    caml_register_global_root(&callback_);
     dispatch_sync(dispatch_get_main_queue(), ^{
         [view handleControlEvent:UIControlEventTouchUpInside withBlock:^{
             caml_callback(callback_, Val_unit);
@@ -162,7 +162,7 @@ static value callback_;
 void CA_registerLoop(value c) {
     CAMLparam1(c);
     callback_ = c;
-    caml_register_global_root(&callback_);
+    caml_register_generational_global_root(&callback_);
     BlockHolder *holder = [BlockHolder new];
     holder.blockName = ^{
         dispatch_async(q, ^{

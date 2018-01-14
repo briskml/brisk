@@ -24,5 +24,3 @@
   (package react_ios)
   (section lib)
   (files (react_ios.complete.o))))
-
-

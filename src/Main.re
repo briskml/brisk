@@ -3,16 +3,19 @@ let otherComponent = React.reducerComponent("Other");
 external registerLoop : (unit => unit) => unit = "CA_registerLoop";
 
 module View = {
-  let createElement = (~style=?, ~children, ()) =>
-    React.(nativeElement(~style?, View.make(React.listToElement(children))));
+  let createElement = (~layout, ~style, ~borderColor, ~children, ()) =>
+    React.(
+      nativeElement(
+        View.make(~layout, ~style, ~borderColor, listToElement(children))
+      )
+    );
 };
 
 module Button = {
-  let createElement = (~style=?, ~text, ~callback=?, ~children, ()) =>
+  let createElement = (~style, ~text, ~callback=?, ~children, ()) =>
     React.(
       nativeElement(
-        ~style?,
-        Button.make(~text, ~callback?, React.listToElement(children))
+        Button.make(~text, ~style, ~callback?, listToElement(children))
       )
     );
 };
@@ -48,7 +51,13 @@ module Component = {
     reducer: (x, _) => React.Update(x),
     render: ({state, reduce}) =>
       if (state) {
-        <View>
+        <View
+          layout=React.Layout.defaultStyle
+          style={
+            borderWidth: 1.,
+            backgroundColor: {red: 0.3, green: 0.5, blue: 0.3, alpha: 1.}
+          }
+          borderColor={red: 0., green: 1., blue: 0., alpha: 1.}>
           <Button
             style=React.Layout.{...defaultStyle, height: 100}
             text="Cell one"
@@ -62,11 +71,16 @@ module Component = {
         </View>
       } else {
         <View
-          style=React.Layout.{
-                  ...defaultStyle,
-                  paddingTop: 80,
-                  paddingBottom: 80
-                }>
+          layout=React.Layout.{
+                   ...defaultStyle,
+                   paddingTop: 80,
+                   paddingBottom: 80
+                 }
+          style={
+            borderWidth: 1.,
+            backgroundColor: {red: 0.3, green: 0.2, blue: 0.1, alpha: 1.}
+          }
+          borderColor={red: 0., green: 0., blue: 1., alpha: 1.}>
           <Button
             style=React.Layout.{...defaultStyle, height: 100}
             text="well"

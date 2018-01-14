@@ -106,16 +106,32 @@ CAMLprim value View_getInstance(value id_) {
     }
 }
 
-CAMLprim value View_setFrame(value x, value y, value width, value height, UIView *view) {
-    CAMLparam4(x, y, width, height);
-    double x_C = Int_val(x);
-    double y_C = Int_val(y);
-    double width_C = Int_val(width);
-    double height_C = Int_val(height);
+CAMLprim value View_setFrame(intnat x, intnat y, intnat width, intnat height, UIView *view) {
     dispatch_sync(dispatch_get_main_queue(), ^{
-        [view setFrame:CGRectMake(x_C, y_C, width_C, height_C)];
+        [view setFrame:CGRectMake(x, y, width, height)];
     });
-    CAMLreturn((long) view);
+    return Val_unit;
+}
+
+CAMLprim value View_setBackgroundColor(double red, double green, double blue, double alpha, UIView *view) {
+    dispatch_sync(dispatch_get_main_queue(), ^{
+        [view setBackgroundColor:[UIColor colorWithRed:red green:green blue:blue alpha:alpha]];
+    });
+    return Val_unit;
+}
+
+CAMLprim value View_setBorderColor(double red, double green, double blue, double alpha, UIView *view) {
+    dispatch_sync(dispatch_get_main_queue(), ^{
+        [view.layer setBorderColor:[[UIColor colorWithRed:red green:green blue:blue alpha:alpha] CGColor]];
+    });
+    return Val_unit;
+}
+
+CAMLprim value View_setBorderWidth(double width, UIView *view) {
+    dispatch_sync(dispatch_get_main_queue(), ^{
+        [view.layer setBorderWidth:width];
+    });
+    return Val_unit;
 }
 
 CAMLprim value View_getWindow() {

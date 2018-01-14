@@ -15,9 +15,12 @@ There's a catch though: it's just a proof of concept.
 - Follow installation instructions [here](https://github.com/ocaml-cross/opam-cross-ios)
 - `opam pin add jbuilder https://github.com/janestreet/jbuilder.git`
 - `opam install jbuilder reason`
-- `jbuilder build` - this builds the sources inside `src`
+- `jbuilder build -x ios` - this builds the sources inside `src`
 - open `OCaml.xcodeproj`
 - Click run
+
+For contributing:
+- run `jbuilder runtest` to run tests
 
 ## Acknowledgements
 

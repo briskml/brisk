@@ -41,13 +41,43 @@ module Callback = {
 
 module NativeView = {
   type t;
-  external getWindow : unit => t = "View_getWindow";
-  external makeInstance : int => t = "View_newView";
-  external addChild : (t, t) => t = "View_addChild";
-  external removeChild : (t, t) => t = "View_removeChild";
+  [@noalloc] external getWindow : unit => t = "View_getWindow";
+  [@noalloc] external makeInstance : ([@untagged] int) => t =
+    "View_newView_byte" "View_newView";
+  [@noalloc] external addChild : (t, t) => t = "View_addChild";
+  [@noalloc] external removeChild : (t, t) => t = "View_removeChild";
   external getInstance : int => option(t) = "View_getInstance";
-  [@noalloc] external setFrame : (int, int, int, int, t) => t =
-    "View_setFrame";
+  [@noalloc]
+  external setFrame :
+    ([@untagged] int, [@untagged] int, [@untagged] int, [@untagged] int, t) =>
+    unit =
+    "View_setFrame_byte" "View_setFrame";
+  [@noalloc]
+  external setBackgroundColor :
+    (
+      [@unboxed] float,
+      [@unboxed] float,
+      [@unboxed] float,
+      [@unboxed] float,
+      t
+    ) =>
+    unit =
+    "View_setBackgroundColor_byte" "View_setBackgroundColor";
+  [@noalloc] external setBorderWidth : ([@unboxed] float, t) => unit =
+    "View_setBorderWidth_byte" "View_setBorderWidth";
+  [@noalloc]
+  external setBorderColor :
+    (
+      [@unboxed] float,
+      [@unboxed] float,
+      [@unboxed] float,
+      [@unboxed] float,
+      t
+    ) =>
+    unit =
+    "View_setBorderColor_byte" "View_setBorderColor";
+  [@noalloc] external setCornerRadius : ([@unboxed] float, t) => unit =
+    "View_setBorderColor_byte" "View_setBorderColor";
 };
 
 module Node = {
@@ -81,7 +111,7 @@ and self('state, 'action) = {
  */
 and element =
   | Element(component('state, 'action)): element
-  | HostElement(nativeComponent, Layout.LayoutSupport.LayoutTypes.cssStyle): element
+  | HostElement(nativeComponent): element
 /***
  * We will want to replace this with a more efficient data structure.
  */
@@ -93,7 +123,8 @@ and nativeComponent = {
   make: int => NativeView.t,
   setProps: NativeView.t => unit,
   children: reactElement,
-  nativeKey: int
+  nativeKey: int,
+  style: Layout.LayoutSupport.LayoutTypes.cssStyle
 }
 and renderedElement =
   | IFlat(list(opaqueInstance))
@@ -347,7 +378,7 @@ module Render = {
         keyTable,
         switch element {
         | Element(component) => component.key
-        | HostElement(component, _) => component.nativeKey
+        | HostElement(component) => component.nativeKey
         }
       )
     };
@@ -392,7 +423,7 @@ module Render = {
         );
         let instanceSubTree = renderReactElement(reactElement);
         Instance({...instance, instanceSubTree, subElements: reactElement})
-      | HostElement({children}, _) as element =>
+      | HostElement({children}) as element =>
         let instance =
           createInstance(
             ~component=defaultHostComponent,
@@ -824,21 +855,13 @@ let listToElement = (l) => Nested("List", l);
  * Instead, wrap every nativeElement in a stateless/statefulComponent.
  * In willReceiveProps/didReceiveProps invoke the side effect (prop mutation)
  */
-let nativeElement = (~key as argumentKey=Key.none, ~style=?, component) => {
+let nativeElement = (~key as argumentKey=Key.none, component) => {
   let key =
     argumentKey != Key.none ?
       argumentKey : component.nativeKey == Key.none ? Key.none : Key.create();
   let componentWithKey =
     key == Key.none ? component : {...component, nativeKey: key};
-  Flat([
-    HostElement(
-      componentWithKey,
-      switch style {
-      | Some(style) => style
-      | None => Layout.LayoutSupport.defaultStyle
-      }
-    )
-  ])
+  Flat([HostElement(componentWithKey)])
 };
 
 module ReactDOMRe = {
@@ -852,15 +875,11 @@ module ReactDOMRe = {
 module OutputTree = {
   type tree =
     | Container(node)
-    | Concrete(NativeView.t, Layout.LayoutSupport.LayoutTypes.cssStyle, node)
+    | Concrete(NativeView.t, nativeComponent, node)
   and node = {
     mutable sub: list(tree),
     mutable id: int,
     mutable nearestParentView: NativeView.t
-  };
-  type viewHierarchy = {
-    view: NativeView.t,
-    children: list(viewHierarchy)
   };
   type sideEffect;
   type forest = list(tree);
@@ -886,12 +905,10 @@ module OutputTree = {
       List.iter(
         (node) =>
           switch node {
-          | Container(node) =>
-            print_endline("Mounting a node lol");
-            mountForest(node.sub)
-          | Concrete(view, _, node) =>
-            print_endline("Mounting a concrete view");
+          | Container(node) => mountForest(node.sub)
+          | Concrete(view, nativeComponent, node) =>
             mountForest(node.sub);
+            nativeComponent.setProps(view);
             ignore(NativeView.addChild(node.nearestParentView, view))
           },
         l
@@ -906,7 +923,7 @@ module OutputTree = {
           : tree => {
     let subTreeInstances = Render.flattenRenderedElement(instanceSubTree);
     switch element {
-    | HostElement(nativeComponent, style) =>
+    | HostElement(nativeComponent) =>
       let view =
         switch (NativeView.getInstance(id)) {
         | Some(x) => x
@@ -914,7 +931,7 @@ module OutputTree = {
         };
       let sub = ListTR.map(fromOpaqueInstance(view), subTreeInstances);
       let node = {id, sub, nearestParentView};
-      Concrete(view, style, node)
+      Concrete(view, nativeComponent, node)
     | Element(_) =>
       let sub =
         ListTR.map(fromOpaqueInstance(nearestParentView), subTreeInstances);
@@ -1055,10 +1072,10 @@ module LayoutTest = {
         ~andStyle=LayoutSupport.defaultStyle,
         Container
       )
-    | Concrete(view, style, node) =>
+    | Concrete(view, nativeComponent, node) =>
       LayoutSupport.createNode(
         ~withChildren=Array.of_list(List.map(make, node.sub)),
-        ~andStyle=style,
+        ~andStyle=nativeComponent.style,
         View(view)
       )
     };
@@ -1111,12 +1128,29 @@ module RemoteAction = {
 
 module View = {
   type t = NativeView.t;
-  let make = (children) => {
+  type color = {
+    red: float,
+    green: float,
+    blue: float,
+    alpha: float
+  };
+  type style = {
+    backgroundColor: color,
+    borderWidth: float
+  };
+  let make = (~layout, ~style, ~borderColor, children) => {
     name: "View",
     make: (id) => NativeView.makeInstance(id),
-    setProps: (_) => (),
+    setProps: (view) => {
+      let {red, green, blue, alpha} = style.backgroundColor;
+      NativeView.setBackgroundColor(red, green, blue, alpha, view);
+      NativeView.setBorderWidth(style.borderWidth, view);
+      let {red, green, blue, alpha} = borderColor;
+      NativeView.setBorderColor(red, green, blue, alpha, view)
+    },
     children,
-    nativeKey: Key.none
+    nativeKey: Key.none,
+    style: layout
   };
 };
 
@@ -1126,7 +1160,7 @@ module Button = {
   external setText : (string, t) => t = "Button_setText";
   [@noalloc] external setCallback : (unit => unit, t) => t =
     "Button_setCallback";
-  let make = (~text, ~callback=?, children) => {
+  let make = (~text, ~style, ~callback=?, children) => {
     name: "View",
     make: (id) => {
       let instance = makeInstance(id) |> setText(text);
@@ -1137,6 +1171,7 @@ module Button = {
     },
     setProps: (_) => (),
     children,
-    nativeKey: Key.none
+    nativeKey: Key.none,
+    style
   };
 };

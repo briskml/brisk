@@ -164,7 +164,8 @@ type nativeComponent = {
   make: int => NativeView.t,
   setProps: NativeView.t => unit,
   children: reactElement,
-  nativeKey: int
+  nativeKey: int,
+  style: Layout.cssStyle
 };
 
 let statelessComponent:
@@ -183,8 +184,7 @@ let arrayToElement: array(reactElement) => reactElement;
 
 let listToElement: list(reactElement) => reactElement;
 
-let nativeElement:
-  (~key: Key.t=?, ~style: Layout.cssStyle=?, nativeComponent) => reactElement;
+let nativeElement: (~key: Key.t=?, nativeComponent) => reactElement;
 
 let logString: string => unit;
 
@@ -249,11 +249,36 @@ module RemoteAction: {
   let act: (t('action), ~action: 'action) => unit;
 };
 
-module View: {let make: reactElement => nativeComponent;};
+module View: {
+  type color = {
+    red: float,
+    green: float,
+    blue: float,
+    alpha: float
+  };
+  type style = {
+    backgroundColor: color,
+    borderWidth: float
+  };
+  let make:
+    (
+      ~layout: Layout.cssStyle,
+      ~style: style,
+      ~borderColor: color,
+      reactElement
+    ) =>
+    nativeComponent;
+};
 
 module Button: {
   let make:
-    (~text: string, ~callback: unit => unit=?, reactElement) => nativeComponent;
+    (
+      ~text: string,
+      ~style: Layout.cssStyle,
+      ~callback: unit => unit=?,
+      reactElement
+    ) =>
+    nativeComponent;
 };
 
 module LayoutTest: {

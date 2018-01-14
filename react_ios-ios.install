@@ -37,8 +37,12 @@ lib: [
   "_build/install/default.ios/lib/react_ios/react_ios__React.cmi" {"../../ios-sysroot/lib/react_ios/react_ios__React.cmi"}
   "_build/install/default.ios/lib/react_ios/react_ios__React.cmx" {"../../ios-sysroot/lib/react_ios/react_ios__React.cmx"}
   "_build/install/default.ios/lib/react_ios/react_ios__React.cmt" {"../../ios-sysroot/lib/react_ios/react_ios__React.cmt"}
-  "_build/install/default.ios/lib/react_ios/react_ios__React.cmti" {"../../ios-sysroot/lib/react_ios/react_ios__React.cmti"}
-  "_build/install/default.ios/lib/react_ios/React.rei" {"../../ios-sysroot/lib/react_ios/React.rei"}
+  "_build/install/default.ios/lib/react_ios/React.re" {"../../ios-sysroot/lib/react_ios/React.re"}
+  "_build/install/default.ios/lib/react_ios/react_ios__ReactCore.cmi" {"../../ios-sysroot/lib/react_ios/react_ios__ReactCore.cmi"}
+  "_build/install/default.ios/lib/react_ios/react_ios__ReactCore.cmx" {"../../ios-sysroot/lib/react_ios/react_ios__ReactCore.cmx"}
+  "_build/install/default.ios/lib/react_ios/react_ios__ReactCore.cmt" {"../../ios-sysroot/lib/react_ios/react_ios__ReactCore.cmt"}
+  "_build/install/default.ios/lib/react_ios/react_ios__ReactCore.cmti" {"../../ios-sysroot/lib/react_ios/react_ios__ReactCore.cmti"}
+  "_build/install/default.ios/lib/react_ios/ReactCore.rei" {"../../ios-sysroot/lib/react_ios/ReactCore.rei"}
   "_build/install/default.ios/lib/react_ios/react_ios.cmi" {"../../ios-sysroot/lib/react_ios/react_ios.cmi"}
   "_build/install/default.ios/lib/react_ios/react_ios.cmx" {"../../ios-sysroot/lib/react_ios/react_ios.cmx"}
   "_build/install/default.ios/lib/react_ios/react_ios.cmt" {"../../ios-sysroot/lib/react_ios/react_ios.cmt"}

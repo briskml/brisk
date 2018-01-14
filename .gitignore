@@ -7,5 +7,7 @@ finalOutput/*.js
 /lib/ocaml/
 *.log
 .bsb.lock
-./*.xcuserdatad
+**/*.xcuserdatad
+**/*.xcuserdata
+*.install
 

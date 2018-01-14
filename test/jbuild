@@ -1,0 +1,10 @@
+(jbuild_version 1)
+
+(executables
+ ((libraries (alcotest react_ios))
+  (names (test))))
+
+(alias
+ ((name runtest)
+  (deps (test.exe))
+  (action (run ${<}))))

@@ -14,6 +14,7 @@
          react_ios__LayoutSupport.cmx
          react_ios__LayoutPrint.cmx
          react_ios__Layout.cmx
+         react_ios__ReactCore_Internal.cmx 
          react_ios__ReactCore.cmx 
          react_ios__React.cmx
          react_ios__Main.cmx

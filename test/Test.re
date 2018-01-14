@@ -1,22 +1,19 @@
 open React_ios;
 
-module Implementation = {
-  let map = Hashtbl.create(1000);
-  type hostView =
-    | Text(string)
-    | View;
-  let getInstance = (id) =>
-    if (Hashtbl.mem(map, id)) {
-      Some(Hashtbl.find(map, id))
-    } else {
-      None
-    };
-};
-
-module ReasonReactM = ReactCore.Make(Implementation);
-
 module ReasonReact = {
-  include ReasonReactM;
+  module Implementation = {
+    let map = Hashtbl.create(1000);
+    type hostView =
+      | Text(string)
+      | View;
+    let getInstance = (id) =>
+      if (Hashtbl.mem(map, id)) {
+        Some(Hashtbl.find(map, id))
+      } else {
+        None
+      };
+  };
+  include ReactCore_Internal.Make(Implementation);
   module Text = {
     let make = (~title="ImABox", ~onClick as _=?, _children) => {
       name: "Dummy",
@@ -78,7 +75,9 @@ module Div = {
 
 module BoxWrapper = {
   let component = ReasonReact.statelessComponent("BoxWrapper");
-  let make = (~title="ImABox", ~twoBoxes=false, ~onClick as _=?, _children) => {
+  let make =
+      (~title="ImABox", ~twoBoxes=false, ~onClick as _=?, _children)
+      : ReasonReact.component(ReasonReact.stateless, unit) => {
     ...component,
     initialState: () => (),
     render: (_self) =>
@@ -90,6 +89,8 @@ module BoxWrapper = {
     initialState: () => (),
     render: (_self) => twoBoxes ? <Div /> : <Div />
   };
+  let createElement = (~key=?, ~title=?, ~twoBoxes=?, ~children, ()) =>
+    ReasonReact.element(~key?, make(~title?, ~twoBoxes?, ~onClick=(), ()));
 };
 
 
@@ -99,7 +100,7 @@ module BoxWrapper = {
 module BoxWithDynamicKeys = {
   let component =
     ReasonReact.statelessComponent(~useDynamicKey=true, "BoxWithDynamicKeys");
-  let make = (~title="ImABox", _children) => {
+  let make = (~title="ImABox", (_children: list(ReasonReact.reactElement))) => {
     ...component,
     render: (_self) => <Box title />
   };
@@ -238,4 +239,35 @@ module UpdateAlternateClicks = {
   };
 };
 
-Alcotest.run("Tests", []);
+let renderedElement =
+  Alcotest.testable(
+    (formatter, t) => Format.pp_print_text(formatter, ""),
+    (==)
+  );
+
+let suite = [
+  (
+    "Render",
+    `Quick,
+    () => {
+      open ReasonReact;
+      let component = BoxWrapper.make();
+      let rendered = RenderedElement.render(<BoxWrapper />);
+      let expected =
+        IFlat([
+          Instance({
+            component,
+            element: Element(component),
+            iState: (),
+            instanceSubTree: IFlat([]),
+            subElements: Flat([]),
+            pendingStateUpdates: ref([]),
+            id: 0
+          })
+        ]);
+      Alcotest.check(renderedElement, "", expected, rendered)
+    }
+  )
+];
+
+Alcotest.run("Tests", [("BoxWrapper", suite)]);

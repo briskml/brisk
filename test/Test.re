@@ -33,6 +33,129 @@ module ReasonReact = {
   let stringToElement = (string) => <Text title=string />;
 };
 
+module TestRenderer = {
+  open ReasonReact;
+  type opaqueComponent =
+    | Component(component('a, 'b)): opaqueComponent
+    | InstanceAndComponent(component('a, 'b), instance('a, 'b)): opaqueComponent;
+  let compareComponents = false;
+  type testInstance = {
+    component: opaqueComponent,
+    id: Key.t,
+    subtree: t
+  }
+  and t =
+    | Flat(list(testInstance)): t
+    | Nested(list(t)): t;
+  let render = (element) => {
+    let rec convertInstance =
+            (Instance({component, id, instanceSubTree} as instance)) => {
+      component: InstanceAndComponent(component, instance),
+      id,
+      subtree: convertElement(instanceSubTree)
+    }
+    and convertElement =
+      fun
+      | IFlat(instances) => Flat(List.map(convertInstance, instances))
+      | INested(_, elements) => Nested(List.map(convertElement, elements));
+    convertElement(RenderedElement.render(element))
+  };
+  let compareComponents = (left, right) =>
+    switch (left, right) {
+    | (Component(_), Component(_))
+    | (InstanceAndComponent(_, _), InstanceAndComponent(_, _)) => assert false
+    | (Component(justComponent), InstanceAndComponent(comp, instance)) =>
+      comp.handedOffInstance := Some(instance);
+      let result =
+        switch justComponent.handedOffInstance^ {
+        | Some(_) => true
+        | None => false
+        };
+      comp.handedOffInstance := None;
+      result
+    | (InstanceAndComponent(comp, instance), Component(justComponent)) =>
+      comp.handedOffInstance := Some(instance);
+      let result =
+        switch justComponent.handedOffInstance^ {
+        | Some(_) => true
+        | None => false
+        };
+      comp.handedOffInstance := None;
+      result
+    };
+  let rec compareElement = (left, right) =>
+    switch (left, right) {
+    | (Flat(le), Flat(re)) =>
+      if (List.length(le) != List.length(re)) {
+        false
+      } else {
+        List.fold_left(
+          (&&),
+          true,
+          List.map(compareInstance, List.combine(le, re))
+        )
+      }
+    | (Nested(l), Nested(r)) =>
+      List.fold_left(
+        (&&),
+        true,
+        List.map(
+          ((leftRendered, rightRendered)) =>
+            compareElement(leftRendered, rightRendered),
+          List.combine(l, r)
+        )
+      )
+    | (Nested(_), Flat(_))
+    | (Flat(_), Nested(_)) => false
+    }
+  and compareInstance = ((left, right)) =>
+    left.id == right.id
+    && compareComponents(left.component, right.component)
+    && compareElement(left.subtree, right.subtree);
+  let printList = (indent, lst) => {
+    let indent = String.make(indent, ' ');
+    "["
+    ++ String.concat(",\n", List.map((s) => s, lst))
+    ++ "\n"
+    ++ indent
+    ++ "]"
+  };
+  let componentName = (component) =>
+    switch component {
+    | InstanceAndComponent(component, _) => component.debugName
+    | Component(component) => component.debugName
+    };
+  let printElement = (tree) => {
+    let rec pp = (~indent) =>
+      fun
+      | Flat(instances) =>
+        ListTR.map(printInstance(~indent), instances) |> printList(indent)
+      | Nested(elements) =>
+        ListTR.map(pp(~indent), elements) |> printList(indent)
+    and printInstance = (~indent, instance) => {
+      let indentString = String.make(indent, ' ');
+      Printf.sprintf(
+        {|
+      %s{
+      %s  id: %s
+      %s  name: %s
+      %s  subtree: %s
+      %s}
+      |},
+        indentString,
+        indentString,
+        string_of_int(instance.id),
+        indentString,
+        componentName(instance.component),
+        indentString,
+        pp(~indent=indent + 2, instance.subtree),
+        indentString
+      )
+    };
+    pp(~indent=0, tree)
+  };
+};
+
 
 /***
  * The simplest component. Composes nothing!
@@ -100,7 +223,7 @@ module BoxWrapper = {
 module BoxWithDynamicKeys = {
   let component =
     ReasonReact.statelessComponent(~useDynamicKey=true, "BoxWithDynamicKeys");
-  let make = (~title="ImABox", (_children: list(ReasonReact.reactElement))) => {
+  let make = (~title="ImABox", _children: list(ReasonReact.reactElement)) => {
     ...component,
     render: (_self) => <Box title />
   };
@@ -241,29 +364,33 @@ module UpdateAlternateClicks = {
 
 let renderedElement =
   Alcotest.testable(
-    (formatter, t) => Format.pp_print_text(formatter, ""),
-    (==)
+    (formatter, t) =>
+      Format.pp_print_text(formatter, TestRenderer.printElement(t)),
+    TestRenderer.compareElement
   );
 
 let suite = [
   (
-    "Render",
+    "First Render",
     `Quick,
     () => {
-      open ReasonReact;
+      open TestRenderer;
       let component = BoxWrapper.make();
-      let rendered = RenderedElement.render(<BoxWrapper />);
+      let rendered = render(ReasonReact.element(component));
       let expected =
-        IFlat([
-          Instance({
-            component,
-            element: Element(component),
-            iState: (),
-            instanceSubTree: IFlat([]),
-            subElements: Flat([]),
-            pendingStateUpdates: ref([]),
-            id: 0
-          })
+        Flat([
+          {
+            component: Component(component),
+            id: 0,
+            subtree:
+              Flat([
+                {
+                  component: Component(ReasonReact.Render.defaultHostComponent),
+                  id: 1,
+                  subtree: Nested([])
+                }
+              ])
+          }
         ]);
       Alcotest.check(renderedElement, "", expected, rendered)
     }

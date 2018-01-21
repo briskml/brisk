@@ -90,7 +90,7 @@ module Make:
        */
       let useTailHack: ref(bool);
     };
-    module Key: {type t; let create: unit => t; let none: t;};
+    module Key: {type t; let create: unit => t;};
     type sideEffects;
     type update('state, 'action) =
       | NoUpdate
@@ -127,49 +127,54 @@ module Make:
 
     /*** Type of a react element before rendering  */
     type reactElement;
-    type instance('state, 'action);
+    type nativeElement = {
+      make: int => Implementation.hostView,
+      setProps: Implementation.hostView => unit,
+      children: reactElement,
+      style: Layout.cssStyle
+    };
+    type elementType('concreteElementType);
+    type instance('state, 'action, 'elementType);
     type oldNewSelf('state, 'action) = {
       oldSelf: self('state, 'action),
       newSelf: self('state, 'action)
     };
-    type componentSpec('state, 'initialState, 'action) = {
+    type componentSpec('state, 'initialState, 'action, 'elementType) = {
       debugName: string,
+      elementType: elementType('elementType),
       willReceiveProps: self('state, 'action) => 'state,
       didMount: self('state, 'action) => unit,
       didUpdate: oldNewSelf('state, 'action) => unit,
       willUnmount: self('state, 'action) => unit /* TODO: currently unused */,
       willUpdate: oldNewSelf('state, 'action) => unit,
       shouldUpdate: oldNewSelf('state, 'action) => bool,
-      render: self('state, 'action) => reactElement,
+      render: self('state, 'action) => 'elementType,
       initialState: unit => 'initialState,
       reducer: ('action, 'state) => update('state, 'action),
       printState: 'state => string /* for internal debugging */,
-      handedOffInstance: ref(option(instance('state, 'action))) /* Used to avoid Obj.magic in update */,
+      handedOffInstance: ref(option(instance('state, 'action, 'elementType))) /* Used to avoid Obj.magic in update */,
       key: Key.t
     };
-    type component('state, 'action) = componentSpec('state, 'state, 'action);
+    type component('state, 'action, 'elementType) =
+      componentSpec('state, 'state, 'action, 'elementType);
     type stateless = unit;
     type actionless = unit;
-    type nativeComponent = {
-      name: string,
-      make: int => Implementation.hostView,
-      setProps: Implementation.hostView => unit,
-      children: reactElement,
-      nativeKey: Key.t,
-      style: Layout.cssStyle
-    };
     let statelessComponent:
-      (~useDynamicKey: bool=?, string) => component(stateless, actionless);
+      (~useDynamicKey: bool=?, string) =>
+      component(stateless, actionless, reactElement);
     let statefulComponent:
       (~useDynamicKey: bool=?, string) =>
-      componentSpec('state, stateless, actionless);
+      componentSpec('state, stateless, actionless, reactElement);
     let reducerComponent:
       (~useDynamicKey: bool=?, string) =>
-      componentSpec('state, stateless, 'action);
-    let element: (~key: Key.t=?, component('state, 'action)) => reactElement;
+      componentSpec('state, stateless, 'action, reactElement);
+    let statelessNativeComponent:
+      (~useDynamicKey: bool=?, string) =>
+      component(stateless, actionless, nativeElement);
+    let element:
+      (~key: Key.t=?, component('state, 'action, 'elementType)) => reactElement;
     let arrayToElement: array(reactElement) => reactElement;
     let listToElement: list(reactElement) => reactElement;
-    let nativeElement: (~key: Key.t=?, nativeComponent) => reactElement;
     let logString: string => unit;
 
     /***

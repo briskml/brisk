@@ -54,19 +54,21 @@ module View = {
     backgroundColor: color,
     borderWidth: float
   };
+  let component = statelessNativeComponent("View");
   let make = (~layout, ~style, ~borderColor, children) => {
-    name: "View",
-    make: (id) => NativeView.makeInstance(id),
-    setProps: (view) => {
-      let {red, green, blue, alpha} = style.backgroundColor;
-      NativeView.setBackgroundColor(red, green, blue, alpha, view);
-      NativeView.setBorderWidth(style.borderWidth, view);
-      let {red, green, blue, alpha} = borderColor;
-      NativeView.setBorderColor(red, green, blue, alpha, view)
-    },
-    children,
-    nativeKey: Key.none,
-    style: layout
+    ...component,
+    render: (_) => {
+      make: (id) => NativeView.makeInstance(id),
+      setProps: (view) => {
+        let {red, green, blue, alpha} = style.backgroundColor;
+        NativeView.setBackgroundColor(red, green, blue, alpha, view);
+        NativeView.setBorderWidth(style.borderWidth, view);
+        let {red, green, blue, alpha} = borderColor;
+        NativeView.setBorderColor(red, green, blue, alpha, view)
+      },
+      children,
+      style: layout
+    }
   };
 };
 
@@ -76,18 +78,20 @@ module Button = {
   external setText : (string, t) => t = "Button_setText";
   [@noalloc] external setCallback : (unit => unit, t) => t =
     "Button_setCallback";
+  let component = statelessNativeComponent("Button");
   let make = (~text, ~style, ~callback=?, children) => {
-    name: "Button",
-    make: (id) => {
-      let instance = makeInstance(id) |> setText(text);
-      switch callback {
-      | Some(callback) => setCallback(callback, instance)
-      | None => instance
-      }
-    },
-    setProps: (_) => (),
-    children,
-    nativeKey: Key.none,
-    style
+    ...component,
+    render: (_) => {
+      make: (id) => {
+        let instance = makeInstance(id) |> setText(text);
+        switch callback {
+        | Some(callback) => setCallback(callback, instance)
+        | None => instance
+        }
+      },
+      setProps: (_) => (),
+      children,
+      style
+    }
   };
 };

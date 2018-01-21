@@ -15,20 +15,22 @@ module ReasonReact = {
   };
   include ReactCore_Internal.Make(Implementation);
   module Text = {
+    let component = statelessNativeComponent("Text");
     let make = (~title="ImABox", ~onClick as _=?, _children) => {
-      name: "Dummy",
-      setProps: (_) => (),
-      children: listToElement([]),
-      nativeKey: Key.none,
-      style: Layout.defaultStyle,
-      make: (id) => {
-        let elem = Implementation.Text(title);
-        Hashtbl.add(Implementation.map, id, elem);
-        elem
+      ...component,
+      render: (_) => {
+        setProps: (_) => (),
+        children: listToElement([]),
+        style: Layout.defaultStyle,
+        make: (id) => {
+          let elem = Implementation.Text(title);
+          Hashtbl.add(Implementation.map, id, elem);
+          elem
+        }
       }
     };
     let createElement = (~key=?, ~title=?, ~children as _children, ()) =>
-      nativeElement(~key?, make(~title?, ()));
+      element(~key?, make(~title?, ()));
   };
   let stringToElement = (string) => <Text title=string />;
 };
@@ -36,29 +38,35 @@ module ReasonReact = {
 module TestRenderer = {
   open ReasonReact;
   type opaqueComponent =
-    | Component(component('a, 'b)): opaqueComponent
-    | InstanceAndComponent(component('a, 'b), instance('a, 'b)): opaqueComponent;
+    | Component(component('a, 'b, 'c)): opaqueComponent
+    | InstanceAndComponent(component('a, 'b, 'c), instance('a, 'b, 'c)): opaqueComponent;
   let compareComponents = false;
   type testInstance = {
     component: opaqueComponent,
     id: Key.t,
     subtree: t
   }
-  and t =
-    | Flat(list(testInstance)): t
-    | Nested(list(t)): t;
-  let render = (element) => {
-    let rec convertInstance =
-            (Instance({component, id, instanceSubTree} as instance)) => {
-      component: InstanceAndComponent(component, instance),
-      id,
-      subtree: convertElement(instanceSubTree)
-    }
-    and convertElement =
-      fun
-      | IFlat(instances) => Flat(List.map(convertInstance, instances))
-      | INested(_, elements) => Nested(List.map(convertElement, elements));
-    convertElement(RenderedElement.render(element))
+  and t = list(testInstance);
+  let rec convertInstance =
+    fun
+    | Instance({component, id, instanceSubTree} as instance) => {
+        component: InstanceAndComponent(component, instance),
+        id,
+        subtree: convertElement(instanceSubTree)
+      }
+    | NativeInstance(_, {component, id, instanceSubTree} as instance) => {
+        component: InstanceAndComponent(component, instance),
+        id,
+        subtree: convertElement(instanceSubTree)
+      }
+  and convertElement =
+    fun
+    | IFlat(instances) => List.map(convertInstance, instances)
+    | INested(_, elements) => List.flatten(List.map(convertElement, elements));
+  let render = (element) => convertElement(RenderedElement.render(element));
+  let update = (element, next) => {
+    let (element, _) = RenderedElement.update(element, next);
+    convertElement(element)
   };
   let compareComponents = (left, right) =>
     switch (left, right) {
@@ -85,7 +93,7 @@ module TestRenderer = {
     };
   let rec compareElement = (left, right) =>
     switch (left, right) {
-    | (Flat(le), Flat(re)) =>
+    | (le, re) =>
       if (List.length(le) != List.length(re)) {
         false
       } else {
@@ -95,18 +103,6 @@ module TestRenderer = {
           List.map(compareInstance, List.combine(le, re))
         )
       }
-    | (Nested(l), Nested(r)) =>
-      List.fold_left(
-        (&&),
-        true,
-        List.map(
-          ((leftRendered, rightRendered)) =>
-            compareElement(leftRendered, rightRendered),
-          List.combine(l, r)
-        )
-      )
-    | (Nested(_), Flat(_))
-    | (Flat(_), Nested(_)) => false
     }
   and compareInstance = ((left, right)) =>
     left.id == right.id
@@ -126,12 +122,8 @@ module TestRenderer = {
     | Component(component) => component.debugName
     };
   let printElement = (tree) => {
-    let rec pp = (~indent) =>
-      fun
-      | Flat(instances) =>
-        ListTR.map(printInstance(~indent), instances) |> printList(indent)
-      | Nested(elements) =>
-        ListTR.map(pp(~indent), elements) |> printList(indent)
+    let rec pp = (~indent, instances) =>
+      ListTR.map(printInstance(~indent), instances) |> printList(indent)
     and printInstance = (~indent, instance) => {
       let indentString = String.make(indent, ' ');
       Printf.sprintf(
@@ -161,56 +153,59 @@ module TestRenderer = {
  * The simplest component. Composes nothing!
  */
 module Box = {
-  let make = (~title="ImABox", ~onClick as _=?, _children) =>
-    ReasonReact.{
-      name: "Dummy",
+  open ReasonReact;
+  let component = statelessNativeComponent("Box");
+  let make = (~title="ImABox", ~onClick as _=?, _children) => {
+    ...component,
+    render: (_) => {
       setProps: (_) => (),
       children: ReasonReact.listToElement([]),
-      nativeKey: Key.none,
       style: Layout.defaultStyle,
       make: (id) => {
         let elem = Implementation.Text(title);
         Hashtbl.add(Implementation.map, id, elem);
         elem
       }
-    };
+    }
+  };
   let createElement = (~key=?, ~title=?, ~children as _children, ()) =>
-    ReasonReact.nativeElement(~key?, make(~title?, ()));
+    ReasonReact.element(~key?, make(~title?, ()));
 };
 
 module Div = {
-  let make = (children) =>
-    ReasonReact.{
-      name: "Div",
+  open ReasonReact;
+  let component = statelessNativeComponent("Div");
+  let make = (children) => {
+    ...component,
+    render: (_) => {
       setProps: (_) => (),
       children: listToElement(children),
-      nativeKey: Key.none,
       style: Layout.defaultStyle,
       make: (id) => {
         let elem = Implementation.View;
         Hashtbl.add(Implementation.map, id, elem);
         elem
       }
-    };
+    }
+  };
   let createElement = (~key=?, ~children, ()) =>
-    ReasonReact.nativeElement(~key?, make(children));
+    ReasonReact.element(~key?, make(children));
 };
 
 module BoxWrapper = {
   let component = ReasonReact.statelessComponent("BoxWrapper");
   let make =
       (~title="ImABox", ~twoBoxes=false, ~onClick as _=?, _children)
-      : ReasonReact.component(ReasonReact.stateless, unit) => {
+      : ReasonReact.component(
+          ReasonReact.stateless,
+          unit,
+          ReasonReact.reactElement
+        ) => {
     ...component,
     initialState: () => (),
     render: (_self) =>
       twoBoxes ?
         <Div> <Box title /> <Box title /> </Div> : <Div> <Box title /> </Div>
-  };
-  let make = (~title="ImABox", ~twoBoxes=false, ~onClick as _=?, _children) => {
-    ...component,
-    initialState: () => (),
-    render: (_self) => twoBoxes ? <Div /> : <Div />
   };
   let createElement = (~key=?, ~title=?, ~twoBoxes=?, ~children, ()) =>
     ReasonReact.element(~key?, make(~title?, ~twoBoxes?, ~onClick=(), ()));
@@ -377,21 +372,42 @@ let suite = [
       open TestRenderer;
       let component = BoxWrapper.make();
       let rendered = render(ReasonReact.element(component));
-      let expected =
-        Flat([
-          {
-            component: Component(component),
-            id: 0,
-            subtree:
-              Flat([
-                {
-                  component: Component(ReasonReact.Render.defaultHostComponent),
-                  id: 1,
-                  subtree: Nested([])
-                }
-              ])
-          }
-        ]);
+      let expected = [
+        {
+          component: Component(BoxWrapper.component),
+          id: 0,
+          subtree: [
+            {
+              component: Component(Div.component),
+              id: 1,
+              subtree: [
+                {component: Component(Box.component), id: 2, subtree: []}
+              ]
+            }
+          ]
+        }
+      ];
+      Alcotest.check(renderedElement, "", expected, rendered)
+    }
+  ),
+  (
+    "Top level update",
+    `Quick,
+    () => {
+      open TestRenderer;
+      let component = BoxWrapper.make();
+      let rendered =
+        update(
+          ReasonReact.RenderedElement.render(<BoxWrapper />),
+          <BoxWrapper twoBoxes=true />
+        );
+      let expected = [
+        {
+          component: Component(component),
+          id: 0,
+          subtree: [{component: Component(Div.make([])), id: 1, subtree: []}]
+        }
+      ];
       Alcotest.check(renderedElement, "", expected, rendered)
     }
   )

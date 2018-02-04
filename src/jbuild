@@ -14,7 +14,9 @@
          react_ios__LayoutSupport.cmx
          react_ios__LayoutPrint.cmx
          react_ios__Layout.cmx
-         react_ios__React.cmx 
+         react_ios__ReactCore_Internal.cmx 
+         react_ios__ReactCore.cmx 
+         react_ios__React.cmx
          react_ios__Main.cmx
          ))
   (action (run ocamlfind -toolchain ios ocamlopt -package unix -linkpkg -output-complete-obj ${!^} -o react_ios.complete.o))))
@@ -23,5 +25,3 @@
   (package react_ios)
   (section lib)
   (files (react_ios.complete.o))))
-
-

@@ -5,7 +5,7 @@ external registerLoop : (unit => unit) => unit = "CA_registerLoop";
 module View = {
   let createElement = (~layout, ~style, ~borderColor, ~children, ()) =>
     React.(
-      nativeElement(
+      element(
         View.make(~layout, ~style, ~borderColor, listToElement(children))
       )
     );
@@ -14,9 +14,7 @@ module View = {
 module Button = {
   let createElement = (~style, ~text, ~callback=?, ~children, ()) =>
     React.(
-      nativeElement(
-        Button.make(~text, ~style, ~callback?, listToElement(children))
-      )
+      element(Button.make(~text, ~style, ~callback?, listToElement(children)))
     );
 };
 

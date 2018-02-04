@@ -501,7 +501,7 @@ module Make = (Implementation: HostImplementation) => {
                 (
                   nextInstanceSubTree,
                   newNewInstance,
-                  NativeInstance(nextSubElements, instance)
+                  NativeInstance(nextSubElements, newNewInstance)
                 )
               | React =>
                 let nextInstanceSubTree =
@@ -519,7 +519,7 @@ module Make = (Implementation: HostImplementation) => {
                   instanceSubTree: nextInstanceSubTree,
                   subElements: nextSubElements
                 };
-                (nextInstanceSubTree, newNewInstance, Instance(instance))
+                (nextInstanceSubTree, newNewInstance, Instance(newNewInstance))
               };
             if (nextComponent.didUpdate !== defaultDidUpdate) {
               let newNewSelf = createSelf(~instance=newNewInstance);
@@ -864,6 +864,11 @@ module Make = (Implementation: HostImplementation) => {
       ...basicComponent(~useDynamicKey?, debugName, Host),
       initialState: () => ()
     };
+  let statefulNativeComponent:
+    (~useDynamicKey: bool=?, string) =>
+    componentSpec('state, stateless, actionless, nativeElement) =
+    (~useDynamicKey=?, debugName) =>
+      basicComponent(~useDynamicKey?, debugName, Host);
   let element = (~key as argumentKey=Key.none, component) => {
     let key =
       argumentKey != Key.none ?

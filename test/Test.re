@@ -41,7 +41,6 @@ module TestRenderer = {
   type opaqueComponent =
     | Component(componentSpec('a, 'b, 'c, 'd)): opaqueComponent
     | InstanceAndComponent(component('a, 'b, 'c), instance('a, 'b, 'c)): opaqueComponent;
-  let compareComponents = false;
   type testInstance = {
     component: opaqueComponent,
     id: Key.t,
@@ -49,6 +48,17 @@ module TestRenderer = {
     state: string
   }
   and t = list(testInstance);
+  type testUpdate = {
+    oldInstance: testInstance,
+    newInstance: testInstance,
+    componentChanged: bool,
+    stateChanged: bool,
+    subTreeChanged: bool
+  };
+  type testUpdateEntry =
+    | NewRenderedElement(t)
+    | UpdateInstance(testUpdate);
+  type testUpdateLog = list(testUpdateEntry);
   let rec convertInstance =
     fun
     | Instance({component, id, instanceSubTree, iState} as instance) => {
@@ -68,9 +78,38 @@ module TestRenderer = {
     | IFlat(instances) => List.map(convertInstance, instances)
     | INested(_, elements) => List.flatten(List.map(convertElement, elements));
   let render = (element) => convertElement(RenderedElement.render(element));
-  let update = (element, next) => {
-    let (nextElement, updateLog) = RenderedElement.update(element, next);
-    nextElement
+  let update = (element, next) => RenderedElement.update(element, next);
+  let convertUpdateLog = (updateLog: ReasonReact.UpdateLog.t) => {
+    let rec convertUpdateLog = (updateLogRef) =>
+      switch updateLogRef {
+      | [] => []
+      | [ReasonReact.UpdateLog.NewRenderedElement(element), ...t] => [
+          NewRenderedElement(convertElement(element)),
+          ...convertUpdateLog(t)
+        ]
+      | [
+          UpdateInstance({
+            ReasonReact.UpdateLog.oldId,
+            newId,
+            oldOpaqueInstance,
+            newOpaqueInstance,
+            componentChanged,
+            stateChanged,
+            subTreeChanged
+          }),
+          ...t
+        ] => [
+          UpdateInstance({
+            oldInstance: {...convertInstance(oldOpaqueInstance), id: oldId},
+            newInstance: {...convertInstance(newOpaqueInstance), id: newId},
+            componentChanged,
+            stateChanged,
+            subTreeChanged
+          }),
+          ...convertUpdateLog(t)
+        ]
+      };
+    List.rev(convertUpdateLog(updateLog^))
   };
   let compareComponents = (left, right) =>
     switch (left, right) {
@@ -121,28 +160,73 @@ module TestRenderer = {
     ++ indent
     ++ "]"
   };
+  let rec compareUpdateLog = (left, right) =>
+    switch (left, right) {
+    | ([], []) => true
+    | ([UpdateInstance(x), ...t1], [UpdateInstance(y), ...t2]) =>
+      x.stateChanged === y.stateChanged
+      && x.componentChanged === y.componentChanged
+      && x.subTreeChanged === y.subTreeChanged
+      && compareInstance((x.oldInstance, y.oldInstance))
+      && compareInstance((x.newInstance, y.newInstance))
+      && compareUpdateLog(t1, t2)
+    | ([NewRenderedElement(x), ...t1], [NewRenderedElement(y), ...t2]) =>
+      compareElement(x, y) && compareUpdateLog(t1, t2)
+    | ([NewRenderedElement(_), ..._], [UpdateInstance(_), ..._])
+    | ([UpdateInstance(_), ..._], [NewRenderedElement(_), ..._]) => false
+    | ([_, ..._], [])
+    | ([], [_, ..._]) => false
+    };
   let componentName = (component) =>
     switch component {
     | InstanceAndComponent(component, _) => component.debugName
     | Component(component) => component.debugName
     };
-  let printElement = (formatter) => {
-    let rec pp = () => Fmt.brackets(Fmt.list(~sep=Fmt.comma, printInstance()))
-    and printInstance = () =>
-      Fmt.braces(
-        Fmt.hvbox(
-          (formatter, instance) =>
-            Fmt.pf(
-              formatter,
-              "@,id: %s,@ name: %s,@ state: %s,@ subtree: %a@,",
-              string_of_int(instance.id),
-              componentName(instance.component),
-              instance.state,
-              pp(),
-              instance.subtree
-            )
+  let rec printTreeFormatter = () =>
+    Fmt.brackets(Fmt.list(~sep=Fmt.comma, printInstance()))
+  and printInstance = () =>
+    Fmt.braces(
+      Fmt.hvbox(
+        (formatter, instance) =>
+          Fmt.pf(
+            formatter,
+            "@,id: %s,@ name: %s,@ state: \"%s\",@ subtree: %a@,",
+            string_of_int(instance.id),
+            componentName(instance.component),
+            instance.state,
+            printTreeFormatter(),
+            instance.subtree
+          )
+      )
+    );
+  let printElement = (formatter) =>
+    Fmt.pf(formatter, "%a", printTreeFormatter());
+  let printUpdateLog = (formatter) => {
+    let rec pp = () => Fmt.brackets(Fmt.list(~sep=Fmt.comma, printUpdateLog()))
+    and printUpdateLog = ((), formatter, entry) =>
+      switch entry {
+      | NewRenderedElement(element) =>
+        Fmt.pf(
+          formatter,
+          "%s@,(@[<hov> %a @])",
+          "NewRenderedElement",
+          printTreeFormatter(),
+          element
         )
-      );
+      | UpdateInstance(update) =>
+        Fmt.pf(
+          formatter,
+          "%s@,{@[<hov>@,componentChanged: %s,@ stateChanged: %s,@ subTreeChanged: %s,@ oldInstance: %a,@ newInstance: %a @]}",
+          "UpdateInstance",
+          string_of_bool(update.componentChanged),
+          string_of_bool(update.stateChanged),
+          string_of_bool(update.subTreeChanged),
+          printInstance(),
+          update.oldInstance,
+          printInstance(),
+          update.newInstance
+        )
+      };
     Fmt.pf(formatter, "%a", pp())
   };
 };
@@ -361,6 +445,12 @@ let renderedElement =
     TestRenderer.compareElement
   );
 
+let updateLog =
+  Alcotest.testable(
+    (formatter, t) => TestRenderer.printUpdateLog(formatter, t),
+    TestRenderer.compareUpdateLog
+  );
+
 let suite = [
   (
     "First Render",
@@ -402,37 +492,36 @@ let suite = [
       open TestRenderer;
       ReasonReact.GlobalState.reset();
       let component = BoxWrapper.component;
-      let rendered =
-        update(
+      let (rendered, log) =
+        ReasonReact.RenderedElement.update(
           ReasonReact.RenderedElement.render(<BoxWrapper />),
           <BoxWrapper twoBoxes=true />
         );
+      let newInstance = {
+        component: Component(Div.component),
+        id: 2,
+        state: "",
+        subtree: [
+          {
+            state: "ImABox",
+            component: Component(Box.component),
+            id: 4,
+            subtree: []
+          },
+          {
+            state: "ImABox",
+            component: Component(Box.component),
+            id: 5,
+            subtree: []
+          }
+        ]
+      };
       let expected = [
         {
           component: Component(component),
           id: 1,
           state: "",
-          subtree: [
-            {
-              component: Component(Div.component),
-              id: 2,
-              state: "",
-              subtree: [
-                {
-                  state: "ImABox",
-                  component: Component(Box.component),
-                  id: 4,
-                  subtree: []
-                },
-                {
-                  state: "ImABox",
-                  component: Component(Box.component),
-                  id: 5,
-                  subtree: []
-                }
-              ]
-            }
-          ]
+          subtree: [newInstance]
         }
       ];
       Alcotest.check(
@@ -440,6 +529,28 @@ let suite = [
         "",
         expected,
         TestRenderer.convertElement(rendered)
+      );
+      Alcotest.check(
+        updateLog,
+        "",
+        TestRenderer.convertUpdateLog(log),
+        [
+          UpdateInstance({
+            stateChanged: false,
+            componentChanged: false,
+            subTreeChanged: true,
+            newInstance,
+            oldInstance: newInstance
+          }),
+          UpdateInstance({
+            stateChanged: false,
+            componentChanged: false,
+            subTreeChanged: true,
+            newInstance,
+            oldInstance: newInstance
+          }),
+          NewRenderedElement(expected)
+        ]
       )
     }
   ),
@@ -466,7 +577,7 @@ let suite = [
              }
            ]
          );
-      let rendered1 =
+      let (rendered1, _) =
         TestRenderer.update(rendered0, <ChangeCounter label="defaultText" />);
       TestRenderer.convertElement(rendered1)
       |> Alcotest.check(
@@ -482,7 +593,7 @@ let suite = [
              }
            ]
          );
-      let rendered2 =
+      let (rendered2, _) =
         TestRenderer.update(rendered1, <ChangeCounter label="updatedText" />);
       TestRenderer.convertElement(rendered2)
       |> Alcotest.check(
@@ -524,7 +635,7 @@ let suite = [
       Alcotest.(
         check(bool, "it is memoized", rendered2f_mem === rendered2f, true)
       );
-      let rendered3 =
+      let (rendered3, _) =
         TestRenderer.update(
           rendered2f_mem,
           <ButtonWrapperWrapper wrappedText="updatedText" />
@@ -582,7 +693,7 @@ let suite = [
              }
            ]
          );
-      let rendered4 =
+      let (rendered4, _) =
         TestRenderer.update(
           rendered3,
           <ButtonWrapperWrapper wrappedText="updatedTextmodified" />

@@ -25,7 +25,7 @@ let render = (element) => {
   let layout =
     React.LayoutTest.make(~root=window, ~outputTree, ~width=320, ~height=480);
   React.LayoutTest.performLayout(layout);
-  React.OutputTree.mountForest(outputTree);
+  /*React.OutputTree.mountForest(outputTree);*/
   registerLoop(
     () => {
       let (_, updateLog) = React.RenderedElement.flushPendingUpdates(rendered);

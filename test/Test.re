@@ -1,4 +1,4 @@
-open React_ios;
+open R2n2;
 
 module ReasonReact = {
   module Implementation = {
@@ -6,11 +6,11 @@ module ReasonReact = {
     type hostView =
       | Text(string)
       | View;
-    let getInstance = (id) =>
+    let getInstance = id =>
       if (Hashtbl.mem(map, id)) {
-        Some(Hashtbl.find(map, id))
+        Some(Hashtbl.find(map, id));
       } else {
-        None
+        None;
       };
   };
   include ReactCore_Internal.Make(Implementation);
@@ -23,17 +23,17 @@ module ReasonReact = {
         setProps: (_) => (),
         children: listToElement([]),
         style: Layout.defaultStyle,
-        make: (id) => {
+        make: id => {
           let elem = Implementation.Text(title);
           Hashtbl.add(Implementation.map, id, elem);
-          elem
+          elem;
         }
       }
     };
     let createElement = (~key=?, ~title=?, ~children as _children, ()) =>
       element(~key?, make(~title?, ()));
   };
-  let stringToElement = (string) => <Text title=string />;
+  let stringToElement = string => <Text title=string />;
 };
 
 module TestRenderer = {
@@ -89,10 +89,10 @@ module TestRenderer = {
     | PrependElement(x) => PrependElement(convertElement(x))
     | ReplaceElements(oldElem, newElem) =>
       ReplaceElements(convertElement(oldElem), convertElement(newElem));
-  let render = (element) => convertElement(RenderedElement.render(element));
+  let render = element => convertElement(RenderedElement.render(element));
   let update = (element, next) => RenderedElement.update(element, next);
   let convertUpdateLog = (updateLog: ReasonReact.UpdateLog.t) => {
-    let rec convertUpdateLog = (updateLogRef) =>
+    let rec convertUpdateLog = updateLogRef =>
       switch updateLogRef {
       | [] => []
       | [ReasonReact.UpdateLog.NewRenderedElement(element), ...t] => [
@@ -112,8 +112,14 @@ module TestRenderer = {
           ...t
         ] => [
           UpdateInstance({
-            oldInstance: {...convertInstance(oldOpaqueInstance), id: oldId},
-            newInstance: {...convertInstance(newOpaqueInstance), id: newId},
+            oldInstance: {
+              ...convertInstance(oldOpaqueInstance),
+              id: oldId
+            },
+            newInstance: {
+              ...convertInstance(newOpaqueInstance),
+              id: newId
+            },
             componentChanged,
             stateChanged,
             subTreeChanged: convertSubTreeChange(subTreeChanged)
@@ -121,7 +127,7 @@ module TestRenderer = {
           ...convertUpdateLog(t)
         ]
       };
-    List.rev(convertUpdateLog(updateLog^))
+    List.rev(convertUpdateLog(updateLog^));
   };
   let compareComponents = (left, right) =>
     switch (left, right) {
@@ -135,7 +141,7 @@ module TestRenderer = {
         | None => false
         };
       comp.handedOffInstance := None;
-      result
+      result;
     | (InstanceAndComponent(comp, instance), Component(justComponent)) =>
       comp.handedOffInstance := Some(instance);
       let result =
@@ -144,19 +150,19 @@ module TestRenderer = {
         | None => false
         };
       comp.handedOffInstance := None;
-      result
+      result;
     };
   let rec compareElement = (left, right) =>
     switch (left, right) {
     | (le, re) =>
       if (List.length(le) != List.length(re)) {
-        false
+        false;
       } else {
         List.fold_left(
           (&&),
           true,
           List.map(compareInstance, List.combine(le, re))
-        )
+        );
       }
     }
   and compareInstance = ((left, right)) =>
@@ -166,11 +172,7 @@ module TestRenderer = {
     && compareElement(left.subtree, right.subtree);
   let printList = (indent, lst) => {
     let indent = String.make(indent, ' ');
-    "["
-    ++ String.concat(",\n", List.map((s) => s, lst))
-    ++ "\n"
-    ++ indent
-    ++ "]"
+    "[" ++ String.concat(",\n", List.map(s => s, lst)) ++ "\n" ++ indent ++ "]";
   };
   let rec compareUpdateLog = (left, right) =>
     switch (left, right) {
@@ -189,71 +191,69 @@ module TestRenderer = {
     | ([_, ..._], [])
     | ([], [_, ..._]) => false
     };
-  let componentName = (component) =>
+  let componentName = component =>
     switch component {
     | InstanceAndComponent(component, _) => component.debugName
     | Component(component) => component.debugName
     };
   let rec printTreeFormatter = () => Fmt.hvbox(Fmt.list(printInstance()))
   and printInstance = () =>
-    Fmt.hvbox(
-      (formatter, instance) =>
-        switch instance.subtree {
-        | [] =>
-          Fmt.pf(
-            formatter,
-            "<%s id=%s%s/>",
-            componentName(instance.component),
-            string_of_int(instance.id),
-            switch instance.state {
-            | "" => ""
-            | x => " state=\"" ++ x ++ "\""
-            }
-          )
-        | sub =>
-          Fmt.pf(
-            formatter,
-            "<%s id=%s%s>@ %a@ </%s>",
-            componentName(instance.component),
-            string_of_int(instance.id),
-            switch instance.state {
-            | "" => ""
-            | x => " state=\"" ++ x ++ "\""
-            },
-            printTreeFormatter(),
-            sub,
-            componentName(instance.component)
-          )
-        }
+    Fmt.hvbox((formatter, instance) =>
+      switch instance.subtree {
+      | [] =>
+        Fmt.pf(
+          formatter,
+          "<%s id=%s%s/>",
+          componentName(instance.component),
+          string_of_int(instance.id),
+          switch instance.state {
+          | "" => ""
+          | x => " state=\"" ++ x ++ "\""
+          }
+        )
+      | sub =>
+        Fmt.pf(
+          formatter,
+          "<%s id=%s%s>@ %a@ </%s>",
+          componentName(instance.component),
+          string_of_int(instance.id),
+          switch instance.state {
+          | "" => ""
+          | x => " state=\"" ++ x ++ "\""
+          },
+          printTreeFormatter(),
+          sub,
+          componentName(instance.component)
+        )
+      }
     );
-  let printElement = (formatter) =>
+  let printElement = formatter =>
     Fmt.pf(formatter, "%a", printTreeFormatter());
-  let printSubTreeChange = (formatter) =>
+  let printSubTreeChange = formatter =>
     Fmt.pf(
       formatter,
       "%a",
       Fmt.brackets(
-        Fmt.hvbox(
-          (formatter, change) =>
-            switch change {
-            | NoChange => Fmt.pf(formatter, "%s", "NoChange")
-            | Nested => Fmt.pf(formatter, "%s", "Nested")
-            | PrependElement(x) =>
-              Fmt.pf(formatter, "PrependElement: %a@,", printElement, x)
-            | ReplaceElements(oldElems, newElems) =>
-              Fmt.pf(
-                formatter,
-                "ReplaceElements: %a@, %a@,",
-                printElement,
-                oldElems,
-                printElement,
-                newElems
-              )
-            }
+        Fmt.hvbox((formatter, change) =>
+          switch change {
+          | NoChange => Fmt.pf(formatter, "%s", "NoChange")
+          | Nested => Fmt.pf(formatter, "%s", "Nested")
+          | PrependElement(x) =>
+            Fmt.pf(formatter, "PrependElement: %a@,", printElement, x)
+          | ReplaceElements(oldElems, newElems) =>
+            Fmt.pf(
+              formatter,
+              "ReplaceElements: %a@, %a@,",
+              printElement,
+              oldElems,
+              printElement,
+              newElems
+            )
+          }
         )
       )
     );
-  let printUpdateLog = (formatter) => {
+  let printUpdateLog = formatter => {
     let rec pp = () => Fmt.brackets(Fmt.list(~sep=Fmt.comma, printUpdateLog()))
     and printUpdateLog = ((), formatter, entry) =>
       switch entry {
@@ -280,7 +280,7 @@ module TestRenderer = {
           update.newInstance
         )
       };
-    Fmt.pf(formatter, "%a", pp())
+    Fmt.pf(formatter, "%a", pp());
   };
 };
 
@@ -298,10 +298,10 @@ module Box = {
       setProps: (_) => (),
       children: ReasonReact.listToElement([]),
       style: Layout.defaultStyle,
-      make: (id) => {
+      make: id => {
         let elem = Implementation.Text(title);
         Hashtbl.add(Implementation.map, id, elem);
-        elem
+        elem;
       }
     }
   };
@@ -312,16 +312,16 @@ module Box = {
 module Div = {
   open ReasonReact;
   let component = statelessNativeComponent("Div");
-  let make = (children) => {
+  let make = children => {
     ...component,
     render: (_) => {
       setProps: (_) => (),
       children: listToElement(children),
       style: Layout.defaultStyle,
-      make: (id) => {
+      make: id => {
         let elem = Implementation.View;
         Hashtbl.add(Implementation.map, id, elem);
-        elem
+        elem;
       }
     }
   };
@@ -340,7 +340,7 @@ module BoxWrapper = {
         ) => {
     ...component,
     initialState: () => (),
-    render: (_self) =>
+    render: _self =>
       twoBoxes ?
         <Div> <Box title /> <Box title /> </Div> : <Div> <Box title /> </Div>
   };
@@ -358,7 +358,7 @@ module BoxWithDynamicKeys = {
   let make = (~title="ImABox", _children: list(ReasonReact.reactElement)) => {
     ...component,
     printState: (_) => title,
-    render: (_self) => ReasonReact.listToElement([])
+    render: _self => ReasonReact.listToElement([])
   };
   let createElement = (~title, ~children, ()) =>
     ReasonReact.element(make(~title, children));
@@ -383,7 +383,7 @@ module BoxList = {
       },
     render: ({state, act}) => {
       ReasonReact.RemoteAction.subscribe(~act, rAction);
-      ReasonReact.listToElement(state)
+      ReasonReact.listToElement(state);
     }
   };
   let createElement = (~rAction, ~useDynamicKeys=false, ~children, ()) =>
@@ -419,7 +419,7 @@ module ChangeCounter = {
           print_endline("Will receive props");
           reduce(() => (), ());
           reduce(() => (), ());
-          {mostRecentLabel: label, numChanges: state.numChanges + 1}
+          {mostRecentLabel: label, numChanges: state.numChanges + 1};
         } :
         state,
     render: ({state: {numChanges, mostRecentLabel}}) => ReasonReact.Flat([]),
@@ -435,7 +435,7 @@ module StatelessButton = {
   let make =
       (~initialClickCount as _="noclicks", ~test as _="default", _children) => {
     ...component,
-    render: (_self) => <Div />
+    render: _self => <Div />
   };
   let createElement = (~initialClickCount=?, ~test=?, ~children, ()) =>
     ReasonReact.element(make(~initialClickCount?, ~test?, ()));
@@ -449,7 +449,7 @@ module ButtonWrapper = {
     initialState: () => {buttonWrapperState: 0},
     render: ({state}) =>
       <StatelessButton
-        initialClickCount=("wrapped:" ++ (wrappedText ++ ":wrapped"))
+        initialClickCount=("wrapped:" ++ wrappedText ++ ":wrapped")
       />
   };
   let createElement = (~wrappedText=?, ~children, ()) =>
@@ -480,12 +480,12 @@ module UpdateAlternateClicks = {
   let make = (~rAction, _children) => {
     ...component,
     initialState: () => 0,
-    printState: (state) => string_of_int(state),
+    printState: state => string_of_int(state),
     reducer: (Click, state) => Update(state + 1),
     shouldUpdate: ({newSelf: {state}}) => state mod 2 === 0,
     render: ({state, act}) => {
       ReasonReact.RemoteAction.subscribe(~act, rAction);
-      ReasonReact.stringToElement(string_of_int(state))
+      ReasonReact.stringToElement(string_of_int(state));
     }
   };
   let createElement = (~rAction, ~children, ()) =>
@@ -549,7 +549,7 @@ let suite = [
             <Div id=2> <Box id=3 state="ImABox" /> </Div>
           </BoxWrapper>
         ];
-      Alcotest.check(renderedElement, "", expected, rendered)
+      Alcotest.check(renderedElement, "", expected, rendered);
     }
   ),
   (
@@ -608,7 +608,7 @@ let suite = [
           NewRenderedElement([twoBoxesWrapper])
         ],
         TestRenderer.convertUpdateLog(log)
-      )
+      );
     }
   ),
   (
@@ -842,7 +842,7 @@ let suite = [
           | _ => false
           }
         )
-      )
+      );
     }
   ),
   (
@@ -944,7 +944,7 @@ let suite = [
                ]
              }
            ]
-         )
+         );
     }
   ),
   (
@@ -1045,7 +1045,7 @@ let suite = [
                ]
              }
            ]
-         )
+         );
     }
   ),
   (
@@ -1095,7 +1095,7 @@ let suite = [
                subtree: []
              }
            ]
-         )
+         );
     }
   ),
   (
@@ -1158,7 +1158,7 @@ let suite = [
                subtree: []
              }
            ]
-         )
+         );
     }
   ),
   (
@@ -1221,7 +1221,7 @@ let suite = [
         "Second click then flush",
         result(~state="4", ~text="4"),
         TestRenderer.convertElement(rendered)
-      )
+      );
     }
   )
 ];

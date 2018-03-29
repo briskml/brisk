@@ -1,7 +1,7 @@
 (jbuild_version 1)
 
 (executables
- ((libraries (alcotest react_ios))
+ ((libraries (alcotest r2n2))
   (names (test))))
 
 (alias

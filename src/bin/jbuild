@@ -1,0 +1,13 @@
+(jbuild_version 1)
+
+(executable (
+ (name react_ios)
+ (libraries (r2n2))
+ (modes (object))
+))
+
+(install (
+  (package r2n2)
+  (section lib)
+  (files (react_ios.o))
+))

@@ -284,8 +284,7 @@ module TestRenderer = {
   };
 };
 
-
-/***
+/**
  * The simplest component. Composes nothing!
  */
 module Box = {
@@ -348,8 +347,7 @@ module BoxWrapper = {
     ReasonReact.element(~key?, make(~title?, ~twoBoxes?, ~onClick=(), ()));
 };
 
-
-/***
+/**
  * Box with dynamic keys.
  */
 module BoxWithDynamicKeys = {
@@ -390,8 +388,7 @@ module BoxList = {
     ReasonReact.element(make(~rAction, ~useDynamicKeys, children));
 };
 
-
-/***
+/**
  * This component demonstrates several things:
  *
  * 1. Demonstration of making internal state hidden / abstract. Components
@@ -549,7 +546,7 @@ let suite = [
             <Div id=2> <Box id=3 state="ImABox" /> </Div>
           </BoxWrapper>
         ];
-      Alcotest.check(renderedElement, "", expected, rendered);
+      Assert.check(renderedElement, "", expected, rendered);
     }
   ),
   (
@@ -573,13 +570,13 @@ let suite = [
       let oneBox = TestComponents.(<Div id=2> <Box id=3 /> </Div>);
       let twoBoxesWrapper =
         TestComponents.(<BoxWrapper id=1> twoBoxes </BoxWrapper>);
-      Alcotest.check(
+      Assert.check(
         renderedElement,
         "",
         [twoBoxesWrapper],
         TestRenderer.convertElement(rendered)
       );
-      Alcotest.check(
+      Assert.check(
         updateLog,
         "",
         [
@@ -621,7 +618,7 @@ let suite = [
           <ChangeCounter label="defaultText" />
         );
       TestRenderer.convertElement(rendered0)
-      |> Alcotest.check(
+      |> Assert.check(
            renderedElement,
            "",
            [
@@ -637,7 +634,7 @@ let suite = [
       let (rendered1, _) =
         TestRenderer.update(rendered0, <ChangeCounter label="defaultText" />);
       TestRenderer.convertElement(rendered1)
-      |> Alcotest.check(
+      |> Assert.check(
            renderedElement,
            "",
            [
@@ -653,7 +650,7 @@ let suite = [
       let (rendered2, _) =
         TestRenderer.update(rendered1, <ChangeCounter label="updatedText" />);
       TestRenderer.convertElement(rendered2)
-      |> Alcotest.check(
+      |> Assert.check(
            renderedElement,
            "",
            [
@@ -669,7 +666,7 @@ let suite = [
       let (rendered2f, _) =
         ReasonReact.RenderedElement.flushPendingUpdates(rendered2);
       TestRenderer.convertElement(rendered2f)
-      |> Alcotest.check(
+      |> Assert.check(
            renderedElement,
            "",
            [
@@ -685,12 +682,22 @@ let suite = [
       let (rendered2f_mem, _) =
         ReasonReact.RenderedElement.flushPendingUpdates(rendered2f);
       Alcotest.(
-        check(bool, "it is memoized", rendered2f_mem === rendered2f, true)
+        Assert.check(
+          bool,
+          "it is memoized",
+          rendered2f_mem === rendered2f,
+          true
+        )
       );
       let (rendered2f_mem, _) =
         ReasonReact.RenderedElement.flushPendingUpdates(rendered2f_mem);
       Alcotest.(
-        check(bool, "it is memoized", rendered2f_mem === rendered2f, true)
+        Assert.check(
+          bool,
+          "it is memoized",
+          rendered2f_mem === rendered2f,
+          true
+        )
       );
       let (rendered3, _) =
         TestRenderer.update(
@@ -698,7 +705,7 @@ let suite = [
           <ButtonWrapperWrapper wrappedText="updatedText" />
         );
       TestRenderer.convertElement(rendered3)
-      |> Alcotest.check(
+      |> Assert.check(
            renderedElement,
            "Switching Component Types from: ChangeCounter to ButtonWrapperWrapper",
            [
@@ -756,7 +763,7 @@ let suite = [
           <ButtonWrapperWrapper wrappedText="updatedTextmodified" />
         );
       TestRenderer.convertElement(rendered4)
-      |> Alcotest.check(
+      |> Assert.check(
            renderedElement,
            "Switching Component Types from: ChangeCounter to ButtonWrapperWrapper",
            [
@@ -808,7 +815,7 @@ let suite = [
              }
            ]
          );
-      Alcotest.check(
+      Assert.check(
         Alcotest.bool,
         "Memoized nested button wrapper",
         true,
@@ -861,7 +868,7 @@ let suite = [
       RemoteAction.act(rAction, ~action=BoxList.Reverse);
       let (rendered3, _) = RenderedElement.flushPendingUpdates(rendered2);
       TestRenderer.convertElement(rendered0)
-      |> Alcotest.check(
+      |> Assert.check(
            renderedElement,
            "Initial BoxList",
            [
@@ -874,7 +881,7 @@ let suite = [
            ]
          );
       TestRenderer.convertElement(rendered1)
-      |> Alcotest.check(
+      |> Assert.check(
            renderedElement,
            "Add Hello then Flush",
            [
@@ -894,7 +901,7 @@ let suite = [
            ]
          );
       TestRenderer.convertElement(rendered2)
-      |> Alcotest.check(
+      |> Assert.check(
            renderedElement,
            "Add Hello then Flush",
            [
@@ -920,7 +927,7 @@ let suite = [
            ]
          );
       TestRenderer.convertElement(rendered3)
-      |> Alcotest.check(
+      |> Assert.check(
            renderedElement,
            "Add Hello then Flush",
            [
@@ -962,7 +969,7 @@ let suite = [
       RemoteAction.act(rAction, ~action=BoxList.Reverse);
       let (rendered3, _) = RenderedElement.flushPendingUpdates(rendered2);
       TestRenderer.convertElement(rendered0)
-      |> Alcotest.check(
+      |> Assert.check(
            renderedElement,
            "Initial BoxList",
            [
@@ -975,7 +982,7 @@ let suite = [
            ]
          );
       TestRenderer.convertElement(rendered1)
-      |> Alcotest.check(
+      |> Assert.check(
            renderedElement,
            "Add Hello then Flush",
            [
@@ -995,7 +1002,7 @@ let suite = [
            ]
          );
       TestRenderer.convertElement(rendered2)
-      |> Alcotest.check(
+      |> Assert.check(
            renderedElement,
            "Add Hello then Flush",
            [
@@ -1021,7 +1028,7 @@ let suite = [
            ]
          );
       TestRenderer.convertElement(rendered3)
-      |> Alcotest.check(
+      |> Assert.check(
            renderedElement,
            "Add Hello then Flush",
            [
@@ -1065,7 +1072,7 @@ let suite = [
           )
         );
       TestRenderer.convertElement(rendered0)
-      |> Alcotest.check(
+      |> Assert.check(
            renderedElement,
            "Initial Box",
            [
@@ -1078,7 +1085,7 @@ let suite = [
            ]
          );
       TestRenderer.convertElement(rendered1)
-      |> Alcotest.check(
+      |> Assert.check(
            renderedElement,
            "After update",
            [
@@ -1122,7 +1129,7 @@ let suite = [
           ])
         );
       TestRenderer.convertElement(rendered0)
-      |> Alcotest.check(
+      |> Assert.check(
            renderedElement,
            "Initial Boxes",
            [
@@ -1141,7 +1148,7 @@ let suite = [
            ]
          );
       TestRenderer.convertElement(rendered1)
-      |> Alcotest.check(
+      |> Assert.check(
            renderedElement,
            "Swap Boxes",
            [
@@ -1185,14 +1192,14 @@ let suite = [
       let rAction = RemoteAction.create();
       let rendered = RenderedElement.render(<UpdateAlternateClicks rAction />);
       TestRenderer.convertElement(rendered)
-      |> Alcotest.check(
+      |> Assert.check(
            renderedElement,
            "Initial",
            result(~state="0", ~text="0")
          );
       RemoteAction.act(rAction, ~action=Click);
       let (rendered, _) = RenderedElement.flushPendingUpdates(rendered);
-      Alcotest.check(
+      Assert.check(
         renderedElement,
         "First click then flush",
         result(~state="1", ~text="0"),
@@ -1200,7 +1207,7 @@ let suite = [
       );
       RemoteAction.act(rAction, ~action=Click);
       let (rendered, _) = RenderedElement.flushPendingUpdates(rendered);
-      Alcotest.check(
+      Assert.check(
         renderedElement,
         "Second click then flush",
         result(~state="2", ~text="2"),
@@ -1208,7 +1215,7 @@ let suite = [
       );
       RemoteAction.act(rAction, ~action=Click);
       let (rendered, _) = RenderedElement.flushPendingUpdates(rendered);
-      Alcotest.check(
+      Assert.check(
         renderedElement,
         "Second click then flush",
         result(~state="3", ~text="2"),
@@ -1216,7 +1223,7 @@ let suite = [
       );
       RemoteAction.act(rAction, ~action=Click);
       let (rendered, _) = RenderedElement.flushPendingUpdates(rendered);
-      Alcotest.check(
+      Assert.check(
         renderedElement,
         "Second click then flush",
         result(~state="4", ~text="4"),
@@ -1226,4 +1233,4 @@ let suite = [
   )
 ];
 
-Alcotest.run("Tests", [("BoxWrapper", suite)]);
+Alcotest.run(~argv=[|"--verbose --color"|], "Tests", [("BoxWrapper", suite)]);

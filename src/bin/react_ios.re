@@ -1,3 +1,5 @@
+open R2n2;
+
 let otherComponent = React.reducerComponent("Other");
 
 external registerLoop : (unit => unit) => unit = "CA_registerLoop";
@@ -18,7 +20,7 @@ module Button = {
     );
 };
 
-let render = (element) => {
+let render = element => {
   let window = React.NativeView.getWindow();
   let rendered = React.RenderedElement.render(React.element(element));
   let outputTree = React.OutputTree.fromRenderedElement(window, rendered);
@@ -26,20 +28,18 @@ let render = (element) => {
     React.LayoutTest.make(~root=window, ~outputTree, ~width=320, ~height=480);
   React.LayoutTest.performLayout(layout);
   /*React.OutputTree.mountForest(outputTree);*/
-  registerLoop(
-    () => {
-      let (_, updateLog) = React.RenderedElement.flushPendingUpdates(rendered);
-      ignore(React.OutputTree.applyUpdateLog(updateLog, outputTree, window));
-      let layout =
-        React.LayoutTest.make(
-          ~root=window,
-          ~outputTree,
-          ~width=320,
-          ~height=480
-        );
-      React.LayoutTest.performLayout(layout)
-    }
-  )
+  registerLoop(() => {
+    let (_, updateLog) = React.RenderedElement.flushPendingUpdates(rendered);
+    ignore(React.OutputTree.applyUpdateLog(updateLog, outputTree, window));
+    let layout =
+      React.LayoutTest.make(
+        ~root=window,
+        ~outputTree,
+        ~width=320,
+        ~height=480
+      );
+    React.LayoutTest.performLayout(layout);
+  });
 };
 
 module Component = {
@@ -53,7 +53,12 @@ module Component = {
           layout=React.Layout.defaultStyle
           style={
             borderWidth: 1.,
-            backgroundColor: {red: 0.3, green: 0.5, blue: 0.3, alpha: 1.}
+            backgroundColor: {
+              red: 0.3,
+              green: 0.5,
+              blue: 0.3,
+              alpha: 1.
+            }
           }
           borderColor={red: 0., green: 1., blue: 0., alpha: 1.}>
           <Button
@@ -66,7 +71,7 @@ module Component = {
             text="Cell two"
             callback=(reduce(() => ! state))
           />
-        </View>
+        </View>;
       } else {
         <View
           layout=React.Layout.{
@@ -76,7 +81,12 @@ module Component = {
                  }
           style={
             borderWidth: 1.,
-            backgroundColor: {red: 0.3, green: 0.2, blue: 0.1, alpha: 1.}
+            backgroundColor: {
+              red: 0.3,
+              green: 0.2,
+              blue: 0.1,
+              alpha: 1.
+            }
           }
           borderColor={red: 0., green: 0., blue: 1., alpha: 1.}>
           <Button
@@ -84,7 +94,7 @@ module Component = {
             text="well"
             callback=(reduce(() => ! state))
           />
-        </View>
+        </View>;
       }
   };
 };

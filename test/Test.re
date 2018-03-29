@@ -48,12 +48,17 @@ module TestRenderer = {
     state: string
   }
   and t = list(testInstance);
+  type testSubTreeChange =
+    | NoChange
+    | Nested
+    | PrependElement(t)
+    | ReplaceElements(t, t);
   type testUpdate = {
     oldInstance: testInstance,
     newInstance: testInstance,
     componentChanged: bool,
     stateChanged: bool,
-    subTreeChanged: bool
+    subTreeChanged: testSubTreeChange
   };
   type testUpdateEntry =
     | NewRenderedElement(t)
@@ -77,6 +82,13 @@ module TestRenderer = {
     fun
     | IFlat(instances) => List.map(convertInstance, instances)
     | INested(_, elements) => List.flatten(List.map(convertElement, elements));
+  let convertSubTreeChange =
+    fun
+    | ReasonReact.UpdateLog.NoChange => NoChange
+    | Nested => Nested
+    | PrependElement(x) => PrependElement(convertElement(x))
+    | ReplaceElements(oldElem, newElem) =>
+      ReplaceElements(convertElement(oldElem), convertElement(newElem));
   let render = (element) => convertElement(RenderedElement.render(element));
   let update = (element, next) => RenderedElement.update(element, next);
   let convertUpdateLog = (updateLog: ReasonReact.UpdateLog.t) => {
@@ -104,7 +116,7 @@ module TestRenderer = {
             newInstance: {...convertInstance(newOpaqueInstance), id: newId},
             componentChanged,
             stateChanged,
-            subTreeChanged
+            subTreeChanged: convertSubTreeChange(subTreeChanged)
           }),
           ...convertUpdateLog(t)
         ]
@@ -182,25 +194,65 @@ module TestRenderer = {
     | InstanceAndComponent(component, _) => component.debugName
     | Component(component) => component.debugName
     };
-  let rec printTreeFormatter = () =>
-    Fmt.brackets(Fmt.list(~sep=Fmt.comma, printInstance()))
+  let rec printTreeFormatter = () => Fmt.hvbox(Fmt.list(printInstance()))
   and printInstance = () =>
-    Fmt.braces(
-      Fmt.hvbox(
-        (formatter, instance) =>
+    Fmt.hvbox(
+      (formatter, instance) =>
+        switch instance.subtree {
+        | [] =>
           Fmt.pf(
             formatter,
-            "@,id: %s,@ name: %s,@ state: \"%s\",@ subtree: %a@,",
-            string_of_int(instance.id),
+            "<%s id=%s%s/>",
             componentName(instance.component),
-            instance.state,
-            printTreeFormatter(),
-            instance.subtree
+            string_of_int(instance.id),
+            switch instance.state {
+            | "" => ""
+            | x => " state=\"" ++ x ++ "\""
+            }
           )
-      )
+        | sub =>
+          Fmt.pf(
+            formatter,
+            "<%s id=%s%s>@ %a@ </%s>",
+            componentName(instance.component),
+            string_of_int(instance.id),
+            switch instance.state {
+            | "" => ""
+            | x => " state=\"" ++ x ++ "\""
+            },
+            printTreeFormatter(),
+            sub,
+            componentName(instance.component)
+          )
+        }
     );
   let printElement = (formatter) =>
     Fmt.pf(formatter, "%a", printTreeFormatter());
+  let printSubTreeChange = (formatter) =>
+    Fmt.pf(
+      formatter,
+      "%a",
+      Fmt.brackets(
+        Fmt.hvbox(
+          (formatter, change) =>
+            switch change {
+            | NoChange => Fmt.pf(formatter, "%s", "NoChange")
+            | Nested => Fmt.pf(formatter, "%s", "Nested")
+            | PrependElement(x) =>
+              Fmt.pf(formatter, "PrependElement: %a@,", printElement, x)
+            | ReplaceElements(oldElems, newElems) =>
+              Fmt.pf(
+                formatter,
+                "ReplaceElements: %a@, %a@,",
+                printElement,
+                oldElems,
+                printElement,
+                newElems
+              )
+            }
+        )
+      )
+    );
   let printUpdateLog = (formatter) => {
     let rec pp = () => Fmt.brackets(Fmt.list(~sep=Fmt.comma, printUpdateLog()))
     and printUpdateLog = ((), formatter, entry) =>
@@ -216,11 +268,12 @@ module TestRenderer = {
       | UpdateInstance(update) =>
         Fmt.pf(
           formatter,
-          "%s@,{@[<hov>@,componentChanged: %s,@ stateChanged: %s,@ subTreeChanged: %s,@ oldInstance: %a,@ newInstance: %a @]}",
+          "%s@,{@[<hov>@,componentChanged: %s,@ stateChanged: %s,@ subTreeChanged: %a,@ oldInstance: %a,@ newInstance: %a @]}",
           "UpdateInstance",
           string_of_bool(update.componentChanged),
           string_of_bool(update.stateChanged),
-          string_of_bool(update.subTreeChanged),
+          printSubTreeChange,
+          update.subTreeChanged,
           printInstance(),
           update.oldInstance,
           printInstance(),
@@ -451,6 +504,36 @@ let updateLog =
     TestRenderer.compareUpdateLog
   );
 
+module TestComponents = {
+  module Box = {
+    let createElement = (~id, ~state="ImABox", ~children, ()) =>
+      TestRenderer.{
+        component: Component(Box.component),
+        id,
+        state,
+        subtree: children
+      };
+  };
+  module Div = {
+    let createElement = (~id, ~children, ()) =>
+      TestRenderer.{
+        component: Component(Div.component),
+        id,
+        state: "",
+        subtree: children
+      };
+  };
+  module BoxWrapper = {
+    let createElement = (~id, ~children, ()) =>
+      TestRenderer.{
+        component: Component(BoxWrapper.component),
+        id,
+        state: "",
+        subtree: children
+      };
+  };
+};
+
 let suite = [
   (
     "First Render",
@@ -460,28 +543,12 @@ let suite = [
       ReasonReact.GlobalState.reset();
       let component = BoxWrapper.make();
       let rendered = render(ReasonReact.element(component));
-      let expected = [
-        {
-          component: Component(BoxWrapper.component),
-          id: 1,
-          state: "",
-          subtree: [
-            {
-              component: Component(Div.component),
-              id: 2,
-              state: "",
-              subtree: [
-                {
-                  state: "ImABox",
-                  component: Component(Box.component),
-                  id: 3,
-                  subtree: []
-                }
-              ]
-            }
-          ]
-        }
-      ];
+      let expected =
+        TestComponents.[
+          <BoxWrapper id=1>
+            <Div id=2> <Box id=3 state="ImABox" /> </Div>
+          </BoxWrapper>
+        ];
       Alcotest.check(renderedElement, "", expected, rendered)
     }
   ),
@@ -491,66 +558,56 @@ let suite = [
     () => {
       open TestRenderer;
       ReasonReact.GlobalState.reset();
-      let component = BoxWrapper.component;
       let (rendered, log) =
         ReasonReact.RenderedElement.update(
           ReasonReact.RenderedElement.render(<BoxWrapper />),
           <BoxWrapper twoBoxes=true />
         );
-      let newInstance = {
-        component: Component(Div.component),
-        id: 2,
-        state: "",
-        subtree: [
-          {
-            state: "ImABox",
-            component: Component(Box.component),
-            id: 4,
-            subtree: []
-          },
-          {
-            state: "ImABox",
-            component: Component(Box.component),
-            id: 5,
-            subtree: []
-          }
-        ]
-      };
-      let expected = [
-        {
-          component: Component(component),
-          id: 1,
-          state: "",
-          subtree: [newInstance]
-        }
-      ];
+      let twoBoxes =
+        TestComponents.(
+          <Div id=2>
+            <Box id=4 state="ImABox" />
+            <Box id=5 state="ImABox" />
+          </Div>
+        );
+      let oneBox = TestComponents.(<Div id=2> <Box id=3 /> </Div>);
+      let twoBoxesWrapper =
+        TestComponents.(<BoxWrapper id=1> twoBoxes </BoxWrapper>);
       Alcotest.check(
         renderedElement,
         "",
-        expected,
+        [twoBoxesWrapper],
         TestRenderer.convertElement(rendered)
       );
       Alcotest.check(
         updateLog,
         "",
-        TestRenderer.convertUpdateLog(log),
         [
           UpdateInstance({
             stateChanged: false,
             componentChanged: false,
-            subTreeChanged: true,
-            newInstance,
-            oldInstance: newInstance
+            subTreeChanged:
+              ReplaceElements(
+                [TestComponents.(<Box id=3 state="ImABox" />)],
+                TestComponents.[
+                  <Box id=4 state="ImABox" />,
+                  <Box id=5 state="ImABox" />
+                ]
+              ),
+            newInstance: twoBoxes,
+            oldInstance: oneBox
           }),
           UpdateInstance({
             stateChanged: false,
             componentChanged: false,
-            subTreeChanged: true,
-            newInstance,
-            oldInstance: newInstance
+            subTreeChanged: Nested,
+            newInstance: twoBoxesWrapper,
+            oldInstance:
+              TestComponents.(<BoxWrapper id=1> oneBox </BoxWrapper>)
           }),
-          NewRenderedElement(expected)
-        ]
+          NewRenderedElement([twoBoxesWrapper])
+        ],
+        TestRenderer.convertUpdateLog(log)
       )
     }
   ),

@@ -260,7 +260,7 @@ module TestRenderer = {
       | NewRenderedElement(element) =>
         Fmt.pf(
           formatter,
-          "%s@,(@[<hov> %a @])",
+          "%s (@[<hov> %a @])",
           "NewRenderedElement",
           printTreeFormatter(),
           element
@@ -268,7 +268,7 @@ module TestRenderer = {
       | UpdateInstance(update) =>
         Fmt.pf(
           formatter,
-          "%s@,{@[<hov>@,componentChanged: %s,@ stateChanged: %s,@ subTreeChanged: %a,@ oldInstance: %a,@ newInstance: %a @]}",
+          "%s {@[<hov>@,componentChanged: %s,@ stateChanged: %s,@ subTreeChanged: %a,@ oldInstance: %a,@ newInstance: %a @]}",
           "UpdateInstance",
           string_of_bool(update.componentChanged),
           string_of_bool(update.stateChanged),

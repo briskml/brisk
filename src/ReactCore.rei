@@ -204,15 +204,9 @@ module Make:
      */
     module OutputTree: {
       type t;
-      let mountForest: t => unit;
       let fromRenderedElement:
         (Implementation.hostView, RenderedElement.t) => t;
       let applyUpdateLog: (UpdateLog.t, t, Implementation.hostView) => t;
-    };
-    module ReactDOMRe: {
-      type reactDOMProps;
-      let createElement:
-        (string, ~props: reactDOMProps=?, array(reactElement)) => reactElement;
     };
 
     /***

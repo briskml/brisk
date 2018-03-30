@@ -170,6 +170,15 @@ module TestRenderer = {
     && left.state == right.state
     && compareComponents(left.component, right.component)
     && compareElement(left.subtree, right.subtree);
+  let compareSubtree =
+    fun
+    | (NoChange, NoChange)
+    | (Nested, Nested) => true
+    | (PrependElement(left), PrependElement(right)) =>
+      compareElement(left, right)
+    | (ReplaceElements(left1, left2), ReplaceElements(right1, right2)) =>
+      compareElement(left1, right1) && compareElement(left2, right2)
+    | (_, _) => false;
   let printList = (indent, lst) => {
     let indent = String.make(indent, ' ');
     "[" ++ String.concat(",\n", List.map(s => s, lst)) ++ "\n" ++ indent ++ "]";
@@ -180,7 +189,7 @@ module TestRenderer = {
     | ([UpdateInstance(x), ...t1], [UpdateInstance(y), ...t2]) =>
       x.stateChanged === y.stateChanged
       && x.componentChanged === y.componentChanged
-      && x.subTreeChanged === y.subTreeChanged
+      && compareSubtree((x.subTreeChanged, y.subTreeChanged))
       && compareInstance((x.oldInstance, y.oldInstance))
       && compareInstance((x.newInstance, y.newInstance))
       && compareUpdateLog(t1, t2)

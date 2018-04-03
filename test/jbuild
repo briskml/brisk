@@ -1,8 +1,8 @@
 (jbuild_version 1)
 
 (executables
- ((libraries (alcotest r2n2))
-  (names (test))))
+ ((names (test))
+  (libraries (alcotest r2n2))))
 
 (alias
  ((name runtest)

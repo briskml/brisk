@@ -1,3 +1,5 @@
+open Flex;
+
 module type HostImplementation = {
   type hostView;
   let getInstance: int => option(hostView);

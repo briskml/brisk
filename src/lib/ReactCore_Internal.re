@@ -76,9 +76,8 @@ module Make = (Implementation: HostImplementation) => {
     | Nested(string, list(reactElement))
   and nativeElement = {
     make: int => Implementation.hostView,
-    setProps: Implementation.hostView => unit,
-    children: reactElement,
-    style: Layout.LayoutSupport.LayoutTypes.cssStyle
+    updateInstance: Implementation.hostView => unit,
+    children: reactElement
   }
   and elementType('a) =
     | Host: elementType(nativeElement)
@@ -489,6 +488,7 @@ module Make = (Implementation: HostImplementation) => {
             ) =
               switch nextComponent.elementType {
               | Host =>
+                let nextSubElements = nextSubElements;
                 let (subTreeChange, nextInstanceSubTree) =
                   updateRenderedElement(
                     ~updateOpaqueInstanceState?,
@@ -530,7 +530,7 @@ module Make = (Implementation: HostImplementation) => {
                 );
               };
             switch (stateChanged, subTreeChanged) {
-            | (false, UpdateLog.NoChange) => print_endline(nextComponent.debugName ++ " NoChange"); opaqueInstance
+            | (false, UpdateLog.NoChange) => opaqueInstance
             | (stateChanged, subTreeChanged) =>
               if (nextComponent.didUpdate !== defaultDidUpdate) {
                 let newNewSelf = createSelf(~instance=newNewInstance);
@@ -557,29 +557,27 @@ module Make = (Implementation: HostImplementation) => {
                 );
                 newOpaqueInstance;
               } else {
+                print_endline("Here too");
                 opaqueInstance;
               }
             | Host =>
-              let nativeElement =
-                switch updatedOpaqueInstance {
-                | NativeInstance(nativeElement, _) => nativeElement
-                | _ =>
-                  /* This cannot happen since they have the same type*/
-                  assert false
-                };
-              if (stateChanged) {
-                let newOpaqueInstance =
-                  NativeInstance(nativeElement, newInstance);
-                logUpdate(
-                  ~componentChanged=false,
-                  ~stateChanged,
-                  ~subTreeChanged=NoChange,
-                  newOpaqueInstance
-                );
-                newOpaqueInstance;
-              } else {
-                opaqueInstance;
-              };
+              switch updatedOpaqueInstance {
+              | NativeInstance(_, _) as newOpaqueInstance =>
+                if (stateChanged) {
+                  logUpdate(
+                    ~componentChanged=false,
+                    ~stateChanged,
+                    ~subTreeChanged=NoChange,
+                    newOpaqueInstance
+                  );
+                  newOpaqueInstance;
+                } else {
+                  opaqueInstance;
+                }
+              | _ =>
+                /* This cannot happen since they have the same type*/
+                assert false
+              }
             };
           };
         /*
@@ -1106,7 +1104,7 @@ module Make = (Implementation: HostImplementation) => {
       | Concrete(view, nativeComponent, node) =>
         LayoutSupport.createNode(
           ~withChildren=Array.of_list(List.map(make, node.sub)),
-          ~andStyle=nativeComponent.style,
+          ~andStyle=LayoutSupport.defaultStyle,
           View(view)
         )
       };

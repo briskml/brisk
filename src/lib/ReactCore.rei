@@ -129,9 +129,8 @@ module Make:
     type reactElement;
     type nativeElement = {
       make: int => Implementation.hostView,
-      setProps: Implementation.hostView => unit,
-      children: reactElement,
-      style: Layout.cssStyle
+      updateInstance: Implementation.hostView => unit,
+      children: reactElement
     };
     type elementType('concreteElementType);
     type instance('state, 'action, 'elementType);

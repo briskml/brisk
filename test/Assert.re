@@ -2,13 +2,13 @@ open Alcotest;
 
 let renderedElement =
   Alcotest.testable(
-    (formatter, t) => TestRenderer.printElement(formatter, t),
+    (formatter, t) => TestPrinter.printElement(formatter, t),
     TestRenderer.compareElement
   );
 
 let updateLog =
   Alcotest.testable(
-    (formatter, t) => TestRenderer.printUpdateLog(formatter, t),
+    (formatter, t) => TestPrinter.printUpdateLog(formatter, t),
     TestRenderer.compareUpdateLog
   );
 
@@ -69,14 +69,13 @@ let check = (t, msg, x, y) =>
     |> failwith;
   };
 
-
 let assertElement = (~label="", expected, rendered) =>
-check(
-  renderedElement,
-  label,
-  expected,
-  TestRenderer.convertElement(rendered)
-);
+  check(
+    renderedElement,
+    label,
+    expected,
+    TestRenderer.convertElement(rendered)
+  );
 
 let assertUpdateLog = (~label="", expected, actual) =>
   check(updateLog, label, expected, TestRenderer.convertUpdateLog(actual));

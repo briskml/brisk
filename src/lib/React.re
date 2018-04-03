@@ -2,7 +2,8 @@ module NativeView = {
   type t;
   type hostView = t;
   [@noalloc] external getWindow : unit => t = "View_getWindow";
-  [@noalloc] external makeInstance : ([@untagged] int) => t =
+  [@noalloc]
+  external makeInstance : ([@untagged] int) => t =
     "View_newView_byte" "View_newView";
   [@noalloc] external addChild : (t, t) => t = "View_addChild";
   [@noalloc] external removeChild : (t, t) => t = "View_removeChild";
@@ -23,7 +24,8 @@ module NativeView = {
     ) =>
     unit =
     "View_setBackgroundColor_byte" "View_setBackgroundColor";
-  [@noalloc] external setBorderWidth : ([@unboxed] float, t) => unit =
+  [@noalloc]
+  external setBorderWidth : ([@unboxed] float, t) => unit =
     "View_setBorderWidth_byte" "View_setBorderWidth";
   [@noalloc]
   external setBorderColor :
@@ -36,7 +38,8 @@ module NativeView = {
     ) =>
     unit =
     "View_setBorderColor_byte" "View_setBorderColor";
-  [@noalloc] external setCornerRadius : ([@unboxed] float, t) => unit =
+  [@noalloc]
+  external setCornerRadius : ([@unboxed] float, t) => unit =
     "View_setBorderColor_byte" "View_setBorderColor";
 };
 
@@ -58,16 +61,15 @@ module View = {
   let make = (~layout, ~style, ~borderColor, children) => {
     ...component,
     render: (_) => {
-      make: (id) => NativeView.makeInstance(id),
-      setProps: (view) => {
+      make: id => NativeView.makeInstance(id),
+      updateInstance: view => {
         let {red, green, blue, alpha} = style.backgroundColor;
         NativeView.setBackgroundColor(red, green, blue, alpha, view);
         NativeView.setBorderWidth(style.borderWidth, view);
         let {red, green, blue, alpha} = borderColor;
-        NativeView.setBorderColor(red, green, blue, alpha, view)
+        NativeView.setBorderColor(red, green, blue, alpha, view);
       },
-      children,
-      style: layout
+      children
     }
   };
 };
@@ -76,22 +78,21 @@ module Button = {
   type t = NativeView.t;
   external makeInstance : int => NativeView.t = "Button_makeInstance";
   external setText : (string, t) => t = "Button_setText";
-  [@noalloc] external setCallback : (unit => unit, t) => t =
-    "Button_setCallback";
+  [@noalloc]
+  external setCallback : (unit => unit, t) => t = "Button_setCallback";
   let component = statelessNativeComponent("Button");
   let make = (~text, ~style, ~callback=?, children) => {
     ...component,
     render: (_) => {
-      make: (id) => {
+      make: id => {
         let instance = makeInstance(id) |> setText(text);
         switch callback {
         | Some(callback) => setCallback(callback, instance)
         | None => instance
-        }
+        };
       },
-      setProps: (_) => (),
       children,
-      style
+      updateInstance: (_) => ()
     }
   };
 };

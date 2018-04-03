@@ -16,19 +16,20 @@ module ReasonReact = {
   include ReactCore_Internal.Make(Implementation);
   module Text = {
     /* FIXME: If a different prop is supplied as title, the change is not picked up by React. It's because make returns a host element and there's no way to know if a Host element is not changed. */
-    let component = statelessNativeComponent("Text");
-    let make = (~title="ImABox", ~onClick as _=?, _children) => {
+    let component = statefulNativeComponent("Text");
+    let make = (~title="ImABox", _children) => {
       ...component,
+      initialState: () => title,
+      willReceiveProps: (_) => title,
       printState: (_) => title,
       render: (_) => {
-        setProps: (_) => (),
         children: listToElement([]),
-        style: Layout.defaultStyle,
         make: id => {
           let elem = Implementation.Text(title);
           Hashtbl.add(Implementation.map, id, elem);
           elem;
-        }
+        },
+        updateInstance: (_) => ()
       }
     };
     let createElement = (~key=?, ~title=?, ~children as _children, ()) =>
@@ -298,19 +299,20 @@ module Components = {
  */
   module Box = {
     open ReasonReact;
-    let component = statelessNativeComponent("Box");
+    let component = statefulNativeComponent("Box");
     let make = (~title="ImABox", ~onClick as _=?, _children) => {
       ...component,
+      initialState: () => title,
+      willReceiveProps: (_) => title,
       printState: (_) => title,
       render: (_) => {
-        setProps: (_) => (),
         children: ReasonReact.listToElement([]),
-        style: Layout.defaultStyle,
         make: id => {
           let elem = Implementation.Text(title);
           Hashtbl.add(Implementation.map, id, elem);
           elem;
-        }
+        },
+        updateInstance: (_) => ()
       }
     };
     let createElement = (~key=?, ~title=?, ~children as _children, ()) =>
@@ -322,14 +324,13 @@ module Components = {
     let make = children => {
       ...component,
       render: (_) => {
-        setProps: (_) => (),
         children: listToElement(children),
-        style: Layout.defaultStyle,
         make: id => {
           let elem = Implementation.View;
           Hashtbl.add(Implementation.map, id, elem);
           elem;
-        }
+        },
+        updateInstance: (_) => ()
       }
     };
     let createElement = (~key=?, ~children, ()) =>

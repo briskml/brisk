@@ -125,7 +125,7 @@ module Make = (Implementation: HostImplementation) => {
      * Most recent subtree of instances.
      */
     instanceSubTree: renderedElement,
-    subElements: reactElement,
+    subElements: 'elementType,
     /***
      * List of state updates pending for this instance.
      * Stored in reverse order.
@@ -144,8 +144,7 @@ module Make = (Implementation: HostImplementation) => {
    * instance tree based on the old - the old one is not mutated.
    */
   and opaqueInstance =
-    | Instance(instance('state, 'action, reactElement)): opaqueInstance
-    | NativeInstance(nativeElement, instance('state, 'action, nativeElement)): opaqueInstance;
+    | Instance(instance('state, 'action, 'elementType)): opaqueInstance;
   let logString = txt =>
     GlobalState.debug^ ?
       {
@@ -232,33 +231,56 @@ module Make = (Implementation: HostImplementation) => {
     let add = (updateLog, x) => updateLog := [x, ...updateLog^];
   };
   module Render = {
-    let createSelf = (~instance) : self(_) => {
-      state: instance.iState,
+    let createSelf = (~state, ~component, ~pendingStateUpdates) : self(_) => {
+      state,
       reduce: (payloadToAction, payload) => {
-        logString("Calling reduce on " ++ instance.component.debugName);
+        logString("Calling reduce on " ++ component.debugName);
         let action = payloadToAction(payload);
-        let stateUpdate = instance.component.reducer(action);
-        instance.pendingStateUpdates :=
-          [stateUpdate, ...instance.pendingStateUpdates^];
+        let stateUpdate = component.reducer(action);
+        pendingStateUpdates := [stateUpdate, ...pendingStateUpdates^];
       },
       act: action => {
-        logString("Calling act on " ++ instance.component.debugName);
-        let stateUpdate = instance.component.reducer(action);
-        instance.pendingStateUpdates :=
-          [stateUpdate, ...instance.pendingStateUpdates^];
+        logString("Calling act on " ++ component.debugName);
+        let stateUpdate = component.reducer(action);
+        pendingStateUpdates := [stateUpdate, ...pendingStateUpdates^];
       }
     };
-    let createInstance = (~component, ~element, ~instanceSubTree, ~subElements) => {
-      let iState = component.initialState();
-      let id = GlobalState.instanceIdCounter^;
-      incr(GlobalState.instanceIdCounter);
+    let createInitialSelf = (~component) => {
+      let pendingStateUpdates = ref([]);
+      (
+        createSelf(
+          ~component,
+          ~state=component.initialState(),
+          ~pendingStateUpdates
+        ),
+        pendingStateUpdates
+      );
+    };
+    let createSelf = (~instance) =>
+      createSelf(
+        ~component=instance.component,
+        ~state=instance.iState,
+        ~pendingStateUpdates=instance.pendingStateUpdates
+      );
+    let createInstance =
+        (
+          ~id,
+          ~state,
+          ~pendingStateUpdates,
+          ~component,
+          ~element,
+          ~instanceSubTree,
+          ~subElements,
+          ()
+        ) => {
+      let iState = state;
       {
         component,
         element,
         iState,
         instanceSubTree,
         subElements,
-        pendingStateUpdates: ref([]),
+        pendingStateUpdates,
         id
       };
     };
@@ -289,8 +311,7 @@ module Make = (Implementation: HostImplementation) => {
     module OpaqueInstanceHash = {
       let addOpaqueInstances = (idTable, opaqueInstances) => {
         let add = opaqueInstance => {
-          let NativeInstance(_, {component: {key}}) |
-              Instance({component: {key}}) = opaqueInstance;
+          let Instance({component: {key}}) = opaqueInstance;
           key == Key.none ? () : Hashtbl.add(idTable, key, opaqueInstance);
         };
         List.iter(add, opaqueInstances);
@@ -345,28 +366,40 @@ module Make = (Implementation: HostImplementation) => {
         let updateLog = UpdateLog.create();
         update(~updateLog, opaqueInstance, element);
       | None =>
-        let instance =
-          createInstance(
-            ~component,
-            ~element,
-            ~instanceSubTree=IFlat([]),
-            ~subElements=Flat([])
-          );
-        let self = createSelf(~instance);
+        let id = GlobalState.instanceIdCounter^;
+        incr(GlobalState.instanceIdCounter);
+        let (self, pendingStateUpdates) = createInitialSelf(~component);
         if (component.didMount !== defaultDidMount) {
           component.didMount(self);
         };
         switch component.elementType {
         | React =>
-          let reactElement: reactElement = component.render(self);
-          let instanceSubTree = renderReactElement(reactElement);
-          Instance({...instance, instanceSubTree, subElements: reactElement});
+          let subElements: reactElement = component.render(self);
+          Instance(
+            createInstance(
+              ~id,
+              ~state=self.state,
+              ~component,
+              ~subElements,
+              ~instanceSubTree=renderReactElement(subElements),
+              ~pendingStateUpdates,
+              ~element,
+              ()
+            )
+          );
         | Host =>
-          let reactElement = component.render(self);
-          let instanceSubTree = renderReactElement(reactElement.children);
-          NativeInstance(
-            reactElement,
-            {...instance, instanceSubTree, subElements: reactElement.children}
+          let subElements: nativeElement = component.render(self);
+          Instance(
+            createInstance(
+              ~id,
+              ~state=self.state,
+              ~component,
+              ~subElements,
+              ~instanceSubTree=renderReactElement(subElements.children),
+              ~pendingStateUpdates,
+              ~element,
+              ()
+            )
           );
         };
       }
@@ -415,7 +448,7 @@ module Make = (Implementation: HostImplementation) => {
         };
       let stateNotUpdated = opaqueInstance === updatedOpaqueInstance;
       let bailOut = {
-        let NativeInstance(_, {element}) | Instance({element}) = opaqueInstance;
+        let Instance({element}) = opaqueInstance;
         stateNotUpdated && element === nextElement;
       };
       let logUpdate =
@@ -425,8 +458,8 @@ module Make = (Implementation: HostImplementation) => {
             ~subTreeChanged,
             newOpaqueInstance
           ) => {
-        let NativeInstance(_, {id}) | Instance({id}) = opaqueInstance;
-        let NativeInstance(_, {id: newId}) | Instance({id: newId}) = newOpaqueInstance;
+        let Instance({id}) = opaqueInstance;
+        let Instance({id: newId}) = newOpaqueInstance;
         UpdateLog.add(
           updateLog,
           UpdateLog.UpdateInstance({
@@ -445,9 +478,6 @@ module Make = (Implementation: HostImplementation) => {
       } else {
         let resetHandedOffInstance =
           switch updatedOpaqueInstance {
-          | NativeInstance(_, {component} as updatedInstance) =>
-            component.handedOffInstance := Some(updatedInstance);
-            (() => component.handedOffInstance := None);
           | Instance({component} as updatedInstance) =>
             component.handedOffInstance := Some(updatedInstance);
             (() => component.handedOffInstance := None);
@@ -480,8 +510,7 @@ module Make = (Implementation: HostImplementation) => {
             };
             let nextSubElements = nextComponent.render(newSelf);
             /* TODO: Invoke any lifecycles necessary. */
-            let Instance({subElements, instanceSubTree}) |
-                NativeInstance(_, {subElements, instanceSubTree}) = updatedOpaqueInstance;
+            let {subElements, instanceSubTree} = updatedInstance;
             let (
               nextInstanceSubTree,
               newNewInstance,
@@ -495,17 +524,21 @@ module Make = (Implementation: HostImplementation) => {
                   updateRenderedElement(
                     ~updateOpaqueInstanceState?,
                     ~updateLog,
-                    (instanceSubTree, subElements, nextSubElements.children)
+                    (
+                      instanceSubTree,
+                      subElements.children,
+                      nextSubElements.children
+                    )
                   );
                 let newNewInstance = {
                   ...newInstance,
                   instanceSubTree: nextInstanceSubTree,
-                  subElements: nextSubElements.children
+                  subElements: nextSubElements
                 };
                 (
                   nextInstanceSubTree,
                   newNewInstance,
-                  NativeInstance(nextSubElements, newNewInstance),
+                  Instance(newNewInstance),
                   subTreeChange
                 );
               | React =>
@@ -515,7 +548,7 @@ module Make = (Implementation: HostImplementation) => {
                     ~updateLog,
                     (
                       instanceSubTree,
-                      subElements,
+                      subElements: reactElement,
                       nextSubElements: reactElement
                     )
                   );
@@ -559,27 +592,21 @@ module Make = (Implementation: HostImplementation) => {
                 );
                 newOpaqueInstance;
               } else {
-                print_endline("Here too");
                 opaqueInstance;
               }
             | Host =>
-              switch updatedOpaqueInstance {
-              | NativeInstance(_, _) as newOpaqueInstance =>
-                if (stateChanged) {
-                  logUpdate(
-                    ~componentChanged=false,
-                    ~stateChanged,
-                    ~subTreeChanged=NoChange,
-                    newOpaqueInstance
-                  );
-                  newOpaqueInstance;
-                } else {
-                  opaqueInstance;
-                }
-              | _ =>
-                /* This cannot happen since they have the same type*/
-                assert false
-              }
+              let newOpaqueInstance = Instance(newInstance);
+              if (stateChanged) {
+                logUpdate(
+                  ~componentChanged=false,
+                  ~stateChanged,
+                  ~subTreeChanged=NoChange,
+                  newOpaqueInstance
+                );
+                newOpaqueInstance;
+              } else {
+                opaqueInstance;
+              };
             };
           };
         /*
@@ -590,19 +617,11 @@ module Make = (Implementation: HostImplementation) => {
         | None =>
           /* DO NOT FORGET TO RESET HANDEDOFFINSTANCE */
           resetHandedOffInstance();
-          let NativeInstance(
-                _,
-                {component: {debugName}, instanceSubTree, subElements}
-              ) |
-              Instance({component: {debugName}, instanceSubTree, subElements}) = updatedOpaqueInstance;
-          let nextInstance =
-            createInstance(
-              ~component=nextComponent,
-              ~element=nextElement,
-              ~instanceSubTree,
-              ~subElements
-            );
-          let self = createSelf(~instance=nextInstance);
+          let Instance({component: {debugName}, instanceSubTree, subElements}) = updatedOpaqueInstance;
+          let id = GlobalState.instanceIdCounter^;
+          incr(GlobalState.instanceIdCounter);
+          let (self, pendingStateUpdates) =
+            createInitialSelf(~component=nextComponent);
           let nextSubElements = nextComponent.render(self);
           /*
            * ** Switching component type **
@@ -615,23 +634,34 @@ module Make = (Implementation: HostImplementation) => {
               let nextSubtree = renderReactElement(nextSubElements);
               (
                 nextSubtree,
-                Instance({
-                  ...nextInstance,
-                  instanceSubTree: nextSubtree,
-                  subElements: nextSubElements
-                })
+                Instance(
+                  createInstance(
+                    ~id,
+                    ~state=self.state,
+                    ~component=nextComponent,
+                    ~subElements=nextSubElements,
+                    ~instanceSubTree=nextSubtree,
+                    ~pendingStateUpdates,
+                    ~element=nextElement,
+                    ()
+                  )
+                )
               );
             | Host =>
               let nextSubtree = renderReactElement(nextSubElements.children);
               (
                 nextSubtree,
-                NativeInstance(
-                  nextSubElements,
-                  {
-                    ...nextInstance,
-                    instanceSubTree: nextSubtree,
-                    subElements: nextSubElements.children
-                  }
+                Instance(
+                  createInstance(
+                    ~id,
+                    ~state=self.state,
+                    ~component=nextComponent,
+                    ~subElements=nextSubElements,
+                    ~instanceSubTree=nextSubtree,
+                    ~pendingStateUpdates,
+                    ~element=nextElement,
+                    ()
+                  )
                 )
               );
             };
@@ -838,21 +868,12 @@ module Make = (Implementation: HostImplementation) => {
           let nextState = executeUpdate(~state, stateUpdate);
           executeUpdates(~state=nextState, otherStateUpdates);
         };
-      switch opaqueInstance {
-      | NativeInstance(elem, instance) =>
-        let pendingUpdates = List.rev(instance.pendingStateUpdates^);
-        instance.pendingStateUpdates := [];
-        let nextState = executeUpdates(~state=instance.iState, pendingUpdates);
-        instance.iState === nextState ?
-          opaqueInstance :
-          NativeInstance(elem, {...instance, iState: nextState});
-      | Instance(instance) =>
-        let pendingUpdates = List.rev(instance.pendingStateUpdates^);
-        instance.pendingStateUpdates := [];
-        let nextState = executeUpdates(~state=instance.iState, pendingUpdates);
-        instance.iState === nextState ?
-          opaqueInstance : Instance({...instance, iState: nextState});
-      };
+      let Instance(instance) = opaqueInstance;
+      let pendingUpdates = List.rev(instance.pendingStateUpdates^);
+      instance.pendingStateUpdates := [];
+      let nextState = executeUpdates(~state=instance.iState, pendingUpdates);
+      instance.iState === nextState ?
+        opaqueInstance : Instance({...instance, iState: nextState});
     };
 
     /***
@@ -860,7 +881,7 @@ module Make = (Implementation: HostImplementation) => {
      * TODO: invoke lifecycles
      */
     let flushPendingUpdates = (~updateLog, opaqueInstance) => {
-      let NativeInstance(_, {element}) | Instance({element}) = opaqueInstance;
+      let Instance({element}) = opaqueInstance;
       update(
         ~updateLog,
         ~updateOpaqueInstanceState=executePendingStateUpdates,
@@ -960,25 +981,28 @@ module Make = (Implementation: HostImplementation) => {
     };
     type forest = list(tree);
     type t = forest;
-    let rec fromOpaqueInstance = (nearestParentView, opaqueInstance) : tree =>
-      switch opaqueInstance {
-      | NativeInstance(nativeElement, {id, instanceSubTree}) =>
+    let rec fromOpaqueInstance =
+            (
+              nearestParentView,
+              Instance({id, instanceSubTree, component, subElements})
+            )
+            : tree => {
+      let subTreeInstances = Render.flattenRenderedElement(instanceSubTree);
+      let sub =
+        ListTR.map(fromOpaqueInstance(nearestParentView), subTreeInstances);
+      let node = {id, sub, nearestParentView};
+      switch component.elementType {
+      | Host =>
+        let nativeElement = subElements;
         let view =
           switch (Implementation.getInstance(id)) {
           | Some(x) => x
           | None => nativeElement.make(id)
           };
-        let subTreeInstances = Render.flattenRenderedElement(instanceSubTree);
-        let sub = ListTR.map(fromOpaqueInstance(view), subTreeInstances);
-        let node = {id, sub, nearestParentView};
         Concrete(view, nativeElement, node);
-      | Instance({id, instanceSubTree}) =>
-        let subTreeInstances = Render.flattenRenderedElement(instanceSubTree);
-        let sub =
-          ListTR.map(fromOpaqueInstance(nearestParentView), subTreeInstances);
-        let node = {id, sub, nearestParentView};
-        Container(node);
+      | React => Container(node)
       };
+    };
     let fromRenderedElement = (nearestParentView, renderedElement) =>
       ListTR.map(
         fromOpaqueInstance(nearestParentView),
@@ -1032,8 +1056,7 @@ module Make = (Implementation: HostImplementation) => {
                       Update ID
                    */
               };
-              let NativeInstance(_, {instanceSubTree}) |
-                  Instance({instanceSubTree}) = newOpaqueInstance;
+              let Instance({instanceSubTree}) = newOpaqueInstance;
               /*
                if (componentChanged) {
                  n.name = component.debugName;

@@ -213,8 +213,7 @@ let suite =
                   Instance({
                     instanceSubTree:
                       IFlat([
-                        NativeInstance(
-                          _,
+                        Instance(
                           {instanceSubTree: INested(_, [_, _, IFlat([x])])}
                         )
                       ])
@@ -224,8 +223,7 @@ let suite =
                   Instance({
                     instanceSubTree:
                       IFlat([
-                        NativeInstance(
-                          _,
+                        Instance(
                           {instanceSubTree: INested(_, [_, _, IFlat([y])])}
                         )
                       ])

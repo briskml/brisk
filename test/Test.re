@@ -42,17 +42,14 @@ let suite =
           TestComponents.(<BoxWrapper id=1> twoBoxes </BoxWrapper>);
         let expected = (
           [twoBoxesWrapper],
-          [
+          TestComponents.[
             UpdateInstance({
               stateChanged: false,
               componentChanged: false,
               subTreeChanged:
                 ReplaceElements(
-                  [TestComponents.(<Box id=3 state="ImABox" />)],
-                  TestComponents.[
-                    <Box id=4 state="ImABox" />,
-                    <Box id=5 state="ImABox" />
-                  ]
+                  [<Box id=3 state="ImABox" />],
+                  [<Box id=4 state="ImABox" />, <Box id=5 state="ImABox" />]
                 ),
               newInstance: twoBoxes,
               oldInstance: oneBox
@@ -62,8 +59,7 @@ let suite =
               componentChanged: false,
               subTreeChanged: Nested,
               newInstance: twoBoxesWrapper,
-              oldInstance:
-                TestComponents.(<BoxWrapper id=1> oneBox </BoxWrapper>)
+              oldInstance: <BoxWrapper id=1> oneBox </BoxWrapper>
             }),
             TopLevelUpdate(Nested)
           ]
@@ -104,7 +100,7 @@ let suite =
           ),
           actual
         );
-        let (rendered2, _) as actual =
+        let (rendered2, _) as actual2 =
           TestRenderer.update(
             rendered1,
             <ChangeCounter label="updatedText" />
@@ -129,9 +125,9 @@ let suite =
               TopLevelUpdate(Nested)
             ]
           ),
-          actual
+          actual2
         );
-        let (rendered2f, _) as actual =
+        let (rendered2f, _) as actual2f =
           ReasonReact.RenderedElement.flushPendingUpdates(rendered2);
         assertUpdate(
           (
@@ -152,7 +148,7 @@ let suite =
               })
             ]
           ),
-          actual
+          actual2f
         );
         let (rendered2f_mem, _) =
           ReasonReact.RenderedElement.flushPendingUpdates(rendered2f);
@@ -170,38 +166,105 @@ let suite =
           rendered2f_mem === rendered2f,
           true
         );
-        let (rendered3, _) =
+        let (rendered3, _) as actual3 =
           TestRenderer.update(
             rendered2f_mem,
             <ButtonWrapperWrapper wrappedText="updatedText" />
           );
-        TestRenderer.convertElement(rendered3)
-        |> check(
-             renderedElement,
-             "Switching Component Types from: ChangeCounter to ButtonWrapperWrapper",
-             TestComponents.[
-               <ButtonWrapperWrapper
-                 id=2
-                 nestedText="wrappedText:updatedText"
-               />
-             ]
-           );
-        let (rendered4, _) =
+        assertUpdate(
+          ~label="Updating components: ChangeCounter to ButtonWrapperWrapper",
+          TestComponents.(
+            [
+              <ButtonWrapperWrapper id=2 nestedText="wrappedText:updatedText" />
+            ],
+            [
+              UpdateInstance({
+                componentChanged: true,
+                stateChanged: true,
+                subTreeChanged:
+                  ReplaceElements(
+                    [],
+                    [
+                      <Div id=3>
+                        <Text id=4 title="buttonWrapperWrapperState" />
+                        <Text id=5 title="wrappedText:updatedText" />
+                        <ButtonWrapper id=6 />
+                      </Div>
+                    ]
+                  ),
+                oldInstance:
+                  <ChangeCounter id=1 label="updatedText" counter=2011 />,
+                newInstance:
+                  <ButtonWrapperWrapper
+                    id=2
+                    nestedText="wrappedText:updatedText"
+                  />
+              }),
+              TopLevelUpdate(Nested)
+            ]
+          ),
+          actual3
+        );
+        let (rendered4, _) as actual4 =
           TestRenderer.update(
             rendered3,
             <ButtonWrapperWrapper wrappedText="updatedTextmodified" />
           );
-        TestRenderer.convertElement(rendered4)
-        |> check(
-             renderedElement,
-             "Updating text in the button wrapper",
-             TestComponents.[
-               <ButtonWrapperWrapper
-                 id=2
-                 nestedText="wrappedText:updatedTextmodified"
-               />
-             ]
-           );
+        assertUpdate(
+          ~label="Updating text in the button wrapper",
+          TestComponents.(
+            [
+              <ButtonWrapperWrapper
+                id=2
+                nestedText="wrappedText:updatedTextmodified"
+              />
+            ],
+            [
+              UpdateInstance({
+                componentChanged: false,
+                stateChanged: true,
+                subTreeChanged: NoChange,
+                oldInstance: <Text id=5 title="wrappedText:updatedText" />,
+                newInstance:
+                  <Text id=5 title="wrappedText:updatedTextmodified" />
+              }),
+              UpdateInstance({
+                componentChanged: false,
+                stateChanged: false,
+                subTreeChanged: Nested,
+                oldInstance:
+                  <Div id=3>
+                    <Text id=4 title="buttonWrapperWrapperState" />
+                    <Text id=5 title="wrappedText:updatedText" />
+                    <ButtonWrapper id=6 />
+                  </Div>,
+                newInstance:
+                  <Div id=3>
+                    <Text id=4 title="buttonWrapperWrapperState" />
+                    <Text id=5 title="wrappedText:updatedTextmodified" />
+                    <ButtonWrapper id=6 />
+                  </Div>
+              }),
+              UpdateInstance({
+                componentChanged: false,
+                stateChanged: false,
+                subTreeChanged: Nested,
+                oldInstance:
+                  <ButtonWrapperWrapper
+                    id=2
+                    nestedText="wrappedText:updatedText"
+                  />,
+                newInstance:
+                  <ButtonWrapperWrapper
+                    id=2
+                    nestedText="wrappedText:updatedTextmodified"
+                  />
+              }),
+              TopLevelUpdate(Nested)
+            ]
+          ),
+          actual4
+        );
         check(
           Alcotest.bool,
           "Memoized nested button wrapper",
@@ -213,9 +276,9 @@ let suite =
                   Instance({
                     instanceSubTree:
                       IFlat([
-                        Instance(
-                          {instanceSubTree: INested(_, [_, _, IFlat([x])])}
-                        )
+                        Instance({
+                          instanceSubTree: INested(_, [_, _, IFlat([x])])
+                        })
                       ])
                   })
                 ]),
@@ -223,9 +286,9 @@ let suite =
                   Instance({
                     instanceSubTree:
                       IFlat([
-                        Instance(
-                          {instanceSubTree: INested(_, [_, _, IFlat([y])])}
-                        )
+                        Instance({
+                          instanceSubTree: INested(_, [_, _, IFlat([y])])
+                        })
                       ])
                   })
                 ])
@@ -247,96 +310,111 @@ let suite =
         let rendered0 =
           RenderedElement.render(<BoxList useDynamicKeys=true rAction />);
         RemoteAction.act(rAction, ~action=BoxList.Create("Hello"));
-        let (rendered1, _) = RenderedElement.flushPendingUpdates(rendered0);
+        let (rendered1, _) as actual1 =
+          RenderedElement.flushPendingUpdates(rendered0);
         RemoteAction.act(rAction, ~action=BoxList.Create("World"));
-        let (rendered2, _) = RenderedElement.flushPendingUpdates(rendered1);
+        let (rendered2, _) as actual2 =
+          RenderedElement.flushPendingUpdates(rendered1);
         RemoteAction.act(rAction, ~action=BoxList.Reverse);
-        let (rendered3, _) = RenderedElement.flushPendingUpdates(rendered2);
+        let (rendered3, _) as actual3 =
+          RenderedElement.flushPendingUpdates(rendered2);
         TestRenderer.convertElement(rendered0)
         |> check(
              renderedElement,
              "Initial BoxList",
-             [
-               {
-                 id: 1,
-                 component: Component(BoxList.component),
-                 state: "",
-                 subtree: []
-               }
-             ]
+             [TestComponents.(<BoxList id=1 />)]
            );
-        TestRenderer.convertElement(rendered1)
-        |> check(
-             renderedElement,
-             "Add Hello then Flush",
-             [
-               {
-                 id: 1,
-                 component: Component(BoxList.component),
-                 state: "",
-                 subtree: [
-                   {
-                     id: 2,
-                     component: Component(BoxWithDynamicKeys.component),
-                     state: "Hello",
-                     subtree: []
-                   }
-                 ]
-               }
-             ]
-           );
-        TestRenderer.convertElement(rendered2)
-        |> check(
-             renderedElement,
-             "Add Hello then Flush",
-             [
-               {
-                 id: 1,
-                 component: Component(BoxList.component),
-                 state: "",
-                 subtree: [
-                   {
-                     id: 3,
-                     component: Component(BoxWithDynamicKeys.component),
-                     state: "World",
-                     subtree: []
-                   },
-                   {
-                     id: 2,
-                     component: Component(BoxWithDynamicKeys.component),
-                     state: "Hello",
-                     subtree: []
-                   }
-                 ]
-               }
-             ]
-           );
-        TestRenderer.convertElement(rendered3)
-        |> check(
-             renderedElement,
-             "Add Hello then Flush",
-             [
-               {
-                 id: 1,
-                 component: Component(BoxList.component),
-                 state: "",
-                 subtree: [
-                   {
-                     id: 2,
-                     component: Component(BoxWithDynamicKeys.component),
-                     state: "Hello",
-                     subtree: []
-                   },
-                   {
-                     id: 3,
-                     component: Component(BoxWithDynamicKeys.component),
-                     state: "World",
-                     subtree: []
-                   }
-                 ]
-               }
-             ]
-           );
+        assertUpdate(
+          ~label="Add Hello then Flush",
+          TestComponents.(
+            [
+              <BoxList id=1>
+                <BoxWithDynamicKeys id=2 state="Hello" />
+              </BoxList>
+            ],
+            [
+              UpdateInstance({
+                componentChanged: false,
+                stateChanged: true,
+                subTreeChanged:
+                  ReplaceElements(
+                    [],
+                    [<BoxWithDynamicKeys id=2 state="Hello" />]
+                  ),
+                oldInstance: <BoxList id=1 />,
+                newInstance:
+                  <BoxList id=1>
+                    <BoxWithDynamicKeys id=2 state="Hello" />
+                  </BoxList>
+              })
+            ]
+          ),
+          actual1
+        );
+        assertUpdate(
+          ~label="Add Hello then Flush",
+          TestComponents.(
+            [
+              <BoxList id=1>
+                <BoxWithDynamicKeys id=3 state="World" />
+                <BoxWithDynamicKeys id=2 state="Hello" />
+              </BoxList>
+            ],
+            [
+              UpdateInstance({
+                componentChanged: false,
+                stateChanged: true,
+                subTreeChanged:
+                  ReplaceElements(
+                    [<BoxWithDynamicKeys id=2 state="Hello" />],
+                    [
+                      <BoxWithDynamicKeys id=3 state="World" />,
+                      <BoxWithDynamicKeys id=2 state="Hello" />
+                    ]
+                  ),
+                oldInstance:
+                  <BoxList id=1>
+                    <BoxWithDynamicKeys id=2 state="Hello" />
+                  </BoxList>,
+                newInstance:
+                  <BoxList id=1>
+                    <BoxWithDynamicKeys id=3 state="World" />
+                    <BoxWithDynamicKeys id=2 state="Hello" />
+                  </BoxList>
+              })
+            ]
+          ),
+          actual2
+        );
+        assertUpdate(
+          ~label="Add Hello then Flush",
+          TestComponents.(
+            [
+              <BoxList id=1>
+                <BoxWithDynamicKeys id=2 state="Hello" />
+                <BoxWithDynamicKeys id=3 state="World" />
+              </BoxList>
+            ],
+            [
+              UpdateInstance({
+                componentChanged: false,
+                stateChanged: true,
+                subTreeChanged: Nested,
+                oldInstance:
+                  <BoxList id=1>
+                    <BoxWithDynamicKeys id=3 state="World" />
+                    <BoxWithDynamicKeys id=2 state="Hello" />
+                  </BoxList>,
+                newInstance:
+                  <BoxList id=1>
+                    <BoxWithDynamicKeys id=2 state="Hello" />
+                    <BoxWithDynamicKeys id=3 state="World" />
+                  </BoxList>
+              })
+            ]
+          ),
+          actual3
+        );
       }
     ),
     (
@@ -348,96 +426,111 @@ let suite =
         let rAction = RemoteAction.create();
         let rendered0 = RenderedElement.render(<BoxList rAction />);
         RemoteAction.act(rAction, ~action=BoxList.Create("Hello"));
-        let (rendered1, _) = RenderedElement.flushPendingUpdates(rendered0);
+        let (rendered1, _) as actual1 =
+          RenderedElement.flushPendingUpdates(rendered0);
         RemoteAction.act(rAction, ~action=BoxList.Create("World"));
-        let (rendered2, _) = RenderedElement.flushPendingUpdates(rendered1);
+        let (rendered2, _) as actual2 =
+          RenderedElement.flushPendingUpdates(rendered1);
         RemoteAction.act(rAction, ~action=BoxList.Reverse);
-        let (rendered3, _) = RenderedElement.flushPendingUpdates(rendered2);
+        let (rendered3, _) as actual3 =
+          RenderedElement.flushPendingUpdates(rendered2);
         TestRenderer.convertElement(rendered0)
         |> Assert.check(
              renderedElement,
              "Initial BoxList",
-             [
-               {
-                 id: 1,
-                 component: Component(BoxList.component),
-                 state: "",
-                 subtree: []
-               }
-             ]
+             [TestComponents.(<BoxList id=1 />)]
            );
-        TestRenderer.convertElement(rendered1)
-        |> check(
-             renderedElement,
-             "Add Hello then Flush",
-             [
-               {
-                 id: 1,
-                 component: Component(BoxList.component),
-                 state: "",
-                 subtree: [
-                   {
-                     id: 2,
-                     component: Component(Box.component),
-                     state: "Hello",
-                     subtree: []
-                   }
-                 ]
-               }
-             ]
-           );
-        TestRenderer.convertElement(rendered2)
-        |> check(
-             renderedElement,
-             "Add Hello then Flush",
-             [
-               {
-                 id: 1,
-                 component: Component(BoxList.component),
-                 state: "",
-                 subtree: [
-                   {
-                     id: 3,
-                     component: Component(Box.component),
-                     state: "World",
-                     subtree: []
-                   },
-                   {
-                     id: 4,
-                     component: Component(Box.component),
-                     state: "Hello",
-                     subtree: []
-                   }
-                 ]
-               }
-             ]
-           );
-        TestRenderer.convertElement(rendered3)
-        |> check(
-             renderedElement,
-             "Add Hello then Flush",
-             [
-               {
-                 id: 1,
-                 component: Component(BoxList.component),
-                 state: "",
-                 subtree: [
-                   {
-                     id: 3,
-                     component: Component(Box.component),
-                     state: "Hello",
-                     subtree: []
-                   },
-                   {
-                     id: 4,
-                     component: Component(Box.component),
-                     state: "World",
-                     subtree: []
-                   }
-                 ]
-               }
-             ]
-           );
+        assertUpdate(
+          ~label="Add Hello then Flush",
+          TestComponents.(
+            [<BoxList id=1> <Box id=2 state="Hello" /> </BoxList>],
+            [
+              UpdateInstance({
+                componentChanged: false,
+                stateChanged: true,
+                subTreeChanged:
+                  ReplaceElements([], [<Box id=2 state="Hello" />]),
+                oldInstance: <BoxList id=1 />,
+                newInstance:
+                  <BoxList id=1> <Box id=2 state="Hello" /> </BoxList>
+              })
+            ]
+          ),
+          actual1
+        );
+        assertUpdate(
+          ~label="Add Hello then Flush",
+          TestComponents.(
+            [
+              <BoxList id=1>
+                <Box id=3 state="World" />
+                <Box id=4 state="Hello" />
+              </BoxList>
+            ],
+            [
+              UpdateInstance({
+                componentChanged: false,
+                stateChanged: true,
+                subTreeChanged:
+                  ReplaceElements(
+                    [<Box id=2 state="Hello" />],
+                    [<Box id=3 state="World" />, <Box id=4 state="Hello" />]
+                  ),
+                oldInstance:
+                  <BoxList id=1> <Box id=2 state="Hello" /> </BoxList>,
+                newInstance:
+                  <BoxList id=1>
+                    <Box id=3 state="World" />
+                    <Box id=4 state="Hello" />
+                  </BoxList>
+              })
+            ]
+          ),
+          actual2
+        );
+        assertUpdate(
+          ~label="Add Hello then Flush",
+          TestComponents.(
+            [
+              <BoxList id=1>
+                <Box id=3 state="Hello" />
+                <Box id=4 state="World" />
+              </BoxList>
+            ],
+            [
+              UpdateInstance({
+                componentChanged: false,
+                stateChanged: true,
+                subTreeChanged: NoChange,
+                oldInstance: <Box id=4 state="Hello" />,
+                newInstance: <Box id=4 state="World" />
+              }),
+              UpdateInstance({
+                componentChanged: false,
+                stateChanged: true,
+                subTreeChanged: NoChange,
+                oldInstance: <Box id=3 state="World" />,
+                newInstance: <Box id=3 state="Hello" />
+              }),
+              UpdateInstance({
+                componentChanged: false,
+                stateChanged: true,
+                subTreeChanged: Nested,
+                oldInstance:
+                  <BoxList id=1>
+                    <Box id=3 state="World" />
+                    <Box id=4 state="Hello" />
+                  </BoxList>,
+                newInstance:
+                  <BoxList id=1>
+                    <Box id=3 state="Hello" />
+                    <Box id=4 state="World" />
+                  </BoxList>
+              })
+            ]
+          ),
+          actual3
+        );
       }
     ),
     (
@@ -448,7 +541,13 @@ let suite =
         GlobalState.reset();
         let box_ = <BoxWithDynamicKeys title="box to move" />;
         let rendered0 = RenderedElement.render(box_);
-        let (rendered1, _) =
+        TestRenderer.convertElement(rendered0)
+        |> check(
+             renderedElement,
+             "Initial Box",
+             [TestComponents.(<BoxWithDynamicKeys id=1 state="box to move" />)]
+           );
+        let (rendered1, _) as actual1 =
           RenderedElement.update(
             rendered0,
             Nested(
@@ -456,38 +555,27 @@ let suite =
               [ReasonReact.stringToElement("before"), Nested("div", [box_])]
             )
           );
-        TestRenderer.convertElement(rendered0)
-        |> check(
-             renderedElement,
-             "Initial Box",
-             [
-               {
-                 id: 1,
-                 component: Component(BoxWithDynamicKeys.component),
-                 state: "box to move",
-                 subtree: []
-               }
-             ]
-           );
-        TestRenderer.convertElement(rendered1)
-        |> check(
-             renderedElement,
-             "After update",
-             [
-               {
-                 id: 2,
-                 component: Component(Text.component),
-                 state: "before",
-                 subtree: []
-               },
-               {
-                 id: 1,
-                 component: Component(BoxWithDynamicKeys.component),
-                 state: "box to move",
-                 subtree: []
-               }
-             ]
-           );
+        assertUpdate(
+          ~label="After update",
+          TestComponents.(
+            [
+              <Text id=2 title="before" />,
+              <BoxWithDynamicKeys id=1 state="box to move" />
+            ],
+            [
+              TopLevelUpdate(
+                ReplaceElements(
+                  [<BoxWithDynamicKeys id=1 state="box to move" />],
+                  [
+                    <Text id=2 title="before" />,
+                    <BoxWithDynamicKeys id=1 state="box to move" />
+                  ]
+                )
+              )
+            ]
+          ),
+          actual1
+        );
       }
     ),
     (
@@ -505,7 +593,16 @@ let suite =
               <Box key=key2 title="Box2unchanged" />
             ])
           );
-        let (rendered1, _) =
+        TestRenderer.convertElement(rendered0)
+        |> check(
+             renderedElement,
+             "Initial Boxes",
+             TestComponents.[
+               <Box id=1 state="Box1unchanged" />,
+               <Box id=2 state="Box2unchanged" />
+             ]
+           );
+        let (rendered1, _) as actual1 =
           RenderedElement.update(
             rendered0,
             ReasonReact.listToElement([
@@ -513,44 +610,33 @@ let suite =
               <Box key=key1 title="Box1changed" />
             ])
           );
-        TestRenderer.convertElement(rendered0)
-        |> check(
-             renderedElement,
-             "Initial Boxes",
-             [
-               {
-                 id: 1,
-                 component: Component(Box.component),
-                 state: "Box1unchanged",
-                 subtree: []
-               },
-               {
-                 id: 2,
-                 component: Component(Box.component),
-                 state: "Box2unchanged",
-                 subtree: []
-               }
-             ]
-           );
-        TestRenderer.convertElement(rendered1)
-        |> check(
-             renderedElement,
-             "Swap Boxes",
-             [
-               {
-                 id: 2,
-                 component: Component(Box.component),
-                 state: "Box2changed",
-                 subtree: []
-               },
-               {
-                 id: 1,
-                 component: Component(Box.component),
-                 state: "Box1changed",
-                 subtree: []
-               }
-             ]
-           );
+        assertUpdate(
+          ~label="Swap Boxes",
+          TestComponents.(
+            [
+              <Box id=2 state="Box2changed" />,
+              <Box id=1 state="Box1changed" />
+            ],
+            [
+              UpdateInstance({
+                componentChanged: false,
+                stateChanged: true,
+                subTreeChanged: NoChange,
+                oldInstance: <Box id=1 state="Box1unchanged" />,
+                newInstance: <Box id=1 state="Box1changed" />
+              }),
+              UpdateInstance({
+                componentChanged: false,
+                stateChanged: true,
+                subTreeChanged: NoChange,
+                oldInstance: <Box id=2 state="Box2unchanged" />,
+                newInstance: <Box id=2 state="Box2changed" />
+              }),
+              TopLevelUpdate(Nested)
+            ]
+          ),
+          actual1
+        );
       }
     ),
     (
@@ -564,14 +650,7 @@ let suite =
             TestRenderer.id: 1,
             component: Component(UpdateAlternateClicks.component),
             state,
-            subtree: [
-              {
-                id: 2,
-                state: text,
-                component: Component(Text.component),
-                subtree: []
-              }
-            ]
+            subtree: [TestComponents.(<Text id=2 title=text />)]
           }
         ];
         let rAction = RemoteAction.create();

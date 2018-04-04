@@ -8,6 +8,26 @@ module Box = {
     };
 };
 
+module BoxWithDynamicKeys = {
+  let createElement = (~id, ~state="ImABox", ~children, ()) =>
+    TestRenderer.{
+      component: Component(Components.BoxWithDynamicKeys.component),
+      id,
+      state,
+      subtree: children
+    };
+};
+
+module BoxList = {
+  let createElement = (~id, ~state="", ~children, ()) =>
+    TestRenderer.{
+      component: Component(Components.BoxList.component),
+      id,
+      state,
+      subtree: children
+    };
+};
+
 module Div = {
   let createElement = (~id, ~children, ()) =>
     TestRenderer.{
@@ -38,53 +58,54 @@ module ChangeCounter = {
     };
 };
 
-module ButtonWrapperWrapper = {
+module Text = {
   open Components;
-  let createElement = (~id, ~nestedText, ~children: _, ()) =>
+  let createElement = (~id, ~title, ~children: _, ()) =>
     TestRenderer.{
       id,
-      component: Component(ButtonWrapperWrapper.component),
+      component: Component(ReasonReact.Text.component),
+      state: title,
+      subtree: []
+    };
+};
+
+module ButtonWrapper = {
+  open Components;
+  let createElement = (~id, ~children: _, ()) =>
+    TestRenderer.{
+      id,
+      component: Component(ButtonWrapper.component),
       state: "",
       subtree: [
         {
           id: id + 1,
-          component: Component(Div.component),
+          component: Component(StatelessButton.component),
           state: "",
           subtree: [
             {
-              id: id + 2,
-              component: Component(ReasonReact.Text.component),
-              state: "buttonWrapperWrapperState",
-              subtree: []
-            },
-            {
-              id: id + 3,
-              component: Component(ReasonReact.Text.component),
-              state: nestedText,
-              subtree: []
-            },
-            {
-              id: id + 4,
-              component: Component(ButtonWrapper.component),
+              component: Component(Div.component),
               state: "",
-              subtree: [
-                {
-                  id: id + 5,
-                  component: Component(StatelessButton.component),
-                  state: "",
-                  subtree: [
-                    {
-                      component: Component(Div.component),
-                      state: "",
-                      id: id + 6,
-                      subtree: []
-                    }
-                  ]
-                }
-              ]
+              id: id + 2,
+              subtree: []
             }
           ]
         }
+      ]
+    };
+};
+
+module ButtonWrapperWrapper = {
+  let createElement = (~id, ~nestedText, ~children: _, ()) =>
+    TestRenderer.{
+      id,
+      component: Component(Components.ButtonWrapperWrapper.component),
+      state: "",
+      subtree: [
+        <Div id=(id + 1)>
+          <Text id=(id + 2) title="buttonWrapperWrapperState" />
+          <Text id=(id + 3) title=nestedText />
+          <ButtonWrapper id=(id + 4) />
+        </Div>
       ]
     };
 };

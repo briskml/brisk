@@ -33,19 +33,12 @@ type testUpdateEntry =
 type testUpdateLog = list(testUpdateEntry);
 
 let rec convertInstance =
-  fun
-  | Instance({component, id, instanceSubTree, iState} as instance) => {
-      component: InstanceAndComponent(component, instance),
-      id,
-      subtree: convertElement(instanceSubTree),
-      state: component.printState(iState)
-    }
-  | NativeInstance(_, {component, id, instanceSubTree, iState} as instance) => {
-      component: InstanceAndComponent(component, instance),
-      id,
-      subtree: convertElement(instanceSubTree),
-      state: component.printState(iState)
-    }
+        (Instance({component, id, instanceSubTree, iState} as instance)) => {
+  component: InstanceAndComponent(component, instance),
+  id,
+  subtree: convertElement(instanceSubTree),
+  state: component.printState(iState)
+}
 and convertElement =
   fun
   | IFlat(instances) => List.map(convertInstance, instances)

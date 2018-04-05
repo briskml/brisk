@@ -6,6 +6,12 @@ let renderedElement =
     TestRenderer.compareElement
   );
 
+let topLevelUpdateLog =
+  Alcotest.testable(
+    (formatter, t) => TestPrinter.printTopLevelUpdateLog(formatter, t),
+    TestRenderer.compareTopLevelUpdateLog
+  );
+
 let updateLog =
   Alcotest.testable(
     (formatter, t) => TestPrinter.printUpdateLog(formatter, t),
@@ -80,8 +86,22 @@ let assertElement = (~label="", expected, rendered) =>
 let assertUpdateLog = (~label="", expected, actual) =>
   check(updateLog, label, expected, TestRenderer.convertUpdateLog(actual));
 
-let assertUpdate =
+let assertTopLevelUpdateLog = (~label="", expected, actual) =>
+  check(
+    topLevelUpdateLog,
+    label,
+    expected,
+    TestRenderer.convertTopLevelUpdateLog(actual)
+  );
+
+let assertFlushUpdate =
     (~label="", (expectedElement, expectedLog), (actualElement, actualLog)) => {
   assertElement(~label, expectedElement, actualElement);
   assertUpdateLog(~label, expectedLog, actualLog);
+};
+
+let assertUpdate =
+    (~label="", (expectedElement, expectedLog), (actualElement, actualLog)) => {
+  assertElement(~label, expectedElement, actualElement);
+  assertTopLevelUpdateLog(~label, expectedLog, actualLog);
 };

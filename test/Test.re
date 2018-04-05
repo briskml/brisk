@@ -42,27 +42,33 @@ let suite =
           TestComponents.(<BoxWrapper id=1> twoBoxes </BoxWrapper>);
         let expected = (
           [twoBoxesWrapper],
-          TestComponents.[
-            UpdateInstance({
-              stateChanged: false,
-              componentChanged: false,
-              subTreeChanged:
-                ReplaceElements(
-                  [<Box id=3 state="ImABox" />],
-                  [<Box id=4 state="ImABox" />, <Box id=5 state="ImABox" />]
-                ),
-              newInstance: twoBoxes,
-              oldInstance: oneBox
-            }),
-            UpdateInstance({
-              stateChanged: false,
-              componentChanged: false,
-              subTreeChanged: Nested,
-              newInstance: twoBoxesWrapper,
-              oldInstance: <BoxWrapper id=1> oneBox </BoxWrapper>
-            }),
-            TopLevelUpdate(Nested)
-          ]
+          Some({
+            typ: Nested,
+            updateLog:
+              ref(
+                TestComponents.[
+                  UpdateInstance({
+                    stateChanged: false,
+                    subTreeChanged:
+                      ReplaceElements(
+                        [<Box id=3 state="ImABox" />],
+                        [
+                          <Box id=4 state="ImABox" />,
+                          <Box id=5 state="ImABox" />
+                        ]
+                      ),
+                    newInstance: twoBoxes,
+                    oldInstance: oneBox
+                  }),
+                  UpdateInstance({
+                    stateChanged: false,
+                    subTreeChanged: Nested,
+                    newInstance: twoBoxesWrapper,
+                    oldInstance: <BoxWrapper id=1> oneBox </BoxWrapper>
+                  })
+                ]
+              )
+          })
         );
         assertUpdate(expected, actual);
       }
@@ -96,7 +102,7 @@ let suite =
                 <ChangeCounter id=1 label="defaultText" counter=10 />
               )
             ],
-            []
+            None
           ),
           actual
         );
@@ -106,39 +112,34 @@ let suite =
             <ChangeCounter label="updatedText" />
           );
         assertUpdate(
-          (
-            [
-              TestComponents.(
-                <ChangeCounter id=1 label="updatedText" counter=11 />
-              )
-            ],
-            TestComponents.[
-              UpdateInstance({
-                componentChanged: false,
-                stateChanged: true,
-                subTreeChanged: NoChange,
-                oldInstance:
-                  <ChangeCounter id=1 label="defaultText" counter=10 />,
-                newInstance:
-                  <ChangeCounter id=1 label="updatedText" counter=11 />
-              }),
-              TopLevelUpdate(Nested)
-            ]
+          TestComponents.(
+            [<ChangeCounter id=1 label="updatedText" counter=11 />],
+            Some(
+              TestRenderer.{
+                typ: Nested,
+                updateLog:
+                  ref([
+                    UpdateInstance({
+                      stateChanged: true,
+                      subTreeChanged: NoChange,
+                      oldInstance:
+                        <ChangeCounter id=1 label="defaultText" counter=10 />,
+                      newInstance:
+                        <ChangeCounter id=1 label="updatedText" counter=11 />
+                    })
+                  ])
+              }
+            )
           ),
           actual2
         );
         let (rendered2f, _) as actual2f =
           ReasonReact.RenderedElement.flushPendingUpdates(rendered2);
-        assertUpdate(
-          (
+        assertFlushUpdate(
+          TestComponents.(
+            [<ChangeCounter id=1 label="updatedText" counter=2011 />],
             [
-              TestComponents.(
-                <ChangeCounter id=1 label="updatedText" counter=2011 />
-              )
-            ],
-            TestComponents.[
               UpdateInstance({
-                componentChanged: false,
                 stateChanged: true,
                 subTreeChanged: NoChange,
                 oldInstance:
@@ -177,31 +178,34 @@ let suite =
             [
               <ButtonWrapperWrapper id=2 nestedText="wrappedText:updatedText" />
             ],
-            [
-              UpdateInstance({
-                componentChanged: true,
-                stateChanged: true,
-                subTreeChanged:
-                  ReplaceElements(
-                    [],
-                    [
-                      <Div id=3>
-                        <Text id=4 title="buttonWrapperWrapperState" />
-                        <Text id=5 title="wrappedText:updatedText" />
-                        <ButtonWrapper id=6 />
-                      </Div>
-                    ]
-                  ),
-                oldInstance:
-                  <ChangeCounter id=1 label="updatedText" counter=2011 />,
-                newInstance:
-                  <ButtonWrapperWrapper
-                    id=2
-                    nestedText="wrappedText:updatedText"
-                  />
-              }),
-              TopLevelUpdate(Nested)
-            ]
+            Some(
+              TestRenderer.{
+                typ: Nested,
+                updateLog:
+                  ref([
+                    SwitchComponent({
+                      subTreeChanged:
+                        ReplaceElements(
+                          [],
+                          [
+                            <Div id=3>
+                              <Text id=4 title="buttonWrapperWrapperState" />
+                              <Text id=5 title="wrappedText:updatedText" />
+                              <ButtonWrapper id=6 />
+                            </Div>
+                          ]
+                        ),
+                      oldInstance:
+                        <ChangeCounter id=1 label="updatedText" counter=2011 />,
+                      newInstance:
+                        <ButtonWrapperWrapper
+                          id=2
+                          nestedText="wrappedText:updatedText"
+                        />
+                    })
+                  ])
+              }
+            )
           ),
           actual3
         );
@@ -219,49 +223,52 @@ let suite =
                 nestedText="wrappedText:updatedTextmodified"
               />
             ],
-            [
-              UpdateInstance({
-                componentChanged: false,
-                stateChanged: true,
-                subTreeChanged: NoChange,
-                oldInstance: <Text id=5 title="wrappedText:updatedText" />,
-                newInstance:
-                  <Text id=5 title="wrappedText:updatedTextmodified" />
-              }),
-              UpdateInstance({
-                componentChanged: false,
-                stateChanged: false,
-                subTreeChanged: Nested,
-                oldInstance:
-                  <Div id=3>
-                    <Text id=4 title="buttonWrapperWrapperState" />
-                    <Text id=5 title="wrappedText:updatedText" />
-                    <ButtonWrapper id=6 />
-                  </Div>,
-                newInstance:
-                  <Div id=3>
-                    <Text id=4 title="buttonWrapperWrapperState" />
-                    <Text id=5 title="wrappedText:updatedTextmodified" />
-                    <ButtonWrapper id=6 />
-                  </Div>
-              }),
-              UpdateInstance({
-                componentChanged: false,
-                stateChanged: false,
-                subTreeChanged: Nested,
-                oldInstance:
-                  <ButtonWrapperWrapper
-                    id=2
-                    nestedText="wrappedText:updatedText"
-                  />,
-                newInstance:
-                  <ButtonWrapperWrapper
-                    id=2
-                    nestedText="wrappedText:updatedTextmodified"
-                  />
-              }),
-              TopLevelUpdate(Nested)
-            ]
+            Some(
+              TestRenderer.{
+                typ: Nested,
+                updateLog:
+                  ref([
+                    UpdateInstance({
+                      stateChanged: true,
+                      subTreeChanged: NoChange,
+                      oldInstance:
+                        <Text id=5 title="wrappedText:updatedText" />,
+                      newInstance:
+                        <Text id=5 title="wrappedText:updatedTextmodified" />
+                    }),
+                    UpdateInstance({
+                      stateChanged: false,
+                      subTreeChanged: Nested,
+                      oldInstance:
+                        <Div id=3>
+                          <Text id=4 title="buttonWrapperWrapperState" />
+                          <Text id=5 title="wrappedText:updatedText" />
+                          <ButtonWrapper id=6 />
+                        </Div>,
+                      newInstance:
+                        <Div id=3>
+                          <Text id=4 title="buttonWrapperWrapperState" />
+                          <Text id=5 title="wrappedText:updatedTextmodified" />
+                          <ButtonWrapper id=6 />
+                        </Div>
+                    }),
+                    UpdateInstance({
+                      stateChanged: false,
+                      subTreeChanged: Nested,
+                      oldInstance:
+                        <ButtonWrapperWrapper
+                          id=2
+                          nestedText="wrappedText:updatedText"
+                        />,
+                      newInstance:
+                        <ButtonWrapperWrapper
+                          id=2
+                          nestedText="wrappedText:updatedTextmodified"
+                        />
+                    })
+                  ])
+              }
+            )
           ),
           actual4
         );
@@ -324,7 +331,7 @@ let suite =
              "Initial BoxList",
              [TestComponents.(<BoxList id=1 />)]
            );
-        assertUpdate(
+        assertFlushUpdate(
           ~label="Add Hello then Flush",
           TestComponents.(
             [
@@ -334,7 +341,6 @@ let suite =
             ],
             [
               UpdateInstance({
-                componentChanged: false,
                 stateChanged: true,
                 subTreeChanged:
                   ReplaceElements(
@@ -351,7 +357,7 @@ let suite =
           ),
           actual1
         );
-        assertUpdate(
+        assertFlushUpdate(
           ~label="Add Hello then Flush",
           TestComponents.(
             [
@@ -362,7 +368,6 @@ let suite =
             ],
             [
               UpdateInstance({
-                componentChanged: false,
                 stateChanged: true,
                 subTreeChanged:
                   ReplaceElements(
@@ -386,7 +391,7 @@ let suite =
           ),
           actual2
         );
-        assertUpdate(
+        assertFlushUpdate(
           ~label="Add Hello then Flush",
           TestComponents.(
             [
@@ -397,7 +402,6 @@ let suite =
             ],
             [
               UpdateInstance({
-                componentChanged: false,
                 stateChanged: true,
                 subTreeChanged: Nested,
                 oldInstance:
@@ -440,13 +444,12 @@ let suite =
              "Initial BoxList",
              [TestComponents.(<BoxList id=1 />)]
            );
-        assertUpdate(
+        assertFlushUpdate(
           ~label="Add Hello then Flush",
           TestComponents.(
             [<BoxList id=1> <Box id=2 state="Hello" /> </BoxList>],
             [
               UpdateInstance({
-                componentChanged: false,
                 stateChanged: true,
                 subTreeChanged:
                   ReplaceElements([], [<Box id=2 state="Hello" />]),
@@ -458,7 +461,7 @@ let suite =
           ),
           actual1
         );
-        assertUpdate(
+        assertFlushUpdate(
           ~label="Add Hello then Flush",
           TestComponents.(
             [
@@ -469,7 +472,6 @@ let suite =
             ],
             [
               UpdateInstance({
-                componentChanged: false,
                 stateChanged: true,
                 subTreeChanged:
                   ReplaceElements(
@@ -488,7 +490,7 @@ let suite =
           ),
           actual2
         );
-        assertUpdate(
+        assertFlushUpdate(
           ~label="Add Hello then Flush",
           TestComponents.(
             [
@@ -499,21 +501,18 @@ let suite =
             ],
             [
               UpdateInstance({
-                componentChanged: false,
                 stateChanged: true,
                 subTreeChanged: NoChange,
                 oldInstance: <Box id=4 state="Hello" />,
                 newInstance: <Box id=4 state="World" />
               }),
               UpdateInstance({
-                componentChanged: false,
                 stateChanged: true,
                 subTreeChanged: NoChange,
                 oldInstance: <Box id=3 state="World" />,
                 newInstance: <Box id=3 state="Hello" />
               }),
               UpdateInstance({
-                componentChanged: false,
                 stateChanged: true,
                 subTreeChanged: Nested,
                 oldInstance:
@@ -562,20 +561,40 @@ let suite =
               <Text id=2 title="before" />,
               <BoxWithDynamicKeys id=1 state="box to move" />
             ],
-            [
-              TopLevelUpdate(
-                ReplaceElements(
-                  [<BoxWithDynamicKeys id=1 state="box to move" />],
-                  [
-                    <Text id=2 title="before" />,
-                    <BoxWithDynamicKeys id=1 state="box to move" />
-                  ]
-                )
-              )
-            ]
+            Some(
+              TestRenderer.{
+                typ:
+                  ReplaceElements(
+                    [<BoxWithDynamicKeys id=1 state="box to move" />],
+                    [
+                      <Text id=2 title="before" />,
+                      <BoxWithDynamicKeys id=1 state="box to move" />
+                    ]
+                  ),
+                updateLog: ref([])
+              }
+            )
           ),
           actual1
         );
+        /* TODO Compare rendered0 and rendered1 */
+        /* check(
+             Alcotest.bool,
+             "Memoized nested box",
+             true,
+             ReasonReact.(
+               switch (rendered0, rendered1) {
+               | (
+                   IFlat([Instance({instanceSubTree: IFlat([x])})]),
+                   IFlat([
+                     Instance({instanceSubTree: INested(_, [_, IFlat([y])])})
+                   ])
+                 ) =>
+                 x === y
+               | _ => false
+               }
+             )
+           ); */
       }
     ),
     (
@@ -617,23 +636,26 @@ let suite =
               <Box id=2 state="Box2changed" />,
               <Box id=1 state="Box1changed" />
             ],
-            [
-              UpdateInstance({
-                componentChanged: false,
-                stateChanged: true,
-                subTreeChanged: NoChange,
-                oldInstance: <Box id=1 state="Box1unchanged" />,
-                newInstance: <Box id=1 state="Box1changed" />
-              }),
-              UpdateInstance({
-                componentChanged: false,
-                stateChanged: true,
-                subTreeChanged: NoChange,
-                oldInstance: <Box id=2 state="Box2unchanged" />,
-                newInstance: <Box id=2 state="Box2changed" />
-              }),
-              TopLevelUpdate(Nested)
-            ]
+            Some(
+              TestRenderer.{
+                typ: Nested,
+                updateLog:
+                  ref([
+                    UpdateInstance({
+                      stateChanged: true,
+                      subTreeChanged: NoChange,
+                      oldInstance: <Box id=1 state="Box1unchanged" />,
+                      newInstance: <Box id=1 state="Box1changed" />
+                    }),
+                    UpdateInstance({
+                      stateChanged: true,
+                      subTreeChanged: NoChange,
+                      oldInstance: <Box id=2 state="Box2unchanged" />,
+                      newInstance: <Box id=2 state="Box2changed" />
+                    })
+                  ])
+              }
+            )
           ),
           actual1
         );

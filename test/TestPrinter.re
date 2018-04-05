@@ -66,21 +66,24 @@ let printUpdateLog = formatter => {
   let rec pp = () => Fmt.brackets(Fmt.list(~sep=Fmt.comma, printUpdateLog()))
   and printUpdateLog = ((), formatter, entry) =>
     switch entry {
-    | TopLevelUpdate(subtreeChange) =>
-      Fmt.pf(
-        formatter,
-        "%s (@[<hov> %a @])",
-        "TopLevelUpdate",
-        printSubTreeChange,
-        subtreeChange
-      )
     | UpdateInstance(update) =>
       Fmt.pf(
         formatter,
-        "%s {@[<hov>@,componentChanged: %s,@ stateChanged: %s,@ subTreeChanged: %a,@ oldInstance: %a,@ newInstance: %a @]}",
+        "%s {@[<hov>@,stateChanged: %s,@ subTreeChanged: %a,@ oldInstance: %a,@ newInstance: %a @]}",
         "UpdateInstance",
-        string_of_bool(update.componentChanged),
         string_of_bool(update.stateChanged),
+        printSubTreeChange,
+        update.subTreeChanged,
+        printInstance(),
+        update.oldInstance,
+        printInstance(),
+        update.newInstance
+      )
+    | SwitchComponent(update) =>
+      Fmt.pf(
+        formatter,
+        "%s {@[<hov>@,subTreeChanged: %a,@ oldInstance: %a,@ newInstance: %a @]}",
+        "SwitchComponent",
         printSubTreeChange,
         update.subTreeChanged,
         printInstance(),
@@ -91,3 +94,23 @@ let printUpdateLog = formatter => {
     };
   Fmt.pf(formatter, "%a", pp());
 };
+
+let printTopLevelUpdateLog =
+  Fmt.hvbox((formatter, topLevelUpdateLog: option(testTopLevelUpdateLog)) => switch (topLevelUpdateLog) {
+  | Some(topLevelUpdate) =>
+    Fmt.pf(
+      formatter,
+      "%s {@[<hov>@,subTreeChanged: %a,@ updateLog: %a @]}",
+      "TopLevelUpdate",
+      printSubTreeChange,
+      topLevelUpdate.typ,
+      printUpdateLog,
+      topLevelUpdate.updateLog^
+    )
+  | None =>
+    Fmt.pf(
+      formatter,
+      "%s",
+      "NoUpdate"
+    )
+  });

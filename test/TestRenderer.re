@@ -21,27 +21,41 @@ type testSubTreeChange =
 type testUpdate = {
   oldInstance: testInstance,
   newInstance: testInstance,
-  componentChanged: bool,
   stateChanged: bool,
   subTreeChanged: testSubTreeChange
 };
 
+type testSwitchComponent = {
+  oldInstance: testInstance,
+  newInstance: testInstance,
+  subTreeChanged: testSubTreeChange
+};
+
 type testUpdateEntry =
-  | TopLevelUpdate(testSubTreeChange)
-  | UpdateInstance(testUpdate);
+  | UpdateInstance(testUpdate)
+  | SwitchComponent(testSwitchComponent);
 
-type testUpdateLog = list(testUpdateEntry);
+type testUpdateLog = ref(list(testUpdateEntry));
 
-let rec convertInstance =
-        (Instance({component, id, instanceSubTree, iState} as instance)) => {
-  component: InstanceAndComponent(component, instance),
-  id,
-  subtree: convertElement(instanceSubTree),
-  state: component.printState(iState)
-}
+type testTopLevelUpdateLog = {
+  typ: testSubTreeChange,
+  updateLog: testUpdateLog
+};
+
+let rec convertInstance:
+  'state 'action 'elementType .
+  instance('state, 'action, 'elementType) => testInstance
+ =
+  ({component, id, instanceSubTree, iState} as instance) => {
+    component: InstanceAndComponent(component, instance),
+    id,
+    subtree: convertElement(instanceSubTree),
+    state: component.printState(iState)
+  }
 and convertElement =
   fun
-  | IFlat(instances) => List.map(convertInstance, instances)
+  | IFlat(instances) =>
+    List.map((Instance(instance)) => convertInstance(instance), instances)
   | INested(_, elements) => List.flatten(List.map(convertElement, elements));
 
 let convertSubTreeChange =
@@ -57,20 +71,15 @@ let render = element => RenderedElement.render(element);
 let update = (element, next) => RenderedElement.update(element, next);
 
 let convertUpdateLog = (updateLog: ReasonReact.UpdateLog.t) => {
-  let rec convertUpdateLog = updateLogRef =>
+  let rec convertUpdateLog = (updateLogRef: list(ReasonReact.UpdateLog.entry)) =>
     switch updateLogRef {
     | [] => []
-    | [ReasonReact.UpdateLog.TopLevelUpdate(subtreeChange), ...t] => [
-        TopLevelUpdate(convertSubTreeChange(subtreeChange)),
-        ...convertUpdateLog(t)
-      ]
     | [
         UpdateInstance({
           ReasonReact.UpdateLog.oldId,
           newId,
-          oldOpaqueInstance,
-          newOpaqueInstance,
-          componentChanged,
+          instanceUpdate:
+            ReasonReact.UpdateLog.InstanceUpdate(oldInstance, newInstance),
           stateChanged,
           subTreeChanged
         }),
@@ -78,22 +87,54 @@ let convertUpdateLog = (updateLog: ReasonReact.UpdateLog.t) => {
       ] => [
         UpdateInstance({
           oldInstance: {
-            ...convertInstance(oldOpaqueInstance),
+            ...convertInstance(oldInstance),
             id: oldId
           },
           newInstance: {
-            ...convertInstance(newOpaqueInstance),
+            ...convertInstance(newInstance),
             id: newId
           },
-          componentChanged,
           stateChanged,
           subTreeChanged: convertSubTreeChange(subTreeChanged)
         }),
         ...convertUpdateLog(t)
       ]
+    | [
+        SwitchComponent({
+          ReasonReact.UpdateLog.oldId,
+          newId,
+          oldOpaqueInstance: Instance(oldInstance),
+          newOpaqueInstance: Instance(newInstance),
+          subTreeChanged
+        }),
+        ...t
+      ] => [
+        SwitchComponent({
+          oldInstance: {
+            ...convertInstance(oldInstance),
+            id: oldId
+          },
+          newInstance: {
+            ...convertInstance(newInstance),
+            id: newId
+          },
+          subTreeChanged: convertSubTreeChange(subTreeChanged)
+        })
+      ]
     };
   List.rev(convertUpdateLog(updateLog^));
 };
+
+let convertTopLevelUpdateLog:
+  option(ReasonReact.UpdateLog.topLevelUpdate) => option(testTopLevelUpdateLog) =
+  fun
+  | Some(topLevelUpdate) =>
+    Some({
+      typ: convertSubTreeChange(topLevelUpdate.ReasonReact.UpdateLog.typ),
+      updateLog:
+        ref(convertUpdateLog(topLevelUpdate.ReasonReact.UpdateLog.updateLog))
+    })
+  | None => None;
 
 let compareComponents = (left, right) =>
   switch (left, right) {
@@ -153,18 +194,31 @@ let rec compareUpdateLog = (left, right) =>
   | ([], []) => true
   | ([UpdateInstance(x), ...t1], [UpdateInstance(y), ...t2]) =>
     x.stateChanged === y.stateChanged
-    && x.componentChanged === y.componentChanged
     && compareSubtree((x.subTreeChanged, y.subTreeChanged))
+    && compareUpdateLog(t1, t2)
     && compareInstance((x.oldInstance, y.oldInstance))
     && compareInstance((x.newInstance, y.newInstance))
+  | ([SwitchComponent(x), ...t1], [SwitchComponent(y), ...t2]) =>
+    compareSubtree((x.subTreeChanged, y.subTreeChanged))
     && compareUpdateLog(t1, t2)
-  | ([TopLevelUpdate(x), ...t1], [TopLevelUpdate(y), ...t2]) =>
-    compareSubtree((x, y)) && compareUpdateLog(t1, t2)
-  | ([TopLevelUpdate(_), ..._], [UpdateInstance(_), ..._])
-  | ([UpdateInstance(_), ..._], [TopLevelUpdate(_), ..._]) => false
+    && compareInstance((x.oldInstance, y.oldInstance))
+    && compareInstance((x.newInstance, y.newInstance))
+  | ([UpdateInstance(_), ..._], [_, ..._])
+  | ([SwitchComponent(_), ..._], [_, ..._])
   | ([_, ..._], [])
   | ([], [_, ..._]) => false
   };
+
+let compareTopLevelUpdateLog:
+  (option(testTopLevelUpdateLog), option(testTopLevelUpdateLog)) => bool =
+  (left, right) =>
+    switch (left, right) {
+    | (None, None) => true
+    | (Some(x), Some(y)) =>
+      compareSubtree((x.typ, y.typ))
+      && compareUpdateLog(x.updateLog^, y.updateLog^)
+    | (_, _) => false
+    };
 
 let componentName = component =>
   switch component {

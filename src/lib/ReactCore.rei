@@ -179,7 +179,7 @@ module Make:
     /***
      * Log of operations performed to update an instance tree.
      */
-    module UpdateLog: {type t; let create: unit => t;};
+    module UpdateLog: {type t; type topLevelUpdate; let create: unit => t;};
     module RenderedElement: {
 
       /*** Type of a react element after rendering  */
@@ -190,7 +190,7 @@ module Make:
       let render: reactElement => t;
 
       /*** Update a rendered element when a new react element is received. */
-      let update: (t, reactElement) => (t, UpdateLog.t);
+      let update: (t, reactElement) => (t, option(UpdateLog.topLevelUpdate));
 
       /*** Flush pending state updates (and possibly add new ones). */
       let flushPendingUpdates: t => (t, UpdateLog.t);

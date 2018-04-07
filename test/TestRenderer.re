@@ -12,11 +12,12 @@ type testInstance = {
 }
 and t = list(testInstance);
 
-type testSubTreeChange =
-  | NoChange
-  | Nested
-  | PrependElement(t)
-  | ReplaceElements(t, t);
+type testSubTreeChange = [
+  | `NoChange
+  | `Nested
+  | `PrependElement(t)
+  | `ReplaceElements(t, t)
+];
 
 type testUpdate = {
   oldInstance: testInstance,
@@ -25,20 +26,21 @@ type testUpdate = {
   subTreeChanged: testSubTreeChange
 };
 
-type testSwitchComponent = {
+type testChangeComponent = {
   oldInstance: testInstance,
   newInstance: testInstance,
-  subTreeChanged: testSubTreeChange
+  oldSubtree: t,
+  newSubtree: t
 };
 
 type testUpdateEntry =
   | UpdateInstance(testUpdate)
-  | SwitchComponent(testSwitchComponent);
+  | ChangeComponent(testChangeComponent);
 
 type testUpdateLog = ref(list(testUpdateEntry));
 
 type testTopLevelUpdateLog = {
-  typ: testSubTreeChange,
+  subtreeChange: testSubTreeChange,
   updateLog: testUpdateLog
 };
 
@@ -58,13 +60,22 @@ and convertElement =
     List.map((Instance(instance)) => convertInstance(instance), instances)
   | INested(_, elements) => List.flatten(List.map(convertElement, elements));
 
-let convertSubTreeChange =
+let convertSubTreeChange:
+  ReasonReact.UpdateLog.subtreeChange => testSubTreeChange =
   fun
-  | ReasonReact.UpdateLog.NoChange => NoChange
-  | Nested => Nested
-  | PrependElement(x) => PrependElement(convertElement(x))
-  | ReplaceElements(oldElem, newElem) =>
-    ReplaceElements(convertElement(oldElem), convertElement(newElem));
+  | `NoChange => `NoChange
+  | `Nested => `Nested
+  | `PrependElement(x) => `PrependElement(convertElement(x))
+  | `ReplaceElements(oldElem, newElem) =>
+    `ReplaceElements((convertElement(oldElem), convertElement(newElem)));
+
+let convertTopLevelSubTreeChange:
+  ReasonReact.RenderedElement.subtreeChange => testSubTreeChange =
+  fun
+  | `Nested => `Nested
+  | `PrependElement(x) => `PrependElement(convertElement(x))
+  | `ReplaceElements(oldElem, newElem) =>
+    `ReplaceElements((convertElement(oldElem), convertElement(newElem)));
 
 let render = element => RenderedElement.render(element);
 
@@ -75,41 +86,34 @@ let convertUpdateLog = (updateLog: ReasonReact.UpdateLog.t) => {
     switch updateLogRef {
     | [] => []
     | [
-        UpdateInstance({
-          ReasonReact.UpdateLog.oldId,
-          newId,
-          instanceUpdate:
-            ReasonReact.UpdateLog.InstanceUpdate(oldInstance, newInstance),
+        ReasonReact.UpdateLog.UpdateInstance({
+          oldInstance,
+          newInstance,
           stateChanged,
           subTreeChanged
         }),
         ...t
       ] => [
         UpdateInstance({
-          oldInstance: {
-            ...convertInstance(oldInstance),
-            id: oldId
-          },
-          newInstance: {
-            ...convertInstance(newInstance),
-            id: newId
-          },
+          oldInstance: convertInstance(oldInstance),
+          newInstance: convertInstance(newInstance),
           stateChanged,
           subTreeChanged: convertSubTreeChange(subTreeChanged)
         }),
         ...convertUpdateLog(t)
       ]
     | [
-        SwitchComponent({
-          ReasonReact.UpdateLog.oldId,
+        ReasonReact.UpdateLog.ChangeComponent({
+          oldId,
           newId,
           oldOpaqueInstance: Instance(oldInstance),
           newOpaqueInstance: Instance(newInstance),
-          subTreeChanged
+          oldSubtree,
+          newSubtree
         }),
         ...t
       ] => [
-        SwitchComponent({
+        ChangeComponent({
           oldInstance: {
             ...convertInstance(oldInstance),
             id: oldId
@@ -118,21 +122,31 @@ let convertUpdateLog = (updateLog: ReasonReact.UpdateLog.t) => {
             ...convertInstance(newInstance),
             id: newId
           },
-          subTreeChanged: convertSubTreeChange(subTreeChanged)
-        })
+          oldSubtree: convertElement(oldSubtree),
+          newSubtree: convertElement(newSubtree)
+        }),
+        ...convertUpdateLog(t)
       ]
     };
   List.rev(convertUpdateLog(updateLog^));
 };
 
 let convertTopLevelUpdateLog:
-  option(ReasonReact.UpdateLog.topLevelUpdate) => option(testTopLevelUpdateLog) =
+  option(ReasonReact.RenderedElement.topLevelUpdate) =>
+  option(testTopLevelUpdateLog) =
   fun
   | Some(topLevelUpdate) =>
     Some({
-      typ: convertSubTreeChange(topLevelUpdate.ReasonReact.UpdateLog.typ),
+      subtreeChange:
+        convertTopLevelSubTreeChange(
+          topLevelUpdate.ReasonReact.RenderedElement.subtreeChange
+        ),
       updateLog:
-        ref(convertUpdateLog(topLevelUpdate.ReasonReact.UpdateLog.updateLog))
+        ref(
+          convertUpdateLog(
+            topLevelUpdate.ReasonReact.RenderedElement.updateLog
+          )
+        )
     })
   | None => None;
 
@@ -181,11 +195,11 @@ and compareInstance = ((left, right)) =>
 
 let compareSubtree =
   fun
-  | (NoChange, NoChange)
-  | (Nested, Nested) => true
-  | (PrependElement(left), PrependElement(right)) =>
+  | (`NoChange, `NoChange)
+  | (`Nested, `Nested) => true
+  | (`PrependElement(left), `PrependElement(right)) =>
     compareElement(left, right)
-  | (ReplaceElements(left1, left2), ReplaceElements(right1, right2)) =>
+  | (`ReplaceElements(left1, left2), `ReplaceElements(right1, right2)) =>
     compareElement(left1, right1) && compareElement(left2, right2)
   | (_, _) => false;
 
@@ -198,13 +212,13 @@ let rec compareUpdateLog = (left, right) =>
     && compareUpdateLog(t1, t2)
     && compareInstance((x.oldInstance, y.oldInstance))
     && compareInstance((x.newInstance, y.newInstance))
-  | ([SwitchComponent(x), ...t1], [SwitchComponent(y), ...t2]) =>
-    compareSubtree((x.subTreeChanged, y.subTreeChanged))
+  | ([ChangeComponent(x), ...t1], [ChangeComponent(y), ...t2]) =>
+    compareElement(x.oldSubtree, y.newSubtree)
     && compareUpdateLog(t1, t2)
     && compareInstance((x.oldInstance, y.oldInstance))
     && compareInstance((x.newInstance, y.newInstance))
   | ([UpdateInstance(_), ..._], [_, ..._])
-  | ([SwitchComponent(_), ..._], [_, ..._])
+  | ([ChangeComponent(_), ..._], [_, ..._])
   | ([_, ..._], [])
   | ([], [_, ..._]) => false
   };
@@ -215,7 +229,7 @@ let compareTopLevelUpdateLog:
     switch (left, right) {
     | (None, None) => true
     | (Some(x), Some(y)) =>
-      compareSubtree((x.typ, y.typ))
+      compareSubtree((x.subtreeChange, y.subtreeChange))
       && compareUpdateLog(x.updateLog^, y.updateLog^)
     | (_, _) => false
     };

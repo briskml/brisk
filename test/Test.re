@@ -43,26 +43,26 @@ let suite =
         let expected = (
           [twoBoxesWrapper],
           Some({
-            typ: Nested,
+            subtreeChange: `Nested,
             updateLog:
               ref(
                 TestComponents.[
                   UpdateInstance({
                     stateChanged: false,
                     subTreeChanged:
-                      ReplaceElements(
+                      `ReplaceElements((
                         [<Box id=3 state="ImABox" />],
                         [
                           <Box id=4 state="ImABox" />,
                           <Box id=5 state="ImABox" />
                         ]
-                      ),
+                      )),
                     newInstance: twoBoxes,
                     oldInstance: oneBox
                   }),
                   UpdateInstance({
                     stateChanged: false,
-                    subTreeChanged: Nested,
+                    subTreeChanged: `Nested,
                     newInstance: twoBoxesWrapper,
                     oldInstance: <BoxWrapper id=1> oneBox </BoxWrapper>
                   })
@@ -116,12 +116,12 @@ let suite =
             [<ChangeCounter id=1 label="updatedText" counter=11 />],
             Some(
               TestRenderer.{
-                typ: Nested,
+                subtreeChange: `Nested,
                 updateLog:
                   ref([
                     UpdateInstance({
                       stateChanged: true,
-                      subTreeChanged: NoChange,
+                      subTreeChanged: `NoChange,
                       oldInstance:
                         <ChangeCounter id=1 label="defaultText" counter=10 />,
                       newInstance:
@@ -141,7 +141,7 @@ let suite =
             [
               UpdateInstance({
                 stateChanged: true,
-                subTreeChanged: NoChange,
+                subTreeChanged: `NoChange,
                 oldInstance:
                   <ChangeCounter id=1 label="updatedText" counter=11 />,
                 newInstance:
@@ -180,21 +180,18 @@ let suite =
             ],
             Some(
               TestRenderer.{
-                typ: Nested,
+                subtreeChange: `Nested,
                 updateLog:
                   ref([
-                    SwitchComponent({
-                      subTreeChanged:
-                        ReplaceElements(
-                          [],
-                          [
-                            <Div id=3>
-                              <Text id=4 title="buttonWrapperWrapperState" />
-                              <Text id=5 title="wrappedText:updatedText" />
-                              <ButtonWrapper id=6 />
-                            </Div>
-                          ]
-                        ),
+                    ChangeComponent({
+                      oldSubtree: [],
+                      newSubtree: [
+                        <Div id=3>
+                          <Text id=4 title="buttonWrapperWrapperState" />
+                          <Text id=5 title="wrappedText:updatedText" />
+                          <ButtonWrapper id=6 />
+                        </Div>
+                      ],
                       oldInstance:
                         <ChangeCounter id=1 label="updatedText" counter=2011 />,
                       newInstance:
@@ -225,12 +222,12 @@ let suite =
             ],
             Some(
               TestRenderer.{
-                typ: Nested,
+                subtreeChange: `Nested,
                 updateLog:
                   ref([
                     UpdateInstance({
                       stateChanged: true,
-                      subTreeChanged: NoChange,
+                      subTreeChanged: `NoChange,
                       oldInstance:
                         <Text id=5 title="wrappedText:updatedText" />,
                       newInstance:
@@ -238,7 +235,7 @@ let suite =
                     }),
                     UpdateInstance({
                       stateChanged: false,
-                      subTreeChanged: Nested,
+                      subTreeChanged: `Nested,
                       oldInstance:
                         <Div id=3>
                           <Text id=4 title="buttonWrapperWrapperState" />
@@ -254,7 +251,7 @@ let suite =
                     }),
                     UpdateInstance({
                       stateChanged: false,
-                      subTreeChanged: Nested,
+                      subTreeChanged: `Nested,
                       oldInstance:
                         <ButtonWrapperWrapper
                           id=2
@@ -343,10 +340,10 @@ let suite =
               UpdateInstance({
                 stateChanged: true,
                 subTreeChanged:
-                  ReplaceElements(
+                  `ReplaceElements((
                     [],
                     [<BoxWithDynamicKeys id=2 state="Hello" />]
-                  ),
+                  )),
                 oldInstance: <BoxList id=1 />,
                 newInstance:
                   <BoxList id=1>
@@ -370,13 +367,13 @@ let suite =
               UpdateInstance({
                 stateChanged: true,
                 subTreeChanged:
-                  ReplaceElements(
+                  `ReplaceElements((
                     [<BoxWithDynamicKeys id=2 state="Hello" />],
                     [
                       <BoxWithDynamicKeys id=3 state="World" />,
                       <BoxWithDynamicKeys id=2 state="Hello" />
                     ]
-                  ),
+                  )),
                 oldInstance:
                   <BoxList id=1>
                     <BoxWithDynamicKeys id=2 state="Hello" />
@@ -403,7 +400,7 @@ let suite =
             [
               UpdateInstance({
                 stateChanged: true,
-                subTreeChanged: Nested,
+                subTreeChanged: `Nested,
                 oldInstance:
                   <BoxList id=1>
                     <BoxWithDynamicKeys id=3 state="World" />
@@ -452,7 +449,7 @@ let suite =
               UpdateInstance({
                 stateChanged: true,
                 subTreeChanged:
-                  ReplaceElements([], [<Box id=2 state="Hello" />]),
+                  `ReplaceElements(([], [<Box id=2 state="Hello" />])),
                 oldInstance: <BoxList id=1 />,
                 newInstance:
                   <BoxList id=1> <Box id=2 state="Hello" /> </BoxList>
@@ -474,10 +471,10 @@ let suite =
               UpdateInstance({
                 stateChanged: true,
                 subTreeChanged:
-                  ReplaceElements(
+                  `ReplaceElements((
                     [<Box id=2 state="Hello" />],
                     [<Box id=3 state="World" />, <Box id=4 state="Hello" />]
-                  ),
+                  )),
                 oldInstance:
                   <BoxList id=1> <Box id=2 state="Hello" /> </BoxList>,
                 newInstance:
@@ -502,19 +499,19 @@ let suite =
             [
               UpdateInstance({
                 stateChanged: true,
-                subTreeChanged: NoChange,
+                subTreeChanged: `NoChange,
                 oldInstance: <Box id=4 state="Hello" />,
                 newInstance: <Box id=4 state="World" />
               }),
               UpdateInstance({
                 stateChanged: true,
-                subTreeChanged: NoChange,
+                subTreeChanged: `NoChange,
                 oldInstance: <Box id=3 state="World" />,
                 newInstance: <Box id=3 state="Hello" />
               }),
               UpdateInstance({
                 stateChanged: true,
-                subTreeChanged: Nested,
+                subTreeChanged: `Nested,
                 oldInstance:
                   <BoxList id=1>
                     <Box id=3 state="World" />
@@ -563,14 +560,14 @@ let suite =
             ],
             Some(
               TestRenderer.{
-                typ:
-                  ReplaceElements(
+                subtreeChange:
+                  `ReplaceElements((
                     [<BoxWithDynamicKeys id=1 state="box to move" />],
                     [
                       <Text id=2 title="before" />,
                       <BoxWithDynamicKeys id=1 state="box to move" />
                     ]
-                  ),
+                  )),
                 updateLog: ref([])
               }
             )
@@ -638,18 +635,18 @@ let suite =
             ],
             Some(
               TestRenderer.{
-                typ: Nested,
+                subtreeChange: `Nested,
                 updateLog:
                   ref([
                     UpdateInstance({
                       stateChanged: true,
-                      subTreeChanged: NoChange,
+                      subTreeChanged: `NoChange,
                       oldInstance: <Box id=1 state="Box1unchanged" />,
                       newInstance: <Box id=1 state="Box1changed" />
                     }),
                     UpdateInstance({
                       stateChanged: true,
-                      subTreeChanged: NoChange,
+                      subTreeChanged: `NoChange,
                       oldInstance: <Box id=2 state="Box2unchanged" />,
                       newInstance: <Box id=2 state="Box2changed" />
                     })

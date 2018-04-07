@@ -45,14 +45,14 @@ let printSubTreeChange = formatter =>
     "%a",
     Fmt.hvbox((formatter, change) =>
       switch change {
-      | NoChange => Fmt.pf(formatter, "%s", "NoChange")
-      | Nested => Fmt.pf(formatter, "%s", "Nested")
-      | PrependElement(x) =>
-        Fmt.pf(formatter, "PrependElement: %a@,", printElement, x)
-      | ReplaceElements(oldElems, newElems) =>
+      | `NoChange => Fmt.pf(formatter, "%s", "`NoChange")
+      | `Nested => Fmt.pf(formatter, "%s", "`Nested")
+      | `PrependElement(x) =>
+        Fmt.pf(formatter, "`PrependElement: %a@,", printElement, x)
+      | `ReplaceElements(oldElems, newElems) =>
         Fmt.pf(
           formatter,
-          "ReplaceElements: %a@, %a@,",
+          "`ReplaceElements: %a@, %a@,",
           printElement,
           oldElems,
           printElement,
@@ -79,13 +79,15 @@ let printUpdateLog = formatter => {
         printInstance(),
         update.newInstance
       )
-    | SwitchComponent(update) =>
+    | ChangeComponent(update) =>
       Fmt.pf(
         formatter,
-        "%s {@[<hov>@,subTreeChanged: %a,@ oldInstance: %a,@ newInstance: %a @]}",
-        "SwitchComponent",
-        printSubTreeChange,
-        update.subTreeChanged,
+        "%s {@[<hov>@,oldSubtree: %a,@ newSubtree: %a,@ oldInstance: %a,@ newInstance: %a @]}",
+        "ChangeComponent",
+        printElement,
+        update.oldSubtree,
+        printElement,
+        update.newSubtree,
         printInstance(),
         update.oldInstance,
         printInstance(),
@@ -96,21 +98,18 @@ let printUpdateLog = formatter => {
 };
 
 let printTopLevelUpdateLog =
-  Fmt.hvbox((formatter, topLevelUpdateLog: option(testTopLevelUpdateLog)) => switch (topLevelUpdateLog) {
-  | Some(topLevelUpdate) =>
-    Fmt.pf(
-      formatter,
-      "%s {@[<hov>@,subTreeChanged: %a,@ updateLog: %a @]}",
-      "TopLevelUpdate",
-      printSubTreeChange,
-      topLevelUpdate.typ,
-      printUpdateLog,
-      topLevelUpdate.updateLog^
-    )
-  | None =>
-    Fmt.pf(
-      formatter,
-      "%s",
-      "NoUpdate"
-    )
-  });
+  Fmt.hvbox((formatter, topLevelUpdateLog: option(testTopLevelUpdateLog)) =>
+    switch topLevelUpdateLog {
+    | Some(topLevelUpdate) =>
+      Fmt.pf(
+        formatter,
+        "%s {@[<hov>@,subTreeChanged: %a,@ updateLog: %a @]}",
+        "TopLevelUpdate",
+        printSubTreeChange,
+        topLevelUpdate.subtreeChange,
+        printUpdateLog,
+        topLevelUpdate.updateLog^
+      )
+    | None => Fmt.pf(formatter, "%s", "NoUpdate")
+    }
+  );

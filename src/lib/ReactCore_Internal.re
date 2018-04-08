@@ -257,9 +257,7 @@ module Make = (Implementation: HostImplementation) => {
       oldId: int,
       newId: int,
       oldOpaqueInstance: opaqueInstance,
-      newOpaqueInstance: opaqueInstance,
-      oldSubtree: renderedElement,
-      newSubtree: renderedElement
+      newOpaqueInstance: opaqueInstance
     };
     type entry =
       | UpdateInstance(instanceUpdate('state, 'action, 'elementType)): entry
@@ -281,8 +279,6 @@ module Make = (Implementation: HostImplementation) => {
     let addChangeComponent =
         (
           ~updateLog,
-          ~oldSubtree,
-          ~newSubtree,
           opaqueInstance,
           newOpaqueInstance
         ) => {
@@ -294,9 +290,7 @@ module Make = (Implementation: HostImplementation) => {
           oldId: id,
           newId,
           oldOpaqueInstance: opaqueInstance,
-          newOpaqueInstance,
-          oldSubtree,
-          newSubtree
+          newOpaqueInstance
         })
       );
     };
@@ -479,9 +473,12 @@ module Make = (Implementation: HostImplementation) => {
      *
      * The UpdateLog:
      * ---------------------
-     * The updates happen depth first and so the update log contains most deep changes first.
-     * A change at depth N in the tree, causes all nodes from 0 to N generate an update. It's because the render tree is an immutable data structure.
-     * A change deep within a tree, means that the subtree of its parent has changed and it propagates to the root of a tree.
+     * The updates happen depth first and so the update log contains the deepes
+     * changes first.
+     * A change at depth N in the tree, causes all nodes from 0 to N generate an 
+     * update. It's because the render tree is an immutable data structure.
+     * A change deep within a tree, means that the subtree of its parent has
+     * changed and it propagates to the root of a tree.
      */
     and update =
         (
@@ -606,11 +603,8 @@ module Make = (Implementation: HostImplementation) => {
               })
             );
           };
-          let Instance({instanceSubTree: originalInstanceSubTree}) = originalOpaqueInstance;
           UpdateLog.addChangeComponent(
             ~updateLog,
-            ~oldSubtree=originalInstanceSubTree,
-            ~newSubtree=nextSubtree,
             originalOpaqueInstance,
             newOpaqueInstance
           );

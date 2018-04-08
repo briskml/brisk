@@ -6,80 +6,6 @@ module type HostImplementation = {
 module Make:
   (Implementation: HostImplementation) =>
   {
-    module Node: {type context;};
-    module Layout: {
-      type t;
-      type unitOfM = int;
-      type direction;
-      type flexDirection =
-        | Column
-        | ColumnReverse
-        | Row
-        | RowReverse;
-      type justify;
-      type align;
-      type positionType;
-      type wrapType;
-      type overflow;
-      type cssStyle = {
-        mutable direction,
-        mutable flexDirection,
-        mutable justifyContent: justify,
-        mutable alignContent: align,
-        mutable alignItems: align,
-        mutable alignSelf: align,
-        mutable positionType,
-        mutable flexWrap: wrapType,
-        mutable overflow,
-        mutable flex: unitOfM,
-        mutable flexGrow: unitOfM,
-        mutable flexShrink: unitOfM,
-        mutable flexBasis: unitOfM,
-        mutable marginLeft: unitOfM,
-        mutable marginTop: unitOfM,
-        mutable marginRight: unitOfM,
-        mutable marginBottom: unitOfM,
-        mutable marginStart: unitOfM,
-        mutable marginEnd: unitOfM,
-        mutable marginHorizontal: unitOfM,
-        mutable marginVertical: unitOfM,
-        mutable margin: unitOfM,
-        mutable width: unitOfM,
-        mutable height: unitOfM,
-        mutable minWidth: unitOfM,
-        mutable minHeight: unitOfM,
-        mutable maxWidth: unitOfM,
-        mutable maxHeight: unitOfM,
-        mutable left: unitOfM,
-        mutable top: unitOfM,
-        mutable right: unitOfM,
-        mutable bottom: unitOfM,
-        mutable start: unitOfM,
-        mutable endd: unitOfM,
-        mutable horizontal: unitOfM,
-        mutable vertical: unitOfM,
-        mutable position: unitOfM,
-        mutable paddingLeft: unitOfM,
-        mutable paddingTop: unitOfM,
-        mutable paddingRight: unitOfM,
-        mutable paddingBottom: unitOfM,
-        mutable paddingStart: unitOfM,
-        mutable paddingEnd: unitOfM,
-        mutable paddingHorizontal: unitOfM,
-        mutable paddingVertical: unitOfM,
-        mutable padding: unitOfM,
-        mutable borderLeft: unitOfM,
-        mutable borderTop: unitOfM,
-        mutable borderRight: unitOfM,
-        mutable borderBottom: unitOfM,
-        mutable borderStart: unitOfM,
-        mutable borderEnd: unitOfM,
-        mutable borderHorizontal: unitOfM,
-        mutable borderVertical: unitOfM,
-        mutable border: unitOfM
-      };
-      let defaultStyle: cssStyle;
-    };
     module GlobalState: {
       let debug: ref(bool);
       let reset: unit => unit;
@@ -227,16 +153,5 @@ module Make:
 
       /*** Perform an action on the subscribed component. */
       let act: (t('action), ~action: 'action) => unit;
-    };
-    module LayoutTest: {
-      let make:
-        (
-          ~root: Implementation.hostView,
-          ~outputTree: OutputTree.t,
-          ~width: int,
-          ~height: int
-        ) =>
-        Layout.t;
-      let performLayout: Layout.t => unit;
     };
   };

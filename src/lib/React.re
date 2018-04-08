@@ -8,6 +8,7 @@ module NativeView = {
   [@noalloc] external addChild : (t, t) => t = "View_addChild";
   [@noalloc] external removeChild : (t, t) => t = "View_removeChild";
   external getInstance : int => option(t) = "View_getInstance";
+  let memoizeInstance = (_, _) => ();
   [@noalloc]
   external setFrame :
     ([@untagged] int, [@untagged] int, [@untagged] int, [@untagged] int, t) =>
@@ -61,7 +62,7 @@ module View = {
   let make = (~layout, ~style, ~borderColor, children) => {
     ...component,
     render: (_) => {
-      make: id => NativeView.makeInstance(id),
+      make: () => NativeView.makeInstance(0),
       updateInstance: view => {
         let {red, green, blue, alpha} = style.backgroundColor;
         NativeView.setBackgroundColor(red, green, blue, alpha, view);
@@ -84,8 +85,8 @@ module Button = {
   let make = (~text, ~style, ~callback=?, children) => {
     ...component,
     render: (_) => {
-      make: id => {
-        let instance = makeInstance(id) |> setText(text);
+      make: () => {
+        let instance = makeInstance(0) |> setText(text);
         switch callback {
         | Some(callback) => setCallback(callback, instance)
         | None => instance

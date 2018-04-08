@@ -11,11 +11,7 @@ module Box = {
     printState: (_) => title,
     render: (_) => {
       children: ReasonReact.listToElement([]),
-      make: id => {
-        let elem = Implementation.Text(title);
-        Hashtbl.add(Implementation.map, id, elem);
-        elem;
-      },
+      make: () => Implementation.Text(title),
       updateInstance: (_) => ()
     }
   };
@@ -30,11 +26,7 @@ module Div = {
     ...component,
     render: (_) => {
       children: listToElement(children),
-      make: id => {
-        let elem = Implementation.View;
-        Hashtbl.add(Implementation.map, id, elem);
-        elem;
-      },
+      make: () => Implementation.View,
       updateInstance: (_) => ()
     }
   };

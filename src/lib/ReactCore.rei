@@ -1,6 +1,7 @@
 module type HostImplementation = {
   type hostView;
   let getInstance: int => option(hostView);
+  let memoizeInstance: (int, hostView) => unit;
 };
 
 module Make:
@@ -54,7 +55,7 @@ module Make:
     /*** Type of a react element before rendering  */
     type reactElement;
     type nativeElement = {
-      make: int => Implementation.hostView,
+      make: unit => Implementation.hostView,
       updateInstance: Implementation.hostView => unit,
       children: reactElement
     };

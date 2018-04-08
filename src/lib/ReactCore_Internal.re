@@ -3,6 +3,7 @@ open Flex;
 module type HostImplementation = {
   type hostView;
   let getInstance: int => option(hostView);
+  let memoizeInstance: (int, hostView) => unit;
 };
 
 module Make = (Implementation: HostImplementation) => {
@@ -44,12 +45,6 @@ module Make = (Implementation: HostImplementation) => {
       handlerTwo(payload);
     };
   };
-  module Node = {
-    type context =
-      | View(Implementation.hostView)
-      | Container;
-    let nullContext = Container;
-  };
   type reduce('payload, 'action) =
     ('payload => 'action) => Callback.t('payload);
   type update('state, 'action) =
@@ -74,7 +69,7 @@ module Make = (Implementation: HostImplementation) => {
     | Flat(list(element))
     | Nested(string, list(reactElement))
   and nativeElement = {
-    make: int => Implementation.hostView,
+    make: unit => Implementation.hostView,
     updateInstance: Implementation.hostView => unit,
     children: reactElement
   }
@@ -495,7 +490,11 @@ module Make = (Implementation: HostImplementation) => {
         updatedComponent.handedOffInstance :=
           Some((originalInstance, updatedInstance));
         switch nextComponent.handedOffInstance^ {
+        /*
+         * Case A: The next element *is* of the same component class.
+         */
         | Some((originalInstance, updatedInstance)) =>
+          /* DO NOT FORGET TO RESET HANDEDOFFINSTANCE */
           updatedComponent.handedOffInstance := None;
           let updatedInstanceWithNewElement = {
             ...updatedInstance,
@@ -504,12 +503,16 @@ module Make = (Implementation: HostImplementation) => {
           };
           let oldSelf = createSelf(~instance=updatedInstance);
           let newState = nextComponent.willReceiveProps(oldSelf);
+          /* We need to split up the check for state changes in two parts.
+             The first part covers pending updates.
+             The second part covers willReceiveProps. */
           let stateChanged =
             ! stateNotUpdated || newState !== updatedInstance.iState;
           let updatedInstanceWithNewState = {
             ...updatedInstanceWithNewElement,
             iState: newState
           };
+          /* TODO: Invoke any lifecycles necessary. */
           let newSelf = createSelf(~instance=updatedInstance);
           if (nextComponent.shouldUpdate === defaultShouldUpdate
               || nextComponent.shouldUpdate({oldSelf, newSelf})) {
@@ -568,8 +571,14 @@ module Make = (Implementation: HostImplementation) => {
           } else {
             originalOpaqueInstance;
           };
+        /*
+         * Case B: The next element is *not* of the same component class. We know
+         * because otherwise we would have observed the mutation on
+         * `nextComponentClass`.
+         */
         | None =>
           updatedComponent.handedOffInstance := None;
+          /* DO NOT FORGET TO RESET HANDEDOFFINSTANCE */
           let (self, pendingStateUpdates, id) =
             createInitialSelf(~component=nextComponent);
           let nextSubElements = nextComponent.render(self);
@@ -592,6 +601,11 @@ module Make = (Implementation: HostImplementation) => {
               })
             );
           };
+          /*
+           * ** Switching component type **
+           * TODO: Invoke destruction lifecycle on previous component.
+           * TODO: Invoke creation lifecycle on next component.
+           */
           UpdateLog.addChangeComponent(
             ~updateLog,
             originalOpaqueInstance,
@@ -601,25 +615,6 @@ module Make = (Implementation: HostImplementation) => {
         };
       };
     }
-    /*
-     * Case A: The next element *is* of the same component class.
-     */
-    /* DO NOT FORGET TO RESET HANDEDOFFINSTANCE */
-    /* We need to split up the check for state changes in two parts.
-       The first part covers pending updates.
-       The second part covers willReceiveProps. */
-    /* TODO: Invoke any lifecycles necessary. */
-    /*
-     * Case B: The next element is *not* of the same component class. We know
-     * because otherwise we would have observed the mutation on
-     * `nextComponentClass`.
-     */
-    /* DO NOT FORGET TO RESET HANDEDOFFINSTANCE */
-    /*
-     * ** Switching component type **
-     * TODO: Invoke destruction lifecycle on previous component.
-     * TODO: Invoke creation lifecycle on next component.
-     */
     and updateRenderedElement =
         (
           ~updateInstanceState=?,
@@ -960,7 +955,10 @@ module Make = (Implementation: HostImplementation) => {
         let view =
           switch (Implementation.getInstance(id)) {
           | Some(x) => x
-          | None => nativeElement.make(id)
+          | None =>
+            let hostView = nativeElement.make();
+            Implementation.memoizeInstance(id, hostView);
+            hostView;
           };
         Concrete(view, nativeElement, node);
       | React => Container(node)

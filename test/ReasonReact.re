@@ -11,6 +11,7 @@ module Implementation = {
     } else {
       None;
     };
+  let memoizeInstance = (id, instance) => Hashtbl.add(map, id, instance);
 };
 
 include ReactCore_Internal.Make(Implementation);
@@ -29,11 +30,7 @@ module Text = {
     printState: (_) => title,
     render: (_) => {
       children: listToElement([]),
-      make: id => {
-        let elem = Implementation.Text(title);
-        Hashtbl.add(Implementation.map, id, elem);
-        elem;
-      },
+      make: () => Implementation.Text(title),
       updateInstance: (_) => ()
     }
   };

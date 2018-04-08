@@ -60,18 +60,9 @@ and convertElement =
     List.map((Instance(instance)) => convertInstance(instance), instances)
   | INested(_, elements) => List.flatten(List.map(convertElement, elements));
 
-let convertSubTreeChange:
-  ReasonReact.UpdateLog.subtreeChange => testSubTreeChange =
+let convertSubTreeChange =
   fun
   | `NoChange => `NoChange
-  | `Nested => `Nested
-  | `PrependElement(x) => `PrependElement(convertElement(x))
-  | `ReplaceElements(oldElem, newElem) =>
-    `ReplaceElements((convertElement(oldElem), convertElement(newElem)));
-
-let convertTopLevelSubTreeChange:
-  ReasonReact.RenderedElement.subtreeChange => testSubTreeChange =
-  fun
   | `Nested => `Nested
   | `PrependElement(x) => `PrependElement(convertElement(x))
   | `ReplaceElements(oldElem, newElem) =>
@@ -104,22 +95,14 @@ let convertUpdateLog = (updateLog: ReasonReact.UpdateLog.t) => {
       ]
     | [
         ReasonReact.UpdateLog.ChangeComponent({
-          oldId,
-          newId,
           oldOpaqueInstance: Instance(oldInstance),
           newOpaqueInstance: Instance(newInstance)
         }),
         ...t
       ] => [
         ChangeComponent({
-          oldInstance: {
-            ...convertInstance(oldInstance),
-            id: oldId
-          },
-          newInstance: {
-            ...convertInstance(newInstance),
-            id: newId
-          },
+          oldInstance: convertInstance(oldInstance),
+          newInstance: convertInstance(newInstance),
           oldSubtree: convertElement(oldInstance.instanceSubTree),
           newSubtree: convertElement(newInstance.instanceSubTree)
         }),
@@ -135,10 +118,7 @@ let convertTopLevelUpdateLog:
   fun
   | Some(topLevelUpdate) =>
     Some({
-      subtreeChange:
-        convertTopLevelSubTreeChange(
-          topLevelUpdate.ReasonReact.RenderedElement.subtreeChange
-        ),
+      subtreeChange: convertSubTreeChange(topLevelUpdate.subtreeChange),
       updateLog:
         ref(
           convertUpdateLog(

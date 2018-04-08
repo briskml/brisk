@@ -138,6 +138,7 @@ module Make:
       oldSelf: self('state, 'action),
       newSelf: self('state, 'action)
     };
+    type handedOffInstance('state, 'action, 'elementType);
     type componentSpec('state, 'initialState, 'action, 'elementType) = {
       debugName: string,
       elementType: elementType('elementType),
@@ -151,7 +152,7 @@ module Make:
       initialState: unit => 'initialState,
       reducer: ('action, 'state) => update('state, 'action),
       printState: 'state => string /* for internal debugging */,
-      handedOffInstance: ref(option(instance('state, 'action, 'elementType))) /* Used to avoid Obj.magic in update */,
+      handedOffInstance: handedOffInstance('state, 'action, 'elementType),
       key: Key.t
     };
     type component('state, 'action, 'elementType) =

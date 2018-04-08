@@ -107,9 +107,7 @@ let convertUpdateLog = (updateLog: ReasonReact.UpdateLog.t) => {
           oldId,
           newId,
           oldOpaqueInstance: Instance(oldInstance),
-          newOpaqueInstance: Instance(newInstance),
-          oldSubtree,
-          newSubtree
+          newOpaqueInstance: Instance(newInstance)
         }),
         ...t
       ] => [
@@ -122,8 +120,8 @@ let convertUpdateLog = (updateLog: ReasonReact.UpdateLog.t) => {
             ...convertInstance(newInstance),
             id: newId
           },
-          oldSubtree: convertElement(oldSubtree),
-          newSubtree: convertElement(newSubtree)
+          oldSubtree: convertElement(oldInstance.instanceSubTree),
+          newSubtree: convertElement(newInstance.instanceSubTree)
         }),
         ...convertUpdateLog(t)
       ]

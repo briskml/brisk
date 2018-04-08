@@ -155,7 +155,7 @@ let compareComponents = (left, right) =>
   | (Component(_), Component(_))
   | (InstanceAndComponent(_, _), InstanceAndComponent(_, _)) => assert false
   | (Component(justComponent), InstanceAndComponent(comp, instance)) =>
-    comp.handedOffInstance := Some(instance);
+    comp.handedOffInstance := Some((instance, instance));
     let result =
       switch justComponent.handedOffInstance^ {
       | Some(_) => true
@@ -164,7 +164,7 @@ let compareComponents = (left, right) =>
     comp.handedOffInstance := None;
     result;
   | (InstanceAndComponent(comp, instance), Component(justComponent)) =>
-    comp.handedOffInstance := Some(instance);
+    comp.handedOffInstance := Some((instance, instance));
     let result =
       switch justComponent.handedOffInstance^ {
       | Some(_) => true
@@ -213,10 +213,11 @@ let rec compareUpdateLog = (left, right) =>
     && compareInstance((x.oldInstance, y.oldInstance))
     && compareInstance((x.newInstance, y.newInstance))
   | ([ChangeComponent(x), ...t1], [ChangeComponent(y), ...t2]) =>
-    compareElement(x.oldSubtree, y.newSubtree)
-    && compareUpdateLog(t1, t2)
+    compareElement(x.oldSubtree, y.oldSubtree)
+    && compareElement(x.newSubtree, y.newSubtree)
     && compareInstance((x.oldInstance, y.oldInstance))
     && compareInstance((x.newInstance, y.newInstance))
+    && compareUpdateLog(t1, t2)
   | ([UpdateInstance(_), ..._], [_, ..._])
   | ([ChangeComponent(_), ..._], [_, ..._])
   | ([_, ..._], [])

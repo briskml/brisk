@@ -19,7 +19,7 @@ module Make = (Implementation: HostImplementation) => {
     /*
      * Use physical equality to recognize that an element was added to the list
      * of children.
-     * Note: this currently does not check for pending updates on components in 
+     * Note: this currently does not check for pending updates on components in
      * the list.
      */
     let useTailHack = ref(false);
@@ -49,12 +49,6 @@ module Make = (Implementation: HostImplementation) => {
       | View(Implementation.hostView)
       | Container;
     let nullContext = Container;
-  };
-  module Layout = {
-    include Layout.Create(Node, FloatEncoding);
-    include LayoutSupport.LayoutTypes;
-    type t = LayoutSupport.LayoutTypes.node;
-    let defaultStyle = LayoutSupport.defaultStyle;
   };
   type reduce('payload, 'action) =
     ('payload => 'action) => Callback.t('payload);
@@ -108,8 +102,8 @@ module Make = (Implementation: HostImplementation) => {
     * component and we can observe the mutation on the other component,
     * it means that we've got two components of the same type.
     *
-    * Additionally, we pass two instances here. 
-    * - The first instance in the tuple contains the original instance that 
+    * Additionally, we pass two instances here.
+    * - The first instance in the tuple contains the original instance that
     *   the update has been started with
     * - The second instance is the same instance but after executing pending
     *   state updates
@@ -276,12 +270,7 @@ module Make = (Implementation: HostImplementation) => {
           subTreeChanged
         })
       );
-    let addChangeComponent =
-        (
-          ~updateLog,
-          opaqueInstance,
-          newOpaqueInstance
-        ) => {
+    let addChangeComponent = (~updateLog, opaqueInstance, newOpaqueInstance) => {
       let Instance({id}) = opaqueInstance;
       let Instance({id: newId}) = newOpaqueInstance;
       add(
@@ -475,7 +464,7 @@ module Make = (Implementation: HostImplementation) => {
      * ---------------------
      * The updates happen depth first and so the update log contains the deepes
      * changes first.
-     * A change at depth N in the tree, causes all nodes from 0 to N generate an 
+     * A change at depth N in the tree, causes all nodes from 0 to N generate an
      * update. It's because the render tree is an immutable data structure.
      * A change deep within a tree, means that the subtree of its parent has
      * changed and it propagates to the root of a tree.
@@ -1045,62 +1034,6 @@ module Make = (Implementation: HostImplementation) => {
         forest,
         updateLog^
       );
-    };
-  };
-  module LayoutTest = {
-    open Layout;
-    open OutputTree;
-    let rec make = tree =>
-      switch tree {
-      | Container(node) =>
-        LayoutSupport.createNode(
-          ~withChildren=Array.of_list(List.map(make, node.sub)),
-          ~andStyle=LayoutSupport.defaultStyle,
-          Container
-        )
-      | Concrete(view, nativeComponent, node) =>
-        LayoutSupport.createNode(
-          ~withChildren=Array.of_list(List.map(make, node.sub)),
-          ~andStyle=LayoutSupport.defaultStyle,
-          View(view)
-        )
-      };
-    let make = (~root, ~outputTree as forest, ~width, ~height) => {
-      let children =
-        List.fold_left((t, element) => [make(element), ...t], [], forest);
-      LayoutSupport.createNode(
-        ~withChildren=Array.of_list(children),
-        ~andStyle={...LayoutSupport.defaultStyle, width, height},
-        View(root)
-      );
-    };
-    let performLayout = root => {
-      Layout.layoutNode(
-        root,
-        FixedEncoding.cssUndefined,
-        FixedEncoding.cssUndefined,
-        Ltr
-      );
-      let rec traverseLayout = (node: Layout.LayoutSupport.LayoutTypes.node) => {
-        Array.iter(traverseLayout, node.children);
-        switch node.context {
-        | Container => ()
-        | View(view) =>
-          /*
-           ignore(
-             NativeView.setFrame(
-               node.layout.left,
-               node.layout.top,
-               node.layout.width,
-               node.layout.height,
-               view
-             )
-           )
-           */
-          ()
-        };
-      };
-      traverseLayout(root);
     };
   };
   module RemoteAction = {

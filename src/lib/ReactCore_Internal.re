@@ -13,11 +13,14 @@ module Make = (Implementation: HostImplementation) => {
     let reset = () => {
       debug := true;
       componentKeyCounter := 0;
-      instanceIdCounter := 1; /* FIXME: To be done afterwards because we'll need to  adjust tests*/
+      /* FIXME: To be done afterwards because we'll need to  adjust tests*/
+      instanceIdCounter := 1;
     };
     /*
-     * Use physical equality to recognize that an element was added to the list of children.
-     * Note: this currently does not check for pending updates on components in the list.
+     * Use physical equality to recognize that an element was added to the list
+     * of children.
+     * Note: this currently does not check for pending updates on components in 
+     * the list.
      */
     let useTailHack = ref(false);
   };
@@ -91,6 +94,35 @@ module Make = (Implementation: HostImplementation) => {
     oldSelf: self('state, 'action),
     newSelf: self('state, 'action)
   }
+  /**
+    * This type is used to avoid Obj.magic in update.
+    * We create one handedOffInstance ref per component type.
+    * The componentSpec is usually reacreated on every render.
+    * The ref is created in functions like `statelessComponent`. Then a user
+    * usually spreads this ref like so:
+    * let make = ... => {...component, ...};
+    * Therefore all components coming from a given `make` function usually
+    * share the same ref. Then, in the update function it can be determined
+    *
+    * If two components are of the same types when we passi the instance to one
+    * component and we can observe the mutation on the other component,
+    * it means that we've got two components of the same type.
+    *
+    * Additionally, we pass two instances here. 
+    * - The first instance in the tuple contains the original instance that 
+    *   the update has been started with
+    * - The second instance is the same instance but after executing pending
+    *   state updates
+    */
+  and handedOffInstance('state, 'action, 'element) =
+    ref(
+      option(
+        (
+          instance('state, 'action, 'element),
+          instance('state, 'action, 'element)
+        )
+      )
+    )
   and componentSpec('state, 'initialState, 'action, 'element) = {
     debugName: string,
     elementType: elementType('element),
@@ -104,7 +136,7 @@ module Make = (Implementation: HostImplementation) => {
     initialState: unit => 'initialState,
     reducer: ('action, 'state) => update('state, 'action),
     printState: 'state => string /* for internal debugging */,
-    handedOffInstance: ref(option(instance('state, 'action, 'element))) /* Used to avoid Obj.magic in update */,
+    handedOffInstance: handedOffInstance('state, 'action, 'element),
     key: int
   }
   and component('state, 'action, 'elementType) =
@@ -273,13 +305,11 @@ module Make = (Implementation: HostImplementation) => {
     let createSelf = (~state, ~component, ~pendingStateUpdates) : self(_) => {
       state,
       reduce: (payloadToAction, payload) => {
-        logString("Calling reduce on " ++ component.debugName);
         let action = payloadToAction(payload);
         let stateUpdate = component.reducer(action);
         pendingStateUpdates := [stateUpdate, ...pendingStateUpdates^];
       },
       act: action => {
-        logString("Calling act on " ++ component.debugName);
         let stateUpdate = component.reducer(action);
         pendingStateUpdates := [stateUpdate, ...pendingStateUpdates^];
       }
@@ -372,6 +402,23 @@ module Make = (Implementation: HostImplementation) => {
       | None => None
       | Some(keyTable) => OpaqueInstanceHash.lookupKey(keyTable, key)
       };
+    /**
+      * Used because of higher order polymorphism. See here 5.3:
+      * https://caml.inria.fr/pub/docs/manual-ocaml/polymorphism.html
+      *
+      * When we pass the updateInstanceState function it has to be polymorphic
+      * *for all* instance('state, 'action, 'elementType) and passing such
+      * function as an argument introduces higher rank polymorphism.
+      * It's because it's not the function itself has to be polymorphic but its
+      * argument. Therefore we have to wrap it in a record
+      */
+    type updateInstanceState = {
+      f:
+        'state 'action 'elementType .
+        instance('state, 'action, 'elementType) =>
+        instance('state, 'action, 'elementType)
+
+    };
 
     /***
      * Initial render of an Element. Recurses to produce the entire tree of
@@ -438,18 +485,19 @@ module Make = (Implementation: HostImplementation) => {
      */
     and update =
         (
-          ~updateOpaqueInstanceState=?,
+          ~updateInstanceState=?,
           ~updateLog,
           originalOpaqueInstance,
           Element(nextComponent) as nextElement
         )
         : opaqueInstance => {
-      let updatedOpaqueInstance =
-        switch updateOpaqueInstanceState {
-        | Some(f) => f(originalOpaqueInstance)
-        | None => originalOpaqueInstance
+      let Instance(originalInstance) = originalOpaqueInstance;
+      let updatedInstance =
+        switch updateInstanceState {
+        | Some({f}) => f(originalInstance)
+        | None => originalInstance
         };
-      let stateNotUpdated = originalOpaqueInstance === updatedOpaqueInstance;
+      let stateNotUpdated = originalInstance === updatedInstance;
       let bailOut = {
         let Instance({element}) = originalOpaqueInstance;
         stateNotUpdated && element === nextElement;
@@ -457,16 +505,13 @@ module Make = (Implementation: HostImplementation) => {
       if (bailOut) {
         originalOpaqueInstance;
       } else {
-        let Instance({component: updatedComponent} as updatedInstance) = updatedOpaqueInstance;
-        updatedComponent.handedOffInstance := Some(updatedInstance);
+        let {component: updatedComponent} = updatedInstance;
+        updatedComponent.handedOffInstance :=
+          Some((originalInstance, updatedInstance));
         switch nextComponent.handedOffInstance^ {
-        /*
-         * Case A: The next element *is* of the same component class.
-         */
-        | Some(updatedInstance) =>
-          /* DO NOT FORGET TO RESET HANDEDOFFINSTANCE */
+        | Some((originalInstance, updatedInstance)) =>
           updatedComponent.handedOffInstance := None;
-          let updatedInstance = {
+          let updatedInstanceWithNewElement = {
             ...updatedInstance,
             component: nextComponent,
             element: nextElement
@@ -474,12 +519,9 @@ module Make = (Implementation: HostImplementation) => {
           let oldSelf = createSelf(~instance=updatedInstance);
           let newState = nextComponent.willReceiveProps(oldSelf);
           let stateChanged =
-            /* We need to split up the check for state changes in two parts.
-               The first part covers pending updates.
-               The second part covers willReceiveProps. */
             ! stateNotUpdated || newState !== updatedInstance.iState;
           let updatedInstanceWithNewState = {
-            ...updatedInstance,
+            ...updatedInstanceWithNewElement,
             iState: newState
           };
           let newSelf = createSelf(~instance=updatedInstance);
@@ -489,11 +531,10 @@ module Make = (Implementation: HostImplementation) => {
               nextComponent.willUpdate({oldSelf, newSelf});
             };
             let nextSubElements = nextComponent.render(newSelf);
-            /* TODO: Invoke any lifecycles necessary. */
             let {subElements, instanceSubTree} = updatedInstanceWithNewState;
             let (subTreeChange, nextInstanceSubTree) =
               updateRenderedElement(
-                ~updateOpaqueInstanceState?,
+                ~updateInstanceState?,
                 ~updateLog,
                 switch nextComponent.elementType {
                 | React => (
@@ -508,23 +549,23 @@ module Make = (Implementation: HostImplementation) => {
                   )
                 }
               );
-            let updatedInstanceWithNewSubtree = {
-              ...updatedInstanceWithNewState,
-              instanceSubTree: nextInstanceSubTree,
-              subElements: nextSubElements
-            };
             switch (stateChanged, subTreeChange) {
-            | (false, `NoChange) => originalOpaqueInstance /* The original one */
+            | (false, `NoChange) => originalOpaqueInstance
             | (stateChanged, subTreeChanged) =>
               if (nextComponent.didUpdate !== defaultDidUpdate) {
                 let newSelf = createSelf(~instance=updatedInstance);
                 nextComponent.didUpdate({oldSelf, newSelf});
               };
+              let updatedInstanceWithNewSubtree = {
+                ...updatedInstanceWithNewState,
+                instanceSubTree: nextInstanceSubTree,
+                subElements: nextSubElements
+              };
               UpdateLog.addUpdateInstance(
                 ~updateLog,
                 ~stateChanged,
                 ~subTreeChanged,
-                updatedInstance,
+                originalInstance,
                 updatedInstanceWithNewSubtree
               );
               Instance(updatedInstanceWithNewSubtree);
@@ -534,29 +575,18 @@ module Make = (Implementation: HostImplementation) => {
               ~updateLog,
               ~stateChanged,
               ~subTreeChanged=`NoChange,
-              updatedInstance,
+              originalInstance,
               updatedInstanceWithNewState
             );
             Instance(updatedInstanceWithNewState);
           } else {
             originalOpaqueInstance;
           };
-        /*
-         * Case B: The next element is *not* of the same component class. We know
-         * because otherwise we would have observed the mutation on
-         * `nextComponentClass`.
-         */
         | None =>
-          /* DO NOT FORGET TO RESET HANDEDOFFINSTANCE */
           updatedComponent.handedOffInstance := None;
           let (self, pendingStateUpdates, id) =
             createInitialSelf(~component=nextComponent);
           let nextSubElements = nextComponent.render(self);
-          /*
-           * ** Switching component type **
-           * TODO: Invoke destruction lifecycle on previous component.
-           * TODO: Invoke creation lifecycle on next component.
-           */
           let (nextSubtree, newOpaqueInstance) = {
             let nextSubtree =
               switch nextComponent.elementType {
@@ -588,9 +618,28 @@ module Make = (Implementation: HostImplementation) => {
         };
       };
     }
+    /*
+     * Case A: The next element *is* of the same component class.
+     */
+    /* DO NOT FORGET TO RESET HANDEDOFFINSTANCE */
+    /* We need to split up the check for state changes in two parts.
+       The first part covers pending updates.
+       The second part covers willReceiveProps. */
+    /* TODO: Invoke any lifecycles necessary. */
+    /*
+     * Case B: The next element is *not* of the same component class. We know
+     * because otherwise we would have observed the mutation on
+     * `nextComponentClass`.
+     */
+    /* DO NOT FORGET TO RESET HANDEDOFFINSTANCE */
+    /*
+     * ** Switching component type **
+     * TODO: Invoke destruction lifecycle on previous component.
+     * TODO: Invoke creation lifecycle on next component.
+     */
     and updateRenderedElement =
         (
-          ~updateOpaqueInstanceState=?,
+          ~updateInstanceState=?,
           ~updateLog,
           ~useKeyTable=?,
           (oldRenderedElement, oldReactElement, nextReactElement)
@@ -613,7 +662,7 @@ module Make = (Implementation: HostImplementation) => {
             (
               `NoChangeOrNested,
               update(
-                ~updateOpaqueInstanceState?,
+                ~updateInstanceState?,
                 ~updateLog,
                 subOpaqueInstance,
                 element
@@ -630,7 +679,7 @@ module Make = (Implementation: HostImplementation) => {
             (
               `NoChangeOrNested,
               update(
-                ~updateOpaqueInstanceState?,
+                ~updateInstanceState?,
                 ~updateLog,
                 subOpaqueInstance,
                 element
@@ -672,7 +721,7 @@ module Make = (Implementation: HostImplementation) => {
         let newRenderedElementsAndUpdates =
           ListTR.map3(
             updateRenderedElement(
-              ~updateOpaqueInstanceState?,
+              ~updateInstanceState?,
               ~updateLog,
               ~useKeyTable=keyTable
             ),
@@ -767,26 +816,30 @@ module Make = (Implementation: HostImplementation) => {
      * Execute the pending updates at the top level of an instance tree.
      * If no state change is performed, the argument is returned unchanged.
      */
-    let executePendingStateUpdates = opaqueInstance => {
-      let executeUpdate = (~state, stateUpdate) =>
-        switch (stateUpdate(state)) {
-        | NoUpdate => state
-        | Update(newState) => newState
-        };
-      let rec executeUpdates = (~state, stateUpdates) =>
-        switch stateUpdates {
-        | [] => state
-        | [stateUpdate, ...otherStateUpdates] =>
-          let nextState = executeUpdate(~state, stateUpdate);
-          executeUpdates(~state=nextState, otherStateUpdates);
-        };
-      let Instance(instance) = opaqueInstance;
-      let pendingUpdates = List.rev(instance.pendingStateUpdates^);
-      instance.pendingStateUpdates := [];
-      let nextState = executeUpdates(~state=instance.iState, pendingUpdates);
-      instance.iState === nextState ?
-        opaqueInstance : Instance({...instance, iState: nextState});
-    };
+    let executePendingStateUpdates:
+      'state 'action 'elementType .
+      instance('state, 'action, 'elementType) =>
+      instance('state, 'action, 'elementType)
+     =
+      instance => {
+        let executeUpdate = (~state, stateUpdate) =>
+          switch (stateUpdate(state)) {
+          | NoUpdate => state
+          | Update(newState) => newState
+          };
+        let rec executeUpdates = (~state, stateUpdates) =>
+          switch stateUpdates {
+          | [] => state
+          | [stateUpdate, ...otherStateUpdates] =>
+            let nextState = executeUpdate(~state, stateUpdate);
+            executeUpdates(~state=nextState, otherStateUpdates);
+          };
+        let pendingUpdates = List.rev(instance.pendingStateUpdates^);
+        instance.pendingStateUpdates := [];
+        let nextState = executeUpdates(~state=instance.iState, pendingUpdates);
+        instance.iState === nextState ?
+          instance : {...instance, iState: nextState};
+      };
 
     /***
      * Flush the pending updates in an instance tree.
@@ -796,7 +849,7 @@ module Make = (Implementation: HostImplementation) => {
       let Instance({element}) = opaqueInstance;
       update(
         ~updateLog,
-        ~updateOpaqueInstanceState=executePendingStateUpdates,
+        ~updateInstanceState={f: executePendingStateUpdates},
         opaqueInstance,
         element
       );

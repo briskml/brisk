@@ -126,18 +126,6 @@ module Make:
     };
 
     /***
-     * Imperative trees obtained from rendered elements.
-     * Can be updated in-place by applying an update log.
-     * Can return a new tree if toplevel rendering is required.
-     */
-    module OutputTree: {
-      type t;
-      let fromRenderedElement:
-        (Implementation.hostView, RenderedElement.t) => t;
-      let applyUpdateLog: (UpdateLog.t, t, Implementation.hostView) => t;
-    };
-
-    /***
      * RemoteAction provides a way to send actions to a remote component.
      * The sender creates a fresh RemoteAction and passes it down.
      * The recepient component calls subscribe in the didMount method.

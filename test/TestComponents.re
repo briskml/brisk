@@ -63,7 +63,7 @@ module Text = {
   let createElement = (~id, ~title, ~children: _, ()) =>
     TestRenderer.{
       id,
-      component: Component(ReasonReact.Text.component),
+      component: Component(Text.component),
       state: title,
       subtree: []
     };

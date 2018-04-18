@@ -537,10 +537,7 @@ let suite =
         let (rendered1, _) as actual1 =
           RenderedElement.update(
             rendered0,
-            Nested(
-              "div",
-              [ReasonReact.stringToElement("before"), Nested("div", [box_])]
-            )
+            Nested("div", [stringToElement("before"), Nested("div", [box_])])
           );
         assertUpdate(
           ~label="After update",

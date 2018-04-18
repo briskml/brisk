@@ -12,7 +12,8 @@ module Box = {
     render: (_) => {
       children: ReasonReact.listToElement([]),
       make: () => Implementation.Text(title),
-      updateInstance: (_) => ()
+      updateInstance: (_, _) => (),
+      shouldContentUpdate: (~oldState, ~newState) => oldState != newState
     }
   };
   let createElement = (~key=?, ~title=?, ~children as _children, ()) =>
@@ -27,7 +28,8 @@ module Div = {
     render: (_) => {
       children: listToElement(children),
       make: () => Implementation.View,
-      updateInstance: (_) => ()
+      updateInstance: (_, _) => (),
+      shouldContentUpdate: (~oldState as _, ~newState as _) => false
     }
   };
   let createElement = (~key=?, ~children, ()) =>
@@ -125,7 +127,7 @@ module ChangeCounter = {
           {mostRecentLabel: label, numChanges: state.numChanges + 1};
         } :
         state,
-    render: ({state: {numChanges, mostRecentLabel}}) => ReasonReact.Flat([]),
+    render: ({state: {numChanges, mostRecentLabel}}) => ReasonReact.Nested("", []),
     printState: ({numChanges, mostRecentLabel}) =>
       "[" ++ string_of_int(numChanges) ++ ", " ++ mostRecentLabel ++ "]"
   };
@@ -146,10 +148,9 @@ module StatelessButton = {
 
 module ButtonWrapper = {
   type state = {buttonWrapperState: int};
-  let component = ReasonReact.statefulComponent("ButtonWrapper");
+  let component = ReasonReact.statelessComponent("ButtonWrapper");
   let make = (~wrappedText="default", _children) => {
     ...component,
-    initialState: () => {buttonWrapperState: 0},
     render: ({state}) =>
       <StatelessButton
         initialClickCount=("wrapped:" ++ wrappedText ++ ":wrapped")

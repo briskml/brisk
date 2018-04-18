@@ -31,7 +31,8 @@ module Text = {
     render: (_) => {
       children: listToElement([]),
       make: () => Implementation.Text(title),
-      updateInstance: (_) => ()
+      updateInstance: (_, _) => (),
+      shouldContentUpdate: (~oldState, ~newState) => oldState != newState
     }
   };
   let createElement = (~key=?, ~title=?, ~children as _children, ()) =>

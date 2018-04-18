@@ -54,12 +54,13 @@ module Make:
 
     /*** Type of a react element before rendering  */
     type reactElement;
-    type nativeElement = {
+    type nativeElement('state, 'action) = {
       make: unit => Implementation.hostView,
-      updateInstance: Implementation.hostView => unit,
+    updateInstance: (self('state, 'action), Implementation.hostView) => unit,
+      shouldContentUpdate: (~oldState: 'state, ~newState: 'state) => bool,
       children: reactElement
     };
-    type elementType('concreteElementType);
+    type elementType('concreteElementType, 'state, 'action);
     type instance('state, 'action, 'elementType);
     type oldNewSelf('state, 'action) = {
       oldSelf: self('state, 'action),
@@ -68,7 +69,7 @@ module Make:
     type handedOffInstance('state, 'action, 'elementType);
     type componentSpec('state, 'initialState, 'action, 'elementType) = {
       debugName: string,
-      elementType: elementType('elementType),
+      elementType: elementType('elementType, 'state, 'action),
       willReceiveProps: self('state, 'action) => 'state,
       didMount: self('state, 'action) => unit,
       didUpdate: oldNewSelf('state, 'action) => unit,
@@ -97,7 +98,7 @@ module Make:
       componentSpec('state, stateless, 'action, reactElement);
     let statelessNativeComponent:
       (~useDynamicKey: bool=?, string) =>
-      component(stateless, actionless, nativeElement);
+      component(stateless, actionless, nativeElement(stateless, actionless));
     let element:
       (~key: Key.t=?, component('state, 'action, 'elementType)) => reactElement;
     let arrayToElement: array(reactElement) => reactElement;

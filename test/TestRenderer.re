@@ -17,6 +17,7 @@ type testSubTreeChange = [
   | `Nested
   | `PrependElement(t)
   | `ReplaceElements(t, t)
+  | `UpdateContent
 ];
 
 type testUpdate = {
@@ -56,14 +57,15 @@ let rec convertInstance:
   }
 and convertElement =
   fun
-  | IFlat(instances) =>
-    List.map((Instance(instance)) => convertInstance(instance), instances)
+  | IFlat(Instance(instance)) =>
+    [convertInstance(instance)]
   | INested(_, elements) => List.flatten(List.map(convertElement, elements));
 
 let convertSubTreeChange =
   fun
   | `NoChange => `NoChange
   | `Nested => `Nested
+  | `UpdateContent => `UpdateContent
   | `PrependElement(x) => `PrependElement(convertElement(x))
   | `ReplaceElements(oldElem, newElem) =>
     `ReplaceElements((convertElement(oldElem), convertElement(newElem)));
@@ -174,6 +176,7 @@ and compareInstance = ((left, right)) =>
 let compareSubtree =
   fun
   | (`NoChange, `NoChange)
+  | (`UpdateContent, `UpdateContent)
   | (`Nested, `Nested) => true
   | (`PrependElement(left), `PrependElement(right)) =>
     compareElement(left, right)

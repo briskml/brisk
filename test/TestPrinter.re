@@ -47,6 +47,7 @@ let printSubTreeChange = formatter =>
       switch change {
       | `NoChange => Fmt.pf(formatter, "%s", "`NoChange")
       | `Nested => Fmt.pf(formatter, "%s", "`Nested")
+      | `UpdateContent => Fmt.pf(formatter, "%s", "`UpdateContent")
       | `PrependElement(x) =>
         Fmt.pf(formatter, "`PrependElement: %a@,", printElement, x)
       | `ReplaceElements(oldElems, newElems) =>

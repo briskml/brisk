@@ -87,16 +87,15 @@ module Make = (Implementation: HostImplementation) => {
   /**
     * This type is used to avoid Obj.magic in update.
     * We create one handedOffInstance ref per component type.
-    * The componentSpec is usually reacreated on every render.
+    * The componentSpec is usually recreated on every render.
     * The ref is created in functions like `statelessComponent`. Then a user
     * usually spreads this ref like so:
     * let make = ... => {...component, ...};
     * Therefore all components coming from a given `make` function usually
     * share the same ref. Then, in the update function it can be determined
     *
-    * If two components are of the same types when we passi the instance to one
-    * component and we can observe the mutation on the other component,
-    * it means that we've got two components of the same type.
+    * When we pass the instance to one component and we can observe the mutation
+    * on the other component, it means that we've got two components of the same type.
     *
     * Additionally, we pass two instances here.
     * - The first instance in the tuple contains the original instance that
@@ -161,8 +160,8 @@ module Make = (Implementation: HostImplementation) => {
   /***
    * Opaque wrapper around `instance`, which allows many instances to be
    * commingled in a single data structure. The GADT hides the type parameters.
-   * The result of "rendering" an Element, is a tree of instances that are
-   * produced. This tree is then updated to produce a new *version* of the
+   * The result of "rendering" an Element is a tree of produced instances.
+   * This tree is then updated to produce a new *version* of the
    * instance tree based on the old - the old one is not mutated.
    */
   and opaqueInstance =
@@ -344,13 +343,6 @@ module Make = (Implementation: HostImplementation) => {
       };
       let addOpaqueInstances = (idTable, opaqueInstances) =>
         List.iter(addOpaqueInstance(idTable), opaqueInstances);
-      let createPositionTable = opaqueInstances => {
-        let posTable = Hashtbl.create(1);
-        let add = (i, opaqueInstance) =>
-          Hashtbl.add(posTable, i, opaqueInstance);
-        List.iteri(add, opaqueInstances);
-        posTable;
-      };
       let addRenderedElement = (idTable, renderedElement) => {
         let rec aux =
           fun
@@ -370,10 +362,6 @@ module Make = (Implementation: HostImplementation) => {
         | Not_found => None
         };
       };
-      let lookupPosition = (posTable, i) =>
-        try (Some(Hashtbl.find(posTable, i))) {
-        | Not_found => None
-        };
     };
     let getOpaqueInstance = (~useKeyTable, Element({key})) =>
       switch useKeyTable {
@@ -621,7 +609,7 @@ module Make = (Implementation: HostImplementation) => {
           ~updateLog,
           ~useKeyTable=?,
           (oldRenderedElement, oldReactElement, nextReactElement)
-        ) => {
+        ) =>
       /*
        * Key Policy for reactElement.
        * Nested elements determine shape: if the shape is not identical, re-render.
@@ -630,44 +618,6 @@ module Make = (Implementation: HostImplementation) => {
        * If the component has an explicit key, match the instance with the same key.
        * Note: components are matched for key across the entire reactElement structure.
        */
-      let processElement =
-          (~keyTable, ~posTable, position, Element(component) as element)
-          : ([ | `NoChangeOrNested | `NewElement], opaqueInstance) =>
-        if (component.key !== Key.none) {
-          switch (OpaqueInstanceHash.lookupKey(keyTable, component.key)) {
-          | Some(subOpaqueInstance) =>
-            /* instance tree with the same component key */
-            (
-              `NoChangeOrNested,
-              update(
-                ~updateInstanceState?,
-                ~updateLog,
-                subOpaqueInstance,
-                element
-              )
-            )
-          | None =>
-            /* not found: render a new instance */
-            (`NewElement, renderElement(element))
-          };
-        } else {
-          switch (OpaqueInstanceHash.lookupPosition(posTable, position)) {
-          | Some(subOpaqueInstance) =>
-            /* instance tree at the corresponding position */
-            (
-              `NoChangeOrNested,
-              update(
-                ~updateInstanceState?,
-                ~updateLog,
-                subOpaqueInstance,
-                element
-              )
-            )
-          | None =>
-            /* not found: render a new instance */
-            (`NewElement, renderElement(element))
-          };
-        };
       switch (oldRenderedElement, oldReactElement, nextReactElement) {
       | (
           INested(iName, instanceSubTrees),
@@ -739,11 +689,38 @@ module Make = (Implementation: HostImplementation) => {
           | None => OpaqueInstanceHash.createKeyTable(IFlat(oldOpaqueInstance))
           | Some(keyTable) => keyTable
           };
-        let posTable =
-          OpaqueInstanceHash.createPositionTable([oldOpaqueInstance]);
         /* Why shouldn't this be reached if there are different lengths?*/
-        let (update, newOpaqueInstance) =
-          processElement(~keyTable, ~posTable, 0, nextReactElement);
+        let (update, newOpaqueInstance) = {
+          let Element(component) = nextReactElement;
+          if (component.key !== Key.none) {
+            switch (OpaqueInstanceHash.lookupKey(keyTable, component.key)) {
+            | Some(subOpaqueInstance) =>
+              /* instance tree with the same component key */
+              (
+                `NoChangeOrNested,
+                update(
+                  ~updateInstanceState?,
+                  ~updateLog,
+                  subOpaqueInstance,
+                  nextReactElement
+                )
+              )
+            | None =>
+              /* not found: render a new instance */
+              (`NewElement, renderElement(nextReactElement))
+            };
+          } else {
+            (
+              `NoChangeOrNested,
+              update(
+                ~updateInstanceState?,
+                ~updateLog,
+                oldOpaqueInstance,
+                nextReactElement
+              )
+            );
+          };
+        };
         switch update {
         | `NewElement =>
           let newRenderedElement = IFlat(newOpaqueInstance);
@@ -773,7 +750,6 @@ module Make = (Implementation: HostImplementation) => {
           newRenderedElement
         );
       };
-    };
 
     /***
      * Execute the pending updates at the top level of an instance tree.

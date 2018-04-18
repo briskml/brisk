@@ -66,18 +66,19 @@ module Make = (Implementation: HostImplementation) => {
    * We will want to replace this with a more efficient data structure.
    */
   and reactElement =
-    | Flat(list(element))
+    | Flat(element)
     | Nested(string, list(reactElement))
-  and nativeElement = {
+  and nativeElement('state, 'action) = {
     make: unit => Implementation.hostView,
-    updateInstance: Implementation.hostView => unit,
+    updateInstance: (self('state, 'action), Implementation.hostView) => unit,
+    shouldContentUpdate: (~oldState: 'state, ~newState: 'state) => bool,
     children: reactElement
   }
-  and elementType('a) =
-    | Host: elementType(nativeElement)
-    | React: elementType(reactElement)
+  and elementType('a, 'state, 'action) =
+    | Host: elementType(nativeElement('state, 'action), 'state, 'action)
+    | React: elementType(reactElement, 'state, 'action)
   and renderedElement =
-    | IFlat(list(opaqueInstance))
+    | IFlat(opaqueInstance)
     | INested(string, list(renderedElement))
   and oldNewSelf('state, 'action) = {
     oldSelf: self('state, 'action),
@@ -114,7 +115,7 @@ module Make = (Implementation: HostImplementation) => {
     )
   and componentSpec('state, 'initialState, 'action, 'element) = {
     debugName: string,
-    elementType: elementType('element),
+    elementType: elementType('element, 'state, 'action),
     willReceiveProps: self('state, 'action) => 'state,
     didMount: self('state, 'action) => unit,
     didUpdate: oldNewSelf('state, 'action) => unit,
@@ -314,36 +315,35 @@ module Make = (Implementation: HostImplementation) => {
       );
     let rec flattenReactElement =
       fun
-      | Flat(l) => l
+      | Flat(l) => [l]
       | Nested(_, l) => ListTR.concat(ListTR.map(flattenReactElement, l));
     let rec flattenRenderedElement =
       fun
-      | IFlat(l) => l
+      | IFlat(l) => [l]
       | INested(_, l) => ListTR.concat(ListTR.map(flattenRenderedElement, l));
     let rec mapReactElement = (f, reactElement) =>
       switch reactElement {
-      | Flat(l) => IFlat(ListTR.map(f, l))
+      | Flat(l) => IFlat(f(l))
       | Nested(s, l) => INested(s, ListTR.map(mapReactElement(f), l))
       };
     let rec mapRenderedElement = (f, renderedElement) =>
       switch renderedElement {
-      | IFlat(l) =>
-        let nextL = ListTR.map(f, l);
-        let unchanged = List.for_all2((===), l, nextL);
-        unchanged ? renderedElement : IFlat(nextL);
+      | IFlat(e) =>
+        let nextE = f(e);
+        let unchanged = e === nextE;
+        unchanged ? renderedElement : IFlat(nextE);
       | INested(s, l) =>
         let nextL = ListTR.map(mapRenderedElement(f), l);
         let unchanged = List.for_all2((===), l, nextL);
         unchanged ? renderedElement : INested(s, nextL);
       };
     module OpaqueInstanceHash = {
-      let addOpaqueInstances = (idTable, opaqueInstances) => {
-        let add = opaqueInstance => {
-          let Instance({component: {key}}) = opaqueInstance;
-          key == Key.none ? () : Hashtbl.add(idTable, key, opaqueInstance);
-        };
-        List.iter(add, opaqueInstances);
+      let addOpaqueInstance = (idTable, opaqueInstance) => {
+        let Instance({component: {key}}) = opaqueInstance;
+        key == Key.none ? () : Hashtbl.add(idTable, key, opaqueInstance);
       };
+      let addOpaqueInstances = (idTable, opaqueInstances) =>
+        List.iter(addOpaqueInstance(idTable), opaqueInstances);
       let createPositionTable = opaqueInstances => {
         let posTable = Hashtbl.create(1);
         let add = (i, opaqueInstance) =>
@@ -354,7 +354,7 @@ module Make = (Implementation: HostImplementation) => {
       let addRenderedElement = (idTable, renderedElement) => {
         let rec aux =
           fun
-          | IFlat(l) => addOpaqueInstances(idTable, l)
+          | IFlat(l) => addOpaqueInstance(idTable, l)
           | INested(_, l) => List.iter(aux, l);
         aux(renderedElement);
       };
@@ -733,43 +733,28 @@ module Make = (Implementation: HostImplementation) => {
             newRenderedElement
           )
         };
-      | (IFlat(oldOpaqueInstances), Flat(_), Flat(_)) =>
+      | (IFlat(oldOpaqueInstance), Flat(_), Flat(nextReactElement)) =>
         let keyTable =
           switch useKeyTable {
-          | None =>
-            OpaqueInstanceHash.createKeyTable(IFlat(oldOpaqueInstances))
+          | None => OpaqueInstanceHash.createKeyTable(IFlat(oldOpaqueInstance))
           | Some(keyTable) => keyTable
           };
         let posTable =
-          OpaqueInstanceHash.createPositionTable(oldOpaqueInstances);
+          OpaqueInstanceHash.createPositionTable([oldOpaqueInstance]);
         /* Why shouldn't this be reached if there are different lengths?*/
-        let newOpaqueInstancesAndUpdates =
-          List.mapi(
-            processElement(~keyTable, ~posTable),
-            flattenReactElement(nextReactElement)
-          );
-        let replaced =
-          List.fold_left(
-            (acc, (elem, _)) =>
-              switch elem {
-              | `NoChangeOrNested => acc
-              | `NewElement => true
-              },
-            false,
-            newOpaqueInstancesAndUpdates
-          );
-        let newOpaqueInstances = List.map(snd, newOpaqueInstancesAndUpdates);
-        if (replaced) {
-          let newRenderedElement = IFlat(newOpaqueInstances);
+        let (update, newOpaqueInstance) =
+          processElement(~keyTable, ~posTable, 0, nextReactElement);
+        switch update {
+        | `NewElement =>
+          let newRenderedElement = IFlat(newOpaqueInstance);
           (
             `ReplaceElements((oldRenderedElement, newRenderedElement)),
             newRenderedElement
           );
-        } else {
-          let changed =
-            List.exists2((!==), oldOpaqueInstances, newOpaqueInstances);
+        | `NoChangeOrNested =>
+          let changed = oldOpaqueInstance !== newOpaqueInstance;
           if (changed) {
-            (`Nested, IFlat(newOpaqueInstances));
+            (`Nested, IFlat(newOpaqueInstance));
           } else {
             (`NoChange, oldRenderedElement);
           };
@@ -904,14 +889,19 @@ module Make = (Implementation: HostImplementation) => {
       basicComponent(~useDynamicKey?, debugName, React);
   let statelessNativeComponent:
     (~useDynamicKey: bool=?, string) =>
-    component(stateless, actionless, nativeElement) =
+    component(stateless, actionless, nativeElement(stateless, actionless)) =
     (~useDynamicKey=?, debugName) => {
       ...basicComponent(~useDynamicKey?, debugName, Host),
       initialState: () => ()
     };
   let statefulNativeComponent:
     (~useDynamicKey: bool=?, string) =>
-    componentSpec('state, stateless, actionless, nativeElement) =
+    componentSpec(
+      'state,
+      stateless,
+      actionless,
+      nativeElement('state, actionless)
+    ) =
     (~useDynamicKey=?, debugName) =>
       basicComponent(~useDynamicKey?, debugName, Host);
   let element = (~key as argumentKey=Key.none, component) => {
@@ -919,7 +909,7 @@ module Make = (Implementation: HostImplementation) => {
       argumentKey != Key.none ?
         argumentKey : component.key == Key.none ? Key.none : Key.create();
     let componentWithKey = key == Key.none ? component : {...component, key};
-    Flat([Element(componentWithKey)]);
+    Flat(Element(componentWithKey));
   };
   let arrayToElement = (a: array(reactElement)) : reactElement =>
     Nested("Array", Array.to_list(a));

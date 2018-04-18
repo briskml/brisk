@@ -3,31 +3,22 @@ open Assert;
 let suite =
   Components.[
     (
-      "First Render",
+      "Box wrapper",
       `Quick,
       () => {
         open TestRenderer;
         ReasonReact.GlobalState.reset();
-        let component = BoxWrapper.make();
-        let rendered = render(ReasonReact.element(component));
+        let rendered = render(<BoxWrapper />);
         let expected =
           TestComponents.[
             <BoxWrapper id=1>
               <Div id=2> <Box id=3 state="ImABox" /> </Div>
             </BoxWrapper>
           ];
-        assertElement(expected, rendered);
-      }
-    ),
-    (
-      "Top level update",
-      `Quick,
-      () => {
-        open TestRenderer;
-        ReasonReact.GlobalState.reset();
+        assertElement(~label="First render", expected, rendered);
         let actual =
           ReasonReact.RenderedElement.update(
-            ReasonReact.RenderedElement.render(<BoxWrapper />),
+            rendered,
             <BoxWrapper twoBoxes=true />
           );
         let twoBoxes =
@@ -227,7 +218,7 @@ let suite =
                   ref([
                     UpdateInstance({
                       stateChanged: true,
-                      subTreeChanged: `NoChange,
+                      subTreeChanged: `UpdateContent,
                       oldInstance:
                         <Text id=5 title="wrappedText:updatedText" />,
                       newInstance:
@@ -276,26 +267,26 @@ let suite =
           ReasonReact.(
             switch (rendered3, rendered4) {
             | (
-                IFlat([
+                IFlat(
                   Instance({
                     instanceSubTree:
-                      IFlat([
+                      IFlat(
                         Instance({
-                          instanceSubTree: INested(_, [_, _, IFlat([x])])
+                          instanceSubTree: INested(_, [_, _, IFlat(x)])
                         })
-                      ])
+                      )
                   })
-                ]),
-                IFlat([
+                ),
+                IFlat(
                   Instance({
                     instanceSubTree:
-                      IFlat([
+                      IFlat(
                         Instance({
-                          instanceSubTree: INested(_, [_, _, IFlat([y])])
+                          instanceSubTree: INested(_, [_, _, IFlat(y)])
                         })
-                      ])
+                      )
                   })
-                ])
+                )
               ) =>
               x === y
             | _ => false

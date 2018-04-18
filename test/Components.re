@@ -1,8 +1,9 @@
+open ReasonReact;
+
 /**
  * The simplest component. Composes nothing!
  */
 module Box = {
-  open ReasonReact;
   let component = statefulNativeComponent("Box");
   let make = (~title="ImABox", ~onClick as _=?, _children) => {
     ...component,
@@ -10,18 +11,17 @@ module Box = {
     willReceiveProps: (_) => title,
     printState: (_) => title,
     render: (_) => {
-      children: ReasonReact.listToElement([]),
+      children: listToElement([]),
       make: () => Implementation.Text(title),
       updateInstance: (_, _) => (),
       shouldContentUpdate: (~oldState, ~newState) => oldState != newState
     }
   };
   let createElement = (~key=?, ~title=?, ~children as _children, ()) =>
-    ReasonReact.element(~key?, make(~title?, ()));
+    element(~key?, make(~title?, ()));
 };
 
 module Div = {
-  open ReasonReact;
   let component = statelessNativeComponent("Div");
   let make = children => {
     ...component,
@@ -33,18 +33,39 @@ module Div = {
     }
   };
   let createElement = (~key=?, ~children, ()) =>
-    ReasonReact.element(~key?, make(children));
+    element(~key?, make(children));
 };
 
+module Text = {
+  /**
+   * FIXME: If a different prop is supplied as title, the change is not picked up by React.
+   * It's because make returns a host element and there's no way to know if a Host element
+   * is not changed.
+   * */
+  let component = statefulNativeComponent("Text");
+  let make = (~title="ImABox", _children) => {
+    ...component,
+    initialState: () => title,
+    willReceiveProps: (_) => title,
+    printState: (_) => title,
+    render: (_) => {
+      children: listToElement([]),
+      make: () => Implementation.Text(title),
+      updateInstance: (_, _) => (),
+      shouldContentUpdate: (~oldState, ~newState) => oldState != newState
+    }
+  };
+  let createElement = (~key=?, ~title=?, ~children as _children, ()) =>
+    element(~key?, make(~title?, ()));
+};
+
+let stringToElement = string => <Text title=string />;
+
 module BoxWrapper = {
-  let component = ReasonReact.statelessComponent("BoxWrapper");
+  let component = statelessComponent("BoxWrapper");
   let make =
       (~title="ImABox", ~twoBoxes=false, ~onClick as _=?, _children)
-      : ReasonReact.component(
-          ReasonReact.stateless,
-          unit,
-          ReasonReact.reactElement
-        ) => {
+      : component(stateless, unit, reactElement) => {
     ...component,
     initialState: () => (),
     render: _self =>
@@ -52,7 +73,7 @@ module BoxWrapper = {
         <Div> <Box title /> <Box title /> </Div> : <Div> <Box title /> </Div>
   };
   let createElement = (~key=?, ~title=?, ~twoBoxes=?, ~children, ()) =>
-    ReasonReact.element(~key?, make(~title?, ~twoBoxes?, ~onClick=(), ()));
+    element(~key?, make(~title?, ~twoBoxes?, ~onClick=(), ()));
 };
 
 /**
@@ -60,40 +81,40 @@ module BoxWrapper = {
  */
 module BoxWithDynamicKeys = {
   let component =
-    ReasonReact.statelessComponent(~useDynamicKey=true, "BoxWithDynamicKeys");
-  let make = (~title="ImABox", _children: list(ReasonReact.reactElement)) => {
+    statelessComponent(~useDynamicKey=true, "BoxWithDynamicKeys");
+  let make = (~title="ImABox", _children: list(reactElement)) => {
     ...component,
     printState: (_) => title,
-    render: _self => ReasonReact.listToElement([])
+    render: _self => listToElement([])
   };
   let createElement = (~title, ~children, ()) =>
-    ReasonReact.element(make(~title, children));
+    element(make(~title, children));
 };
 
 module BoxList = {
   type action =
     | Create(string)
     | Reverse;
-  let component = ReasonReact.reducerComponent("BoxList");
+  let component = reducerComponent("BoxList");
   let make = (~rAction, ~useDynamicKeys=false, _children) => {
     ...component,
     initialState: () => [],
     reducer: (action, state) =>
       switch action {
       | Create(title) =>
-        ReasonReact.Update([
+        Update([
           useDynamicKeys ? <BoxWithDynamicKeys title /> : <Box title />,
           ...state
         ])
-      | Reverse => ReasonReact.Update(List.rev(state))
+      | Reverse => Update(List.rev(state))
       },
     render: ({state, act}) => {
-      ReasonReact.RemoteAction.subscribe(~act, rAction);
-      ReasonReact.listToElement(state);
+      RemoteAction.subscribe(~act, rAction);
+      listToElement(state);
     }
   };
   let createElement = (~rAction, ~useDynamicKeys=false, ~children, ()) =>
-    ReasonReact.element(make(~rAction, ~useDynamicKeys, children));
+    element(make(~rAction, ~useDynamicKeys, children));
 };
 
 /**
@@ -112,12 +133,12 @@ module ChangeCounter = {
     numChanges: int,
     mostRecentLabel: string
   };
-  let component = ReasonReact.reducerComponent("ChangeCounter");
+  let component = reducerComponent("ChangeCounter");
   let make = (~label, _children) => {
     ...component,
     initialState: () => {mostRecentLabel: label, numChanges: 10},
     reducer: ((), state) =>
-      ReasonReact.Update({...state, numChanges: state.numChanges + 1000}),
+      Update({...state, numChanges: state.numChanges + 1000}),
     willReceiveProps: ({state, reduce}) =>
       label != state.mostRecentLabel ?
         {
@@ -127,28 +148,27 @@ module ChangeCounter = {
           {mostRecentLabel: label, numChanges: state.numChanges + 1};
         } :
         state,
-    render: ({state: {numChanges, mostRecentLabel}}) => ReasonReact.Nested("", []),
+    render: ({state: {numChanges, mostRecentLabel}}) => Nested("", []),
     printState: ({numChanges, mostRecentLabel}) =>
       "[" ++ string_of_int(numChanges) ++ ", " ++ mostRecentLabel ++ "]"
   };
-  let createElement = (~label, ~children, ()) =>
-    ReasonReact.element(make(~label, ()));
+  let createElement = (~label, ~children, ()) => element(make(~label, ()));
 };
 
 module StatelessButton = {
-  let component = ReasonReact.statelessComponent("StatelessButton");
+  let component = statelessComponent("StatelessButton");
   let make =
       (~initialClickCount as _="noclicks", ~test as _="default", _children) => {
     ...component,
     render: _self => <Div />
   };
   let createElement = (~initialClickCount=?, ~test=?, ~children, ()) =>
-    ReasonReact.element(make(~initialClickCount?, ~test?, ()));
+    element(make(~initialClickCount?, ~test?, ()));
 };
 
 module ButtonWrapper = {
   type state = {buttonWrapperState: int};
-  let component = ReasonReact.statelessComponent("ButtonWrapper");
+  let component = statelessComponent("ButtonWrapper");
   let make = (~wrappedText="default", _children) => {
     ...component,
     render: ({state}) =>
@@ -157,30 +177,30 @@ module ButtonWrapper = {
       />
   };
   let createElement = (~wrappedText=?, ~children, ()) =>
-    ReasonReact.element(make(~wrappedText?, ()));
+    element(make(~wrappedText?, ()));
 };
 
 module ButtonWrapperWrapper = {
   let buttonWrapperJsx = <ButtonWrapper wrappedText="TestButtonUpdated!!!" />;
-  let component = ReasonReact.statefulComponent("ButtonWrapperWrapper");
+  let component = statefulComponent("ButtonWrapperWrapper");
   let make = (~wrappedText="default", _children) => {
     ...component,
     initialState: () => "buttonWrapperWrapperState",
     render: ({state}) =>
       <Div>
-        (ReasonReact.stringToElement(state))
-        (ReasonReact.stringToElement("wrappedText:" ++ wrappedText))
+        (stringToElement(state))
+        (stringToElement("wrappedText:" ++ wrappedText))
         buttonWrapperJsx
       </Div>
   };
   let createElement = (~wrappedText=?, ~children, ()) =>
-    ReasonReact.element(make(~wrappedText?, ()));
+    element(make(~wrappedText?, ()));
 };
 
 module UpdateAlternateClicks = {
   type action =
     | Click;
-  let component = ReasonReact.reducerComponent("UpdateAlternateClicks");
+  let component = reducerComponent("UpdateAlternateClicks");
   let make = (~rAction, _children) => {
     ...component,
     initialState: () => 0,
@@ -188,10 +208,9 @@ module UpdateAlternateClicks = {
     reducer: (Click, state) => Update(state + 1),
     shouldUpdate: ({newSelf: {state}}) => state mod 2 === 0,
     render: ({state, act}) => {
-      ReasonReact.RemoteAction.subscribe(~act, rAction);
-      ReasonReact.stringToElement(string_of_int(state));
+      RemoteAction.subscribe(~act, rAction);
+      stringToElement(string_of_int(state));
     }
   };
-  let createElement = (~rAction, ~children, ()) =>
-    ReasonReact.element(make(~rAction, ()));
+  let createElement = (~rAction, ~children, ()) => element(make(~rAction, ()));
 };

@@ -43,17 +43,21 @@ module Text = {
    * is not changed.
    * */
   let component = statefulNativeComponent("Text");
+  let shouldUpdate = (!=);
   let make = (~title="ImABox", _children) => {
     ...component,
     initialState: () => title,
     willReceiveProps: (_) => title,
-    printState: (state) => state,
+    shouldUpdate: ({oldSelf: {state: oldState}, newSelf: {state: newState}}) =>
+      shouldUpdate(oldState, newState),
+    printState: state => state,
     render: (_) => {
       children: listToElement([]),
       make: () => Implementation.Text(title),
       updateInstance: (_, _) => (),
-      shouldReconfigureInstance: (~oldState, ~newState) => { print_endline(oldState ++ newState); oldState != newState
-      }}
+      shouldReconfigureInstance: (~oldState, ~newState) =>
+        shouldUpdate(oldState, newState)
+    }
   };
   let createElement = (~key=?, ~title=?, ~children as _children, ()) =>
     element(~key?, make(~title?, ()));

@@ -218,7 +218,7 @@ let suite =
                   ref([
                     UpdateInstance({
                       stateChanged: true,
-                      subTreeChanged: `UpdateContent,
+                      subTreeChanged: `ContentChanged(`NoChange),
                       oldInstance:
                         <Text id=5 title="wrappedText:updatedText" />,
                       newInstance:
@@ -490,13 +490,13 @@ let suite =
             [
               UpdateInstance({
                 stateChanged: true,
-                subTreeChanged: `NoChange,
+                subTreeChanged: `ContentChanged(`NoChange),
                 oldInstance: <Box id=4 state="Hello" />,
                 newInstance: <Box id=4 state="World" />
               }),
               UpdateInstance({
                 stateChanged: true,
-                subTreeChanged: `NoChange,
+                subTreeChanged: `ContentChanged(`NoChange),
                 oldInstance: <Box id=3 state="World" />,
                 newInstance: <Box id=3 state="Hello" />
               }),
@@ -628,13 +628,13 @@ let suite =
                   ref([
                     UpdateInstance({
                       stateChanged: true,
-                      subTreeChanged: `NoChange,
+                      subTreeChanged: `ContentChanged(`NoChange),
                       oldInstance: <Box id=1 state="Box1unchanged" />,
                       newInstance: <Box id=1 state="Box1changed" />
                     }),
                     UpdateInstance({
                       stateChanged: true,
-                      subTreeChanged: `NoChange,
+                      subTreeChanged: `ContentChanged(`NoChange),
                       oldInstance: <Box id=2 state="Box2unchanged" />,
                       newInstance: <Box id=2 state="Box2changed" />
                     })

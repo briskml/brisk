@@ -12,12 +12,16 @@ type testInstance = {
 }
 and t = list(testInstance);
 
-type testSubTreeChange = [
+type testSubTreeChangeReact = [
   | `NoChange
   | `Nested
   | `PrependElement(t)
   | `ReplaceElements(t, t)
-  | `UpdateContent
+];
+
+type testSubTreeChange = [
+  testSubTreeChangeReact
+  | `ContentChanged(testSubTreeChangeReact)
 ];
 
 type testUpdate = {
@@ -57,18 +61,25 @@ let rec convertInstance:
   }
 and convertElement =
   fun
-  | IFlat(Instance(instance)) =>
-    [convertInstance(instance)]
+  | IFlat(Instance(instance)) => [convertInstance(instance)]
   | INested(_, elements) => List.flatten(List.map(convertElement, elements));
+
+let rec convertSubTreeChangeReact = (x: UpdateLog.subtreeChangeReact) =>
+  switch x {
+  | `NoChange => `NoChange
+  | `Nested => `Nested
+  | `PrependElement(x) => `PrependElement(convertElement(x))
+  | `ReplaceElements(oldElem, newElem) =>
+    `ReplaceElements((convertElement(oldElem), convertElement(newElem)))
+  };
 
 let convertSubTreeChange =
   fun
-  | `NoChange => `NoChange
-  | `Nested => `Nested
-  | `UpdateContent => `UpdateContent
-  | `PrependElement(x) => `PrependElement(convertElement(x))
-  | `ReplaceElements(oldElem, newElem) =>
-    `ReplaceElements((convertElement(oldElem), convertElement(newElem)));
+  | `ContentChanged(x) => `ContentChanged(convertSubTreeChangeReact(x))
+  | `NoChange as x
+  | `Nested as x
+  | `PrependElement(_) as x
+  | `ReplaceElements(_, _) as x => convertSubTreeChangeReact(x);
 
 let render = element => RenderedElement.render(element);
 
@@ -173,15 +184,21 @@ and compareInstance = ((left, right)) =>
   && compareComponents(left.component, right.component)
   && compareElement(left.subtree, right.subtree);
 
-let compareSubtree =
+let compareSubtreeReact =
   fun
   | (`NoChange, `NoChange)
-  | (`UpdateContent, `UpdateContent)
   | (`Nested, `Nested) => true
   | (`PrependElement(left), `PrependElement(right)) =>
     compareElement(left, right)
   | (`ReplaceElements(left1, left2), `ReplaceElements(right1, right2)) =>
     compareElement(left1, right1) && compareElement(left2, right2)
+  | (_, _) => false;
+
+let compareSubtree =
+  fun
+  | (`ContentChanged(x), `ContentChanged(y)) => compareSubtreeReact((x, y))
+  | (#testSubTreeChangeReact, #testSubTreeChangeReact) as x =>
+    compareSubtreeReact(x)
   | (_, _) => false;
 
 let rec compareUpdateLog = (left, right) =>

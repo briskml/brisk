@@ -14,7 +14,7 @@ module Box = {
       children: listToElement([]),
       make: () => Implementation.Text(title),
       updateInstance: (_, _) => (),
-      shouldContentUpdate: (~oldState, ~newState) => oldState != newState
+      shouldReconfigureInstance: (~oldState, ~newState) => oldState != newState
     }
   };
   let createElement = (~key=?, ~title=?, ~children as _children, ()) =>
@@ -29,7 +29,7 @@ module Div = {
       children: listToElement(children),
       make: () => Implementation.View,
       updateInstance: (_, _) => (),
-      shouldContentUpdate: (~oldState as _, ~newState as _) => false
+      shouldReconfigureInstance: (~oldState as _, ~newState as _) => false
     }
   };
   let createElement = (~key=?, ~children, ()) =>
@@ -47,13 +47,13 @@ module Text = {
     ...component,
     initialState: () => title,
     willReceiveProps: (_) => title,
-    printState: (_) => title,
+    printState: (state) => state,
     render: (_) => {
       children: listToElement([]),
       make: () => Implementation.Text(title),
       updateInstance: (_, _) => (),
-      shouldContentUpdate: (~oldState, ~newState) => oldState != newState
-    }
+      shouldReconfigureInstance: (~oldState, ~newState) => { print_endline(oldState ++ newState); oldState != newState
+      }}
   };
   let createElement = (~key=?, ~title=?, ~children as _children, ()) =>
     element(~key?, make(~title?, ()));

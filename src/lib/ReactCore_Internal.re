@@ -71,7 +71,7 @@ module Make = (Implementation: HostImplementation) => {
   and nativeElement('state, 'action) = {
     make: unit => Implementation.hostView,
     updateInstance: (self('state, 'action), Implementation.hostView) => unit,
-    shouldContentUpdate: (~oldState: 'state, ~newState: 'state) => bool,
+    shouldReconfigureInstance: (~oldState: 'state, ~newState: 'state) => bool,
     children: reactElement
   }
   and elementType('a, 'state, 'action) =
@@ -230,12 +230,17 @@ module Make = (Implementation: HostImplementation) => {
 
   /*** Log of operations performed to update an instance tree. */
   module UpdateLog = {
-    type subtreeChange = [
+    type subtreeChangeReact = [
       | `Nested
       | `NoChange
       | `PrependElement(renderedElement)
       | `ReplaceElements(renderedElement, renderedElement)
     ];
+    type subtreeChangeHost = [
+      subtreeChangeReact
+      | `ContentChanged(subtreeChangeReact)
+    ];
+    type subtreeChange = subtreeChangeHost;
     type instanceUpdate('state, 'action, 'elementType) = {
       oldInstance: instance('state, 'action, 'elementType),
       newInstance: instance('state, 'action, 'elementType),
@@ -501,7 +506,7 @@ module Make = (Implementation: HostImplementation) => {
             iState: newState
           };
           /* TODO: Invoke any lifecycles necessary. */
-          let newSelf = createSelf(~instance=updatedInstance);
+          let newSelf = createSelf(~instance=updatedInstanceWithNewState);
           if (nextComponent.shouldUpdate === defaultShouldUpdate
               || nextComponent.shouldUpdate({oldSelf, newSelf})) {
             if (nextComponent.willUpdate !== defaultWillUpdate) {
@@ -526,9 +531,22 @@ module Make = (Implementation: HostImplementation) => {
                   )
                 }
               );
+            let contentChanged =
+              switch nextComponent.elementType {
+              | React => false
+              | Host =>
+                nextSubElements.shouldReconfigureInstance(
+                  ~oldState=oldSelf.state,
+                  ~newState=newSelf.state
+                )
+              };
             switch (stateChanged, subTreeChange) {
-            | (false, `NoChange) => originalOpaqueInstance
+            | (false, `NoChange) when ! contentChanged => originalOpaqueInstance
             | (stateChanged, subTreeChanged) =>
+              let subTreeChanged =
+                contentChanged ?
+                  `ContentChanged(subTreeChanged) :
+                  (subTreeChanged :> UpdateLog.subtreeChangeHost);
               if (nextComponent.didUpdate !== defaultDidUpdate) {
                 let newSelf = createSelf(~instance=updatedInstance);
                 nextComponent.didUpdate({oldSelf, newSelf});
@@ -609,7 +627,8 @@ module Make = (Implementation: HostImplementation) => {
           ~updateLog,
           ~useKeyTable=?,
           (oldRenderedElement, oldReactElement, nextReactElement)
-        ) =>
+        )
+        : (UpdateLog.subtreeChangeReact, renderedElement) =>
       /*
        * Key Policy for reactElement.
        * Nested elements determine shape: if the shape is not identical, re-render.
@@ -800,13 +819,13 @@ module Make = (Implementation: HostImplementation) => {
      * Rendering produces a list of instance trees.
      */
     type t = renderedElement;
-    type subtreeChange = [
+    type topLevelChange = [
       | `Nested
       | `PrependElement(renderedElement)
       | `ReplaceElements(renderedElement, renderedElement)
     ];
     type topLevelUpdate = {
-      subtreeChange,
+      subtreeChange: topLevelChange,
       updateLog: UpdateLog.t
     };
     let listToRenderedElement = renderedElements =>

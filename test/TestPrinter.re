@@ -39,15 +39,14 @@ and printInstance = () =>
 
 let printElement = formatter => Fmt.pf(formatter, "%a", printTreeFormatter());
 
-let printSubTreeChange = formatter =>
+let printSubTreeChangeReact = formatter =>
   Fmt.pf(
     formatter,
     "%a",
-    Fmt.hvbox((formatter, change) =>
+    Fmt.hvbox((formatter, change: testSubTreeChangeReact) =>
       switch change {
       | `NoChange => Fmt.pf(formatter, "%s", "`NoChange")
       | `Nested => Fmt.pf(formatter, "%s", "`Nested")
-      | `UpdateContent => Fmt.pf(formatter, "%s", "`UpdateContent")
       | `PrependElement(x) =>
         Fmt.pf(formatter, "`PrependElement: %a@,", printElement, x)
       | `ReplaceElements(oldElems, newElems) =>
@@ -62,6 +61,14 @@ let printSubTreeChange = formatter =>
       }
     )
   );
+
+let printSubTreeChange = (formatter, change) =>
+  switch change {
+  | `ContentChanged(x) =>
+    Fmt.pf(formatter, "`ContentChanged(%a)", printSubTreeChangeReact, x)
+  | #testSubTreeChangeReact as change =>
+    printSubTreeChangeReact(formatter, change)
+  };
 
 let printUpdateLog = formatter => {
   let rec pp = () => Fmt.brackets(Fmt.list(~sep=Fmt.comma, printUpdateLog()))

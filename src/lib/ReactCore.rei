@@ -57,7 +57,7 @@ module Make:
     type nativeElement('state, 'action) = {
       make: unit => Implementation.hostView,
     updateInstance: (self('state, 'action), Implementation.hostView) => unit,
-      shouldContentUpdate: (~oldState: 'state, ~newState: 'state) => bool,
+      shouldReconfigureInstance: (~oldState: 'state, ~newState: 'state) => bool,
       children: reactElement
     };
     type elementType('concreteElementType, 'state, 'action);

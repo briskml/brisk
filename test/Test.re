@@ -602,8 +602,8 @@ let suite =
              renderedElement,
              "Initial Boxes",
              TestComponents.[
-               <Box id=1 state="Box1unchanged" />,
-               <Box id=2 state="Box2unchanged" />
+               <Box id=key1 state="Box1unchanged" />,
+               <Box id=key2 state="Box2unchanged" />
              ]
            );
         let (rendered1, _) as actual1 =
@@ -618,8 +618,8 @@ let suite =
           ~label="Swap Boxes",
           TestComponents.(
             [
-              <Box id=2 state="Box2changed" />,
-              <Box id=1 state="Box1changed" />
+              <Box id=key2 state="Box2changed" />,
+              <Box id=key1 state="Box1changed" />
             ],
             Some(
               TestRenderer.{
@@ -696,6 +696,109 @@ let suite =
           "Second click then flush",
           result(~state="4", ~text="4"),
           TestRenderer.convertElement(rendered)
+        );
+      }
+    ),
+    (
+      "Test no change",
+      `Quick,
+      () => {
+        open ReasonReact;
+        GlobalState.reset();
+        let key1 = Key.create();
+        let key2 = Key.create();
+        let rendered0 =
+          RenderedElement.render(
+            listToElement(
+              Components.[
+                <Text key=key1 title="x" />,
+                <Text key=key2 title="y" />
+              ]
+            )
+          );
+        Assert.assertElement(
+          TestComponents.[ <Text id=1 title="x" />, <Text id=2 title="y" /> ],
+          rendered0
+        );
+        let actual =
+          RenderedElement.update(
+            rendered0,
+            listToElement(
+              Components.[
+                <Text key=key1 title="x" />,
+                <Text key=key2 title="y" />
+              ]
+            )
+          );
+        assertUpdate(
+          ~label="Updates the state because the state is updated with a new instance",
+          (
+            TestComponents.[ <Text id=1 title="x" />, <Text id=2 title="y" />],
+            Some({
+              subtreeChange: `Nested,
+              updateLog:
+                ref(
+                  TestRenderer.[
+                    UpdateInstance(
+                      TestComponents.{
+                        stateChanged: true,
+                        subTreeChanged: `NoChange,
+                        oldInstance: <Text id=2 title="y" />,
+                        newInstance: <Text id=2 title="y" />
+                      }
+                    ),UpdateInstance(
+                      TestComponents.{
+                        stateChanged: true,
+                        subTreeChanged: `NoChange,
+                        oldInstance: <Text id=1 title="x" />,
+                        newInstance: <Text id=1 title="x" />
+                      }
+                    )
+                  ]
+                )
+            })
+          ),
+          actual
+        );
+        let actual = 
+          RenderedElement.update(
+            fst(actual),
+            listToElement(
+              Components.[
+                <Text key=key2 title="y" />,
+                <Text key=key1 title="x" />
+              ]
+            )
+          );
+        assertUpdate(
+          ~label="Updates the state because the state is updated with a new instance",
+          (
+            TestComponents.[ <Text id=2 title="y" />, <Text id=1 title="x" />, ],
+            Some({
+              subtreeChange: `Nested /* This should say that they've been reordered */,
+              updateLog:
+                ref(
+                  TestRenderer.[
+                    UpdateInstance(
+                      TestComponents.{
+                        stateChanged: true,
+                        subTreeChanged: `NoChange,
+                        oldInstance: <Text id=1 title="x" />,
+                        newInstance: <Text id=1 title="x" />
+                      }
+                    ), UpdateInstance(
+                      TestComponents.{
+                        stateChanged: true,
+                        subTreeChanged: `NoChange,
+                        oldInstance: <Text id=2 title="y" />,
+                        newInstance: <Text id=2 title="y" />
+                      }
+                    )
+                  ]
+                )
+            })
+          ),
+          actual
         );
       }
     )

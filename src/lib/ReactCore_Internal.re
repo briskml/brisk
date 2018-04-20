@@ -62,9 +62,6 @@ module Make = (Implementation: HostImplementation) => {
    */
   and element =
     | Element(component('state, 'action, 'elementType)): element
-  /***
-   * We will want to replace this with a more efficient data structure.
-   */
   and reactElement =
     | Flat(element)
     | Nested(string, list(reactElement))
@@ -621,6 +618,18 @@ module Make = (Implementation: HostImplementation) => {
         };
       };
     }
+    /*
+     * updateRenderedElement recurses through the reactElement tree as long as
+     * the oldReactElement and nextReactElement have the same shape.
+     *
+     * The base case is either an empty list - Nested([]) or a Flat element.
+     *
+     * reactElement is a recursive tree like data structure. The tree doesn't
+     * contain children of the reactElements returned from children, it only
+     * contains the "immediate" children so to speak including all nested lists.
+     *
+     * `keyTable` is a hash table containing all keys in the reactElement tree.
+     */
     and updateRenderedElement =
         (
           ~updateInstanceState=?,
@@ -628,15 +637,7 @@ module Make = (Implementation: HostImplementation) => {
           ~useKeyTable=?,
           (oldRenderedElement, oldReactElement, nextReactElement)
         )
-        : (UpdateLog.subtreeChangeReact, renderedElement) =>
-      /*
-       * Key Policy for reactElement.
-       * Nested elements determine shape: if the shape is not identical, re-render.
-       * Flat elements use a positional match by default, where components at
-       * the same position (from left) are matched for updates.
-       * If the component has an explicit key, match the instance with the same key.
-       * Note: components are matched for key across the entire reactElement structure.
-       */
+        : (UpdateLog.subtreeChangeReact, renderedElement) => {
       switch (oldRenderedElement, oldReactElement, nextReactElement) {
       | (
           INested(iName, instanceSubTrees),
@@ -702,7 +703,18 @@ module Make = (Implementation: HostImplementation) => {
             newRenderedElement
           )
         };
+      /*
+       * Key Policy for reactElement.
+       * Nested elements determine shape: if the shape is not identical, re-render.
+       * Flat elements use a positional match by default, where components at
+       * the same position (from left) are matched for updates.
+       * If the component has an explicit key, match the instance with the same key.
+       * Note: components are matched for key across the entire reactElement structure.
+       */
       | (IFlat(oldOpaqueInstance), Flat(_), Flat(nextReactElement)) =>
+        /* TODO: if oldReactElement.key != nextReactElement.key then they might have 
+      * been reordered.
+      */
         let keyTable =
           switch useKeyTable {
           | None => OpaqueInstanceHash.createKeyTable(IFlat(oldOpaqueInstance))
@@ -768,7 +780,7 @@ module Make = (Implementation: HostImplementation) => {
           `ReplaceElements((oldRenderedElement, newRenderedElement)),
           newRenderedElement
         );
-      };
+      }};
 
     /***
      * Execute the pending updates at the top level of an instance tree.

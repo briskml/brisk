@@ -1,123 +1,106 @@
 open TestRenderer;
 
-let printList = (indent, lst) => {
-  let indent = String.make(indent, ' ');
-  "[" ++ String.concat(",\n", List.map(s => s, lst)) ++ "\n" ++ indent ++ "]";
-};
+open Easy_format;
 
-let rec printTreeFormatter = () => Fmt.hvbox(Fmt.list(printInstance()))
-and printInstance = () =>
-  Fmt.hvbox((formatter, instance) =>
-    switch instance.subtree {
-    | [] =>
-      Fmt.pf(
-        formatter,
-        "<%s id=%s%s/>",
-        componentName(instance.component),
-        string_of_int(instance.id),
-        switch instance.state {
-        | "" => ""
-        | x => " state=\"" ++ x ++ "\""
-        }
-      )
-    | sub =>
-      Fmt.pf(
-        formatter,
-        "<%s id=%s%s>@ %a@ </%s>",
-        componentName(instance.component),
-        string_of_int(instance.id),
-        switch instance.state {
-        | "" => ""
-        | x => " state=\"" ++ x ++ "\""
-        },
-        printTreeFormatter(),
-        sub,
-        componentName(instance.component)
-      )
-    }
-  );
+let list = {...list, align_closing: true};
 
-let printElement = formatter => Fmt.pf(formatter, "%a", printTreeFormatter());
+let label = {...label, space_after_label: false};
 
-let printSubTreeChangeReact = formatter =>
-  Fmt.pf(
-    formatter,
-    "%a",
-    Fmt.hvbox((formatter, change: testSubTreeChangeReact) =>
-      switch change {
-      | `NoChange => Fmt.pf(formatter, "%s", "`NoChange")
-      | `Nested => Fmt.pf(formatter, "%s", "`Nested")
-      | `PrependElement(x) =>
-        Fmt.pf(formatter, "`PrependElement: %a@,", printElement, x)
-      | `ReplaceElements(oldElems, newElems) =>
-        Fmt.pf(
-          formatter,
-          "`ReplaceElements: %a@, %a@,",
-          printElement,
-          oldElems,
-          printElement,
-          newElems
-        )
-      }
+let field = {...label, space_after_label: true};
+
+let makeProp = (key, value) =>
+  Label((Atom(key ++ "=", atom), label), Atom(value, atom));
+
+let makeField = (key, value) => Label((Atom(key ++ ":", atom), field), value);
+
+let rec formatInstance = instance => {
+  let tag = componentName(instance.component);
+  switch instance.subtree {
+  | [] =>
+    List(
+      ("<" ++ tag, "", "/>", list),
+      [
+        makeProp("id", string_of_int(instance.id)),
+        makeProp("state", instance.state)
+      ]
     )
-  );
-
-let printSubTreeChange = (formatter, change) =>
-  switch change {
-  | `ContentChanged(x) =>
-    Fmt.pf(formatter, "`ContentChanged(%a)", printSubTreeChangeReact, x)
-  | #testSubTreeChangeReact as change =>
-    printSubTreeChangeReact(formatter, change)
+  | sub =>
+    List(
+      ("<" ++ tag ++ ">", "", "</" ++ tag ++ ">", list),
+      sub |> List.map(formatInstance)
+    )
   };
-
-let printUpdateLog = formatter => {
-  let rec pp = () => Fmt.brackets(Fmt.list(~sep=Fmt.comma, printUpdateLog()))
-  and printUpdateLog = ((), formatter, entry) =>
-    switch entry {
-    | UpdateInstance(update) =>
-      Fmt.pf(
-        formatter,
-        "%s {@[<hov>@,stateChanged: %s,@ subTreeChanged: %a,@ oldInstance: %a,@ newInstance: %a @]}",
-        "UpdateInstance",
-        string_of_bool(update.stateChanged),
-        printSubTreeChange,
-        update.subTreeChanged,
-        printInstance(),
-        update.oldInstance,
-        printInstance(),
-        update.newInstance
-      )
-    | ChangeComponent(update) =>
-      Fmt.pf(
-        formatter,
-        "%s {@[<hov>@,oldSubtree: %a,@ newSubtree: %a,@ oldInstance: %a,@ newInstance: %a @]}",
-        "ChangeComponent",
-        printElement,
-        update.oldSubtree,
-        printElement,
-        update.newSubtree,
-        printInstance(),
-        update.oldInstance,
-        printInstance(),
-        update.newInstance
-      )
-    };
-  Fmt.pf(formatter, "%a", pp());
 };
 
-let printTopLevelUpdateLog =
-  Fmt.hvbox((formatter, topLevelUpdateLog: option(testTopLevelUpdateLog)) =>
-    switch topLevelUpdateLog {
-    | Some(topLevelUpdate) =>
-      Fmt.pf(
-        formatter,
-        "%s {@[<hov>@,subTreeChanged: %a,@ updateLog: %a @]}",
-        "TopLevelUpdate",
-        printSubTreeChange,
-        topLevelUpdate.subtreeChange,
-        printUpdateLog,
-        topLevelUpdate.updateLog^
-      )
-    | None => Fmt.pf(formatter, "%s", "NoUpdate")
-    }
-  );
+let formatElement = instances =>
+  List(("[", "", "]", list), instances |> List.map(formatInstance));
+
+let formatSubTreeChangeReact =
+  fun
+  | `NoChange => Atom("`NoChange", atom)
+  | `Nested => Atom("`Nested", atom)
+  | `PrependElement(x) =>
+    List(("`PrependElement(", ",", ")", list), [formatElement(x)])
+  | `ReplaceElements(oldElems, newElems) =>
+    List(
+      ("`ReplaceElements(", ",", ")", list),
+      [oldElems, newElems] |> List.map(formatElement)
+    );
+
+let formatSubTreeChange =
+  fun
+  | `ContentChanged(change) =>
+    List(
+      ("`ContentChanged(", "", ")", list),
+      [formatSubTreeChangeReact(change)]
+    )
+  | #testSubTreeChangeReact as change => formatSubTreeChangeReact(change);
+
+let formatUpdateLogItem =
+  fun
+  | UpdateInstance(update) =>
+    List(
+      ("UpdateInstance {", ",", "}", list),
+      [
+        ("stateChanged", Atom(string_of_bool(update.stateChanged), atom)),
+        ("subTreeChanged", formatSubTreeChange(update.subTreeChanged)),
+        ("oldInstance", formatInstance(update.oldInstance)),
+        ("newInstance", formatInstance(update.newInstance))
+      ]
+      |> List.map(((key, value)) => makeField(key, value))
+    )
+  | ChangeComponent(update) =>
+    List(
+      ("ChangeComponent {", ",", "}", list),
+      [
+        ("oldSubtree", formatElement(update.oldSubtree)),
+        ("newSubtree", formatElement(update.newSubtree)),
+        ("oldInstance", formatInstance(update.oldInstance)),
+        ("newInstance", formatInstance(update.newInstance))
+      ]
+      |> List.map(((key, value)) => makeField(key, value))
+    );
+
+let formatUpdateLog = updateLog =>
+  List(("[", ",", "]", list), updateLog |> List.map(formatUpdateLogItem));
+
+let formatTopLevelUpdateLog =
+  fun
+  | None => Atom("__none__", atom)
+  | Some(update) =>
+    List(
+      ("TopLevelUpdate {", ",", "}", list),
+      [
+        makeField("subTreeChanged", formatSubTreeChange(update.subtreeChange)),
+        makeField("updateLog", formatUpdateLog(update.updateLog^))
+      ]
+    );
+
+let printElement = (formatter, instances) =>
+  Pretty.to_formatter(formatter, formatElement(instances));
+
+let printUpdateLog = (formatter, updateLog) =>
+  Pretty.to_formatter(formatter, formatUpdateLog(updateLog));
+
+let printTopLevelUpdateLog = (formatter, topLevelUpdate) =>
+  Pretty.to_formatter(formatter, formatTopLevelUpdateLog(topLevelUpdate));

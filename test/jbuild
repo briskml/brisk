@@ -2,7 +2,7 @@
 
 (executables
  ((names (test))
-  (libraries (alcotest r2n2))))
+  (libraries (alcotest easy-format r2n2))))
 
 (alias
  ((name runtest)

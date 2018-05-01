@@ -18,61 +18,56 @@ let updateLog =
     TestRenderer.compareUpdateLog
   );
 
-let line = (ppf, ~color=?, c) => {
-  open Astring;
-  let with_process_in = (cmd, f) => {
-    let ic = Unix.open_process_in(cmd);
-    try {
-      let r = f(ic);
-      ignore(Unix.close_process_in(ic));
-      r;
-    } {
-    | exn =>
-      ignore(Unix.close_process_in(ic));
-      raise(exn);
-    };
-  };
-  let terminal_columns =
-    /* terminfo */
-    try (with_process_in("tput cols", ic => int_of_string(input_line(ic)))) {
-    | _ =>
-      /* GNU stty */
-      try (
-        with_process_in("stty size", ic =>
-          switch (String.cuts(input_line(ic), ~sep=" ")) {
-          | [_, v] => int_of_string(v)
-          | _ => failwith("stty")
-          }
-        )
-      ) {
-      | _ =>
-        /* shell envvar */
-        try (int_of_string(Sys.getenv("COLUMNS"))) {
-        | _ =>
-          /* default */
-          80
-        }
-      }
-    };
-  let line = String.v(~len=terminal_columns, (_) => c);
-  switch color {
-  | Some(c) => Fmt.pf(ppf, "%a\n%!", Fmt.(styled(c, string)), line)
-  | None => Fmt.pf(ppf, "%s\n%!", line)
-  };
+module Diff = Simple_diff.Make(String);
+
+let diffOutput = (expected, actual) => {
+  open Diff;
+  let gray = string => "\027[90m" ++ string ++ "\027[39m";
+  let red = string => "\027[31m" ++ string ++ "\027[39m";
+  let green = string => "\027[32m" ++ string ++ "\027[39m";
+  let diff = get_diff(expected, actual);
+  diff
+  |> List.map(
+       fun
+       | Equal(lines) =>
+         gray(
+           String.concat(
+             "\n",
+             lines |> Array.map(line => " " ++ line) |> Array.to_list
+           )
+         )
+       | Deleted(lines) =>
+         red(
+           String.concat(
+             "\n",
+             lines |> Array.map(line => "-" ++ line) |> Array.to_list
+           )
+         )
+       | Added(lines) =>
+         green(
+           String.concat(
+             "\n",
+             lines |> Array.map(line => "+" ++ line) |> Array.to_list
+           )
+         )
+     )
+  |> String.concat("\n");
+};
+
+let line = (ppf, c) => {
+  let line = Astring.String.v(~len=80, (_) => c);
+  Fmt.pf(ppf, "%a\n%!", Fmt.(styled(`Yellow, string)), line);
 };
 
 let check = (t, msg, x, y) =>
   if (! equal(t, x, y)) {
-    line(Fmt.stderr, ~color=`Yellow, '-');
-    Fmt.strf(
-      "%s:\n\nEXPECTED:@\n\n%a\n\nACTUAL:@\n\n%a\n",
-      msg,
-      pp(t),
-      x,
-      pp(t),
-      y
-    )
-    |> failwith;
+    line(Fmt.stderr, '-');
+    let expected =
+      Fmt.strf("%a", pp(t), x) |> String.split_on_char('\n') |> Array.of_list;
+    let actual =
+      Fmt.strf("%a", pp(t), y) |> String.split_on_char('\n') |> Array.of_list;
+    let diff = diffOutput(expected, actual);
+    Fmt.strf("%s:\n\n%s\n", msg, diff) |> failwith;
   };
 
 let assertElement = (~label="", expected, rendered) =>

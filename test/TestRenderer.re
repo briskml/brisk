@@ -15,6 +15,7 @@ and t = list(testInstance);
 type testSubTreeChangeReact = [
   | `NoChange
   | `Nested
+  | `Reordered
   | `PrependElement(t)
   | `ReplaceElements(t, t)
 ];
@@ -68,6 +69,7 @@ let rec convertSubTreeChangeReact = (x: UpdateLog.subtreeChangeReact) =>
   switch x {
   | `NoChange => `NoChange
   | `Nested => `Nested
+  | `Reordered => `Reordered
   | `PrependElement(x) => `PrependElement(convertElement(x))
   | `ReplaceElements(oldElem, newElem) =>
     `ReplaceElements((convertElement(oldElem), convertElement(newElem)))
@@ -78,12 +80,11 @@ let convertSubTreeChange =
   | `ContentChanged(x) => `ContentChanged(convertSubTreeChangeReact(x))
   | `NoChange as x
   | `Nested as x
+  | `Reordered as x
   | `PrependElement(_) as x
   | `ReplaceElements(_, _) as x => convertSubTreeChangeReact(x);
 
 let render = element => RenderedElement.render(element);
-
-let update = (element, next) => RenderedElement.update(element, next);
 
 let convertUpdateLog = (updateLog: ReasonReact.UpdateLog.t) => {
   let rec convertUpdateLog = (updateLogRef: list(ReasonReact.UpdateLog.entry)) =>
@@ -187,7 +188,8 @@ and compareInstance = ((left, right)) =>
 let compareSubtreeReact =
   fun
   | (`NoChange, `NoChange)
-  | (`Nested, `Nested) => true
+  | (`Nested, `Nested)
+  | (`Reordered, `Reordered) => true
   | (`PrependElement(left), `PrependElement(right)) =>
     compareElement(left, right)
   | (`ReplaceElements(left1, left2), `ReplaceElements(right1, right2)) =>

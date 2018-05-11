@@ -7,8 +7,10 @@ let suite =
       `Quick,
       () => {
         open TestRenderer;
-        ReasonReact.GlobalState.reset();
-        let rendered = render(<BoxWrapper />);
+        open ReasonReact;
+        GlobalState.reset();
+        let previousReactElement = <BoxWrapper />;
+        let rendered = render(previousReactElement);
         let expected =
           TestComponents.[
             <BoxWrapper id=1>
@@ -17,8 +19,9 @@ let suite =
           ];
         assertElement(~label="First render", expected, rendered);
         let actual =
-          ReasonReact.RenderedElement.update(
-            rendered,
+          RenderedElement.update(
+            ~previousReactElement,
+            ~renderedElement=rendered,
             <BoxWrapper twoBoxes=true />
           );
         let twoBoxes =
@@ -68,11 +71,10 @@ let suite =
       "Change counter test",
       `Quick,
       () => {
-        ReasonReact.GlobalState.reset();
-        let rendered0 =
-          ReasonReact.RenderedElement.render(
-            <ChangeCounter label="defaultText" />
-          );
+        open ReasonReact;
+        GlobalState.reset();
+        let previousReactElement = <ChangeCounter label="defaultText" />;
+        let rendered0 = RenderedElement.render(previousReactElement);
         assertElement(
           [
             TestComponents.(
@@ -81,11 +83,14 @@ let suite =
           ],
           rendered0
         );
+        let updatedReactElement = <ChangeCounter label="defaultText" />;
         let (rendered1, _) as actual =
-          TestRenderer.update(
-            rendered0,
-            <ChangeCounter label="defaultText" />
+          RenderedElement.update(
+            ~previousReactElement,
+            ~renderedElement=rendered0,
+            updatedReactElement
           );
+        let previousReactElement = updatedReactElement;
         assertUpdate(
           (
             [
@@ -97,11 +102,14 @@ let suite =
           ),
           actual
         );
+        let updatedReactElement = <ChangeCounter label="updatedText" />;
         let (rendered2, _) as actual2 =
-          TestRenderer.update(
-            rendered1,
-            <ChangeCounter label="updatedText" />
+          RenderedElement.update(
+            ~previousReactElement,
+            ~renderedElement=rendered1,
+            updatedReactElement
           );
+        let previousReactElement = updatedReactElement;
         assertUpdate(
           TestComponents.(
             [<ChangeCounter id=1 label="updatedText" counter=11 />],
@@ -158,11 +166,15 @@ let suite =
           rendered2f_mem === rendered2f,
           true
         );
+        let updatedReactElement =
+          <ButtonWrapperWrapper wrappedText="updatedText" />;
         let (rendered3, _) as actual3 =
-          TestRenderer.update(
-            rendered2f_mem,
-            <ButtonWrapperWrapper wrappedText="updatedText" />
+          RenderedElement.update(
+            ~previousReactElement,
+            ~renderedElement=rendered2f_mem,
+            updatedReactElement
           );
+        let previousReactElement = updatedReactElement;
         assertUpdate(
           ~label="Updating components: ChangeCounter to ButtonWrapperWrapper",
           TestComponents.(
@@ -197,10 +209,13 @@ let suite =
           ),
           actual3
         );
+        let updatedReactElement =
+          <ButtonWrapperWrapper wrappedText="updatedTextmodified" />;
         let (rendered4, _) as actual4 =
-          TestRenderer.update(
-            rendered3,
-            <ButtonWrapperWrapper wrappedText="updatedTextmodified" />
+          RenderedElement.update(
+            ~previousReactElement,
+            ~renderedElement=rendered3,
+            updatedReactElement
           );
         assertUpdate(
           ~label="Updating text in the button wrapper",
@@ -391,7 +406,7 @@ let suite =
             [
               UpdateInstance({
                 stateChanged: true,
-                subTreeChanged: `Nested,
+                subTreeChanged: `Reordered,
                 oldInstance:
                   <BoxList id=1>
                     <BoxWithDynamicKeys id=3 state="World" />
@@ -534,10 +549,13 @@ let suite =
              "Initial Box",
              [TestComponents.(<BoxWithDynamicKeys id=1 state="box to move" />)]
            );
+        let updatedReactElement =
+          Nested("div", [stringToElement("before"), Nested("div", [box_])]);
         let (rendered1, _) as actual1 =
           RenderedElement.update(
-            rendered0,
-            Nested("div", [stringToElement("before"), Nested("div", [box_])])
+            ~previousReactElement=box_,
+            ~renderedElement=rendered0,
+            updatedReactElement
           );
         assertUpdate(
           ~label="After update",
@@ -590,13 +608,12 @@ let suite =
         GlobalState.reset();
         let key1 = Key.create();
         let key2 = Key.create();
-        let rendered0 =
-          RenderedElement.render(
-            ReasonReact.listToElement([
-              <Box key=key1 title="Box1unchanged" />,
-              <Box key=key2 title="Box2unchanged" />
-            ])
-          );
+        let previousReactElement =
+          ReasonReact.listToElement([
+            <Box key=key1 title="Box1unchanged" />,
+            <Box key=key2 title="Box2unchanged" />
+          ]);
+        let rendered0 = RenderedElement.render(previousReactElement);
         TestRenderer.convertElement(rendered0)
         |> check(
              renderedElement,
@@ -606,13 +623,17 @@ let suite =
                <Box id=key2 state="Box2unchanged" />
              ]
            );
+        let updatedReactElement =
+          ReasonReact.listToElement([
+            <Box key=key2 title="Box2changed" />,
+            <Box key=key1 title="Box1changed" />
+          ]);
+        let previousReactElement = updatedReactElement;
         let (rendered1, _) as actual1 =
           RenderedElement.update(
-            rendered0,
-            ReasonReact.listToElement([
-              <Box key=key2 title="Box2changed" />,
-              <Box key=key1 title="Box1changed" />
-            ])
+            ~previousReactElement,
+            ~renderedElement=rendered0,
+            updatedReactElement
           );
         assertUpdate(
           ~label="Swap Boxes",
@@ -704,101 +725,104 @@ let suite =
       `Quick,
       () => {
         open ReasonReact;
+        open TestComponents;
         GlobalState.reset();
         let key1 = Key.create();
         let key2 = Key.create();
-        let rendered0 =
-          RenderedElement.render(
-            listToElement(
-              Components.[
-                <Text key=key1 title="x" />,
-                <Text key=key2 title="y" />
-              ]
-            )
+        let previousReactElement =
+          listToElement(
+            Components.[
+              <Text key=key1 title="x" />,
+              <Text key=key2 title="y" />
+            ]
           );
+        let rendered0 = RenderedElement.render(previousReactElement);
         Assert.assertElement(
-          TestComponents.[ <Text id=1 title="x" />, <Text id=2 title="y" /> ],
+          [<Text id=1 title="x" />, <Text id=2 title="y" />],
           rendered0
         );
+        let updatedReactElement =
+          listToElement(
+            Components.[
+              <Text key=key1 title="x" />,
+              <Text key=key2 title="y" />
+            ]
+          );
         let actual =
           RenderedElement.update(
-            rendered0,
-            listToElement(
-              Components.[
-                <Text key=key1 title="x" />,
-                <Text key=key2 title="y" />
-              ]
-            )
+            ~previousReactElement,
+            ~renderedElement=rendered0,
+            updatedReactElement
           );
+        let previousReactElement = updatedReactElement;
         assertUpdate(
-          ~label="Updates the state because the state is updated with a new instance",
+          ~label=
+            "Updates the state because the state is updated with a new instance of string",
           (
-            TestComponents.[ <Text id=1 title="x" />, <Text id=2 title="y" />],
+            [<Text id=1 title="x" />, <Text id=2 title="y" />],
             Some({
               subtreeChange: `Nested,
               updateLog:
                 ref(
                   TestRenderer.[
-                    UpdateInstance(
-                      TestComponents.{
-                        stateChanged: true,
-                        subTreeChanged: `NoChange,
-                        oldInstance: <Text id=2 title="y" />,
-                        newInstance: <Text id=2 title="y" />
-                      }
-                    ),UpdateInstance(
-                      TestComponents.{
-                        stateChanged: true,
-                        subTreeChanged: `NoChange,
-                        oldInstance: <Text id=1 title="x" />,
-                        newInstance: <Text id=1 title="x" />
-                      }
-                    )
+                    UpdateInstance({
+                      stateChanged: true,
+                      subTreeChanged: `NoChange,
+                      oldInstance: <Text id=2 title="y" />,
+                      newInstance: <Text id=2 title="y" />
+                    }),
+                    UpdateInstance({
+                      stateChanged: true,
+                      subTreeChanged: `NoChange,
+                      oldInstance: <Text id=1 title="x" />,
+                      newInstance: <Text id=1 title="x" />
+                    })
                   ]
                 )
             })
           ),
           actual
         );
-        let actual = 
+        let updatedReactElement =
+          Components.(
+            listToElement([
+              <Text key=key2 title="y" />,
+              <Text key=key1 title="x" />
+            ])
+          );
+        let actual2 =
           RenderedElement.update(
-            fst(actual),
-            listToElement(
-              Components.[
-                <Text key=key2 title="y" />,
-                <Text key=key1 title="x" />
-              ]
-            )
+            ~previousReactElement,
+            ~renderedElement=fst(actual),
+            updatedReactElement
           );
         assertUpdate(
-          ~label="Updates the state because the state is updated with a new instance",
+          ~label=
+            "Updates the state because the state is updated with a new instance",
           (
-            TestComponents.[ <Text id=2 title="y" />, <Text id=1 title="x" />, ],
+            [<Text id=2 title="y" />, <Text id=1 title="x" />],
             Some({
-              subtreeChange: `Nested /* This should say that they've been reordered */,
+              subtreeChange: `Reordered,
               updateLog:
                 ref(
                   TestRenderer.[
-                    UpdateInstance(
-                      TestComponents.{
-                        stateChanged: true,
-                        subTreeChanged: `NoChange,
-                        oldInstance: <Text id=1 title="x" />,
-                        newInstance: <Text id=1 title="x" />
-                      }
-                    ), UpdateInstance(
-                      TestComponents.{
-                        stateChanged: true,
-                        subTreeChanged: `NoChange,
-                        oldInstance: <Text id=2 title="y" />,
-                        newInstance: <Text id=2 title="y" />
-                      }
-                    )
+                    UpdateInstance({
+                      stateChanged: true,
+                      subTreeChanged: `NoChange,
+                      oldInstance: <Text id=1 title="x" />,
+                      newInstance: <Text id=1 title="x" />
+                    }),
+                    UpdateInstance({
+                      stateChanged: true,
+                      subTreeChanged: `NoChange,
+                      oldInstance: <Text id=2 title="y" />,
+                      newInstance: <Text id=2 title="y" />
+                    })
                   ]
                 )
             })
           ),
-          actual
+          actual2
         );
       }
     )

@@ -721,6 +721,40 @@ let suite =
       }
     ),
     (
+      "Test flat update",
+      `Quick,
+      () => {
+        open ReasonReact;
+        GlobalState.reset();
+        let previousReactElement = <Text key=1 title="x" />;
+        let rendered = RenderedElement.render(previousReactElement);
+        let updatedReactElement = <Text key=2 title="y" />;
+        let actual =
+          RenderedElement.update(
+            ~previousReactElement,
+            ~renderedElement=rendered,
+            updatedReactElement
+          );
+        TestComponents.(
+          assertUpdate(
+            ~label="Will return `ReplaceElements for top level flat update",
+            (
+              [<Text id=2 title="y" />],
+              Some({
+                subtreeChange:
+                  `ReplaceElements((
+                    [<Text id=1 title="x" />],
+                    [<Text id=2 title="y" />]
+                  )),
+                updateLog: ref([])
+              })
+            ),
+            actual
+          )
+        );
+      }
+    ),
+    (
       "Test no change",
       `Quick,
       () => {

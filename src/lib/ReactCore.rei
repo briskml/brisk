@@ -56,8 +56,9 @@ module Make:
     type reactElement;
     type nativeElement('state, 'action) = {
       make: unit => Implementation.hostView,
-    updateInstance: (self('state, 'action), Implementation.hostView) => unit,
-      shouldReconfigureInstance: (~oldState: 'state, ~newState: 'state) => bool,
+      updateInstance: (self('state, 'action), Implementation.hostView) => unit,
+      shouldReconfigureInstance:
+        (~oldState: 'state, ~newState: 'state) => bool,
       children: reactElement
     };
     type elementType('concreteElementType, 'state, 'action);
@@ -120,7 +121,13 @@ module Make:
       let render: reactElement => t;
 
       /*** Update a rendered element when a new react element is received. */
-      let update: (t, reactElement) => (t, option(topLevelUpdate));
+      let update:
+        (
+          ~previousReactElement: reactElement,
+          ~renderedElement: t,
+          reactElement
+        ) =>
+        (t, option(topLevelUpdate));
 
       /*** Flush pending state updates (and possibly add new ones). */
       let flushPendingUpdates: t => (t, UpdateLog.t);

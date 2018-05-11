@@ -230,6 +230,7 @@ module Make = (Implementation: HostImplementation) => {
     type subtreeChangeReact = [
       | `Nested
       | `NoChange
+      | `Reordered
       | `PrependElement(renderedElement)
       | `ReplaceElements(renderedElement, renderedElement)
     ];
@@ -637,7 +638,7 @@ module Make = (Implementation: HostImplementation) => {
           ~useKeyTable=?,
           (oldRenderedElement, oldReactElement, nextReactElement)
         )
-        : (UpdateLog.subtreeChangeReact, renderedElement) => {
+        : (UpdateLog.subtreeChangeReact, renderedElement) =>
       switch (oldRenderedElement, oldReactElement, nextReactElement) {
       | (
           INested(iName, instanceSubTrees),
@@ -661,6 +662,24 @@ module Make = (Implementation: HostImplementation) => {
           when
             List.length(nextReactElements) === List.length(oldRenderedElements)
             && List.length(nextReactElements) === List.length(oldReactElements) =>
+        /**
+         * If we recursively match `oldReactElements` and `nextReactElements`
+         * with Flat(Element({key: oldKey})) and Flat(Element({key: nextKey}))
+         * where oldKey != newKey then we get `Reordered
+         */
+        let rec isReordered = (l1, l2) =>
+          switch (l1, l2) {
+          | ([Nested(_, _), ...t1], [Nested(_, _), ...t2]) =>
+            isReordered(t1, t2)
+          | (
+              [Flat(Element({key: oldKey})), ...t1],
+              [Flat(Element({key: nextKey})), ...t2]
+            ) =>
+            oldKey != nextKey || isReordered(t1, t2)
+          | ([Nested(_, _), ..._], [Flat(_), ..._])
+          | ([Flat(_), ..._], [Nested(_), ..._]) => true
+          | (_, _) => false
+          };
         let keyTable =
           switch useKeyTable {
           | None => OpaqueInstanceHash.createKeyTable(oldRenderedElement)
@@ -695,8 +714,13 @@ module Make = (Implementation: HostImplementation) => {
             List.map(((_, x)) => x, newRenderedElementsAndUpdates)
           );
         switch change {
-        | `NoChange => (`NoChange, oldRenderedElement)
-        | `Nested => (`Nested, newRenderedElement)
+        | `NoChange =>
+          isReordered(oldReactElements, nextReactElements) ?
+            (`Reordered, newRenderedElement) : (`NoChange, oldRenderedElement)
+        | `Nested =>
+          isReordered(oldReactElements, nextReactElements) ?
+            (`Reordered, newRenderedElement) : (`Nested, newRenderedElement)
+        | `Reordered => (`Reordered, newRenderedElement)
         | `PrependElement(_)
         | `ReplaceElements(_, _) => (
             `ReplaceElements((oldRenderedElement, newRenderedElement)),
@@ -712,9 +736,6 @@ module Make = (Implementation: HostImplementation) => {
        * Note: components are matched for key across the entire reactElement structure.
        */
       | (IFlat(oldOpaqueInstance), Flat(_), Flat(nextReactElement)) =>
-        /* TODO: if oldReactElement.key != nextReactElement.key then they might have 
-      * been reordered.
-      */
         let keyTable =
           switch useKeyTable {
           | None => OpaqueInstanceHash.createKeyTable(IFlat(oldOpaqueInstance))
@@ -780,7 +801,7 @@ module Make = (Implementation: HostImplementation) => {
           `ReplaceElements((oldRenderedElement, newRenderedElement)),
           newRenderedElement
         );
-      }};
+      };
 
     /***
      * Execute the pending updates at the top level of an instance tree.
@@ -832,6 +853,7 @@ module Make = (Implementation: HostImplementation) => {
      */
     type t = renderedElement;
     type topLevelChange = [
+      | `Reordered
       | `Nested
       | `PrependElement(renderedElement)
       | `ReplaceElements(renderedElement, renderedElement)
@@ -844,16 +866,17 @@ module Make = (Implementation: HostImplementation) => {
       INested("List", renderedElements);
     let render = reactElement : t => Render.renderReactElement(reactElement);
     let update =
-        (renderedElement: t, reactElement)
+        (~previousReactElement, ~renderedElement: t, reactElement)
         : (t, option(topLevelUpdate)) => {
       let updateLog = UpdateLog.create();
       let (topLevelChange, newRenderedElement) =
         Render.updateRenderedElement(
           ~updateLog,
-          (renderedElement, reactElement, reactElement)
+          (renderedElement, previousReactElement, reactElement)
         );
       switch topLevelChange {
       | `NoChange => (renderedElement, None)
+      | `Reordered as subtreeChange
       | `Nested as subtreeChange
       | `PrependElement(_) as subtreeChange
       | `ReplaceElements(_, _) as subtreeChange => (

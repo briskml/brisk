@@ -37,6 +37,7 @@ let formatElement = instances =>
 
 let formatSubTreeChangeReact =
   fun
+  | `Reordered => Atom("`Reordered", atom)
   | `NoChange => Atom("`NoChange", atom)
   | `Nested => Atom("`Nested", atom)
   | `PrependElement(x) =>
@@ -91,7 +92,7 @@ let formatTopLevelUpdateLog =
     List(
       ("TopLevelUpdate {", ",", "}", list),
       [
-        makeField("subTreeChanged", formatSubTreeChange(update.subtreeChange)),
+        makeField("subTreeChange", formatSubTreeChange(update.subtreeChange)),
         makeField("updateLog", formatUpdateLog(update.updateLog^))
       ]
     );

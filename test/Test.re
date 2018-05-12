@@ -859,6 +859,54 @@ let suite =
           actual2
         );
       }
+    ),
+    (
+      "Prepend Element",
+      `Quick,
+      () => {
+        open ReasonReact;
+        GlobalState.reset();
+        GlobalState.useTailHack := true;
+        let key1 = Key.create();
+        let commonElement = [<Components.Text key=key1 title="x" />];
+        let previousReactElement = listToElement(commonElement);
+        let rendered0 = RenderedElement.render(previousReactElement);
+        Assert.assertElement(
+          [
+            TestComponents.Text.createElement(
+              ~id=1,
+              ~title="x",
+              ~children=(),
+              ()
+            )
+          ],
+          rendered0
+        );
+        let key2 = Key.create();
+        let updated =
+          RenderedElement.update(
+            ~previousReactElement,
+            ~renderedElement=rendered0,
+            listToElement([
+              <Components.Text key=key2 title="y" />,
+              ...commonElement
+            ])
+          );
+        assertUpdate(
+          (
+            [
+              <TestComponents.Text id=2 title="y" />,
+              <TestComponents.Text id=1 title="x" />
+            ],
+            Some({
+              subtreeChange:
+                `PrependElement([<TestComponents.Text id=2 title="y" />]),
+              updateLog: ref([])
+            })
+          ),
+          updated
+        );
+      }
     )
   ];
 

@@ -1,29 +1,87 @@
 open Assert;
 
+module Run = {
+  type updateState = {
+    previousReactElement: ReasonReact.reactElement,
+    oldRenderedElement: ReasonReact.renderedElement,
+    nextReactElement: ReasonReact.reactElement
+  };
+  type testItem('a) =
+    | FirstRender(ReasonReact.reactElement): testItem(TestRenderer.t)
+    | Update(updateState): testItem(
+                             (
+                               TestRenderer.t,
+                               option(TestRenderer.testTopLevelUpdateLog)
+                             )
+                           )
+    | FlushUpdates(ReasonReact.reactElement, ReasonReact.renderedElement): testItem(
+                                                                    option(
+                                                                    (
+                                                                    TestRenderer.t,
+                                                                    list(
+                                                                    TestRenderer.testUpdateEntry
+                                                                    )
+                                                                    )
+                                                                    )
+                                                                    );
+  let expect:
+    type a.
+      (~label: string=?, a, testItem(a)) =>
+      (ReasonReact.RenderedElement.t, ReasonReact.reactElement) =
+    (~label=?, expected, prev) =>
+      switch prev {
+      | Update({nextReactElement, oldRenderedElement, previousReactElement}) =>
+        let (newRenderedElement, _) as actual =
+          ReasonReact.RenderedElement.update(
+            ~previousReactElement,
+            ~renderedElement=oldRenderedElement,
+            nextReactElement
+          );
+        assertUpdate(~label?, expected, actual);
+        (newRenderedElement, nextReactElement);
+      | FirstRender(previousReactElement) =>
+        open TestRenderer;
+        let oldRenderedElement = render(previousReactElement);
+        assertElement(~label?, expected, oldRenderedElement);
+        (oldRenderedElement, previousReactElement);
+      | FlushUpdates(previousReactElement, oldRenderedElement) =>
+        let (newRenderedElement, _) as actual =
+          ReasonReact.RenderedElement.flushPendingUpdates(oldRenderedElement);
+        switch expected {
+        | Some(expected) =>
+          assertFlushUpdate(~label?, expected, actual);
+          (newRenderedElement, previousReactElement);
+        | None =>
+          check(
+            Alcotest.bool,
+            switch label {
+            | None => "It is memoized"
+            | Some(x) => x
+            },
+            oldRenderedElement === newRenderedElement,
+            true
+          );
+          (newRenderedElement, previousReactElement);
+        };
+      };
+  let start = reactElement => {
+    ReasonReact.GlobalState.reset();
+    FirstRender(reactElement);
+  };
+  let update = (nextReactElement, (oldRenderedElement, previousReactElement)) =>
+    Update({nextReactElement, oldRenderedElement, previousReactElement});
+  let flushPendingUpdates = ((oldRenderedElement, previousReactElement)) =>
+    FlushUpdates(previousReactElement, oldRenderedElement);
+  let done_ = ((_oldRenderedElement, _previousReactElement)) => ();
+};
+
 let suite =
   Components.[
     (
       "Box wrapper",
       `Quick,
       () => {
-        open TestRenderer;
-        open ReasonReact;
-        GlobalState.reset();
-        let previousReactElement = <BoxWrapper />;
-        let rendered = render(previousReactElement);
-        let expected =
-          TestComponents.[
-            <BoxWrapper id=1>
-              <Div id=2> <Box id=3 state="ImABox" /> </Div>
-            </BoxWrapper>
-          ];
-        assertElement(~label="First render", expected, rendered);
-        let actual =
-          RenderedElement.update(
-            ~previousReactElement,
-            ~renderedElement=rendered,
-            <BoxWrapper twoBoxes=true />
-          );
+        open Run;
         let twoBoxes =
           TestComponents.(
             <Div id=2>
@@ -32,39 +90,49 @@ let suite =
             </Div>
           );
         let oneBox = TestComponents.(<Div id=2> <Box id=3 /> </Div>);
-        let twoBoxesWrapper =
-          TestComponents.(<BoxWrapper id=1> twoBoxes </BoxWrapper>);
-        let expected = (
-          [twoBoxesWrapper],
-          Some({
-            subtreeChange: `Nested,
-            updateLog:
-              ref(
-                TestComponents.[
-                  UpdateInstance({
-                    stateChanged: false,
-                    subTreeChanged:
-                      `ReplaceElements((
-                        [<Box id=3 state="ImABox" />],
-                        [
-                          <Box id=4 state="ImABox" />,
-                          <Box id=5 state="ImABox" />
-                        ]
-                      )),
-                    newInstance: twoBoxes,
-                    oldInstance: oneBox
-                  }),
-                  UpdateInstance({
-                    stateChanged: false,
-                    subTreeChanged: `Nested,
-                    newInstance: twoBoxesWrapper,
-                    oldInstance: <BoxWrapper id=1> oneBox </BoxWrapper>
-                  })
-                ]
-              )
-          })
-        );
-        assertUpdate(expected, actual);
+        start(<Components.BoxWrapper />)
+        |> expect(
+             TestComponents.[
+               <BoxWrapper id=1>
+                 <Div id=2> <Box id=3 state="ImABox" /> </Div>
+               </BoxWrapper>
+             ]
+           )
+        |> update(<Components.BoxWrapper twoBoxes=true />)
+        |> expect((
+             [TestComponents.(<BoxWrapper id=1> twoBoxes </BoxWrapper>)],
+             Some({
+               TestRenderer.subtreeChange: `Nested,
+               updateLog:
+                 ref(
+                   TestComponents.[
+                     TestRenderer.UpdateInstance({
+                       stateChanged: false,
+                       subTreeChanged:
+                         `ReplaceElements((
+                           [<Box id=3 state="ImABox" />],
+                           [
+                             <Box id=4 state="ImABox" />,
+                             <Box id=5 state="ImABox" />
+                           ]
+                         )),
+                       newInstance: twoBoxes,
+                       oldInstance: oneBox
+                     }),
+                     UpdateInstance({
+                       stateChanged: false,
+                       subTreeChanged: `Nested,
+                       newInstance:
+                         <TestComponents.BoxWrapper id=1>
+                           twoBoxes
+                         </TestComponents.BoxWrapper>,
+                       oldInstance: <BoxWrapper id=1> oneBox </BoxWrapper>
+                     })
+                   ]
+                 )
+             })
+           ))
+        |> done_;
       }
     ),
     (
@@ -72,215 +140,195 @@ let suite =
       `Quick,
       () => {
         open ReasonReact;
-        GlobalState.reset();
-        let previousReactElement = <ChangeCounter label="defaultText" />;
-        let rendered0 = RenderedElement.render(previousReactElement);
-        assertElement(
-          [
-            TestComponents.(
-              <ChangeCounter id=1 label="defaultText" counter=10 />
-            )
-          ],
-          rendered0
-        );
-        let updatedReactElement = <ChangeCounter label="defaultText" />;
-        let (rendered1, _) as actual =
-          RenderedElement.update(
-            ~previousReactElement,
-            ~renderedElement=rendered0,
-            updatedReactElement
-          );
-        let previousReactElement = updatedReactElement;
-        assertUpdate(
-          (
-            [
-              TestComponents.(
-                <ChangeCounter id=1 label="defaultText" counter=10 />
-              )
-            ],
-            None
-          ),
-          actual
-        );
-        let updatedReactElement = <ChangeCounter label="updatedText" />;
-        let (rendered2, _) as actual2 =
-          RenderedElement.update(
-            ~previousReactElement,
-            ~renderedElement=rendered1,
-            updatedReactElement
-          );
-        let previousReactElement = updatedReactElement;
-        assertUpdate(
-          TestComponents.(
-            [<ChangeCounter id=1 label="updatedText" counter=11 />],
-            Some(
-              TestRenderer.{
-                subtreeChange: `Nested,
-                updateLog:
-                  ref([
-                    UpdateInstance({
-                      stateChanged: true,
-                      subTreeChanged: `NoChange,
-                      oldInstance:
-                        <ChangeCounter id=1 label="defaultText" counter=10 />,
-                      newInstance:
-                        <ChangeCounter id=1 label="updatedText" counter=11 />
-                    })
-                  ])
-              }
-            )
-          ),
-          actual2
-        );
-        let (rendered2f, _) as actual2f =
-          ReasonReact.RenderedElement.flushPendingUpdates(rendered2);
-        assertFlushUpdate(
-          TestComponents.(
-            [<ChangeCounter id=1 label="updatedText" counter=2011 />],
-            [
-              UpdateInstance({
-                stateChanged: true,
-                subTreeChanged: `NoChange,
-                oldInstance:
-                  <ChangeCounter id=1 label="updatedText" counter=11 />,
-                newInstance:
-                  <ChangeCounter id=1 label="updatedText" counter=2011 />
-              })
-            ]
-          ),
-          actual2f
-        );
-        let (rendered2f_mem, _) =
-          ReasonReact.RenderedElement.flushPendingUpdates(rendered2f);
-        check(
-          Alcotest.bool,
-          "it is memoized",
-          rendered2f_mem === rendered2f,
-          true
-        );
-        let (rendered2f_mem, _) =
-          ReasonReact.RenderedElement.flushPendingUpdates(rendered2f_mem);
-        check(
-          Alcotest.bool,
-          "it is memoized",
-          rendered2f_mem === rendered2f,
-          true
-        );
-        let updatedReactElement =
-          <ButtonWrapperWrapper wrappedText="updatedText" />;
-        let (rendered3, _) as actual3 =
-          RenderedElement.update(
-            ~previousReactElement,
-            ~renderedElement=rendered2f_mem,
-            updatedReactElement
-          );
-        let previousReactElement = updatedReactElement;
-        assertUpdate(
-          ~label="Updating components: ChangeCounter to ButtonWrapperWrapper",
-          TestComponents.(
-            [
-              <ButtonWrapperWrapper id=2 nestedText="wrappedText:updatedText" />
-            ],
-            Some(
-              TestRenderer.{
-                subtreeChange: `Nested,
-                updateLog:
-                  ref([
-                    ChangeComponent({
-                      oldSubtree: [],
-                      newSubtree: [
-                        <Div id=3>
-                          <Text id=4 title="buttonWrapperWrapperState" />
-                          <Text id=5 title="wrappedText:updatedText" />
-                          <ButtonWrapper id=6 />
-                        </Div>
-                      ],
-                      oldInstance:
-                        <ChangeCounter id=1 label="updatedText" counter=2011 />,
-                      newInstance:
-                        <ButtonWrapperWrapper
-                          id=2
-                          nestedText="wrappedText:updatedText"
-                        />
-                    })
-                  ])
-              }
-            )
-          ),
-          actual3
-        );
-        let updatedReactElement =
-          <ButtonWrapperWrapper wrappedText="updatedTextmodified" />;
-        let (rendered4, _) as actual4 =
-          RenderedElement.update(
-            ~previousReactElement,
-            ~renderedElement=rendered3,
-            updatedReactElement
-          );
-        assertUpdate(
-          ~label="Updating text in the button wrapper",
-          TestComponents.(
-            [
-              <ButtonWrapperWrapper
-                id=2
-                nestedText="wrappedText:updatedTextmodified"
-              />
-            ],
-            Some(
-              TestRenderer.{
-                subtreeChange: `Nested,
-                updateLog:
-                  ref([
-                    UpdateInstance({
-                      stateChanged: true,
-                      subTreeChanged: `ContentChanged(`NoChange),
-                      oldInstance:
-                        <Text id=5 title="wrappedText:updatedText" />,
-                      newInstance:
-                        <Text id=5 title="wrappedText:updatedTextmodified" />
-                    }),
-                    UpdateInstance({
-                      stateChanged: false,
-                      subTreeChanged: `Nested,
-                      oldInstance:
-                        <Div id=3>
-                          <Text id=4 title="buttonWrapperWrapperState" />
-                          <Text id=5 title="wrappedText:updatedText" />
-                          <ButtonWrapper id=6 />
-                        </Div>,
-                      newInstance:
-                        <Div id=3>
-                          <Text id=4 title="buttonWrapperWrapperState" />
-                          <Text id=5 title="wrappedText:updatedTextmodified" />
-                          <ButtonWrapper id=6 />
-                        </Div>
-                    }),
-                    UpdateInstance({
-                      stateChanged: false,
-                      subTreeChanged: `Nested,
-                      oldInstance:
-                        <ButtonWrapperWrapper
-                          id=2
-                          nestedText="wrappedText:updatedText"
-                        />,
-                      newInstance:
-                        <ButtonWrapperWrapper
-                          id=2
-                          nestedText="wrappedText:updatedTextmodified"
-                        />
-                    })
-                  ])
-              }
-            )
-          ),
-          actual4
-        );
+        open Run;
+        let (beforeUpdate4, _) as testContinuation =
+          start(<ChangeCounter label="defaultText" />)
+          |> expect([
+               TestComponents.(
+                 <ChangeCounter id=1 label="defaultText" counter=10 />
+               )
+             ])
+          |> update(<ChangeCounter label="defaultText" />)
+          |> expect((
+               [
+                 TestComponents.(
+                   <ChangeCounter id=1 label="defaultText" counter=10 />
+                 )
+               ],
+               None
+             ))
+          |> update(<ChangeCounter label="updatedText" />)
+          |> expect(
+               TestComponents.(
+                 [<ChangeCounter id=1 label="updatedText" counter=11 />],
+                 Some(
+                   TestRenderer.{
+                     subtreeChange: `Nested,
+                     updateLog:
+                       ref([
+                         UpdateInstance({
+                           stateChanged: true,
+                           subTreeChanged: `NoChange,
+                           oldInstance:
+                             <ChangeCounter
+                               id=1
+                               label="defaultText"
+                               counter=10
+                             />,
+                           newInstance:
+                             <ChangeCounter
+                               id=1
+                               label="updatedText"
+                               counter=11
+                             />
+                         })
+                       ])
+                   }
+                 )
+               )
+             )
+          |> flushPendingUpdates
+          |> expect(
+               Some(
+                 TestComponents.(
+                   [<ChangeCounter id=1 label="updatedText" counter=2011 />],
+                   [
+                     TestRenderer.UpdateInstance({
+                       stateChanged: true,
+                       subTreeChanged: `NoChange,
+                       oldInstance:
+                         <ChangeCounter id=1 label="updatedText" counter=11 />,
+                       newInstance:
+                         <ChangeCounter
+                           id=1
+                           label="updatedText"
+                           counter=2011
+                         />
+                     })
+                   ]
+                 )
+               )
+             )
+          |> flushPendingUpdates
+          |> expect(None)
+          |> flushPendingUpdates
+          |> expect(None)
+          |> update(<ButtonWrapperWrapper wrappedText="updatedText" />)
+          |> expect(
+               ~label=
+                 "Updating components: ChangeCounter to ButtonWrapperWrapper",
+               TestComponents.(
+                 [
+                   <ButtonWrapperWrapper
+                     id=2
+                     nestedText="wrappedText:updatedText"
+                   />
+                 ],
+                 Some(
+                   TestRenderer.{
+                     subtreeChange: `Nested,
+                     updateLog:
+                       ref([
+                         ChangeComponent({
+                           oldSubtree: [],
+                           newSubtree: [
+                             <Div id=3>
+                               <Text id=4 title="buttonWrapperWrapperState" />
+                               <Text id=5 title="wrappedText:updatedText" />
+                               <ButtonWrapper id=6 />
+                             </Div>
+                           ],
+                           oldInstance:
+                             <ChangeCounter
+                               id=1
+                               label="updatedText"
+                               counter=2011
+                             />,
+                           newInstance:
+                             <ButtonWrapperWrapper
+                               id=2
+                               nestedText="wrappedText:updatedText"
+                             />
+                         })
+                       ])
+                   }
+                 )
+               )
+             );
+        let (afterUpdate, _) =
+          testContinuation
+          |> update(
+               <ButtonWrapperWrapper wrappedText="updatedTextmodified" />
+             )
+          |> expect(
+               ~label="Updating text in the button wrapper",
+               TestComponents.(
+                 [
+                   <ButtonWrapperWrapper
+                     id=2
+                     nestedText="wrappedText:updatedTextmodified"
+                   />
+                 ],
+                 Some(
+                   TestRenderer.{
+                     subtreeChange: `Nested,
+                     updateLog:
+                       ref([
+                         UpdateInstance({
+                           stateChanged: true,
+                           subTreeChanged: `ContentChanged(`NoChange),
+                           oldInstance:
+                             <Text id=5 title="wrappedText:updatedText" />,
+                           newInstance:
+                             <Text
+                               id=5
+                               title="wrappedText:updatedTextmodified"
+                             />
+                         }),
+                         UpdateInstance({
+                           stateChanged: false,
+                           subTreeChanged: `Nested,
+                           oldInstance:
+                             <Div id=3>
+                               <Text id=4 title="buttonWrapperWrapperState" />
+                               <Text id=5 title="wrappedText:updatedText" />
+                               <ButtonWrapper id=6 />
+                             </Div>,
+                           newInstance:
+                             <Div id=3>
+                               <Text id=4 title="buttonWrapperWrapperState" />
+                               <Text
+                                 id=5
+                                 title="wrappedText:updatedTextmodified"
+                               />
+                               <ButtonWrapper id=6 />
+                             </Div>
+                         }),
+                         UpdateInstance({
+                           stateChanged: false,
+                           subTreeChanged: `Nested,
+                           oldInstance:
+                             <ButtonWrapperWrapper
+                               id=2
+                               nestedText="wrappedText:updatedText"
+                             />,
+                           newInstance:
+                             <ButtonWrapperWrapper
+                               id=2
+                               nestedText="wrappedText:updatedTextmodified"
+                             />
+                         })
+                       ])
+                   }
+                 )
+               )
+             );
         check(
           Alcotest.bool,
           "Memoized nested button wrapper",
           true,
           ReasonReact.(
-            switch (rendered3, rendered4) {
+            switch (beforeUpdate4, afterUpdate) {
             | (
                 IFlat(
                   Instance({

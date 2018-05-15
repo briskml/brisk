@@ -68,6 +68,10 @@ module Run = {
     ReasonReact.GlobalState.reset();
     FirstRender(reactElement);
   };
+  let act = (~action, rAction, (oldRenderedElement, previousReactElement)) => {
+    ReasonReact.RemoteAction.act(rAction, ~action);
+    (oldRenderedElement, previousReactElement);
+  };
   let update = (nextReactElement, (oldRenderedElement, previousReactElement)) =>
     Update({nextReactElement, oldRenderedElement, previousReactElement});
   let flushPendingUpdates = ((oldRenderedElement, previousReactElement)) =>
@@ -363,113 +367,104 @@ let suite =
       `Quick,
       () => {
         open ReasonReact;
-        GlobalState.reset();
+        open TestComponents;
+        open TestRenderer;
+        open Run;
         let rAction = RemoteAction.create();
-        let rendered0 =
-          RenderedElement.render(<BoxList useDynamicKeys=true rAction />);
-        RemoteAction.act(rAction, ~action=BoxList.Create("Hello"));
-        let (rendered1, _) as actual1 =
-          RenderedElement.flushPendingUpdates(rendered0);
-        RemoteAction.act(rAction, ~action=BoxList.Create("World"));
-        let (rendered2, _) as actual2 =
-          RenderedElement.flushPendingUpdates(rendered1);
-        RemoteAction.act(rAction, ~action=BoxList.Reverse);
-        let (rendered3, _) as actual3 =
-          RenderedElement.flushPendingUpdates(rendered2);
-        TestRenderer.convertElement(rendered0)
-        |> check(
-             renderedElement,
-             "Initial BoxList",
-             [TestComponents.(<BoxList id=1 />)]
-           );
-        assertFlushUpdate(
-          ~label="Add Hello then Flush",
-          TestComponents.(
-            [
-              <BoxList id=1>
-                <BoxWithDynamicKeys id=2 state="Hello" />
-              </BoxList>
-            ],
-            [
-              UpdateInstance({
-                stateChanged: true,
-                subTreeChanged:
-                  `ReplaceElements((
-                    [],
-                    [<BoxWithDynamicKeys id=2 state="Hello" />]
-                  )),
-                oldInstance: <BoxList id=1 />,
-                newInstance:
-                  <BoxList id=1>
-                    <BoxWithDynamicKeys id=2 state="Hello" />
-                  </BoxList>
-              })
-            ]
-          ),
-          actual1
-        );
-        assertFlushUpdate(
-          ~label="Add Hello then Flush",
-          TestComponents.(
-            [
-              <BoxList id=1>
-                <BoxWithDynamicKeys id=3 state="World" />
-                <BoxWithDynamicKeys id=2 state="Hello" />
-              </BoxList>
-            ],
-            [
-              UpdateInstance({
-                stateChanged: true,
-                subTreeChanged:
-                  `ReplaceElements((
-                    [<BoxWithDynamicKeys id=2 state="Hello" />],
-                    [
-                      <BoxWithDynamicKeys id=3 state="World" />,
-                      <BoxWithDynamicKeys id=2 state="Hello" />
-                    ]
-                  )),
-                oldInstance:
-                  <BoxList id=1>
-                    <BoxWithDynamicKeys id=2 state="Hello" />
-                  </BoxList>,
-                newInstance:
-                  <BoxList id=1>
-                    <BoxWithDynamicKeys id=3 state="World" />
-                    <BoxWithDynamicKeys id=2 state="Hello" />
-                  </BoxList>
-              })
-            ]
-          ),
-          actual2
-        );
-        assertFlushUpdate(
-          ~label="Add Hello then Flush",
-          TestComponents.(
-            [
-              <BoxList id=1>
-                <BoxWithDynamicKeys id=2 state="Hello" />
-                <BoxWithDynamicKeys id=3 state="World" />
-              </BoxList>
-            ],
-            [
-              UpdateInstance({
-                stateChanged: true,
-                subTreeChanged: `Reordered,
-                oldInstance:
-                  <BoxList id=1>
-                    <BoxWithDynamicKeys id=3 state="World" />
-                    <BoxWithDynamicKeys id=2 state="Hello" />
-                  </BoxList>,
-                newInstance:
-                  <BoxList id=1>
-                    <BoxWithDynamicKeys id=2 state="Hello" />
-                    <BoxWithDynamicKeys id=3 state="World" />
-                  </BoxList>
-              })
-            ]
-          ),
-          actual3
-        );
+        start(<Components.BoxList useDynamicKeys=true rAction />)
+        |> expect(~label="Initial BoxList", [<BoxList id=1 />])
+        |> act(~action=Components.BoxList.Create("Hello"), rAction)
+        |> flushPendingUpdates
+        |> expect(
+             ~label="Add Hello then Flush",
+             Some((
+               [
+                 <BoxList id=1>
+                   <BoxWithDynamicKeys id=2 state="Hello" />
+                 </BoxList>
+               ],
+               [
+                 UpdateInstance({
+                   stateChanged: true,
+                   subTreeChanged:
+                     `ReplaceElements((
+                       [],
+                       [<BoxWithDynamicKeys id=2 state="Hello" />]
+                     )),
+                   oldInstance: <BoxList id=1 />,
+                   newInstance:
+                     <BoxList id=1>
+                       <BoxWithDynamicKeys id=2 state="Hello" />
+                     </BoxList>
+                 })
+               ]
+             ))
+           )
+        |> act(~action=Components.BoxList.Create("World"), rAction)
+        |> flushPendingUpdates
+        |> expect(
+             ~label="Add Hello then Flush",
+             Some((
+               [
+                 <BoxList id=1>
+                   <BoxWithDynamicKeys id=3 state="World" />
+                   <BoxWithDynamicKeys id=2 state="Hello" />
+                 </BoxList>
+               ],
+               [
+                 UpdateInstance({
+                   stateChanged: true,
+                   subTreeChanged:
+                     `ReplaceElements((
+                       [<BoxWithDynamicKeys id=2 state="Hello" />],
+                       [
+                         <BoxWithDynamicKeys id=3 state="World" />,
+                         <BoxWithDynamicKeys id=2 state="Hello" />
+                       ]
+                     )),
+                   oldInstance:
+                     <BoxList id=1>
+                       <BoxWithDynamicKeys id=2 state="Hello" />
+                     </BoxList>,
+                   newInstance:
+                     <BoxList id=1>
+                       <BoxWithDynamicKeys id=3 state="World" />
+                       <BoxWithDynamicKeys id=2 state="Hello" />
+                     </BoxList>
+                 })
+               ]
+             ))
+           )
+        |> act(~action=Components.BoxList.Reverse, rAction)
+        |> flushPendingUpdates
+        |> expect(
+             ~label="Add Hello then Flush",
+             Some((
+               [
+                 <BoxList id=1>
+                   <BoxWithDynamicKeys id=2 state="Hello" />
+                   <BoxWithDynamicKeys id=3 state="World" />
+                 </BoxList>
+               ],
+               [
+                 UpdateInstance({
+                   stateChanged: true,
+                   subTreeChanged: `Reordered,
+                   oldInstance:
+                     <BoxList id=1>
+                       <BoxWithDynamicKeys id=3 state="World" />
+                       <BoxWithDynamicKeys id=2 state="Hello" />
+                     </BoxList>,
+                   newInstance:
+                     <BoxList id=1>
+                       <BoxWithDynamicKeys id=2 state="Hello" />
+                       <BoxWithDynamicKeys id=3 state="World" />
+                     </BoxList>
+                 })
+               ]
+             ))
+           )
+        |> done_;
       }
     ),
     (
@@ -477,27 +472,17 @@ let suite =
       `Quick,
       () => {
         open ReasonReact;
-        GlobalState.reset();
+        open TestComponents;
+        open TestRenderer;
+        open Run;
         let rAction = RemoteAction.create();
-        let rendered0 = RenderedElement.render(<BoxList rAction />);
-        RemoteAction.act(rAction, ~action=BoxList.Create("Hello"));
-        let (rendered1, _) as actual1 =
-          RenderedElement.flushPendingUpdates(rendered0);
-        RemoteAction.act(rAction, ~action=BoxList.Create("World"));
-        let (rendered2, _) as actual2 =
-          RenderedElement.flushPendingUpdates(rendered1);
-        RemoteAction.act(rAction, ~action=BoxList.Reverse);
-        let (rendered3, _) as actual3 =
-          RenderedElement.flushPendingUpdates(rendered2);
-        TestRenderer.convertElement(rendered0)
-        |> Assert.check(
-             renderedElement,
-             "Initial BoxList",
-             [TestComponents.(<BoxList id=1 />)]
-           );
-        assertFlushUpdate(
+        start(<Components.BoxList rAction />)
+        |> expect(~label="Initial BoxList", [<BoxList id=1 />])
+        |> act(~action=Components.BoxList.Create("Hello"), rAction)
+        |> flushPendingUpdates
+        |> expect(
           ~label="Add Hello then Flush",
-          TestComponents.(
+          Some((
             [<BoxList id=1> <Box id=2 state="Hello" /> </BoxList>],
             [
               UpdateInstance({
@@ -509,12 +494,13 @@ let suite =
                   <BoxList id=1> <Box id=2 state="Hello" /> </BoxList>
               })
             ]
-          ),
-          actual1
-        );
-        assertFlushUpdate(
+          ))
+        )
+        |> act(~action=Components.BoxList.Create("World"), rAction)
+        |> flushPendingUpdates
+        |> expect(
           ~label="Add Hello then Flush",
-          TestComponents.(
+          Some((
             [
               <BoxList id=1>
                 <Box id=3 state="World" />
@@ -538,12 +524,13 @@ let suite =
                   </BoxList>
               })
             ]
-          ),
-          actual2
-        );
-        assertFlushUpdate(
+          ))
+        )
+        |> act(~action=Components.BoxList.Reverse, rAction)
+        |> flushPendingUpdates
+        |> expect(
           ~label="Add Hello then Flush",
-          TestComponents.(
+          Some((
             [
               <BoxList id=1>
                 <Box id=3 state="Hello" />
@@ -578,9 +565,9 @@ let suite =
                   </BoxList>
               })
             ]
-          ),
-          actual3
-        );
+          ))
+        )
+        |> done_;
       }
     ),
     (

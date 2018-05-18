@@ -1,4 +1,4 @@
-open ReasonReact;
+open TestReactCore;
 
 /**
  * The simplest component. Composes nothing!

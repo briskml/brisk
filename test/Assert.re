@@ -1,6 +1,6 @@
 open Alcotest;
 
-open ReasonReact;
+open TestReactCore;
 
 type updateState = {
   previousReactElement: reactElement,

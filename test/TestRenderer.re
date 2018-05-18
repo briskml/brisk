@@ -1,4 +1,4 @@
-open ReasonReact;
+open TestReactCore;
 
 type opaqueComponent =
   | Component(componentSpec('a, 'b, 'c, 'd)): opaqueComponent
@@ -86,12 +86,12 @@ let convertSubTreeChange =
 
 let render = element => RenderedElement.render(element);
 
-let convertUpdateLog = (updateLog: ReasonReact.UpdateLog.t) => {
-  let rec convertUpdateLog = (updateLogRef: list(ReasonReact.UpdateLog.entry)) =>
+let convertUpdateLog = (updateLog: UpdateLog.t) => {
+  let rec convertUpdateLog = (updateLogRef: list(UpdateLog.entry)) =>
     switch updateLogRef {
     | [] => []
     | [
-        ReasonReact.UpdateLog.UpdateInstance({
+        UpdateLog.UpdateInstance({
           oldInstance,
           newInstance,
           stateChanged,
@@ -108,7 +108,7 @@ let convertUpdateLog = (updateLog: ReasonReact.UpdateLog.t) => {
         ...convertUpdateLog(t)
       ]
     | [
-        ReasonReact.UpdateLog.ChangeComponent({
+        UpdateLog.ChangeComponent({
           oldOpaqueInstance: Instance(oldInstance),
           newOpaqueInstance: Instance(newInstance)
         }),
@@ -127,7 +127,7 @@ let convertUpdateLog = (updateLog: ReasonReact.UpdateLog.t) => {
 };
 
 let convertTopLevelUpdateLog:
-  option(ReasonReact.RenderedElement.topLevelUpdate) =>
+  option(RenderedElement.topLevelUpdate) =>
   option(testTopLevelUpdateLog) =
   fun
   | Some(topLevelUpdate) =>
@@ -136,7 +136,7 @@ let convertTopLevelUpdateLog:
       updateLog:
         ref(
           convertUpdateLog(
-            topLevelUpdate.ReasonReact.RenderedElement.updateLog
+            topLevelUpdate.RenderedElement.updateLog
           )
         )
     })

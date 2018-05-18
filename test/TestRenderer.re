@@ -8,7 +8,7 @@ type testInstance = {
   component: opaqueComponent,
   id: Key.t,
   subtree: t,
-  state: string
+  state: string,
 }
 and t = list(testInstance);
 
@@ -29,14 +29,14 @@ type testUpdate = {
   oldInstance: testInstance,
   newInstance: testInstance,
   stateChanged: bool,
-  subTreeChanged: testSubTreeChange
+  subTreeChanged: testSubTreeChange,
 };
 
 type testChangeComponent = {
   oldInstance: testInstance,
   newInstance: testInstance,
   oldSubtree: t,
-  newSubtree: t
+  newSubtree: t,
 };
 
 type testUpdateEntry =
@@ -47,7 +47,7 @@ type testUpdateLog = ref(list(testUpdateEntry));
 
 type testTopLevelUpdateLog = {
   subtreeChange: testSubTreeChange,
-  updateLog: testUpdateLog
+  updateLog: testUpdateLog,
 };
 
 let rec convertInstance:
@@ -58,15 +58,16 @@ let rec convertInstance:
     component: InstanceAndComponent(component, instance),
     id,
     subtree: convertElement(instanceSubTree),
-    state: component.printState(iState)
+    state: component.printState(iState),
   }
 and convertElement =
   fun
   | IFlat(Instance(instance)) => [convertInstance(instance)]
-  | INested(_, elements) => List.flatten(List.map(convertElement, elements));
+  | INested(_, elements) =>
+    List.flatten(List.map(convertElement, elements));
 
 let rec convertSubTreeChangeReact = (x: UpdateLog.subtreeChangeReact) =>
-  switch x {
+  switch (x) {
   | `NoChange => `NoChange
   | `Nested => `Nested
   | `Reordered => `Reordered
@@ -88,68 +89,64 @@ let render = element => RenderedElement.render(element);
 
 let convertUpdateLog = (updateLog: UpdateLog.t) => {
   let rec convertUpdateLog = (updateLogRef: list(UpdateLog.entry)) =>
-    switch updateLogRef {
+    switch (updateLogRef) {
     | [] => []
     | [
         UpdateLog.UpdateInstance({
           oldInstance,
           newInstance,
           stateChanged,
-          subTreeChanged
+          subTreeChanged,
         }),
-        ...t
+        ...t,
       ] => [
         UpdateInstance({
           oldInstance: convertInstance(oldInstance),
           newInstance: convertInstance(newInstance),
           stateChanged,
-          subTreeChanged: convertSubTreeChange(subTreeChanged)
+          subTreeChanged: convertSubTreeChange(subTreeChanged),
         }),
-        ...convertUpdateLog(t)
+        ...convertUpdateLog(t),
       ]
     | [
         UpdateLog.ChangeComponent({
           oldOpaqueInstance: Instance(oldInstance),
-          newOpaqueInstance: Instance(newInstance)
+          newOpaqueInstance: Instance(newInstance),
         }),
-        ...t
+        ...t,
       ] => [
         ChangeComponent({
           oldInstance: convertInstance(oldInstance),
           newInstance: convertInstance(newInstance),
           oldSubtree: convertElement(oldInstance.instanceSubTree),
-          newSubtree: convertElement(newInstance.instanceSubTree)
+          newSubtree: convertElement(newInstance.instanceSubTree),
         }),
-        ...convertUpdateLog(t)
+        ...convertUpdateLog(t),
       ]
     };
   List.rev(convertUpdateLog(updateLog^));
 };
 
 let convertTopLevelUpdateLog:
-  option(RenderedElement.topLevelUpdate) =>
-  option(testTopLevelUpdateLog) =
+  option(RenderedElement.topLevelUpdate) => option(testTopLevelUpdateLog) =
   fun
   | Some(topLevelUpdate) =>
     Some({
       subtreeChange: convertSubTreeChange(topLevelUpdate.subtreeChange),
       updateLog:
-        ref(
-          convertUpdateLog(
-            topLevelUpdate.RenderedElement.updateLog
-          )
-        )
+        ref(convertUpdateLog(topLevelUpdate.RenderedElement.updateLog)),
     })
   | None => None;
 
 let compareComponents = (left, right) =>
   switch (left, right) {
   | (Component(_), Component(_))
-  | (InstanceAndComponent(_, _), InstanceAndComponent(_, _)) => assert false
+  | (InstanceAndComponent(_, _), InstanceAndComponent(_, _)) =>
+    assert(false)
   | (Component(justComponent), InstanceAndComponent(comp, instance)) =>
     comp.handedOffInstance := Some((instance, instance));
     let result =
-      switch justComponent.handedOffInstance^ {
+      switch (justComponent.handedOffInstance^) {
       | Some(_) => true
       | None => false
       };
@@ -158,7 +155,7 @@ let compareComponents = (left, right) =>
   | (InstanceAndComponent(comp, instance), Component(justComponent)) =>
     comp.handedOffInstance := Some((instance, instance));
     let result =
-      switch justComponent.handedOffInstance^ {
+      switch (justComponent.handedOffInstance^) {
       | Some(_) => true
       | None => false
       };
@@ -175,7 +172,7 @@ let rec compareElement = (left, right) =>
       List.fold_left(
         (&&),
         true,
-        List.map(compareInstance, List.combine(le, re))
+        List.map(compareInstance, List.combine(le, re)),
       );
     }
   }
@@ -236,7 +233,7 @@ let compareTopLevelUpdateLog:
     };
 
 let componentName = component =>
-  switch component {
+  switch (component) {
   | InstanceAndComponent(component, _) => component.debugName
   | Component(component) => component.debugName
   };

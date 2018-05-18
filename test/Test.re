@@ -1,4 +1,4 @@
-open ReasonReact;
+open TestReactCore;
 
 open TestComponents;
 

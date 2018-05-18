@@ -1,0 +1,35 @@
+{
+  "name": "brisk",
+  "version": "0.1.0",
+  "description": "Brisk is a set of tools for building fast native UIs",
+  "repository": "https://github.com/briskml/brisk.git",
+  "license": "MIT",
+  "esy": {
+    "build": [["refmterr", "jbuilder", "build"]],
+    "buildsInSource": "_build"
+  },
+  "scripts": {
+    "test": "esy jbuilder runtest --no-buffer"
+  },
+  "resolutions": {
+    "**/@opam/result": "1.2.0",
+    "**/@opam/lwt": "3.3.0",
+    "**/@opam/ocaml-migrate-parsetree": "1.0.10"
+  },
+  "dependencies": {
+    "@esy-ocaml/esy-installer": "^0.0.0",
+    "@esy-ocaml/reason": "facebook/reason#3629912",
+    "@opam/jbuilder": "^1.0.0-beta20",
+    "refmterr": "^3.1.7"
+  },
+  "peerDependencies": {
+    "ocaml": "~4.6.1"
+  },
+  "devDependencies": {
+    "@esy-ocaml/merlin": "^3.0.5",
+    "@opam/alcotest": "^0.8.3",
+    "@opam/easy-format": "^1.3.1",
+    "@opam/simple-diff": "^0.3.0",
+    "ocaml": "~4.6.1"
+  }
+}

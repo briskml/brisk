@@ -245,19 +245,19 @@ let suite = [
     }
   ),
   (
-    "Test BoxTable with dynamic keys",
+    "Test BoxList with dynamic keys",
     `Quick,
     () => {
       let rAction = RemoteAction.create();
-      start(<Components.BoxTable useDynamicKeys=true rAction />)
-      |> expect(~label="It renders initial BoxTable", [<BoxTable id=1 />])
-      |> act(~action=Components.BoxTable.Create("Hello"), rAction)
+      start(<Components.BoxList useDynamicKeys=true rAction />)
+      |> expect(~label="It renders initial BoxList", [<BoxList id=1 />])
+      |> act(~action=Components.BoxList.Create("Hello"), rAction)
       |> flushPendingUpdates
       |> expect(
            ~label="It adds a new BoxItem and then flushes",
            Some((
              [
-               <BoxTable id=1> <BoxItemDynamic id=2 state="Hello" /> </BoxTable>
+               <BoxList id=1> <BoxItemDynamic id=2 state="Hello" /> </BoxList>
              ],
              [
                UpdateInstance({
@@ -267,25 +267,25 @@ let suite = [
                      [],
                      [<BoxItemDynamic id=2 state="Hello" />]
                    )),
-                 oldInstance: <BoxTable id=1 />,
+                 oldInstance: <BoxList id=1 />,
                  newInstance:
-                   <BoxTable id=1>
+                   <BoxList id=1>
                      <BoxItemDynamic id=2 state="Hello" />
-                   </BoxTable>
+                   </BoxList>
                })
              ]
            ))
          )
-      |> act(~action=Components.BoxTable.Create("World"), rAction)
+      |> act(~action=Components.BoxList.Create("World"), rAction)
       |> flushPendingUpdates
       |> expect(
            ~label="It adds one more BoxItem and then flushes",
            Some((
              [
-               <BoxTable id=1>
+               <BoxList id=1>
                  <BoxItemDynamic id=3 state="World" />
                  <BoxItemDynamic id=2 state="Hello" />
-               </BoxTable>
+               </BoxList>
              ],
              [
                UpdateInstance({
@@ -299,43 +299,43 @@ let suite = [
                      ]
                    )),
                  oldInstance:
-                   <BoxTable id=1>
+                   <BoxList id=1>
                      <BoxItemDynamic id=2 state="Hello" />
-                   </BoxTable>,
+                   </BoxList>,
                  newInstance:
-                   <BoxTable id=1>
+                   <BoxList id=1>
                      <BoxItemDynamic id=3 state="World" />
                      <BoxItemDynamic id=2 state="Hello" />
-                   </BoxTable>
+                   </BoxList>
                })
              ]
            ))
          )
-      |> act(~action=Components.BoxTable.Reverse, rAction)
+      |> act(~action=Components.BoxList.Reverse, rAction)
       |> flushPendingUpdates
       |> expect(
-           ~label="It reverses the items list in the BoxTable",
+           ~label="It reverses the items list in the BoxList",
            Some((
              [
-               <BoxTable id=1>
+               <BoxList id=1>
                  <BoxItemDynamic id=2 state="Hello" />
                  <BoxItemDynamic id=3 state="World" />
-               </BoxTable>
+               </BoxList>
              ],
              [
                UpdateInstance({
                  stateChanged: true,
                  subTreeChanged: `Reordered,
                  oldInstance:
-                   <BoxTable id=1>
+                   <BoxList id=1>
                      <BoxItemDynamic id=3 state="World" />
                      <BoxItemDynamic id=2 state="Hello" />
-                   </BoxTable>,
+                   </BoxList>,
                  newInstance:
-                   <BoxTable id=1>
+                   <BoxList id=1>
                      <BoxItemDynamic id=2 state="Hello" />
                      <BoxItemDynamic id=3 state="World" />
-                   </BoxTable>
+                   </BoxList>
                })
              ]
            ))
@@ -344,40 +344,40 @@ let suite = [
     }
   ),
   (
-    "Test BoxTable without dynamic keys",
+    "Test BoxList without dynamic keys",
     `Quick,
     () => {
       let rAction = RemoteAction.create();
-      start(<Components.BoxTable rAction />)
-      |> expect(~label="It renders BoxTable", [<BoxTable id=1 />])
-      |> act(~action=Components.BoxTable.Create("Hello"), rAction)
+      start(<Components.BoxList rAction />)
+      |> expect(~label="It renders BoxList", [<BoxList id=1 />])
+      |> act(~action=Components.BoxList.Create("Hello"), rAction)
       |> flushPendingUpdates
       |> expect(
            ~label="It adds a new Box and then flushes",
            Some((
-             [<BoxTable id=1> <Box id=2 state="Hello" /> </BoxTable>],
+             [<BoxList id=1> <Box id=2 state="Hello" /> </BoxList>],
              [
                UpdateInstance({
                  stateChanged: true,
                  subTreeChanged:
                    `ReplaceElements(([], [<Box id=2 state="Hello" />])),
-                 oldInstance: <BoxTable id=1 />,
+                 oldInstance: <BoxList id=1 />,
                  newInstance:
-                   <BoxTable id=1> <Box id=2 state="Hello" /> </BoxTable>
+                   <BoxList id=1> <Box id=2 state="Hello" /> </BoxList>
                })
              ]
            ))
          )
-      |> act(~action=Components.BoxTable.Create("World"), rAction)
+      |> act(~action=Components.BoxList.Create("World"), rAction)
       |> flushPendingUpdates
       |> expect(
            ~label="It adds one more Box and then flushes",
            Some((
              [
-               <BoxTable id=1>
+               <BoxList id=1>
                  <Box id=3 state="World" />
                  <Box id=4 state="Hello" />
-               </BoxTable>
+               </BoxList>
              ],
              [
                UpdateInstance({
@@ -388,26 +388,26 @@ let suite = [
                      [<Box id=3 state="World" />, <Box id=4 state="Hello" />]
                    )),
                  oldInstance:
-                   <BoxTable id=1> <Box id=2 state="Hello" /> </BoxTable>,
+                   <BoxList id=1> <Box id=2 state="Hello" /> </BoxList>,
                  newInstance:
-                   <BoxTable id=1>
+                   <BoxList id=1>
                      <Box id=3 state="World" />
                      <Box id=4 state="Hello" />
-                   </BoxTable>
+                   </BoxList>
                })
              ]
            ))
          )
-      |> act(~action=Components.BoxTable.Reverse, rAction)
+      |> act(~action=Components.BoxList.Reverse, rAction)
       |> flushPendingUpdates
       |> expect(
-           ~label="It reverses the boxes list in the BoxTable",
+           ~label="It reverses the boxes list in the BoxList",
            Some((
              [
-               <BoxTable id=1>
+               <BoxList id=1>
                  <Box id=3 state="Hello" />
                  <Box id=4 state="World" />
-               </BoxTable>
+               </BoxList>
              ],
              [
                UpdateInstance({
@@ -426,15 +426,15 @@ let suite = [
                  stateChanged: true,
                  subTreeChanged: `Nested,
                  oldInstance:
-                   <BoxTable id=1>
+                   <BoxList id=1>
                      <Box id=3 state="World" />
                      <Box id=4 state="Hello" />
-                   </BoxTable>,
+                   </BoxList>,
                  newInstance:
-                   <BoxTable id=1>
+                   <BoxList id=1>
                      <Box id=3 state="Hello" />
                      <Box id=4 state="World" />
-                   </BoxTable>
+                   </BoxList>
                })
              ]
            ))

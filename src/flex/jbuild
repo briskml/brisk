@@ -1,0 +1,6 @@
+(jbuild_version 1)
+
+(library
+ ((name flex)
+  (ocamlopt_flags (-inline 100 -g))
+  (public_name flex)))

@@ -1,0 +1,7 @@
+(jbuild_version 1)
+
+(library
+ ((name r2n2)
+  (public_name r2n2)
+  (libraries (flex)))
+)

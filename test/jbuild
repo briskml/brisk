@@ -1,8 +1,8 @@
 (jbuild_version 1)
 
 (executables
- ((libraries (alcotest react_ios))
-  (names (test))))
+ ((names (test))
+  (libraries (alcotest easy-format simple-diff r2n2))))
 
 (alias
  ((name runtest)

@@ -2,7 +2,7 @@
 
 (executables
  ((names (test))
-  (libraries (alcotest easy-format simple-diff r2n2))))
+  (libraries (alcotest easy-format simple-diff brisk))))
 
 (alias
  ((name runtest)

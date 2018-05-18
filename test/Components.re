@@ -95,11 +95,11 @@ module BoxItemDynamic = {
     element(make(~title, children));
 };
 
-module BoxTable = {
+module BoxList = {
   type action =
     | Create(string)
     | Reverse;
-  let component = reducerComponent("BoxTable");
+  let component = reducerComponent("BoxList");
   let make = (~rAction, ~useDynamicKeys=false, _children) => {
     ...component,
     initialState: () => [],

@@ -18,10 +18,10 @@ module BoxItemDynamic = {
     };
 };
 
-module BoxTable = {
+module BoxList = {
   let createElement = (~id, ~state="", ~children, ()) =>
     TestRenderer.{
-      component: Component(Components.BoxTable.component),
+      component: Component(Components.BoxList.component),
       id,
       state,
       subtree: children

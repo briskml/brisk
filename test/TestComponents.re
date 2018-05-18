@@ -8,20 +8,20 @@ module Box = {
     };
 };
 
-module BoxWithDynamicKeys = {
+module BoxItemDynamic = {
   let createElement = (~id, ~state="ImABox", ~children, ()) =>
     TestRenderer.{
-      component: Component(Components.BoxWithDynamicKeys.component),
+      component: Component(Components.BoxItemDynamic.component),
       id,
       state,
       subtree: children
     };
 };
 
-module BoxList = {
+module BoxTable = {
   let createElement = (~id, ~state="", ~children, ()) =>
     TestRenderer.{
-      component: Component(Components.BoxList.component),
+      component: Component(Components.BoxTable.component),
       id,
       state,
       subtree: children
@@ -102,9 +102,8 @@ module ButtonWrapperWrapper = {
       state: "",
       subtree: [
         <Div id=(id + 1)>
-          <Text id=(id + 2) title="buttonWrapperWrapperState" />
-          <Text id=(id + 3) title=nestedText />
-          <ButtonWrapper id=(id + 4) />
+          <Text id=(id + 2) title=nestedText />
+          <ButtonWrapper id=(id + 3) />
         </Div>
       ]
     };

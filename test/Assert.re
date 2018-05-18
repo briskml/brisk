@@ -1,5 +1,22 @@
 open Alcotest;
 
+open ReasonReact;
+
+type updateState = {
+  previousReactElement: reactElement,
+  oldRenderedElement: renderedElement,
+  nextReactElement: reactElement
+};
+
+type update = (TestRenderer.t, option(TestRenderer.testTopLevelUpdateLog));
+
+type flushUpdates = (TestRenderer.t, list(TestRenderer.testUpdateEntry));
+
+type testItem('a) =
+  | FirstRender(reactElement): testItem(TestRenderer.t)
+  | Update(updateState): testItem(update)
+  | FlushUpdates(reactElement, renderedElement): testItem(option(flushUpdates));
+
 let renderedElement =
   Alcotest.testable(
     (formatter, t) => TestPrinter.printElement(formatter, t),
@@ -100,3 +117,61 @@ let assertUpdate =
   assertElement(~label, expectedElement, actualElement);
   assertTopLevelUpdateLog(~label, expectedLog, actualLog);
 };
+
+let expect:
+  type a.
+    (~label: string=?, a, testItem(a)) => (RenderedElement.t, reactElement) =
+  (~label=?, expected, prev) =>
+    switch prev {
+    | Update({nextReactElement, oldRenderedElement, previousReactElement}) =>
+      let (newRenderedElement, _) as actual =
+        RenderedElement.update(
+          ~previousReactElement,
+          ~renderedElement=oldRenderedElement,
+          nextReactElement
+        );
+      assertUpdate(~label?, expected, actual);
+      (newRenderedElement, nextReactElement);
+    | FirstRender(previousReactElement) =>
+      open TestRenderer;
+      let oldRenderedElement = render(previousReactElement);
+      assertElement(~label?, expected, oldRenderedElement);
+      (oldRenderedElement, previousReactElement);
+    | FlushUpdates(previousReactElement, oldRenderedElement) =>
+      let (newRenderedElement, _) as actual =
+        RenderedElement.flushPendingUpdates(oldRenderedElement);
+      switch expected {
+      | Some(expected) =>
+        assertFlushUpdate(~label?, expected, actual);
+        (newRenderedElement, previousReactElement);
+      | None =>
+        check(
+          bool,
+          switch label {
+          | None => "It is memoized"
+          | Some(x) => x
+          },
+          oldRenderedElement === newRenderedElement,
+          true
+        );
+        (newRenderedElement, previousReactElement);
+      };
+    };
+
+let start = reactElement => {
+  GlobalState.reset();
+  FirstRender(reactElement);
+};
+
+let act = (~action, rAction, (oldRenderedElement, previousReactElement)) => {
+  RemoteAction.act(rAction, ~action);
+  (oldRenderedElement, previousReactElement);
+};
+
+let update = (nextReactElement, (oldRenderedElement, previousReactElement)) =>
+  Update({nextReactElement, oldRenderedElement, previousReactElement});
+
+let flushPendingUpdates = ((oldRenderedElement, previousReactElement)) =>
+  FlushUpdates(previousReactElement, oldRenderedElement);
+
+let done_ = ((_oldRenderedElement, _previousReactElement)) => ();

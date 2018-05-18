@@ -109,3 +109,13 @@ module ButtonWrapperWrapper = {
       ]
     };
 };
+
+module UpdateAlternateClicks = {
+  let createElement = (~id=1, ~state, ~text, ~children: _, ()) =>
+    TestRenderer.{
+      id,
+      component: Component(Components.UpdateAlternateClicks.component),
+      state,
+      subtree: [<Text id=(id + 1) title=text />]
+    };
+};

@@ -1,7 +1,5 @@
 open TestReactCore;
-
 open TestComponents;
-
 open TestRenderer;
 
 open Assert;
@@ -23,8 +21,8 @@ let suite = [
            [
              <BoxWrapper id=1>
                <Div id=2> <Box id=3 state="ImABox" /> </Div>
-             </BoxWrapper>
-           ]
+             </BoxWrapper>,
+           ],
          )
       |> update(<Components.BoxWrapper twoBoxes=true />)
       |> expect(
@@ -42,24 +40,24 @@ let suite = [
                          [<Box id=3 state="ImABox" />],
                          [
                            <Box id=4 state="ImABox" />,
-                           <Box id=5 state="ImABox" />
-                         ]
+                           <Box id=5 state="ImABox" />,
+                         ],
                        )),
                      newInstance: twoBoxes,
-                     oldInstance: oneBox
+                     oldInstance: oneBox,
                    }),
                    UpdateInstance({
                      stateChanged: false,
                      subTreeChanged: `Nested,
                      newInstance: <BoxWrapper id=1> twoBoxes </BoxWrapper>,
-                     oldInstance: <BoxWrapper id=1> oneBox </BoxWrapper>
-                   })
-                 ])
-             })
-           )
+                     oldInstance: <BoxWrapper id=1> oneBox </BoxWrapper>,
+                   }),
+                 ]),
+             }),
+           ),
          )
       |> done_;
-    }
+    },
   ),
   (
     "Test willReceiveProps on ChangeCounter text update",
@@ -68,12 +66,12 @@ let suite = [
       start(<Components.ChangeCounter label="default text" />)
       |> expect(
            ~label="It renders ChangeCounter component",
-           [<ChangeCounter id=1 label="default text" counter=0 />]
+           [<ChangeCounter id=1 label="default text" counter=0 />],
          )
       |> update(<Components.ChangeCounter label="default text" />)
       |> expect(
            ~label="It doesn't create any UpdateLog records",
-           ([<ChangeCounter id=1 label="default text" counter=0 />], None)
+           ([<ChangeCounter id=1 label="default text" counter=0 />], None),
          )
       |> update(<Components.ChangeCounter label="updated text" />)
       |> expect(
@@ -90,11 +88,11 @@ let suite = [
                      oldInstance:
                        <ChangeCounter id=1 label="default text" counter=0 />,
                      newInstance:
-                       <ChangeCounter id=1 label="updated text" counter=1 />
-                   })
-                 ])
-             })
-           )
+                       <ChangeCounter id=1 label="updated text" counter=1 />,
+                   }),
+                 ]),
+             }),
+           ),
          )
       |> flushPendingUpdates
       |> expect(
@@ -109,22 +107,22 @@ let suite = [
                  oldInstance:
                    <ChangeCounter id=1 label="updated text" counter=1 />,
                  newInstance:
-                   <ChangeCounter id=1 label="updated text" counter=21 />
-               })
-             ]
-           ))
+                   <ChangeCounter id=1 label="updated text" counter=21 />,
+               }),
+             ],
+           )),
          )
       |> flushPendingUpdates
       |> expect(
            ~label="It flushes updates, but there are no pending actions",
-           None
+           None,
          )
       |> flushPendingUpdates
       |> expect(
            ~label="It flushes updates, but there are no pending actions",
-           None
+           None,
          )
-      |> done_
+      |> done_,
   ),
   (
     "Test changing components",
@@ -134,10 +132,10 @@ let suite = [
         start(<Components.ChangeCounter label="default text" />)
         |> expect(
              ~label="It renders ChangeCounter component",
-             [<ChangeCounter id=1 label="default text" counter=0 />]
+             [<ChangeCounter id=1 label="default text" counter=0 />],
            )
         |> update(
-             <Components.ButtonWrapperWrapper wrappedText="initial text" />
+             <Components.ButtonWrapperWrapper wrappedText="initial text" />,
            )
         |> expect(
              ~label=
@@ -154,7 +152,7 @@ let suite = [
                          <Div id=3>
                            <Text id=4 title="initial text" />
                            <ButtonWrapper id=5 />
-                         </Div>
+                         </Div>,
                        ],
                        oldInstance:
                          <ChangeCounter id=1 label="default text" counter=0 />,
@@ -162,16 +160,16 @@ let suite = [
                          <ButtonWrapperWrapper
                            id=2
                            nestedText="initial text"
-                         />
-                     })
-                   ])
-               })
-             )
+                         />,
+                     }),
+                   ]),
+               }),
+             ),
            );
       let (afterUpdate, _) =
         testContinuation
         |> update(
-             <Components.ButtonWrapperWrapper wrappedText="updated text" />
+             <Components.ButtonWrapperWrapper wrappedText="updated text" />,
            )
         |> expect(
              ~label="It updates text in the ButtonWrapper",
@@ -185,7 +183,7 @@ let suite = [
                        stateChanged: true,
                        subTreeChanged: `ContentChanged(`NoChange),
                        oldInstance: <Text id=4 title="initial text" />,
-                       newInstance: <Text id=4 title="updated text" />
+                       newInstance: <Text id=4 title="updated text" />,
                      }),
                      UpdateInstance({
                        stateChanged: false,
@@ -199,7 +197,7 @@ let suite = [
                          <Div id=3>
                            <Text id=4 title="updated text" />
                            <ButtonWrapper id=5 />
-                         </Div>
+                         </Div>,
                      }),
                      UpdateInstance({
                        stateChanged: false,
@@ -213,11 +211,11 @@ let suite = [
                          <ButtonWrapperWrapper
                            id=2
                            nestedText="updated text"
-                         />
-                     })
-                   ])
-               })
-             )
+                         />,
+                     }),
+                   ]),
+               }),
+             ),
            );
       check(
         Alcotest.bool,
@@ -228,21 +226,25 @@ let suite = [
             IFlat(
               Instance({
                 instanceSubTree:
-                  IFlat(Instance({instanceSubTree: INested(_, [_, IFlat(x)])}))
-              })
+                  IFlat(
+                    Instance({instanceSubTree: INested(_, [_, IFlat(x)])}),
+                  ),
+              }),
             ),
             IFlat(
               Instance({
                 instanceSubTree:
-                  IFlat(Instance({instanceSubTree: INested(_, [_, IFlat(y)])}))
-              })
-            )
+                  IFlat(
+                    Instance({instanceSubTree: INested(_, [_, IFlat(y)])}),
+                  ),
+              }),
+            ),
           ) =>
           x === y
         | _ => false
-        }
+        },
       );
-    }
+    },
   ),
   (
     "Test BoxList with dynamic keys",
@@ -257,7 +259,7 @@ let suite = [
            ~label="It adds a new BoxItem and then flushes",
            Some((
              [
-               <BoxList id=1> <BoxItemDynamic id=2 state="Hello" /> </BoxList>
+               <BoxList id=1> <BoxItemDynamic id=2 state="Hello" /> </BoxList>,
              ],
              [
                UpdateInstance({
@@ -265,16 +267,16 @@ let suite = [
                  subTreeChanged:
                    `ReplaceElements((
                      [],
-                     [<BoxItemDynamic id=2 state="Hello" />]
+                     [<BoxItemDynamic id=2 state="Hello" />],
                    )),
                  oldInstance: <BoxList id=1 />,
                  newInstance:
                    <BoxList id=1>
                      <BoxItemDynamic id=2 state="Hello" />
-                   </BoxList>
-               })
-             ]
-           ))
+                   </BoxList>,
+               }),
+             ],
+           )),
          )
       |> act(~action=Components.BoxList.Create("World"), rAction)
       |> flushPendingUpdates
@@ -285,7 +287,7 @@ let suite = [
                <BoxList id=1>
                  <BoxItemDynamic id=3 state="World" />
                  <BoxItemDynamic id=2 state="Hello" />
-               </BoxList>
+               </BoxList>,
              ],
              [
                UpdateInstance({
@@ -295,8 +297,8 @@ let suite = [
                      [<BoxItemDynamic id=2 state="Hello" />],
                      [
                        <BoxItemDynamic id=3 state="World" />,
-                       <BoxItemDynamic id=2 state="Hello" />
-                     ]
+                       <BoxItemDynamic id=2 state="Hello" />,
+                     ],
                    )),
                  oldInstance:
                    <BoxList id=1>
@@ -306,10 +308,10 @@ let suite = [
                    <BoxList id=1>
                      <BoxItemDynamic id=3 state="World" />
                      <BoxItemDynamic id=2 state="Hello" />
-                   </BoxList>
-               })
-             ]
-           ))
+                   </BoxList>,
+               }),
+             ],
+           )),
          )
       |> act(~action=Components.BoxList.Reverse, rAction)
       |> flushPendingUpdates
@@ -320,7 +322,7 @@ let suite = [
                <BoxList id=1>
                  <BoxItemDynamic id=2 state="Hello" />
                  <BoxItemDynamic id=3 state="World" />
-               </BoxList>
+               </BoxList>,
              ],
              [
                UpdateInstance({
@@ -335,13 +337,13 @@ let suite = [
                    <BoxList id=1>
                      <BoxItemDynamic id=2 state="Hello" />
                      <BoxItemDynamic id=3 state="World" />
-                   </BoxList>
-               })
-             ]
-           ))
+                   </BoxList>,
+               }),
+             ],
+           )),
          )
       |> done_;
-    }
+    },
   ),
   (
     "Test BoxList without dynamic keys",
@@ -363,10 +365,10 @@ let suite = [
                    `ReplaceElements(([], [<Box id=2 state="Hello" />])),
                  oldInstance: <BoxList id=1 />,
                  newInstance:
-                   <BoxList id=1> <Box id=2 state="Hello" /> </BoxList>
-               })
-             ]
-           ))
+                   <BoxList id=1> <Box id=2 state="Hello" /> </BoxList>,
+               }),
+             ],
+           )),
          )
       |> act(~action=Components.BoxList.Create("World"), rAction)
       |> flushPendingUpdates
@@ -377,7 +379,7 @@ let suite = [
                <BoxList id=1>
                  <Box id=3 state="World" />
                  <Box id=4 state="Hello" />
-               </BoxList>
+               </BoxList>,
              ],
              [
                UpdateInstance({
@@ -385,7 +387,7 @@ let suite = [
                  subTreeChanged:
                    `ReplaceElements((
                      [<Box id=2 state="Hello" />],
-                     [<Box id=3 state="World" />, <Box id=4 state="Hello" />]
+                     [<Box id=3 state="World" />, <Box id=4 state="Hello" />],
                    )),
                  oldInstance:
                    <BoxList id=1> <Box id=2 state="Hello" /> </BoxList>,
@@ -393,10 +395,10 @@ let suite = [
                    <BoxList id=1>
                      <Box id=3 state="World" />
                      <Box id=4 state="Hello" />
-                   </BoxList>
-               })
-             ]
-           ))
+                   </BoxList>,
+               }),
+             ],
+           )),
          )
       |> act(~action=Components.BoxList.Reverse, rAction)
       |> flushPendingUpdates
@@ -407,20 +409,20 @@ let suite = [
                <BoxList id=1>
                  <Box id=3 state="Hello" />
                  <Box id=4 state="World" />
-               </BoxList>
+               </BoxList>,
              ],
              [
                UpdateInstance({
                  stateChanged: true,
                  subTreeChanged: `ContentChanged(`NoChange),
                  oldInstance: <Box id=4 state="Hello" />,
-                 newInstance: <Box id=4 state="World" />
+                 newInstance: <Box id=4 state="World" />,
                }),
                UpdateInstance({
                  stateChanged: true,
                  subTreeChanged: `ContentChanged(`NoChange),
                  oldInstance: <Box id=3 state="World" />,
-                 newInstance: <Box id=3 state="Hello" />
+                 newInstance: <Box id=3 state="Hello" />,
                }),
                UpdateInstance({
                  stateChanged: true,
@@ -434,13 +436,13 @@ let suite = [
                    <BoxList id=1>
                      <Box id=3 state="Hello" />
                      <Box id=4 state="World" />
-                   </BoxList>
-               })
-             ]
-           ))
+                   </BoxList>,
+               }),
+             ],
+           )),
          )
       |> done_;
-    }
+    },
   ),
   (
     "Test BoxItemDynamic memoizing during deep move",
@@ -451,22 +453,25 @@ let suite = [
         start(box_)
         |> expect(
              ~label="It renders the initial BoxItemDynamic",
-             [<BoxItemDynamic id=1 state="box to move" />]
+             [<BoxItemDynamic id=1 state="box to move" />],
            );
       let (afterUpdate, _) =
         testContinuation
         |> update(
              Nested(
                "div",
-               [Components.stringToElement("before"), Nested("div", [box_])]
-             )
+               [
+                 Components.stringToElement("before"),
+                 Nested("div", [box_]),
+               ],
+             ),
            )
         |> expect(
              ~label="It adds new element before BoxItemDynamic",
              (
                [
                  <Text id=2 title="before" />,
-                 <BoxItemDynamic id=1 state="box to move" />
+                 <BoxItemDynamic id=1 state="box to move" />,
                ],
                Some({
                  subtreeChange:
@@ -474,12 +479,12 @@ let suite = [
                      [<BoxItemDynamic id=1 state="box to move" />],
                      [
                        <Text id=2 title="before" />,
-                       <BoxItemDynamic id=1 state="box to move" />
-                     ]
+                       <BoxItemDynamic id=1 state="box to move" />,
+                     ],
                    )),
-                 updateLog: ref([])
-               })
-             )
+                 updateLog: ref([]),
+               }),
+             ),
            );
       check(
         Alcotest.bool,
@@ -488,9 +493,9 @@ let suite = [
         switch (beforeUpdate, afterUpdate) {
         | (IFlat(x), INested(_, [_, INested(_, [IFlat(y)])])) => x === y
         | _ => false
-        }
+        },
       );
-    }
+    },
   ),
   (
     "Test list updates with static keys",
@@ -501,28 +506,28 @@ let suite = [
       start(
         listToElement([
           <Components.Box key=key1 title="Box1unchanged" />,
-          <Components.Box key=key2 title="Box2unchanged" />
-        ])
+          <Components.Box key=key2 title="Box2unchanged" />,
+        ]),
       )
       |> expect(
            ~label="It renders the initial Boxes list",
            [
              <Box id=key1 state="Box1unchanged" />,
-             <Box id=key2 state="Box2unchanged" />
-           ]
+             <Box id=key2 state="Box2unchanged" />,
+           ],
          )
       |> update(
            listToElement([
              <Components.Box key=key2 title="Box2changed" />,
-             <Components.Box key=key1 title="Box1changed" />
-           ])
+             <Components.Box key=key1 title="Box1changed" />,
+           ]),
          )
       |> expect(
            ~label="It reorders the list and updates each box",
            (
              [
                <Box id=key2 state="Box2changed" />,
-               <Box id=key1 state="Box1changed" />
+               <Box id=key1 state="Box1changed" />,
              ],
              Some({
                subtreeChange: `Reordered,
@@ -532,20 +537,20 @@ let suite = [
                      stateChanged: true,
                      subTreeChanged: `ContentChanged(`NoChange),
                      oldInstance: <Box id=1 state="Box1unchanged" />,
-                     newInstance: <Box id=1 state="Box1changed" />
+                     newInstance: <Box id=1 state="Box1changed" />,
                    }),
                    UpdateInstance({
                      stateChanged: true,
                      subTreeChanged: `ContentChanged(`NoChange),
                      oldInstance: <Box id=2 state="Box2unchanged" />,
-                     newInstance: <Box id=2 state="Box2changed" />
-                   })
-                 ])
-             })
-           )
+                     newInstance: <Box id=2 state="Box2changed" />,
+                   }),
+                 ]),
+             }),
+           ),
          )
       |> done_;
-    }
+    },
   ),
   (
     "Test 'shouldUpdate' lifecycle phase",
@@ -555,7 +560,7 @@ let suite = [
       start(<Components.UpdateAlternateClicks rAction />)
       |> expect(
            ~label="It renders UpdateAlternateClicks element",
-           [<UpdateAlternateClicks state="0" text="0" />]
+           [<UpdateAlternateClicks state="0" text="0" />],
          )
       |> act(~action=Components.UpdateAlternateClicks.Click, rAction)
       |> flushPendingUpdates
@@ -568,10 +573,10 @@ let suite = [
                  stateChanged: true,
                  subTreeChanged: `NoChange,
                  oldInstance: <UpdateAlternateClicks state="0" text="0" />,
-                 newInstance: <UpdateAlternateClicks state="1" text="0" />
-               })
-             ]
-           ))
+                 newInstance: <UpdateAlternateClicks state="1" text="0" />,
+               }),
+             ],
+           )),
          )
       |> act(~action=Components.UpdateAlternateClicks.Click, rAction)
       |> flushPendingUpdates
@@ -584,16 +589,16 @@ let suite = [
                  stateChanged: true,
                  subTreeChanged: `ContentChanged(`NoChange),
                  oldInstance: <Text id=2 title="0" />,
-                 newInstance: <Text id=2 title="2" />
+                 newInstance: <Text id=2 title="2" />,
                }),
                UpdateInstance({
                  stateChanged: true,
                  subTreeChanged: `Nested,
                  oldInstance: <UpdateAlternateClicks state="1" text="0" />,
-                 newInstance: <UpdateAlternateClicks state="2" text="2" />
-               })
-             ]
-           ))
+                 newInstance: <UpdateAlternateClicks state="2" text="2" />,
+               }),
+             ],
+           )),
          )
       |> act(~action=Components.UpdateAlternateClicks.Click, rAction)
       |> flushPendingUpdates
@@ -606,10 +611,10 @@ let suite = [
                  stateChanged: true,
                  subTreeChanged: `NoChange,
                  oldInstance: <UpdateAlternateClicks state="2" text="2" />,
-                 newInstance: <UpdateAlternateClicks state="3" text="2" />
-               })
-             ]
-           ))
+                 newInstance: <UpdateAlternateClicks state="3" text="2" />,
+               }),
+             ],
+           )),
          )
       |> act(~action=Components.UpdateAlternateClicks.Click, rAction)
       |> flushPendingUpdates
@@ -622,19 +627,19 @@ let suite = [
                  stateChanged: true,
                  subTreeChanged: `ContentChanged(`NoChange),
                  oldInstance: <Text id=2 title="2" />,
-                 newInstance: <Text id=2 title="4" />
+                 newInstance: <Text id=2 title="4" />,
                }),
                UpdateInstance({
                  stateChanged: true,
                  subTreeChanged: `Nested,
                  oldInstance: <UpdateAlternateClicks state="3" text="2" />,
-                 newInstance: <UpdateAlternateClicks state="4" text="4" />
-               })
-             ]
-           ))
+                 newInstance: <UpdateAlternateClicks state="4" text="4" />,
+               }),
+             ],
+           )),
          )
       |> done_;
-    }
+    },
   ),
   (
     "Test top level flat update",
@@ -651,13 +656,13 @@ let suite = [
                subtreeChange:
                  `ReplaceElements((
                    [<Text id=1 title="x" />],
-                   [<Text id=2 title="y" />]
+                   [<Text id=2 title="y" />],
                  )),
-               updateLog: ref([])
-             })
-           )
+               updateLog: ref([]),
+             }),
+           ),
          )
-      |> done_
+      |> done_,
   ),
   (
     "Test no change",
@@ -668,20 +673,20 @@ let suite = [
       start(
         listToElement([
           <Components.Text key=key1 title="x" />,
-          <Components.Text key=key2 title="y" />
-        ])
+          <Components.Text key=key2 title="y" />,
+        ]),
       )
       |> expect(
            ~label="It renders list with Text elements",
-           [<Text id=1 title="x" />, <Text id=2 title="y" />]
+           [<Text id=1 title="x" />, <Text id=2 title="y" />],
          )
       |> update(
            listToElement(
              Components.[
                <Text key=key1 title="x" />,
-               <Text key=key2 title="y" />
-             ]
-           )
+               <Text key=key2 title="y" />,
+             ],
+           ),
          )
       |> expect(
            ~label="It updates the state with a new instance of (same) string",
@@ -695,25 +700,25 @@ let suite = [
                      stateChanged: true,
                      subTreeChanged: `NoChange,
                      oldInstance: <Text id=2 title="y" />,
-                     newInstance: <Text id=2 title="y" />
+                     newInstance: <Text id=2 title="y" />,
                    }),
                    UpdateInstance({
                      stateChanged: true,
                      subTreeChanged: `NoChange,
                      oldInstance: <Text id=1 title="x" />,
-                     newInstance: <Text id=1 title="x" />
-                   })
-                 ])
-             })
-           )
+                     newInstance: <Text id=1 title="x" />,
+                   }),
+                 ]),
+             }),
+           ),
          )
       |> update(
            listToElement(
              Components.[
                <Text key=key2 title="y" />,
-               <Text key=key1 title="x" />
-             ]
-           )
+               <Text key=key1 title="x" />,
+             ],
+           ),
          )
       |> expect(
            ~label=
@@ -728,20 +733,20 @@ let suite = [
                      stateChanged: true,
                      subTreeChanged: `NoChange,
                      oldInstance: <Text id=1 title="x" />,
-                     newInstance: <Text id=1 title="x" />
+                     newInstance: <Text id=1 title="x" />,
                    }),
                    UpdateInstance({
                      stateChanged: true,
                      subTreeChanged: `NoChange,
                      oldInstance: <Text id=2 title="y" />,
-                     newInstance: <Text id=2 title="y" />
-                   })
-                 ])
-             })
-           )
+                     newInstance: <Text id=2 title="y" />,
+                   }),
+                 ]),
+             }),
+           ),
          )
       |> done_;
-    }
+    },
   ),
   (
     "Test prepending new element",
@@ -754,13 +759,13 @@ let suite = [
       start(listToElement(commonElement))
       |> expect(
            ~label="It renders a new Text element",
-           [Text.createElement(~id=1, ~title="x", ~children=(), ())]
+           [Text.createElement(~id=1, ~title="x", ~children=(), ())],
          )
       |> update(
            listToElement([
              <Components.Text key=key2 title="y" />,
-             ...commonElement
-           ])
+             ...commonElement,
+           ]),
          )
       |> expect(
            ~label="It prepends a new Text element to the list",
@@ -768,13 +773,13 @@ let suite = [
              [<Text id=2 title="y" />, <Text id=1 title="x" />],
              Some({
                subtreeChange: `PrependElement([<Text id=2 title="y" />]),
-               updateLog: ref([])
-             })
-           )
+               updateLog: ref([]),
+             }),
+           ),
          )
       |> done_;
-    }
-  )
+    },
+  ),
 ];
 
 Alcotest.run(~argv=[|"--verbose --color"|], "Brisk", [("Core", suite)]);

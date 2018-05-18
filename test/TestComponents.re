@@ -1,6 +1,8 @@
+open TestRenderer;
+
 module Box = {
   let createElement = (~id, ~state="ImABox", ~children, ()) =>
-    TestRenderer.{
+    {
       component: Component(Components.Box.component),
       id,
       state,
@@ -10,7 +12,7 @@ module Box = {
 
 module BoxItemDynamic = {
   let createElement = (~id, ~state="ImABox", ~children, ()) =>
-    TestRenderer.{
+    {
       component: Component(Components.BoxItemDynamic.component),
       id,
       state,
@@ -20,7 +22,7 @@ module BoxItemDynamic = {
 
 module BoxList = {
   let createElement = (~id, ~state="", ~children, ()) =>
-    TestRenderer.{
+    {
       component: Component(Components.BoxList.component),
       id,
       state,
@@ -30,7 +32,7 @@ module BoxList = {
 
 module Div = {
   let createElement = (~id, ~children, ()) =>
-    TestRenderer.{
+    {
       component: Component(Components.Div.component),
       id,
       state: "",
@@ -40,7 +42,7 @@ module Div = {
 
 module BoxWrapper = {
   let createElement = (~id, ~children, ()) =>
-    TestRenderer.{
+    {
       component: Component(Components.BoxWrapper.component),
       id,
       state: "",
@@ -50,7 +52,7 @@ module BoxWrapper = {
 
 module ChangeCounter = {
   let createElement = (~id, ~label, ~counter, ~children: _, ()) =>
-    TestRenderer.{
+    {
       component: Component(Components.ChangeCounter.component),
       id,
       state: Printf.sprintf("[%i, %s]", counter, label),
@@ -59,11 +61,10 @@ module ChangeCounter = {
 };
 
 module Text = {
-  open Components;
   let createElement = (~id, ~title, ~children: _, ()) =>
-    TestRenderer.{
+    {
       id,
-      component: Component(Text.component),
+      component: Component(Components.Text.component),
       state: title,
       subtree: []
     };
@@ -72,7 +73,7 @@ module Text = {
 module ButtonWrapper = {
   open Components;
   let createElement = (~id, ~children: _, ()) =>
-    TestRenderer.{
+    {
       id,
       component: Component(ButtonWrapper.component),
       state: "",
@@ -96,7 +97,7 @@ module ButtonWrapper = {
 
 module ButtonWrapperWrapper = {
   let createElement = (~id, ~nestedText, ~children: _, ()) =>
-    TestRenderer.{
+    {
       id,
       component: Component(Components.ButtonWrapperWrapper.component),
       state: "",
@@ -111,7 +112,7 @@ module ButtonWrapperWrapper = {
 
 module UpdateAlternateClicks = {
   let createElement = (~id=1, ~state, ~text, ~children: _, ()) =>
-    TestRenderer.{
+    {
       id,
       component: Component(Components.UpdateAlternateClicks.component),
       state,

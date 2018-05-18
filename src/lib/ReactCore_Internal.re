@@ -28,7 +28,7 @@ module Make = (Implementation: HostImplementation) => {
   module Key = {
     type t = int;
     let none = (-1);
-    let first = 0;
+    let dynamicKeyMagicNumber = 0;
     let create = () => {
       incr(GlobalState.componentKeyCounter);
       GlobalState.componentKeyCounter^;
@@ -174,8 +174,15 @@ module Make = (Implementation: HostImplementation) => {
   let defaultWillUpdate = _oldNewSef => ();
   let defaultDidUpdate = _oldNewSef => ();
   let defaultDidMount = _self => ();
+
+  /***
+   * If `useDynamicKey` is true, every element of a given componentSpec
+   * will have initial value of key equal to `Key.dynamicKeyMagicNumber`.
+   *
+   * For such cases, we generate a new key during calls to the `element` function.
+   */
   let basicComponent = (~useDynamicKey=false, debugName, elementType) => {
-    let key = useDynamicKey ? Key.first : Key.none;
+    let key = useDynamicKey ? Key.dynamicKeyMagicNumber : Key.none;
     {
       debugName,
       elementType,
@@ -932,8 +939,13 @@ module Make = (Implementation: HostImplementation) => {
   let element = (~key as argumentKey=Key.none, component) => {
     let key =
       argumentKey != Key.none ?
-        argumentKey : component.key == Key.none ? Key.none : Key.create();
-    let componentWithKey = key == Key.none ? component : {...component, key};
+        argumentKey :
+        {
+          let isDynamicKey = component.key == Key.dynamicKeyMagicNumber;
+          isDynamicKey ? Key.create() : Key.none;
+        };
+    let componentWithKey =
+      key != component.key ? {...component, key} : component;
     Flat(Element(componentWithKey));
   };
   let arrayToElement = (a: array(reactElement)) : reactElement =>

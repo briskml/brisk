@@ -83,9 +83,9 @@ module BoxWrapper = {
 /**
  * Box with dynamic keys.
  */
-module BoxWithDynamicKeys = {
+module BoxItemDynamic = {
   let component =
-    statelessComponent(~useDynamicKey=true, "BoxWithDynamicKeys");
+    statelessComponent(~useDynamicKey=true, "BoxItemDynamic");
   let make = (~title="ImABox", _children: list(reactElement)) => {
     ...component,
     printState: (_) => title,
@@ -95,11 +95,11 @@ module BoxWithDynamicKeys = {
     element(make(~title, children));
 };
 
-module BoxList = {
+module BoxTable = {
   type action =
     | Create(string)
     | Reverse;
-  let component = reducerComponent("BoxList");
+  let component = reducerComponent("BoxTable");
   let make = (~rAction, ~useDynamicKeys=false, _children) => {
     ...component,
     initialState: () => [],
@@ -107,7 +107,7 @@ module BoxList = {
       switch action {
       | Create(title) =>
         Update([
-          useDynamicKeys ? <BoxWithDynamicKeys title /> : <Box title />,
+          useDynamicKeys ? <BoxItemDynamic title /> : <Box title />,
           ...state
         ])
       | Reverse => Update(List.rev(state))
@@ -140,9 +140,9 @@ module ChangeCounter = {
   let component = reducerComponent("ChangeCounter");
   let make = (~label, _children) => {
     ...component,
-    initialState: () => {mostRecentLabel: label, numChanges: 10},
+    initialState: () => {mostRecentLabel: label, numChanges: 0},
     reducer: ((), state) =>
-      Update({...state, numChanges: state.numChanges + 1000}),
+      Update({...state, numChanges: state.numChanges + 10}),
     willReceiveProps: ({state, reduce}) =>
       label != state.mostRecentLabel ?
         {
@@ -186,14 +186,12 @@ module ButtonWrapper = {
 
 module ButtonWrapperWrapper = {
   let buttonWrapperJsx = <ButtonWrapper wrappedText="TestButtonUpdated!!!" />;
-  let component = statefulComponent("ButtonWrapperWrapper");
+  let component = statelessComponent("ButtonWrapperWrapper");
   let make = (~wrappedText="default", _children) => {
     ...component,
-    initialState: () => "buttonWrapperWrapperState",
-    render: ({state}) =>
+    render: (_) =>
       <Div>
-        (stringToElement(state))
-        (stringToElement("wrappedText:" ++ wrappedText))
+        (stringToElement(wrappedText))
         buttonWrapperJsx
       </Div>
   };

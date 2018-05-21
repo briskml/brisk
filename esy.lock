@@ -207,7 +207,7 @@
   peerDependencies:
     ocaml " >= 4.1.0"
 
-"@opam/jbuilder@ >= 1.0.0-beta10", "@opam/jbuilder@ >= 1.0.0-beta14", "@opam/jbuilder@ >= 1.0.0-beta17", "@opam/jbuilder@ >= 1.0.0-beta181", "@opam/jbuilder@ >= 1.0.0-beta7", "@opam/jbuilder@ >= 1.0.0-beta9", "@opam/jbuilder@*", "@opam/jbuilder@^1.0.0-beta20":
+"@opam/jbuilder@ >= 1.0.0-beta10", "@opam/jbuilder@ >= 1.0.0-beta14", "@opam/jbuilder@ >= 1.0.0-beta17", "@opam/jbuilder@ >= 1.0.0-beta181", "@opam/jbuilder@ >= 1.0.0-beta7", "@opam/jbuilder@ >= 1.0.0-beta9", "@opam/jbuilder@*", "@opam/jbuilder@^1.0.0-beta14", "@opam/jbuilder@^1.0.0-beta20":
   version "1.0.0-beta20"
   uid "1648206284a54407f6eee01ed950fff7"
   resolved "@opam/jbuilder@1.0.0-beta20-1648206284a54407f6eee01ed950fff7.tgz"
@@ -453,11 +453,22 @@
   peerDependencies:
     ocaml " >= 4.2.3000"
 
+flex@briskml/flex#b0f7a43:
+  version "1.1.1"
+  resolved "https://codeload.github.com/briskml/flex/tar.gz/b0f7a4325bad52aae65b2693b4a9647158b312fe"
+  dependencies:
+    "@esy-ocaml/esy-installer" "^0.0.0"
+    "@esy-ocaml/reason" "^3.0.0"
+    "@opam/jbuilder" "^1.0.0-beta14"
+    refmterr "^3.0.4"
+  peerDependencies:
+    ocaml "~4.6.0"
+
 ocaml@~4.6.1:
   version "4.6.1"
   resolved "https://registry.yarnpkg.com/ocaml/-/ocaml-4.6.1.tgz#8babea2c41a9f734313b4fc1841ec0963c9d7a07"
 
-refmterr@^3.1.7:
+refmterr@^3.0.4, refmterr@^3.1.7:
   version "3.1.7"
   resolved "https://registry.yarnpkg.com/refmterr/-/refmterr-3.1.7.tgz#fdd6a58e212b18c6a0685ff21f27a7df6621b3e8"
   dependencies:

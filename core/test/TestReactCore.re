@@ -1,4 +1,4 @@
-open Brisk;
+open Brisk_core;
 
 module Implementation = {
   type hostView =

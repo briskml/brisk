@@ -1,0 +1,5 @@
+(jbuild_version 1)
+
+(library
+ ((name test_core)
+  (libraries (alcotest easy-format simple-diff brisk_core))))

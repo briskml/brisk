@@ -1,7 +1,7 @@
 (jbuild_version 1)
 
 (library
- ((name brisk)
+ ((name brisk_core)
   (public_name brisk)
   (libraries (flex)))
 )

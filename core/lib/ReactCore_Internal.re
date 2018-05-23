@@ -2,6 +2,7 @@ open Flex;
 
 module type HostImplementation = {
   type hostView;
+
   let getInstance: int => option(hostView);
   let memoizeInstance: (int, hostView) => unit;
 };
@@ -17,7 +18,8 @@ module Make = (Implementation: HostImplementation) => {
       /* FIXME: To be done afterwards because we'll need to  adjust tests*/
       instanceIdCounter := 1;
     };
-    /*
+
+    /**
      * Use physical equality to recognize that an element was added to the list
      * of children.
      * Note: this currently does not check for pending updates on components in
@@ -25,6 +27,7 @@ module Make = (Implementation: HostImplementation) => {
      */
     let useTailHack = ref(false);
   };
+
   module Key = {
     type t = int;
     let none = (-1);
@@ -34,28 +37,33 @@ module Make = (Implementation: HostImplementation) => {
       GlobalState.componentKeyCounter^;
     };
   };
+
   type sideEffects = unit => unit;
   type stateless = unit;
   type actionless = unit;
+
   module Callback = {
     type t('payload) = 'payload => unit;
+
     let default = _event => ();
     let chain = (handlerOne, handlerTwo, payload) => {
       handlerOne(payload);
       handlerTwo(payload);
     };
   };
+
   type reduce('payload, 'action) =
     ('payload => 'action) => Callback.t('payload);
+
   type update('state, 'action) =
     | NoUpdate
     | Update('state)
   and self('state, 'action) = {
     state: 'state,
     reduce: 'payload .reduce('payload, 'action),
-    act: 'action => unit
+    act: 'action => unit,
   }
-  /***
+  /**
    * Elements are what JSX blocks become. They represent the *potential* for a
    * component instance and state to be created / updated. They are not yet
    * instances.
@@ -69,7 +77,7 @@ module Make = (Implementation: HostImplementation) => {
     make: unit => Implementation.hostView,
     updateInstance: (self('state, 'action), Implementation.hostView) => unit,
     shouldReconfigureInstance: (~oldState: 'state, ~newState: 'state) => bool,
-    children: reactElement
+    children: reactElement,
   }
   and elementType('a, 'state, 'action) =
     | Host: elementType(nativeElement('state, 'action), 'state, 'action)
@@ -79,35 +87,35 @@ module Make = (Implementation: HostImplementation) => {
     | INested(string, list(renderedElement))
   and oldNewSelf('state, 'action) = {
     oldSelf: self('state, 'action),
-    newSelf: self('state, 'action)
+    newSelf: self('state, 'action),
   }
   /**
-    * This type is used to avoid Obj.magic in update.
-    * We create one handedOffInstance ref per component type.
-    * The componentSpec is usually recreated on every render.
-    * The ref is created in functions like `statelessComponent`. Then a user
-    * usually spreads this ref like so:
-    * let make = ... => {...component, ...};
-    * Therefore all components coming from a given `make` function usually
-    * share the same ref. Then, in the update function it can be determined
-    *
-    * When we pass the instance to one component and we can observe the mutation
-    * on the other component, it means that we've got two components of the same type.
-    *
-    * Additionally, we pass two instances here.
-    * - The first instance in the tuple contains the original instance that
-    *   the update has been started with
-    * - The second instance is the same instance but after executing pending
-    *   state updates
-    */
+   * This type is used to avoid Obj.magic in update.
+   * We create one handedOffInstance ref per component type.
+   * The componentSpec is usually recreated on every render.
+   * The ref is created in functions like `statelessComponent`. Then a user
+   * usually spreads this ref like so:
+   * let make = ... => {...component, ...};
+   * Therefore all components coming from a given `make` function usually
+   * share the same ref. Then, in the update function it can be determined
+   *
+   * When we pass the instance to one component and we can observe the mutation
+   * on the other component, it means that we've got two components of the same type.
+   *
+   * Additionally, we pass two instances here.
+   * - The first instance in the tuple contains the original instance that
+   *   the update has been started with
+   * - The second instance is the same instance but after executing pending
+   *   state updates
+   */
   and handedOffInstance('state, 'action, 'element) =
     ref(
       option(
         (
           instance('state, 'action, 'element),
-          instance('state, 'action, 'element)
-        )
-      )
+          instance('state, 'action, 'element),
+        ),
+      ),
     )
   and componentSpec('state, 'initialState, 'action, 'element) = {
     debugName: string,
@@ -123,38 +131,38 @@ module Make = (Implementation: HostImplementation) => {
     reducer: ('action, 'state) => update('state, 'action),
     printState: 'state => string /* for internal debugging */,
     handedOffInstance: handedOffInstance('state, 'action, 'element),
-    key: int
+    key: int,
   }
   and component('state, 'action, 'elementType) =
     componentSpec('state, 'state, 'action, 'elementType)
-  /***
+  /**
    * Elements turn into instances at the right time. These instances record the
    * most recent state among other things.
    */
   and instance('state, 'action, 'elementType) = {
     component: component('state, 'action, 'elementType),
-    /***
+    /**
      * This may not be a good idea to hold onto for sake of memory, but it makes
      * it convenient to implement shouldComponentUpdate.
      */
     element,
     iState: 'state,
-    /***
+    /**
      * Most recent subtree of instances.
      */
     instanceSubTree: renderedElement,
     subElements: 'elementType,
-    /***
+    /**
      * List of state updates pending for this instance.
      * Stored in reverse order.
      */
     pendingStateUpdates: ref(list('state => update('state, 'action))),
-    /***
+    /**
      * Unique instance id.
-     * */
-    id: int
+     */
+    id: int,
   }
-  /***
+  /**
    * Opaque wrapper around `instance`, which allows many instances to be
    * commingled in a single data structure. The GADT hides the type parameters.
    * The result of "rendering" an Element is a tree of produced instances.
@@ -163,19 +171,14 @@ module Make = (Implementation: HostImplementation) => {
    */
   and opaqueInstance =
     | Instance(instance('state, 'action, 'elementType)): opaqueInstance;
-  let logString = txt =>
-    GlobalState.debug^ ?
-      {
-        print_string(txt);
-        print_newline();
-      } :
-      ();
+
+  let logString = txt => GlobalState.debug^ ? print_endline(txt) : ();
   let defaultShouldUpdate = _oldNewSef => true;
   let defaultWillUpdate = _oldNewSef => ();
   let defaultDidUpdate = _oldNewSef => ();
   let defaultDidMount = _self => ();
 
-  /***
+  /**
    * If `useDynamicKey` is true, every element of a given componentSpec
    * will have initial value of key equal to `Key.dynamicKeyMagicNumber`.
    *
@@ -192,25 +195,25 @@ module Make = (Implementation: HostImplementation) => {
       willUnmount: _self => (),
       willUpdate: defaultWillUpdate,
       shouldUpdate: defaultShouldUpdate,
-      render: _self => assert false,
+      render: _self => assert(false),
       initialState: () => (),
       reducer: (_action, _state) => NoUpdate,
       printState: _state => "",
       handedOffInstance: ref(None),
-      key
+      key,
     };
   };
 
-  /*** Tail-recursive functions on lists */
+  /** Tail-recursive functions on lists */
   module ListTR = {
     let useTailRecursion = l =>
-      switch l {
+      switch (l) {
       | [_, _, _, _, _, _, _, _, _, _, ..._] => true
       | _ => false
       };
     let concat = list => {
       let rec aux = (acc, l) =>
-        switch l {
+        switch (l) {
         | [] => List.rev(acc)
         | [x, ...rest] => aux(List.rev_append(x, acc), rest)
         };
@@ -225,14 +228,14 @@ module Make = (Implementation: HostImplementation) => {
         | ([], [], []) => acc
         | ([x1, ...nextList1], [x2, ...nextList2], [x3, ...nextList3]) =>
           aux([f((x1, x2, x3)), ...acc], (nextList1, nextList2, nextList3))
-        | _ => assert false;
+        | _ => assert(false);
       aux([], (list1, list2, list3));
     };
     let map3 = (f, list1, list2, list3) =>
       rev_map3(f, List.rev(list1), List.rev(list2), List.rev(list3));
   };
 
-  /*** Log of operations performed to update an instance tree. */
+  /** Log of operations performed to update an instance tree. */
   module UpdateLog = {
     type subtreeChangeReact = [
       | `Nested
@@ -250,18 +253,19 @@ module Make = (Implementation: HostImplementation) => {
       oldInstance: instance('state, 'action, 'elementType),
       newInstance: instance('state, 'action, 'elementType),
       stateChanged: bool,
-      subTreeChanged: subtreeChange
+      subTreeChanged: subtreeChange,
     };
     type componentChange = {
       oldId: int,
       newId: int,
       oldOpaqueInstance: opaqueInstance,
-      newOpaqueInstance: opaqueInstance
+      newOpaqueInstance: opaqueInstance,
     };
     type entry =
       | UpdateInstance(instanceUpdate('state, 'action, 'elementType)): entry
       | ChangeComponent(componentChange): entry;
     type t = ref(list(entry));
+
     let create = () => ref([]);
     let add = (updateLog, x) => updateLog := [x, ...updateLog^];
     let addUpdateInstance =
@@ -272,8 +276,8 @@ module Make = (Implementation: HostImplementation) => {
           oldInstance,
           newInstance,
           stateChanged,
-          subTreeChanged
-        })
+          subTreeChanged,
+        }),
       );
     let addChangeComponent = (~updateLog, opaqueInstance, newOpaqueInstance) => {
       let Instance({id}) = opaqueInstance;
@@ -284,11 +288,12 @@ module Make = (Implementation: HostImplementation) => {
           oldId: id,
           newId,
           oldOpaqueInstance: opaqueInstance,
-          newOpaqueInstance
-        })
+          newOpaqueInstance,
+        }),
       );
     };
   };
+
   module Render = {
     let createSelf = (~state, ~component, ~pendingStateUpdates) : self(_) => {
       state,
@@ -300,7 +305,7 @@ module Make = (Implementation: HostImplementation) => {
       act: action => {
         let stateUpdate = component.reducer(action);
         pendingStateUpdates := [stateUpdate, ...pendingStateUpdates^];
-      }
+      },
     };
     let createInitialSelf = (~component) => {
       let id = GlobalState.instanceIdCounter^;
@@ -310,17 +315,17 @@ module Make = (Implementation: HostImplementation) => {
         createSelf(
           ~component,
           ~state=component.initialState(),
-          ~pendingStateUpdates
+          ~pendingStateUpdates,
         ),
         pendingStateUpdates,
-        id
+        id,
       );
     };
     let createSelf = (~instance) =>
       createSelf(
         ~component=instance.component,
         ~state=instance.iState,
-        ~pendingStateUpdates=instance.pendingStateUpdates
+        ~pendingStateUpdates=instance.pendingStateUpdates,
       );
     let rec flattenReactElement =
       fun
@@ -329,14 +334,15 @@ module Make = (Implementation: HostImplementation) => {
     let rec flattenRenderedElement =
       fun
       | IFlat(l) => [l]
-      | INested(_, l) => ListTR.concat(ListTR.map(flattenRenderedElement, l));
+      | INested(_, l) =>
+        ListTR.concat(ListTR.map(flattenRenderedElement, l));
     let rec mapReactElement = (f, reactElement) =>
-      switch reactElement {
+      switch (reactElement) {
       | Flat(l) => IFlat(f(l))
       | Nested(s, l) => INested(s, ListTR.map(mapReactElement(f), l))
       };
     let rec mapRenderedElement = (f, renderedElement) =>
-      switch renderedElement {
+      switch (renderedElement) {
       | IFlat(e) =>
         let nextE = f(e);
         let unchanged = e === nextE;
@@ -346,6 +352,7 @@ module Make = (Implementation: HostImplementation) => {
         let unchanged = List.for_all2((===), l, nextL);
         unchanged ? renderedElement : INested(s, nextL);
       };
+
     module OpaqueInstanceHash = {
       let addOpaqueInstance = (idTable, opaqueInstance) => {
         let Instance({component: {key}}) = opaqueInstance;
@@ -373,30 +380,32 @@ module Make = (Implementation: HostImplementation) => {
         };
       };
     };
+
     let getOpaqueInstance = (~useKeyTable, Element({key})) =>
-      switch useKeyTable {
+      switch (useKeyTable) {
       | None => None
       | Some(keyTable) => OpaqueInstanceHash.lookupKey(keyTable, key)
       };
+
     /**
-      * Used because of higher order polymorphism. See here 5.3:
-      * https://caml.inria.fr/pub/docs/manual-ocaml/polymorphism.html
-      *
-      * When we pass the updateInstanceState function it has to be polymorphic
-      * *for all* instance('state, 'action, 'elementType) and passing such
-      * function as an argument introduces higher rank polymorphism.
-      * It's because it's not the function itself has to be polymorphic but its
-      * argument. Therefore we have to wrap it in a record
-      */
+     * Used because of higher order polymorphism. See here 5.3:
+     * https://caml.inria.fr/pub/docs/manual-ocaml/polymorphism.html
+     *
+     * When we pass the updateInstanceState function it has to be polymorphic
+     * *for all* instance('state, 'action, 'elementType) and passing such
+     * function as an argument introduces higher rank polymorphism.
+     * It's because it's not the function itself has to be polymorphic but its
+     * argument. Therefore we have to wrap it in a record
+     */
     type updateInstanceState = {
       f:
         'state 'action 'elementType .
         instance('state, 'action, 'elementType) =>
-        instance('state, 'action, 'elementType)
+        instance('state, 'action, 'elementType),
 
     };
 
-    /***
+    /**
      * Initial render of an Element. Recurses to produce the entire tree of
      * instances.
      */
@@ -405,7 +414,7 @@ module Make = (Implementation: HostImplementation) => {
             : opaqueInstance =>
       switch (getOpaqueInstance(useKeyTable, element)) {
       | Some(opaqueInstance) =>
-        /* Throwaway update log: this is a render so no need to keep an update log. */
+        /** Throwaway update log: this is a render so no need to keep an update log. */
         let updateLog = UpdateLog.create();
         update(~updateLog, opaqueInstance, element);
       | None =>
@@ -415,7 +424,7 @@ module Make = (Implementation: HostImplementation) => {
         };
         let subElements = component.render(self);
         let instanceSubTree =
-          switch component.elementType {
+          switch (component.elementType) {
           | React => renderReactElement(subElements: reactElement)
           | Host => renderReactElement(subElements.children)
           };
@@ -426,12 +435,12 @@ module Make = (Implementation: HostImplementation) => {
           subElements,
           instanceSubTree,
           pendingStateUpdates,
-          element
+          element,
         });
       }
     and renderReactElement = (~useKeyTable=?, reactElement) : renderedElement =>
       mapReactElement(renderElement(~useKeyTable?), reactElement)
-    /***
+    /**
      * Update a previously rendered instance tree according to a new Element.
      *
      * Here's where the magic happens:
@@ -467,27 +476,29 @@ module Make = (Implementation: HostImplementation) => {
           ~updateInstanceState=?,
           ~updateLog,
           originalOpaqueInstance,
-          Element(nextComponent) as nextElement
+          Element(nextComponent) as nextElement,
         )
         : opaqueInstance => {
       let Instance(originalInstance) = originalOpaqueInstance;
       let updatedInstance =
-        switch updateInstanceState {
+        switch (updateInstanceState) {
         | Some({f}) => f(originalInstance)
         | None => originalInstance
         };
       let stateNotUpdated = originalInstance === updatedInstance;
+
       let bailOut = {
         let Instance({element}) = originalOpaqueInstance;
         stateNotUpdated && element === nextElement;
       };
+
       if (bailOut) {
         originalOpaqueInstance;
       } else {
         let {component: updatedComponent} = updatedInstance;
         updatedComponent.handedOffInstance :=
           Some((originalInstance, updatedInstance));
-        switch nextComponent.handedOffInstance^ {
+        switch (nextComponent.handedOffInstance^) {
         /*
          * Case A: The next element *is* of the same component class.
          */
@@ -497,18 +508,20 @@ module Make = (Implementation: HostImplementation) => {
           let updatedInstanceWithNewElement = {
             ...updatedInstance,
             component: nextComponent,
-            element: nextElement
+            element: nextElement,
           };
           let oldSelf = createSelf(~instance=updatedInstance);
           let newState = nextComponent.willReceiveProps(oldSelf);
-          /* We need to split up the check for state changes in two parts.
-             The first part covers pending updates.
-             The second part covers willReceiveProps. */
+
+          /** We need to split up the check for state changes in two parts.
+           * The first part covers pending updates.
+           * The second part covers willReceiveProps.
+           */
           let stateChanged =
             ! stateNotUpdated || newState !== updatedInstance.iState;
           let updatedInstanceWithNewState = {
             ...updatedInstanceWithNewElement,
-            iState: newState
+            iState: newState,
           };
           /* TODO: Invoke any lifecycles necessary. */
           let newSelf = createSelf(~instance=updatedInstanceWithNewState);
@@ -523,26 +536,26 @@ module Make = (Implementation: HostImplementation) => {
               updateRenderedElement(
                 ~updateInstanceState?,
                 ~updateLog,
-                switch nextComponent.elementType {
+                switch (nextComponent.elementType) {
                 | React => (
                     instanceSubTree,
                     subElements: reactElement,
-                    nextSubElements: reactElement
+                    nextSubElements: reactElement,
                   )
                 | Host => (
                     instanceSubTree,
                     subElements.children,
-                    nextSubElements.children
+                    nextSubElements.children,
                   )
-                }
+                },
               );
             let contentChanged =
-              switch nextComponent.elementType {
+              switch (nextComponent.elementType) {
               | React => false
               | Host =>
                 nextSubElements.shouldReconfigureInstance(
                   ~oldState=oldSelf.state,
-                  ~newState=newSelf.state
+                  ~newState=newSelf.state,
                 )
               };
             switch (stateChanged, subTreeChange) {
@@ -559,14 +572,14 @@ module Make = (Implementation: HostImplementation) => {
               let updatedInstanceWithNewSubtree = {
                 ...updatedInstanceWithNewState,
                 instanceSubTree: nextInstanceSubTree,
-                subElements: nextSubElements
+                subElements: nextSubElements,
               };
               UpdateLog.addUpdateInstance(
                 ~updateLog,
                 ~stateChanged,
                 ~subTreeChanged,
                 originalInstance,
-                updatedInstanceWithNewSubtree
+                updatedInstanceWithNewSubtree,
               );
               Instance(updatedInstanceWithNewSubtree);
             };
@@ -576,7 +589,7 @@ module Make = (Implementation: HostImplementation) => {
               ~stateChanged,
               ~subTreeChanged=`NoChange,
               originalInstance,
-              updatedInstanceWithNewState
+              updatedInstanceWithNewState,
             );
             Instance(updatedInstanceWithNewState);
           } else {
@@ -595,7 +608,7 @@ module Make = (Implementation: HostImplementation) => {
           let nextSubElements = nextComponent.render(self);
           let (nextSubtree, newOpaqueInstance) = {
             let nextSubtree =
-              switch nextComponent.elementType {
+              switch (nextComponent.elementType) {
               | React => renderReactElement(nextSubElements)
               | Host => renderReactElement(nextSubElements.children)
               };
@@ -608,11 +621,11 @@ module Make = (Implementation: HostImplementation) => {
                 subElements: nextSubElements,
                 instanceSubTree: nextSubtree,
                 pendingStateUpdates,
-                element: nextElement
-              })
+                element: nextElement,
+              }),
             );
           };
-          /*
+          /**
            * ** Switching component type **
            * TODO: Invoke destruction lifecycle on previous component.
            * TODO: Invoke creation lifecycle on next component.
@@ -620,13 +633,13 @@ module Make = (Implementation: HostImplementation) => {
           UpdateLog.addChangeComponent(
             ~updateLog,
             originalOpaqueInstance,
-            newOpaqueInstance
+            newOpaqueInstance,
           );
           newOpaqueInstance;
         };
       };
     }
-    /*
+    /**
      * updateRenderedElement recurses through the reactElement tree as long as
      * the oldReactElement and nextReactElement have the same shape.
      *
@@ -643,34 +656,37 @@ module Make = (Implementation: HostImplementation) => {
           ~updateInstanceState=?,
           ~updateLog,
           ~useKeyTable=?,
-          (oldRenderedElement, oldReactElement, nextReactElement)
+          (oldRenderedElement, oldReactElement, nextReactElement),
         )
         : (UpdateLog.subtreeChangeReact, renderedElement) =>
       switch (oldRenderedElement, oldReactElement, nextReactElement) {
       | (
           INested(iName, instanceSubTrees),
           Nested(_, oldReactElements),
-          Nested(_, [nextReactElement, ...nextReactElements])
+          Nested(_, [nextReactElement, ...nextReactElements]),
         )
           when
             nextReactElements === oldReactElements && GlobalState.useTailHack^ =>
-        /* Detected that nextReactElement was obtained by adding one element  */
+        /* Detected that nextReactElement was obtained by adding one element */
         let addedElement = renderReactElement(nextReactElement);
-        /* Prepend element*/
+
+        /** Prepend element */
         (
           `PrependElement(addedElement),
-          INested(iName, [addedElement, ...instanceSubTrees])
+          INested(iName, [addedElement, ...instanceSubTrees]),
         );
       | (
           INested(oldName, oldRenderedElements),
           Nested(_, oldReactElements),
-          Nested(_, nextReactElements)
+          Nested(_, nextReactElements),
         )
           when
-            List.length(nextReactElements) === List.length(oldRenderedElements)
-            && List.length(nextReactElements) === List.length(oldReactElements) =>
+            List.length(nextReactElements)
+            === List.length(oldRenderedElements)
+            &&
+            List.length(nextReactElements) === List.length(oldReactElements) =>
         let keyTable =
-          switch useKeyTable {
+          switch (useKeyTable) {
           | None => OpaqueInstanceHash.createKeyTable(oldRenderedElement)
           | Some(keyTable) => keyTable
           };
@@ -679,11 +695,11 @@ module Make = (Implementation: HostImplementation) => {
             updateRenderedElement(
               ~updateInstanceState?,
               ~updateLog,
-              ~useKeyTable=keyTable
+              ~useKeyTable=keyTable,
             ),
             oldRenderedElements,
             oldReactElements,
-            nextReactElements
+            nextReactElements,
           );
         let change =
           List.fold_left(
@@ -695,21 +711,21 @@ module Make = (Implementation: HostImplementation) => {
               | (_, x) => x
               },
             `NoChange,
-            newRenderedElementsAndUpdates
+            newRenderedElementsAndUpdates,
           );
         let newRenderedElement =
           INested(
             oldName,
-            List.map(((_, x)) => x, newRenderedElementsAndUpdates)
+            List.map(((_, x)) => x, newRenderedElementsAndUpdates),
           );
-        switch change {
+        switch (change) {
         | `NoChange => (`NoChange, oldRenderedElement)
         | `Nested => (`Nested, newRenderedElement)
         | `Reordered => (`Reordered, newRenderedElement)
         | `PrependElement(_)
         | `ReplaceElements(_, _) => (
             `ReplaceElements((oldRenderedElement, newRenderedElement)),
-            newRenderedElement
+            newRenderedElement,
           )
         };
       /*
@@ -723,11 +739,12 @@ module Make = (Implementation: HostImplementation) => {
       | (
           IFlat(oldOpaqueInstance),
           Flat(Element({key: oldKey})),
-          Flat(Element({key: nextKey}) as nextReactElement)
+          Flat(Element({key: nextKey}) as nextReactElement),
         ) =>
         let keyTable =
-          switch useKeyTable {
-          | None => OpaqueInstanceHash.createKeyTable(IFlat(oldOpaqueInstance))
+          switch (useKeyTable) {
+          | None =>
+            OpaqueInstanceHash.createKeyTable(IFlat(oldOpaqueInstance))
           | Some(keyTable) => keyTable
           };
         /* Why shouldn't this be reached if there are different lengths?*/
@@ -736,18 +753,18 @@ module Make = (Implementation: HostImplementation) => {
           if (component.key !== Key.none) {
             switch (OpaqueInstanceHash.lookupKey(keyTable, component.key)) {
             | Some(subOpaqueInstance) =>
-              /* instance tree with the same component key */
+              /* Instance tree with the same component key */
               (
                 `NoChangeOrNested,
                 update(
                   ~updateInstanceState?,
                   ~updateLog,
                   subOpaqueInstance,
-                  nextReactElement
-                )
+                  nextReactElement,
+                ),
               )
             | None =>
-              /* not found: render a new instance */
+              /* Not found: render a new instance */
               (`NewElement, renderElement(nextReactElement))
             };
           } else {
@@ -757,17 +774,17 @@ module Make = (Implementation: HostImplementation) => {
                 ~updateInstanceState?,
                 ~updateLog,
                 oldOpaqueInstance,
-                nextReactElement
-              )
+                nextReactElement,
+              ),
             );
           };
         };
-        switch update {
+        switch (update) {
         | `NewElement =>
           let newRenderedElement = IFlat(newOpaqueInstance);
           (
             `ReplaceElements((oldRenderedElement, newRenderedElement)),
-            newRenderedElement
+            newRenderedElement,
           );
         | `NoChangeOrNested =>
           let changed = oldOpaqueInstance !== newOpaqueInstance;
@@ -781,7 +798,7 @@ module Make = (Implementation: HostImplementation) => {
         };
       | (_, _, _) =>
         let keyTable =
-          switch useKeyTable {
+          switch (useKeyTable) {
           | None => OpaqueInstanceHash.createKeyTable(oldRenderedElement)
           | Some(keyTable) => keyTable
           };
@@ -790,11 +807,11 @@ module Make = (Implementation: HostImplementation) => {
         /* It's completely new, replaceElement */
         (
           `ReplaceElements((oldRenderedElement, newRenderedElement)),
-          newRenderedElement
+          newRenderedElement,
         );
       };
 
-    /***
+    /**
      * Execute the pending updates at the top level of an instance tree.
      * If no state change is performed, the argument is returned unchanged.
      */
@@ -810,7 +827,7 @@ module Make = (Implementation: HostImplementation) => {
           | Update(newState) => newState
           };
         let rec executeUpdates = (~state, stateUpdates) =>
-          switch stateUpdates {
+          switch (stateUpdates) {
           | [] => state
           | [stateUpdate, ...otherStateUpdates] =>
             let nextState = executeUpdate(~state, stateUpdate);
@@ -818,12 +835,13 @@ module Make = (Implementation: HostImplementation) => {
           };
         let pendingUpdates = List.rev(instance.pendingStateUpdates^);
         instance.pendingStateUpdates := [];
-        let nextState = executeUpdates(~state=instance.iState, pendingUpdates);
+        let nextState =
+          executeUpdates(~state=instance.iState, pendingUpdates);
         instance.iState === nextState ?
           instance : {...instance, iState: nextState};
       };
 
-    /***
+    /**
      * Flush the pending updates in an instance tree.
      * TODO: invoke lifecycles
      */
@@ -833,13 +851,13 @@ module Make = (Implementation: HostImplementation) => {
         ~updateLog,
         ~updateInstanceState={f: executePendingStateUpdates},
         opaqueInstance,
-        element
+        element,
       );
     };
   };
-  module RenderedElement = {
 
-    /***
+  module RenderedElement = {
+    /**
      * Rendering produces a list of instance trees.
      */
     type t = renderedElement;
@@ -851,8 +869,9 @@ module Make = (Implementation: HostImplementation) => {
     ];
     type topLevelUpdate = {
       subtreeChange: topLevelChange,
-      updateLog: UpdateLog.t
+      updateLog: UpdateLog.t,
     };
+
     let listToRenderedElement = renderedElements =>
       INested("List", renderedElements);
     let render = reactElement : t => Render.renderReactElement(reactElement);
@@ -863,15 +882,15 @@ module Make = (Implementation: HostImplementation) => {
       let (topLevelChange, newRenderedElement) =
         Render.updateRenderedElement(
           ~updateLog,
-          (renderedElement, previousReactElement, reactElement)
+          (renderedElement, previousReactElement, reactElement),
         );
-      switch topLevelChange {
+      switch (topLevelChange) {
       | `NoChange => (renderedElement, None)
       | `Nested as subtreeChange
       | `PrependElement(_) as subtreeChange
       | `ReplaceElements(_, _) as subtreeChange => (
           newRenderedElement,
-          Some({subtreeChange, updateLog})
+          Some({subtreeChange, updateLog}),
         )
       | `Reordered as subtreeChange =>
         switch (renderedElement, newRenderedElement) {
@@ -880,15 +899,15 @@ module Make = (Implementation: HostImplementation) => {
             Some({
               subtreeChange:
                 `ReplaceElements((renderedElement, newRenderedElement)),
-              updateLog
-            })
+              updateLog,
+            }),
           )
         | (_, _) => (newRenderedElement, Some({subtreeChange, updateLog}))
         }
       };
     };
 
-    /***
+    /**
      * Flush the pending updates in an instance tree.
      * TODO: invoke lifecycles
      */
@@ -897,7 +916,7 @@ module Make = (Implementation: HostImplementation) => {
       let newRenderedElement =
         Render.mapRenderedElement(
           Render.flushPendingUpdates(~updateLog),
-          renderedElement
+          renderedElement,
         );
       (newRenderedElement, updateLog);
     };
@@ -907,7 +926,7 @@ module Make = (Implementation: HostImplementation) => {
     component(stateless, actionless, reactElement) =
     (~useDynamicKey=?, debugName) => {
       ...basicComponent(~useDynamicKey?, debugName, React),
-      initialState: () => ()
+      initialState: () => (),
     };
   let statefulComponent:
     (~useDynamicKey: bool=?, string) =>
@@ -924,7 +943,7 @@ module Make = (Implementation: HostImplementation) => {
     component(stateless, actionless, nativeElement(stateless, actionless)) =
     (~useDynamicKey=?, debugName) => {
       ...basicComponent(~useDynamicKey?, debugName, Host),
-      initialState: () => ()
+      initialState: () => (),
     };
   let statefulNativeComponent:
     (~useDynamicKey: bool=?, string) =>
@@ -932,10 +951,11 @@ module Make = (Implementation: HostImplementation) => {
       'state,
       stateless,
       actionless,
-      nativeElement('state, actionless)
+      nativeElement('state, actionless),
     ) =
     (~useDynamicKey=?, debugName) =>
       basicComponent(~useDynamicKey?, debugName, Host);
+
   let element = (~key as argumentKey=Key.none, component) => {
     let key =
       argumentKey != Key.none ?
@@ -951,6 +971,7 @@ module Make = (Implementation: HostImplementation) => {
   let arrayToElement = (a: array(reactElement)) : reactElement =>
     Nested("Array", Array.to_list(a));
   let listToElement = l => Nested("List", l);
+
   module RemoteAction = {
     type t('action) = {mutable act: 'action => unit};
     let actDefault = _action => ();

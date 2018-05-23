@@ -1,5 +1,4 @@
 open TestRenderer;
-
 open Easy_format;
 
 let list = {...list, align_closing: true};
@@ -11,23 +10,24 @@ let field = {...label, space_after_label: true};
 let makeProp = (key, value) =>
   Label((Atom(key ++ "=", atom), label), Atom(value, atom));
 
-let makeField = (key, value) => Label((Atom(key ++ ":", atom), field), value);
+let makeField = (key, value) =>
+  Label((Atom(key ++ ":", atom), field), value);
 
 let rec formatInstance = instance => {
   let tag = componentName(instance.component);
-  switch instance.subtree {
+  switch (instance.subtree) {
   | [] =>
     List(
       ("<" ++ tag, "", "/>", list),
       [
         makeProp("id", string_of_int(instance.id)),
-        makeProp("state", instance.state)
-      ]
+        makeProp("state", instance.state),
+      ],
     )
   | sub =>
     List(
       ("<" ++ tag ++ ">", "", "</" ++ tag ++ ">", list),
-      sub |> List.map(formatInstance)
+      sub |> List.map(formatInstance),
     )
   };
 };
@@ -45,7 +45,7 @@ let formatSubTreeChangeReact =
   | `ReplaceElements(oldElems, newElems) =>
     List(
       ("`ReplaceElements(", ",", ")", list),
-      [oldElems, newElems] |> List.map(formatElement)
+      [oldElems, newElems] |> List.map(formatElement),
     );
 
 let formatSubTreeChange =
@@ -53,7 +53,7 @@ let formatSubTreeChange =
   | `ContentChanged(change) =>
     List(
       ("`ContentChanged(", "", ")", list),
-      [formatSubTreeChangeReact(change)]
+      [formatSubTreeChangeReact(change)],
     )
   | #testSubTreeChangeReact as change => formatSubTreeChangeReact(change);
 
@@ -66,9 +66,9 @@ let formatUpdateLogItem =
         ("stateChanged", Atom(string_of_bool(update.stateChanged), atom)),
         ("subTreeChanged", formatSubTreeChange(update.subTreeChanged)),
         ("oldInstance", formatInstance(update.oldInstance)),
-        ("newInstance", formatInstance(update.newInstance))
+        ("newInstance", formatInstance(update.newInstance)),
       ]
-      |> List.map(((key, value)) => makeField(key, value))
+      |> List.map(((key, value)) => makeField(key, value)),
     )
   | ChangeComponent(update) =>
     List(
@@ -77,9 +77,9 @@ let formatUpdateLogItem =
         ("oldSubtree", formatElement(update.oldSubtree)),
         ("newSubtree", formatElement(update.newSubtree)),
         ("oldInstance", formatInstance(update.oldInstance)),
-        ("newInstance", formatInstance(update.newInstance))
+        ("newInstance", formatInstance(update.newInstance)),
       ]
-      |> List.map(((key, value)) => makeField(key, value))
+      |> List.map(((key, value)) => makeField(key, value)),
     );
 
 let formatUpdateLog = updateLog =>
@@ -93,8 +93,8 @@ let formatTopLevelUpdateLog =
       ("TopLevelUpdate {", ",", "}", list),
       [
         makeField("subTreeChange", formatSubTreeChange(update.subtreeChange)),
-        makeField("updateLog", formatUpdateLog(update.updateLog^))
-      ]
+        makeField("updateLog", formatUpdateLog(update.updateLog^)),
+      ],
     );
 
 let printElement = (formatter, instances) =>

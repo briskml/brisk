@@ -1,10 +1,10 @@
-open R2n2;
+open Brisk_core;
 
 module Implementation = {
-  let map = Hashtbl.create(1000);
   type hostView =
     | Text(string)
     | View;
+  let map: Hashtbl.t(int, hostView) = Hashtbl.create(1000);
   let getInstance = id =>
     if (Hashtbl.mem(map, id)) {
       Some(Hashtbl.find(map, id));

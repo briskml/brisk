@@ -1,4 +1,4 @@
-open ReasonReact;
+open TestReactCore;
 
 /**
  * The simplest component. Composes nothing!
@@ -8,14 +8,15 @@ module Box = {
   let make = (~title="ImABox", ~onClick as _=?, _children) => {
     ...component,
     initialState: () => title,
-    willReceiveProps: (_) => title,
-    printState: (_) => title,
-    render: (_) => {
+    willReceiveProps: _ => title,
+    printState: _ => title,
+    render: _ => {
       children: listToElement([]),
       make: () => Implementation.Text(title),
       updateInstance: (_, _) => (),
-      shouldReconfigureInstance: (~oldState, ~newState) => oldState != newState
-    }
+      shouldReconfigureInstance: (~oldState, ~newState) =>
+        oldState != newState,
+    },
   };
   let createElement = (~key=?, ~title=?, ~children as _children, ()) =>
     element(~key?, make(~title?, ()));
@@ -25,12 +26,12 @@ module Div = {
   let component = statelessNativeComponent("Div");
   let make = children => {
     ...component,
-    render: (_) => {
+    render: _ => {
       children: listToElement(children),
       make: () => Implementation.View,
       updateInstance: (_, _) => (),
-      shouldReconfigureInstance: (~oldState as _, ~newState as _) => false
-    }
+      shouldReconfigureInstance: (~oldState as _, ~newState as _) => false,
+    },
   };
   let createElement = (~key=?, ~children, ()) =>
     element(~key?, make(children));
@@ -47,17 +48,18 @@ module Text = {
   let make = (~title="ImABox", _children) => {
     ...component,
     initialState: () => title,
-    willReceiveProps: (_) => title,
-    shouldUpdate: ({oldSelf: {state: oldState}, newSelf: {state: newState}}) =>
+    willReceiveProps: _ => title,
+    shouldUpdate:
+      ({oldSelf: {state: oldState}, newSelf: {state: newState}}) =>
       shouldUpdate(oldState, newState),
     printState: state => state,
-    render: (_) => {
+    render: _ => {
       children: listToElement([]),
       make: () => Implementation.Text(title),
       updateInstance: (_, _) => (),
       shouldReconfigureInstance: (~oldState, ~newState) =>
-        shouldUpdate(oldState, newState)
-    }
+        shouldUpdate(oldState, newState),
+    },
   };
   let createElement = (~key=?, ~title=?, ~children as _children, ()) =>
     element(~key?, make(~title?, ()));
@@ -74,7 +76,7 @@ module BoxWrapper = {
     initialState: () => (),
     render: _self =>
       twoBoxes ?
-        <Div> <Box title /> <Box title /> </Div> : <Div> <Box title /> </Div>
+        <Div> <Box title /> <Box title /> </Div> : <Div> <Box title /> </Div>,
   };
   let createElement = (~key=?, ~title=?, ~twoBoxes=?, ~children, ()) =>
     element(~key?, make(~title?, ~twoBoxes?, ~onClick=(), ()));
@@ -84,12 +86,11 @@ module BoxWrapper = {
  * Box with dynamic keys.
  */
 module BoxItemDynamic = {
-  let component =
-    statelessComponent(~useDynamicKey=true, "BoxItemDynamic");
+  let component = statelessComponent(~useDynamicKey=true, "BoxItemDynamic");
   let make = (~title="ImABox", _children: list(reactElement)) => {
     ...component,
-    printState: (_) => title,
-    render: _self => listToElement([])
+    printState: _ => title,
+    render: _self => listToElement([]),
   };
   let createElement = (~title, ~children, ()) =>
     element(make(~title, children));
@@ -104,18 +105,18 @@ module BoxList = {
     ...component,
     initialState: () => [],
     reducer: (action, state) =>
-      switch action {
+      switch (action) {
       | Create(title) =>
         Update([
           useDynamicKeys ? <BoxItemDynamic title /> : <Box title />,
-          ...state
+          ...state,
         ])
       | Reverse => Update(List.rev(state))
       },
     render: ({state, act}) => {
       RemoteAction.subscribe(~act, rAction);
       listToElement(state);
-    }
+    },
   };
   let createElement = (~rAction, ~useDynamicKeys=false, ~children, ()) =>
     element(make(~rAction, ~useDynamicKeys, children));
@@ -135,7 +136,7 @@ module BoxList = {
 module ChangeCounter = {
   type state = {
     numChanges: int,
-    mostRecentLabel: string
+    mostRecentLabel: string,
   };
   let component = reducerComponent("ChangeCounter");
   let make = (~label, _children) => {
@@ -154,7 +155,7 @@ module ChangeCounter = {
         state,
     render: ({state: {numChanges, mostRecentLabel}}) => Nested("", []),
     printState: ({numChanges, mostRecentLabel}) =>
-      "[" ++ string_of_int(numChanges) ++ ", " ++ mostRecentLabel ++ "]"
+      "[" ++ string_of_int(numChanges) ++ ", " ++ mostRecentLabel ++ "]",
   };
   let createElement = (~label, ~children, ()) => element(make(~label, ()));
 };
@@ -164,7 +165,7 @@ module StatelessButton = {
   let make =
       (~initialClickCount as _="noclicks", ~test as _="default", _children) => {
     ...component,
-    render: _self => <Div />
+    render: _self => <Div />,
   };
   let createElement = (~initialClickCount=?, ~test=?, ~children, ()) =>
     element(make(~initialClickCount?, ~test?, ()));
@@ -178,7 +179,7 @@ module ButtonWrapper = {
     render: ({state}) =>
       <StatelessButton
         initialClickCount=("wrapped:" ++ wrappedText ++ ":wrapped")
-      />
+      />,
   };
   let createElement = (~wrappedText=?, ~children, ()) =>
     element(make(~wrappedText?, ()));
@@ -189,11 +190,7 @@ module ButtonWrapperWrapper = {
   let component = statelessComponent("ButtonWrapperWrapper");
   let make = (~wrappedText="default", _children) => {
     ...component,
-    render: (_) =>
-      <Div>
-        (stringToElement(wrappedText))
-        buttonWrapperJsx
-      </Div>
+    render: _ => <Div> (stringToElement(wrappedText)) buttonWrapperJsx </Div>,
   };
   let createElement = (~wrappedText=?, ~children, ()) =>
     element(make(~wrappedText?, ()));
@@ -212,7 +209,8 @@ module UpdateAlternateClicks = {
     render: ({state, act}) => {
       RemoteAction.subscribe(~act, rAction);
       stringToElement(string_of_int(state));
-    }
+    },
   };
-  let createElement = (~rAction, ~children, ()) => element(make(~rAction, ()));
+  let createElement = (~rAction, ~children, ()) =>
+    element(make(~rAction, ()));
 };

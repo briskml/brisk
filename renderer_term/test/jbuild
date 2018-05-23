@@ -1,5 +1,10 @@
 (jbuild_version 1)
 
-(library
- ((name test_term)
+(executables
+ ((names (test))
   (libraries (alcotest brisk_term))))
+
+(alias
+ ((name runtest)
+  (deps (test.exe))
+  (action (run ${<}))))

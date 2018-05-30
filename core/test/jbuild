@@ -2,7 +2,9 @@
 
 (executables
  ((names (test))
-  (libraries (alcotest easy-format simple-diff brisk_core))))
+  (libraries (alcotest easy-format simple-diff brisk_core))
+  (preprocess (pps (ppx_deriving.std)))
+ ))
 
 (alias
  ((name runtest)

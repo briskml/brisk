@@ -13,6 +13,12 @@ let makeProp = (key, value) =>
 let makeField = (key, value) =>
   Label((Atom(key ++ ":", atom), field), value);
 
+let componentName = component =>
+  switch (component) {
+  | InstanceAndComponent(component, _) => component.debugName
+  | Component(component) => component.debugName
+  };
+
 let rec formatInstance = instance => {
   let tag = componentName(instance.component);
   switch (instance.subtree) {
@@ -93,7 +99,7 @@ let formatTopLevelUpdateLog =
       ("TopLevelUpdate {", ",", "}", list),
       [
         makeField("subTreeChange", formatSubTreeChange(update.subtreeChange)),
-        makeField("updateLog", formatUpdateLog(update.updateLog^)),
+        makeField("updateLog", formatUpdateLog(update.updateLog)),
       ],
     );
 

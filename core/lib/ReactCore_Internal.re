@@ -30,6 +30,8 @@ module Make = (Implementation: HostImplementation) => {
 
   module Key = {
     type t = int;
+
+    let equal = (x: t, y: t) => Pervasives.compare(x, y) == 0;
     let none = (-1);
     let dynamicKeyMagicNumber = 0;
     let create = () => {

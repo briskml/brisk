@@ -21,19 +21,19 @@ type testItem('a) =
 let renderedElement =
   Alcotest.testable(
     (formatter, t) => TestPrinter.printElement(formatter, t),
-    TestRenderer.compareElement,
+    TestRenderer.equal,
   );
 
 let topLevelUpdateLog =
   Alcotest.testable(
     (formatter, t) => TestPrinter.printTopLevelUpdateLog(formatter, t),
-    TestRenderer.compareTopLevelUpdateLog,
+    TestRenderer.equal_optionTestTopLevelUpdateLog,
   );
 
 let updateLog =
   Alcotest.testable(
     (formatter, t) => TestPrinter.printUpdateLog(formatter, t),
-    TestRenderer.compareUpdateLog,
+    TestRenderer.equal_testUpdateLog,
   );
 
 module Diff = Simple_diff.Make(String);

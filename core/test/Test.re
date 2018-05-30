@@ -31,28 +31,27 @@ let suites = [
              [<BoxWrapper id=1> twoBoxes </BoxWrapper>],
              Some({
                subtreeChange: `Nested,
-               updateLog:
-                 ref([
-                   UpdateInstance({
-                     stateChanged: false,
-                     subTreeChanged:
-                       `ReplaceElements((
-                         [<Box id=3 state="ImABox" />],
-                         [
-                           <Box id=4 state="ImABox" />,
-                           <Box id=5 state="ImABox" />,
-                         ],
-                       )),
-                     newInstance: twoBoxes,
-                     oldInstance: oneBox,
-                   }),
-                   UpdateInstance({
-                     stateChanged: false,
-                     subTreeChanged: `Nested,
-                     newInstance: <BoxWrapper id=1> twoBoxes </BoxWrapper>,
-                     oldInstance: <BoxWrapper id=1> oneBox </BoxWrapper>,
-                   }),
-                 ]),
+               updateLog: [
+                 UpdateInstance({
+                   stateChanged: false,
+                   subTreeChanged:
+                     `ReplaceElements((
+                       [<Box id=3 state="ImABox" />],
+                       [
+                         <Box id=4 state="ImABox" />,
+                         <Box id=5 state="ImABox" />,
+                       ],
+                     )),
+                   newInstance: twoBoxes,
+                   oldInstance: oneBox,
+                 }),
+                 UpdateInstance({
+                   stateChanged: false,
+                   subTreeChanged: `Nested,
+                   newInstance: <BoxWrapper id=1> twoBoxes </BoxWrapper>,
+                   oldInstance: <BoxWrapper id=1> oneBox </BoxWrapper>,
+                 }),
+               ],
              }),
            ),
          )
@@ -80,17 +79,16 @@ let suites = [
              [<ChangeCounter id=1 label="updated text" counter=1 />],
              Some({
                subtreeChange: `Nested,
-               updateLog:
-                 ref([
-                   UpdateInstance({
-                     stateChanged: true,
-                     subTreeChanged: `NoChange,
-                     oldInstance:
-                       <ChangeCounter id=1 label="default text" counter=0 />,
-                     newInstance:
-                       <ChangeCounter id=1 label="updated text" counter=1 />,
-                   }),
-                 ]),
+               updateLog: [
+                 UpdateInstance({
+                   stateChanged: true,
+                   subTreeChanged: `NoChange,
+                   oldInstance:
+                     <ChangeCounter id=1 label="default text" counter=0 />,
+                   newInstance:
+                     <ChangeCounter id=1 label="updated text" counter=1 />,
+                 }),
+               ],
              }),
            ),
          )
@@ -144,25 +142,21 @@ let suites = [
                [<ButtonWrapperWrapper id=2 nestedText="initial text" />],
                Some({
                  subtreeChange: `Nested,
-                 updateLog:
-                   ref([
-                     ChangeComponent({
-                       oldSubtree: [],
-                       newSubtree: [
-                         <Div id=3>
-                           <Text id=4 title="initial text" />
-                           <ButtonWrapper id=5 />
-                         </Div>,
-                       ],
-                       oldInstance:
-                         <ChangeCounter id=1 label="default text" counter=0 />,
-                       newInstance:
-                         <ButtonWrapperWrapper
-                           id=2
-                           nestedText="initial text"
-                         />,
-                     }),
-                   ]),
+                 updateLog: [
+                   ChangeComponent({
+                     oldSubtree: [],
+                     newSubtree: [
+                       <Div id=3>
+                         <Text id=4 title="initial text" />
+                         <ButtonWrapper id=5 />
+                       </Div>,
+                     ],
+                     oldInstance:
+                       <ChangeCounter id=1 label="default text" counter=0 />,
+                     newInstance:
+                       <ButtonWrapperWrapper id=2 nestedText="initial text" />,
+                   }),
+                 ],
                }),
              ),
            );
@@ -177,43 +171,36 @@ let suites = [
                [<ButtonWrapperWrapper id=2 nestedText="updated text" />],
                Some({
                  subtreeChange: `Nested,
-                 updateLog:
-                   ref([
-                     UpdateInstance({
-                       stateChanged: true,
-                       subTreeChanged: `ContentChanged(`NoChange),
-                       oldInstance: <Text id=4 title="initial text" />,
-                       newInstance: <Text id=4 title="updated text" />,
-                     }),
-                     UpdateInstance({
-                       stateChanged: false,
-                       subTreeChanged: `Nested,
-                       oldInstance:
-                         <Div id=3>
-                           <Text id=4 title="initial text" />
-                           <ButtonWrapper id=5 />
-                         </Div>,
-                       newInstance:
-                         <Div id=3>
-                           <Text id=4 title="updated text" />
-                           <ButtonWrapper id=5 />
-                         </Div>,
-                     }),
-                     UpdateInstance({
-                       stateChanged: false,
-                       subTreeChanged: `Nested,
-                       oldInstance:
-                         <ButtonWrapperWrapper
-                           id=2
-                           nestedText="initial text"
-                         />,
-                       newInstance:
-                         <ButtonWrapperWrapper
-                           id=2
-                           nestedText="updated text"
-                         />,
-                     }),
-                   ]),
+                 updateLog: [
+                   UpdateInstance({
+                     stateChanged: true,
+                     subTreeChanged: `ContentChanged(`NoChange),
+                     oldInstance: <Text id=4 title="initial text" />,
+                     newInstance: <Text id=4 title="updated text" />,
+                   }),
+                   UpdateInstance({
+                     stateChanged: false,
+                     subTreeChanged: `Nested,
+                     oldInstance:
+                       <Div id=3>
+                         <Text id=4 title="initial text" />
+                         <ButtonWrapper id=5 />
+                       </Div>,
+                     newInstance:
+                       <Div id=3>
+                         <Text id=4 title="updated text" />
+                         <ButtonWrapper id=5 />
+                       </Div>,
+                   }),
+                   UpdateInstance({
+                     stateChanged: false,
+                     subTreeChanged: `Nested,
+                     oldInstance:
+                       <ButtonWrapperWrapper id=2 nestedText="initial text" />,
+                     newInstance:
+                       <ButtonWrapperWrapper id=2 nestedText="updated text" />,
+                   }),
+                 ],
                }),
              ),
            );
@@ -482,7 +469,7 @@ let suites = [
                        <BoxItemDynamic id=1 state="box to move" />,
                      ],
                    )),
-                 updateLog: ref([]),
+                 updateLog: [],
                }),
              ),
            );
@@ -531,21 +518,20 @@ let suites = [
              ],
              Some({
                subtreeChange: `Reordered,
-               updateLog:
-                 ref([
-                   UpdateInstance({
-                     stateChanged: true,
-                     subTreeChanged: `ContentChanged(`NoChange),
-                     oldInstance: <Box id=1 state="Box1unchanged" />,
-                     newInstance: <Box id=1 state="Box1changed" />,
-                   }),
-                   UpdateInstance({
-                     stateChanged: true,
-                     subTreeChanged: `ContentChanged(`NoChange),
-                     oldInstance: <Box id=2 state="Box2unchanged" />,
-                     newInstance: <Box id=2 state="Box2changed" />,
-                   }),
-                 ]),
+               updateLog: [
+                 UpdateInstance({
+                   stateChanged: true,
+                   subTreeChanged: `ContentChanged(`NoChange),
+                   oldInstance: <Box id=1 state="Box1unchanged" />,
+                   newInstance: <Box id=1 state="Box1changed" />,
+                 }),
+                 UpdateInstance({
+                   stateChanged: true,
+                   subTreeChanged: `ContentChanged(`NoChange),
+                   oldInstance: <Box id=2 state="Box2unchanged" />,
+                   newInstance: <Box id=2 state="Box2changed" />,
+                 }),
+               ],
              }),
            ),
          )
@@ -658,7 +644,7 @@ let suites = [
                    [<Text id=1 title="x" />],
                    [<Text id=2 title="y" />],
                  )),
-               updateLog: ref([]),
+               updateLog: [],
              }),
            ),
          )
@@ -694,21 +680,20 @@ let suites = [
              [<Text id=1 title="x" />, <Text id=2 title="y" />],
              Some({
                subtreeChange: `Nested,
-               updateLog:
-                 ref([
-                   UpdateInstance({
-                     stateChanged: true,
-                     subTreeChanged: `NoChange,
-                     oldInstance: <Text id=2 title="y" />,
-                     newInstance: <Text id=2 title="y" />,
-                   }),
-                   UpdateInstance({
-                     stateChanged: true,
-                     subTreeChanged: `NoChange,
-                     oldInstance: <Text id=1 title="x" />,
-                     newInstance: <Text id=1 title="x" />,
-                   }),
-                 ]),
+               updateLog: [
+                 UpdateInstance({
+                   stateChanged: true,
+                   subTreeChanged: `NoChange,
+                   oldInstance: <Text id=2 title="y" />,
+                   newInstance: <Text id=2 title="y" />,
+                 }),
+                 UpdateInstance({
+                   stateChanged: true,
+                   subTreeChanged: `NoChange,
+                   oldInstance: <Text id=1 title="x" />,
+                   newInstance: <Text id=1 title="x" />,
+                 }),
+               ],
              }),
            ),
          )
@@ -727,21 +712,20 @@ let suites = [
              [<Text id=2 title="y" />, <Text id=1 title="x" />],
              Some({
                subtreeChange: `Reordered,
-               updateLog:
-                 ref([
-                   UpdateInstance({
-                     stateChanged: true,
-                     subTreeChanged: `NoChange,
-                     oldInstance: <Text id=1 title="x" />,
-                     newInstance: <Text id=1 title="x" />,
-                   }),
-                   UpdateInstance({
-                     stateChanged: true,
-                     subTreeChanged: `NoChange,
-                     oldInstance: <Text id=2 title="y" />,
-                     newInstance: <Text id=2 title="y" />,
-                   }),
-                 ]),
+               updateLog: [
+                 UpdateInstance({
+                   stateChanged: true,
+                   subTreeChanged: `NoChange,
+                   oldInstance: <Text id=1 title="x" />,
+                   newInstance: <Text id=1 title="x" />,
+                 }),
+                 UpdateInstance({
+                   stateChanged: true,
+                   subTreeChanged: `NoChange,
+                   oldInstance: <Text id=2 title="y" />,
+                   newInstance: <Text id=2 title="y" />,
+                 }),
+               ],
              }),
            ),
          )
@@ -773,7 +757,7 @@ let suites = [
              [<Text id=2 title="y" />, <Text id=1 title="x" />],
              Some({
                subtreeChange: `PrependElement([<Text id=2 title="y" />]),
-               updateLog: ref([]),
+               updateLog: [],
              }),
            ),
          )

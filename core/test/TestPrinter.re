@@ -41,6 +41,28 @@ let rec formatInstance = instance => {
 let formatElement = instances =>
   List(("[", "", "]", list), instances |> List.map(formatInstance));
 
+let formatMountLogItem =
+  fun
+  | MountChild(root, child) =>
+    List(
+      ("MountChild (", ",", ")", list),
+      [
+        makeField("root", Atom(show_testHostInstance(root), atom)),
+        makeField("child", Atom(show_testHostInstance(child), atom)),
+      ],
+    )
+  | UnmountChild(root, child) =>
+    List(
+      ("UnmountChild (", ",", ")", list),
+      [
+        makeField("root", Atom(show_testHostInstance(root), atom)),
+        makeField("child", Atom(show_testHostInstance(child), atom)),
+      ],
+    );
+
+let formatMountLog = mountLog =>
+  List(("[", ",", "]", list), mountLog |> List.map(formatMountLogItem));
+
 let formatSubTreeChangeReact =
   fun
   | `Reordered => Atom("`Reordered", atom)
@@ -105,6 +127,9 @@ let formatTopLevelUpdateLog =
 
 let printElement = (formatter, instances) =>
   Pretty.to_formatter(formatter, formatElement(instances));
+
+let printMountLog = (formatter, mountLog) =>
+  Pretty.to_formatter(formatter, formatMountLog(mountLog));
 
 let printUpdateLog = (formatter, updateLog) =>
   Pretty.to_formatter(formatter, formatUpdateLog(updateLog));

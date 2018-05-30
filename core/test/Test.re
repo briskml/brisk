@@ -4,7 +4,7 @@ open TestRenderer;
 
 open Assert;
 
-let suites = [
+let core = [
   (
     "Test simple subtree change",
     `Quick,
@@ -55,7 +55,7 @@ let suites = [
              }),
            ),
          )
-      |> done_;
+      |> ignore;
     },
   ),
   (
@@ -120,7 +120,7 @@ let suites = [
            ~label="It flushes updates, but there are no pending actions",
            None,
          )
-      |> done_,
+      |> ignore,
   ),
   (
     "Test changing components",
@@ -329,7 +329,7 @@ let suites = [
              ],
            )),
          )
-      |> done_;
+      |> ignore;
     },
   ),
   (
@@ -428,7 +428,7 @@ let suites = [
              ],
            )),
          )
-      |> done_;
+      |> ignore;
     },
   ),
   (
@@ -535,7 +535,7 @@ let suites = [
              }),
            ),
          )
-      |> done_;
+      |> ignore;
     },
   ),
   (
@@ -624,7 +624,7 @@ let suites = [
              ],
            )),
          )
-      |> done_;
+      |> ignore;
     },
   ),
   (
@@ -648,7 +648,7 @@ let suites = [
              }),
            ),
          )
-      |> done_,
+      |> ignore,
   ),
   (
     "Test no change",
@@ -729,7 +729,7 @@ let suites = [
              }),
            ),
          )
-      |> done_;
+      |> ignore;
     },
   ),
   (
@@ -761,7 +761,67 @@ let suites = [
              }),
            ),
          )
-      |> done_;
+      |> ignore;
+    },
+  ),
+];
+
+let mountLog = [
+  (
+    "Test rendered element mount",
+    `Quick,
+    () => {
+      let root = Implementation.{name: "root", element: View};
+
+      TestRenderer.render(<Components.BoxWrapper />)
+      |> mount(root)
+      |> expectHost(
+           ~label=
+             "It correctly prepares a mount log, ignoring non-native BoxWrapper",
+           [
+             MountChild(
+               {name: "root", element: View},
+               {name: "Div", element: View},
+             ),
+             MountChild(
+               {name: "Div", element: View},
+               {name: "Box", element: Text("ImABox")},
+             ),
+           ],
+         )
+      |> ignore;
+    },
+  ),
+  (
+    "Test child elements list mount",
+    `Quick,
+    () => {
+      let root = Implementation.{name: "root", element: View};
+
+      TestRenderer.render(
+        Components.(
+          <Div> <Box title="ImABox1" /> <Box title="ImABox2" /> </Div>
+        ),
+      )
+      |> mount(root)
+      |> expectHost(
+           ~label="It mounts two moxes in a div",
+           [
+             MountChild(
+               {name: "root", element: View},
+               {name: "Div", element: View},
+             ),
+             MountChild(
+               {name: "Div", element: View},
+               {name: "Box", element: Text("ImABox1")},
+             ),
+             MountChild(
+               {name: "Div", element: View},
+               {name: "Box", element: Text("ImABox2")},
+             ),
+           ],
+         )
+      |> ignore;
     },
   ),
 ];
@@ -769,4 +829,8 @@ let suites = [
 /** Annoying dune progress */
 print_endline("");
 
-Alcotest.run(~argv=[|"--verbose --color"|], "Brisk", [("Core", suites)]);
+Alcotest.run(
+  ~argv=[|"--verbose --color"|],
+  "Brisk",
+  [("Core", core), ("MountLog", mountLog)],
+);

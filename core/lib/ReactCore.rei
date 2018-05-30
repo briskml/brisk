@@ -111,6 +111,7 @@ module Make:
      * Log of operations performed to update an instance tree.
      */
     module UpdateLog: {type t; let create: unit => t;};
+
     module RenderedElement: {
       /** Type of a react element after rendering  */
       type t;
@@ -131,6 +132,17 @@ module Make:
 
       /** Flush pending state updates (and possibly add new ones). */
       let flushPendingUpdates: t => (t, UpdateLog.t);
+    };
+
+    /**
+     * Log of operations performed to mount an instance tree.
+     */
+    module MountLog: {
+      type entry;
+      /* type t; */
+
+      let fromRenderedElement:
+        (Implementation.hostView, RenderedElement.t) => list(entry);
     };
 
     /**

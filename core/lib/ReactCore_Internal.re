@@ -923,6 +923,48 @@ module Make = (Implementation: HostImplementation) => {
       (newRenderedElement, updateLog);
     };
   };
+
+  /** Log of operations performed to mount an instance tree. */
+  module MountLog = {
+    open Implementation;
+    type entry =
+      | MountChild(hostView, hostView)
+      | UnmountChild(hostView, hostView);
+
+    let fromRenderedElement = (hostRoot, renderedElement) : list(entry) => {
+      let rec mountRenderedElement = (hostRoot, renderedElement, tree) =>
+        switch (renderedElement) {
+        | IFlat(Instance({id, component, subElements, instanceSubTree})) =>
+          let entries =
+            switch (component.elementType) {
+            | React => mountRenderedElement(hostRoot, instanceSubTree, [])
+            | Host =>
+              switch (getInstance(id)) {
+              | Some(_) => mountRenderedElement(hostRoot, instanceSubTree, [])
+              | None =>
+                let hostChild = subElements.make();
+                memoizeInstance(id, hostChild);
+                mountRenderedElement(
+                  hostChild,
+                  instanceSubTree,
+                  [MountChild(hostRoot, hostChild)],
+                );
+              }
+            };
+          tree @ entries;
+        | INested(_, elements) =>
+          tree
+          @ List.flatten(
+              ListTR.map(
+                element => mountRenderedElement(hostRoot, element, []),
+                elements,
+              ),
+            )
+        };
+      mountRenderedElement(hostRoot, renderedElement, []);
+    };
+  };
+
   let statelessComponent:
     (~useDynamicKey: bool=?, string) =>
     component(stateless, actionless, reactElement) =

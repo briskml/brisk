@@ -11,17 +11,18 @@
   "scripts": {
     "test": "esy jbuilder runtest --no-buffer"
   },
+  "dependencies": {
+    "@esy-ocaml/esy-installer": "^0.0.0",
+    "@esy-ocaml/reason": "^3.2.0",
+    "@opam/jbuilder": "^1.0.0-beta20",
+    "@opam/ppx_deriving": "^4.2.1",
+    "flex": "briskml/flex#b0f7a43",
+    "refmterr": "^3.1.7"
+  },
   "resolutions": {
     "**/@opam/result": "1.2.0",
     "**/@opam/lwt": "3.3.0",
     "**/@opam/ocaml-migrate-parsetree": "1.0.10"
-  },
-  "dependencies": {
-    "@esy-ocaml/esy-installer": "^0.0.0",
-    "@esy-ocaml/reason": "facebook/reason#3629912",
-    "@opam/jbuilder": "^1.0.0-beta20",
-    "flex": "briskml/flex#b0f7a43",
-    "refmterr": "^3.1.7"
   },
   "peerDependencies": {
     "ocaml": "~4.6.1"

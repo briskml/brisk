@@ -9,7 +9,8 @@
     "buildsInSource": "_build"
   },
   "scripts": {
-    "test": "esy jbuilder runtest --no-buffer"
+    "build:dev": "refmterr jbuilder build --dev",
+    "test": "jbuilder runtest --no-buffer"
   },
   "dependencies": {
     "@esy-ocaml/esy-installer": "^0.0.0",

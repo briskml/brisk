@@ -931,7 +931,7 @@ module Make = (Implementation: HostImplementation) => {
       | MountChild(hostView, hostView)
       | UnmountChild(hostView, hostView);
 
-    let hostViewFromInstance = ({id}) =>
+    let getHostViewInstance = ({id}) =>
       switch (getInstance(id)) {
       | Some(hostView) => hostView
       | None =>
@@ -942,51 +942,56 @@ module Make = (Implementation: HostImplementation) => {
         assert(false);
       };
 
-    let rec mountRenderedElement = (~tree, hostRoot, renderedElement) =>
+    let rec mountRenderedElement = (~mountLog, hostRoot, renderedElement) =>
       switch (renderedElement) {
       | IFlat(opaqueInstance) =>
-        mountOpaqueInstance(~tree, hostRoot, opaqueInstance)
+        mountOpaqueInstance(~mountLog, hostRoot, opaqueInstance)
       | INested(_, elements) =>
         List.iter(
-          element => mountRenderedElement(~tree, hostRoot, element),
+          element => mountRenderedElement(~mountLog, hostRoot, element),
           elements,
         )
       }
-    and mountOpaqueInstance = (~tree, hostRoot, opaqueInstance) => {
+    and mountOpaqueInstance = (~mountLog, parentHostRoot, opaqueInstance) => {
       let Instance({id, component, subElements, instanceSubTree}) = opaqueInstance;
       switch (component.elementType) {
-      | React => mountRenderedElement(~tree, hostRoot, instanceSubTree)
+      | React =>
+        mountRenderedElement(~mountLog, parentHostRoot, instanceSubTree)
       | Host =>
         switch (getInstance(id)) {
-        | Some(_) => mountRenderedElement(~tree, hostRoot, instanceSubTree)
+        | Some(_) =>
+          mountRenderedElement(~mountLog, parentHostRoot, instanceSubTree)
         | None =>
           let hostView = subElements.make();
           memoizeInstance(id, hostView);
-          tree := [MountChild(hostRoot, hostView), ...tree^];
-          mountRenderedElement(~tree, hostView, instanceSubTree);
+          mountLog := [MountChild(parentHostRoot, hostView), ...mountLog^];
+          mountRenderedElement(~mountLog, hostView, instanceSubTree);
         }
       };
     };
 
-    let rec unmountRenderedElement = (~tree, hostRoot, renderedElement) =>
+    let rec unmountRenderedElement =
+            (~mountLog, parentHostRoot, renderedElement) =>
       switch (renderedElement) {
       | IFlat(opaqueInstance) =>
-        unmountOpaqueInstance(~tree, hostRoot, opaqueInstance)
+        unmountOpaqueInstance(~mountLog, parentHostRoot, opaqueInstance)
       | INested(_, elements) =>
         List.iter(
-          element => unmountRenderedElement(~tree, hostRoot, element),
+          element =>
+            unmountRenderedElement(~mountLog, parentHostRoot, element),
           elements,
         )
       }
-    and unmountOpaqueInstance = (~tree, hostRoot, opaqueInstance) => {
+    and unmountOpaqueInstance = (~mountLog, parentHostRoot, opaqueInstance) => {
       let Instance({id, component, subElements, instanceSubTree}) = opaqueInstance;
       switch (component.elementType) {
-      | React => unmountRenderedElement(~tree, hostRoot, instanceSubTree)
+      | React =>
+        unmountRenderedElement(~mountLog, parentHostRoot, instanceSubTree)
       | Host =>
         switch (getInstance(id)) {
         | Some(hostView) =>
-          tree := [UnmountChild(hostRoot, hostView), ...tree^];
-          unmountRenderedElement(~tree, hostView, instanceSubTree);
+          mountLog := [UnmountChild(parentHostRoot, hostView), ...mountLog^];
+          unmountRenderedElement(~mountLog, hostView, instanceSubTree);
         | None =>
           print_endline(
             "Host view instance "
@@ -994,13 +999,13 @@ module Make = (Implementation: HostImplementation) => {
             ++ " wasn't found during rendered element unmount",
           );
           /* TODO Determine if/when this case is even possible? */
-          unmountRenderedElement(~tree, hostRoot, instanceSubTree);
+          unmountRenderedElement(~mountLog, parentHostRoot, instanceSubTree);
         }
       };
     };
 
     let rec mountUpdateLog =
-            (~tree, hostRoot, updateLog: list(UpdateLog.entry))
+            (~mountLog, parentHostRoot, updateLog: list(UpdateLog.entry))
             : unit =>
       UpdateLog.(
         switch (updateLog) {
@@ -1018,44 +1023,52 @@ module Make = (Implementation: HostImplementation) => {
            * The first `Nested update means our root hasn't changed, moving on to the subtree
            */
           | `Nested =>
-            let hostRoot = hostViewFromInstance(oldInstance);
-            mountUpdateLog(~tree, hostRoot, tl);
+            let parentHostRoot = getHostViewInstance(oldInstance);
+            mountUpdateLog(~mountLog, parentHostRoot, tl);
           | `ReplaceElements(oldRendered, newRendered) =>
-            unmountRenderedElement(~tree, hostRoot, oldRendered);
-            mountRenderedElement(~tree, hostRoot, newRendered);
-            mountUpdateLog(~tree, hostRoot, tl);
+            unmountRenderedElement(~mountLog, parentHostRoot, oldRendered);
+            mountRenderedElement(~mountLog, parentHostRoot, newRendered);
+            mountUpdateLog(~mountLog, parentHostRoot, tl);
           | _ => assert(false)
           }
         | [ChangeComponent({oldOpaqueInstance, newOpaqueInstance}), ...tl] =>
-          unmountOpaqueInstance(~tree, hostRoot, oldOpaqueInstance);
-          mountOpaqueInstance(~tree, hostRoot, newOpaqueInstance);
-          mountUpdateLog(~tree, hostRoot, tl);
-        | _ => ()
+          unmountOpaqueInstance(~mountLog, parentHostRoot, oldOpaqueInstance);
+          mountOpaqueInstance(~mountLog, parentHostRoot, newOpaqueInstance);
+          mountUpdateLog(~mountLog, parentHostRoot, tl);
+        | [] => ()
         }
       );
 
-    let fromRenderedElement = (hostRoot, renderedElement) : list(entry) => {
-      let tree = ref([]);
-      mountRenderedElement(~tree, hostRoot, renderedElement);
-      List.rev(tree^);
+    let fromRenderedElement = (parentHostRoot, renderedElement) : list(entry) => {
+      let mountLog = ref([]);
+      mountRenderedElement(~mountLog, parentHostRoot, renderedElement);
+      List.rev(mountLog^);
+    };
+
+    let fromUpdateLog =
+        (parentHostRoot: hostView, updateLog: list(UpdateLog.entry))
+        : list(entry) => {
+      let mountLog = ref([]);
+      mountUpdateLog(~mountLog, parentHostRoot, updateLog);
+      List.rev(mountLog^);
     };
 
     let fromTopLevelUpdate =
         (
-          hostRoot: hostView,
+          parentHostRoot: hostView,
           topLevelUpdate: option(RenderedElement.topLevelUpdate),
         )
         : list(entry) =>
       switch (topLevelUpdate) {
       | Some(topLevelUpdate) =>
-        let tree = ref([]);
+        let mountLog = ref([]);
         switch (topLevelUpdate.subtreeChange) {
         | `Nested =>
           let updateLog = List.rev(topLevelUpdate.updateLog^);
-          mountUpdateLog(~tree, hostRoot, updateLog);
+          mountUpdateLog(~mountLog, parentHostRoot, updateLog);
         | _ => assert(false)
         };
-        List.rev(tree^);
+        List.rev(mountLog^);
       | None => []
       };
   };

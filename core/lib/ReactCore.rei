@@ -110,7 +110,7 @@ module Make:
     /**
      * Log of operations performed to update an instance tree.
      */
-    module UpdateLog: {type t; let create: unit => t;};
+    module UpdateLog: {type entry; type t; let create: unit => t;};
 
     module RenderedElement: {
       /** Type of a react element after rendering  */
@@ -144,7 +144,7 @@ module Make:
         (Implementation.hostView, RenderedElement.t) => list(entry);
 
       let fromUpdateLog:
-        (Implementation.hostView, UpdateLog.t) => list(entry);
+        (Implementation.hostView, list(UpdateLog.entry)) => list(entry);
 
       let fromTopLevelUpdate:
         (Implementation.hostView, option(RenderedElement.topLevelUpdate)) =>
@@ -167,6 +167,7 @@ module Make:
       let subscribe: (~act: 'action => unit, t('action)) => unit;
 
       /** Perform an action on the subscribed component. */
+
       let act: (t('action), ~action: 'action) => unit;
     };
   };

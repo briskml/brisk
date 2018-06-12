@@ -824,6 +824,40 @@ let mountLog = [
       |> ignore;
     },
   ),
+  (
+    "Test element update top level mount",
+    `Quick,
+    () => {
+      let root = Implementation.{name: "root", element: View};
+
+      let previousReactElement =
+        Components.(
+          <Div> <Box title="ImABox1" /> <Box title="ImABox2" /> </Div>
+        );
+      let nextReactElement = Components.(<Div> <Box title="ImABox3" /> </Div>);
+
+      let beforeUpdate = TestRenderer.render(previousReactElement);
+      let _ = MountLog.fromRenderedElement(root, beforeUpdate);
+
+      let (afterUpdate, topLevelUpdateLog) =
+        RenderedElement.update(
+          ~previousReactElement,
+          ~renderedElement=beforeUpdate,
+          nextReactElement,
+        );
+
+      let mountLog = MountLog.fromTopLevelUpdate(root, topLevelUpdateLog);
+      assertMountLog(
+        ~label="It correctly mounts topLevelUpdate",
+        [
+          UnmountChild(root, {name: "Box", element: Text("ImABox1")}),
+          UnmountChild(root, {name: "Box", element: Text("ImABox2")}),
+          MountChild(root, {name: "Box", element: Text("ImABox3")}),
+        ],
+        mountLog,
+      );
+    },
+  ),
 ];
 
 /** Annoying dune progress */

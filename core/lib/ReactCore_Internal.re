@@ -931,38 +931,133 @@ module Make = (Implementation: HostImplementation) => {
       | MountChild(hostView, hostView)
       | UnmountChild(hostView, hostView);
 
-    let fromRenderedElement = (hostRoot, renderedElement) : list(entry) => {
-      let rec mountRenderedElement = (hostRoot, renderedElement, tree) =>
-        switch (renderedElement) {
-        | IFlat(Instance({id, component, subElements, instanceSubTree})) =>
-          let entries =
-            switch (component.elementType) {
-            | React => mountRenderedElement(hostRoot, instanceSubTree, [])
-            | Host =>
-              switch (getInstance(id)) {
-              | Some(_) => mountRenderedElement(hostRoot, instanceSubTree, [])
-              | None =>
-                let hostChild = subElements.make();
-                memoizeInstance(id, hostChild);
-                mountRenderedElement(
-                  hostChild,
-                  instanceSubTree,
-                  [MountChild(hostRoot, hostChild)],
-                );
-              }
-            };
-          tree @ entries;
-        | INested(_, elements) =>
-          tree
-          @ List.flatten(
-              ListTR.map(
-                element => mountRenderedElement(hostRoot, element, []),
-                elements,
-              ),
-            )
-        };
-      mountRenderedElement(hostRoot, renderedElement, []);
+    let hostViewFromInstance = ({id}) =>
+      switch (getInstance(id)) {
+      | Some(hostView) => hostView
+      | None =>
+        /* TODO Check if this is possible */
+        print_endline(
+          "Root host view instance " ++ string_of_int(id) ++ " wasn't found",
+        );
+        assert(false);
+      };
+
+    let rec mountRenderedElement = (~tree, hostRoot, renderedElement) =>
+      switch (renderedElement) {
+      | IFlat(opaqueInstance) =>
+        mountOpaqueInstance(~tree, hostRoot, opaqueInstance)
+      | INested(_, elements) =>
+        List.iter(
+          element => mountRenderedElement(~tree, hostRoot, element),
+          elements,
+        )
+      }
+    and mountOpaqueInstance = (~tree, hostRoot, opaqueInstance) => {
+      let Instance({id, component, subElements, instanceSubTree}) = opaqueInstance;
+      switch (component.elementType) {
+      | React => mountRenderedElement(~tree, hostRoot, instanceSubTree)
+      | Host =>
+        switch (getInstance(id)) {
+        | Some(_) => mountRenderedElement(~tree, hostRoot, instanceSubTree)
+        | None =>
+          let hostView = subElements.make();
+          memoizeInstance(id, hostView);
+          tree := [MountChild(hostRoot, hostView), ...tree^];
+          mountRenderedElement(~tree, hostView, instanceSubTree);
+        }
+      };
     };
+
+    let rec unmountRenderedElement = (~tree, hostRoot, renderedElement) =>
+      switch (renderedElement) {
+      | IFlat(opaqueInstance) =>
+        unmountOpaqueInstance(~tree, hostRoot, opaqueInstance)
+      | INested(_, elements) =>
+        List.iter(
+          element => unmountRenderedElement(~tree, hostRoot, element),
+          elements,
+        )
+      }
+    and unmountOpaqueInstance = (~tree, hostRoot, opaqueInstance) => {
+      let Instance({id, component, subElements, instanceSubTree}) = opaqueInstance;
+      switch (component.elementType) {
+      | React => unmountRenderedElement(~tree, hostRoot, instanceSubTree)
+      | Host =>
+        switch (getInstance(id)) {
+        | Some(hostView) =>
+          tree := [UnmountChild(hostRoot, hostView), ...tree^];
+          unmountRenderedElement(~tree, hostView, instanceSubTree);
+        | None =>
+          print_endline(
+            "Host view instance "
+            ++ string_of_int(id)
+            ++ " wasn't found during rendered element unmount",
+          );
+          /* TODO Determine if/when this case is even possible? */
+          unmountRenderedElement(~tree, hostRoot, instanceSubTree);
+        }
+      };
+    };
+
+    let rec mountUpdateLog =
+            (~tree, hostRoot, updateLog: list(UpdateLog.entry))
+            : unit =>
+      UpdateLog.(
+        switch (updateLog) {
+        | [
+            UpdateInstance({
+              stateChanged,
+              subTreeChanged,
+              oldInstance,
+              newInstance,
+            }),
+            ...tl,
+          ] =>
+          switch (subTreeChanged) {
+          /***
+           * The first `Nested update means our root hasn't changed, moving on to the subtree
+           */
+          | `Nested =>
+            let hostRoot = hostViewFromInstance(oldInstance);
+            mountUpdateLog(~tree, hostRoot, tl);
+          | `ReplaceElements(oldRendered, newRendered) =>
+            unmountRenderedElement(~tree, hostRoot, oldRendered);
+            mountRenderedElement(~tree, hostRoot, newRendered);
+            mountUpdateLog(~tree, hostRoot, tl);
+          | _ => assert(false)
+          }
+        | [ChangeComponent({oldOpaqueInstance, newOpaqueInstance}), ...tl] =>
+          unmountOpaqueInstance(~tree, hostRoot, oldOpaqueInstance);
+          mountOpaqueInstance(~tree, hostRoot, newOpaqueInstance);
+          mountUpdateLog(~tree, hostRoot, tl);
+        | _ => ()
+        }
+      );
+
+    let fromRenderedElement = (hostRoot, renderedElement) : list(entry) => {
+      let tree = ref([]);
+      mountRenderedElement(~tree, hostRoot, renderedElement);
+      List.rev(tree^);
+    };
+
+    let fromTopLevelUpdate =
+        (
+          hostRoot: hostView,
+          topLevelUpdate: option(RenderedElement.topLevelUpdate),
+        )
+        : list(entry) =>
+      switch (topLevelUpdate) {
+      | Some(topLevelUpdate) =>
+        let tree = ref([]);
+        switch (topLevelUpdate.subtreeChange) {
+        | `Nested =>
+          let updateLog = List.rev(topLevelUpdate.updateLog^);
+          mountUpdateLog(~tree, hostRoot, updateLog);
+        | _ => assert(false)
+        };
+        List.rev(tree^);
+      | None => []
+      };
   };
 
   let statelessComponent:

@@ -139,10 +139,16 @@ module Make:
      */
     module MountLog: {
       type entry;
-      /* type t; */
 
       let fromRenderedElement:
         (Implementation.hostView, RenderedElement.t) => list(entry);
+
+      let fromUpdateLog:
+        (Implementation.hostView, UpdateLog.t) => list(entry);
+
+      let fromTopLevelUpdate:
+        (Implementation.hostView, option(RenderedElement.topLevelUpdate)) =>
+        list(entry);
     };
 
     /**

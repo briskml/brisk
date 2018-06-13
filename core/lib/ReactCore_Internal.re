@@ -942,66 +942,61 @@ module Make = (Implementation: HostImplementation) => {
         assert(false);
       };
 
-    let rec mountRenderedElement = (~mountLog, hostRoot, renderedElement) =>
+    let rec traverseRenderedElement = (renderedElement, f) =>
       switch (renderedElement) {
-      | IFlat(opaqueInstance) =>
-        mountOpaqueInstance(~mountLog, hostRoot, opaqueInstance)
+      | IFlat(opaqueInstance) => f(opaqueInstance)
       | INested(_, elements) =>
-        List.iter(
-          element => mountRenderedElement(~mountLog, hostRoot, element),
-          elements,
-        )
-      }
-    and mountOpaqueInstance = (~mountLog, parentHostRoot, opaqueInstance) => {
-      let Instance({id, component, subElements, instanceSubTree}) = opaqueInstance;
-      switch (component.elementType) {
-      | React =>
-        mountRenderedElement(~mountLog, parentHostRoot, instanceSubTree)
-      | Host =>
-        switch (getInstance(id)) {
-        | Some(_) =>
-          mountRenderedElement(~mountLog, parentHostRoot, instanceSubTree)
-        | None =>
-          let hostView = subElements.make();
-          memoizeInstance(id, hostView);
-          mountLog := [MountChild(parentHostRoot, hostView), ...mountLog^];
-          mountRenderedElement(~mountLog, hostView, instanceSubTree);
-        }
+        List.iter(element => traverseRenderedElement(element, f), elements)
       };
+
+    let rec mountOpaqueInstance = (~mountLog, parentHostRoot, opaqueInstance) => {
+      let Instance({id, component, subElements, instanceSubTree}) = opaqueInstance;
+      let newHostRoot =
+        switch (component.elementType) {
+        | React => parentHostRoot
+        | Host =>
+          switch (getInstance(id)) {
+          | Some(_) => parentHostRoot
+          | None =>
+            let hostView = subElements.make();
+            memoizeInstance(id, hostView);
+            mountLog := [MountChild(parentHostRoot, hostView), ...mountLog^];
+            hostView;
+          }
+        };
+
+      traverseRenderedElement(
+        instanceSubTree,
+        mountOpaqueInstance(~mountLog, newHostRoot),
+      );
     };
 
-    let rec unmountRenderedElement =
-            (~mountLog, parentHostRoot, renderedElement) =>
-      switch (renderedElement) {
-      | IFlat(opaqueInstance) =>
-        unmountOpaqueInstance(~mountLog, parentHostRoot, opaqueInstance)
-      | INested(_, elements) =>
-        List.iter(
-          element =>
-            unmountRenderedElement(~mountLog, parentHostRoot, element),
-          elements,
-        )
-      }
-    and unmountOpaqueInstance = (~mountLog, parentHostRoot, opaqueInstance) => {
+    let rec unmountOpaqueInstance =
+            (~mountLog, parentHostRoot, opaqueInstance) => {
       let Instance({id, component, subElements, instanceSubTree}) = opaqueInstance;
-      switch (component.elementType) {
-      | React =>
-        unmountRenderedElement(~mountLog, parentHostRoot, instanceSubTree)
-      | Host =>
-        switch (getInstance(id)) {
-        | Some(hostView) =>
-          mountLog := [UnmountChild(parentHostRoot, hostView), ...mountLog^];
-          unmountRenderedElement(~mountLog, hostView, instanceSubTree);
-        | None =>
-          print_endline(
-            "Host view instance "
-            ++ string_of_int(id)
-            ++ " wasn't found during rendered element unmount",
-          );
-          /* TODO Determine if/when this case is even possible? */
-          unmountRenderedElement(~mountLog, parentHostRoot, instanceSubTree);
-        }
-      };
+      let newHostRoot =
+        switch (component.elementType) {
+        | React => parentHostRoot
+        | Host =>
+          switch (getInstance(id)) {
+          | Some(hostView) =>
+            mountLog :=
+              [UnmountChild(parentHostRoot, hostView), ...mountLog^];
+            hostView;
+          | None =>
+            /* TODO Determine if/when this case is even possible? */
+            print_endline(
+              "Host view instance "
+              ++ string_of_int(id)
+              ++ " wasn't found during rendered element unmount",
+            );
+            parentHostRoot;
+          }
+        };
+      traverseRenderedElement(
+        instanceSubTree,
+        mountOpaqueInstance(~mountLog, newHostRoot),
+      );
     };
 
     let rec mountUpdateLog =
@@ -1026,8 +1021,14 @@ module Make = (Implementation: HostImplementation) => {
             let parentHostRoot = getHostViewInstance(oldInstance);
             mountUpdateLog(~mountLog, parentHostRoot, tl);
           | `ReplaceElements(oldRendered, newRendered) =>
-            unmountRenderedElement(~mountLog, parentHostRoot, oldRendered);
-            mountRenderedElement(~mountLog, parentHostRoot, newRendered);
+            traverseRenderedElement(
+              oldRendered,
+              unmountOpaqueInstance(~mountLog, parentHostRoot),
+            );
+            traverseRenderedElement(
+              newRendered,
+              mountOpaqueInstance(~mountLog, parentHostRoot),
+            );
             mountUpdateLog(~mountLog, parentHostRoot, tl);
           | _ => assert(false)
           }
@@ -1041,7 +1042,10 @@ module Make = (Implementation: HostImplementation) => {
 
     let fromRenderedElement = (parentHostRoot, renderedElement) : list(entry) => {
       let mountLog = ref([]);
-      mountRenderedElement(~mountLog, parentHostRoot, renderedElement);
+      traverseRenderedElement(
+        renderedElement,
+        mountOpaqueInstance(~mountLog, parentHostRoot),
+      );
       List.rev(mountLog^);
     };
 

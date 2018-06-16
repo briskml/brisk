@@ -39,21 +39,6 @@ type testInstance = {
 [@deriving eq]
 and t = list(testInstance);
 
-type hostElement =
-  | Text(string)
-  | View;
-
-[@deriving (show({with_path: false}), eq)]
-type testHostInstance = Implementation.hostView;
-
-[@deriving eq]
-type testMountEntry =
-  | MountChild(testHostInstance, testHostInstance)
-  | UnmountChild(testHostInstance, testHostInstance);
-
-[@deriving eq]
-type testMountLog = list(testMountEntry);
-
 [@deriving eq]
 type testSubTreeChangeReact = [
   | `NoChange
@@ -138,18 +123,6 @@ let convertSubTreeChange =
   | `ReplaceElements(_, _) as x => convertSubTreeChangeReact(x);
 
 let render = element => RenderedElement.render(element);
-
-let rec convertMountLog =
-  fun
-  | [] => []
-  | [MountLog.MountChild(root, child), ...t] => [
-      MountChild(root, child),
-      ...convertMountLog(t),
-    ]
-  | [MountLog.UnmountChild(root, child), ...t] => [
-      UnmountChild(root, child),
-      ...convertMountLog(t),
-    ];
 
 let convertUpdateLog = (updateLog: UpdateLog.t) => {
   let rec convertUpdateLog = (updateLogRef: list(UpdateLog.entry)) =>

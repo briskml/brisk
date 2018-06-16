@@ -19,11 +19,11 @@ type testItem('a) =
                                                   );
 
 type mountElement = {
-  hostRoot: TestRenderer.testHostInstance,
+  hostRoot: Implementation.hostView,
   renderedElement,
 };
 
-type mount = list(TestRenderer.testMountEntry);
+type mount = list(Implementation.testMountEntry);
 
 type testHostItem('a) =
   | MountElement(mountElement): testHostItem(mount);
@@ -43,7 +43,7 @@ let topLevelUpdateLog =
 let mountLog =
   Alcotest.testable(
     (formatter, t) => TestPrinter.printMountLog(formatter, t),
-    TestRenderer.equal_testMountLog,
+    Implementation.equal_testMountLog,
   );
 
 let updateLog =
@@ -116,8 +116,10 @@ let assertElement = (~label="", expected, rendered) =>
     TestRenderer.convertElement(rendered),
   );
 
-let assertMountLog = (~label="", expected, actual) =>
-  check(mountLog, label, expected, TestRenderer.convertMountLog(actual));
+let assertMountLog = (~label="", expected, actual) => {
+  Implementation.mountLog := [];
+  check(mountLog, label, expected, List.rev(actual));
+}
 
 let assertUpdateLog = (~label="", expected, actual) =>
   check(updateLog, label, expected, TestRenderer.convertUpdateLog(actual));
@@ -147,9 +149,10 @@ let expectHost: type a. (~label: string=?, a, testHostItem(a)) => a =
     switch (prev) {
     | MountElement({hostRoot, renderedElement}) =>
       open TestRenderer;
-      let mountLog = MountLog.fromRenderedElement(hostRoot, renderedElement);
+      MountLog.mountRenderedElement(hostRoot, renderedElement);
+      let mountLog = Implementation.mountLog^;
       assertMountLog(~label?, expected, mountLog);
-      TestRenderer.convertMountLog(mountLog);
+      mountLog;
     };
 
 let expect:

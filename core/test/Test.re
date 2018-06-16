@@ -779,14 +779,18 @@ let mountLog = [
            ~label=
              "It correctly prepares a mount log, ignoring non-native BoxWrapper",
            [
-             MountChild(
+            Implementation.BeginChanges,
+            MountChild(
                {name: "root", element: View},
                {name: "Div", element: View},
+               0
              ),
              MountChild(
                {name: "Div", element: View},
                {name: "Box", element: Text("ImABox")},
+               0
              ),
+             CommitChanges,
            ],
          )
       |> ignore;
@@ -807,18 +811,23 @@ let mountLog = [
       |> expectHost(
            ~label="It mounts two moxes in a div",
            [
-             MountChild(
+            Implementation.BeginChanges,
+            MountChild(
                {name: "root", element: View},
                {name: "Div", element: View},
+               0
              ),
              MountChild(
                {name: "Div", element: View},
                {name: "Box", element: Text("ImABox1")},
+               0
              ),
              MountChild(
                {name: "Div", element: View},
                {name: "Box", element: Text("ImABox2")},
+               1
              ),
+             CommitChanges,
            ],
          )
       |> ignore;
@@ -837,7 +846,8 @@ let mountLog = [
       let nextReactElement = Components.(<Div> <Box title="ImABox3" /> </Div>);
 
       let beforeUpdate = TestRenderer.render(previousReactElement);
-      let _ = MountLog.fromRenderedElement(root, beforeUpdate);
+      let _ = MountLog.mountRenderedElement(root, beforeUpdate);
+      Implementation.mountLog := [];
 
       let (afterUpdate, topLevelUpdateLog) =
         RenderedElement.update(
@@ -846,15 +856,17 @@ let mountLog = [
           nextReactElement,
         );
 
-      let mountLog = MountLog.fromTopLevelUpdate(root, topLevelUpdateLog);
+      MountLog.applyTopLevelUpdate(root, afterUpdate, topLevelUpdateLog);
       assertMountLog(
         ~label="It correctly mounts topLevelUpdate",
         [
+          Implementation.BeginChanges,
           UnmountChild(root, {name: "Box", element: Text("ImABox1")}),
           UnmountChild(root, {name: "Box", element: Text("ImABox2")}),
-          MountChild(root, {name: "Box", element: Text("ImABox3")}),
+          MountChild(root, {name: "Box", element: Text("ImABox3")}, 0),
+          CommitChanges,
         ],
-        mountLog,
+        Implementation.mountLog^,
       );
     },
   ),

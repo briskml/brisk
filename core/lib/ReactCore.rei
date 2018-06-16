@@ -2,6 +2,17 @@ module type HostImplementation = {
   type hostView;
   let getInstance: int => option(hostView);
   let memoizeInstance: (int, hostView) => unit;
+
+  let beginChanges: unit => unit;
+
+  let mountChild:
+    (~parent: hostView, ~child: hostView, ~position: int) => unit;
+  let unmountChild: (~parent: hostView, ~child: hostView) => unit;
+
+  let remountChild:
+    (~parent: hostView, ~child: hostView, ~position: int) => unit;
+
+  let commitChanges: unit => unit;
 };
 
 module Make:
@@ -138,17 +149,16 @@ module Make:
      * Log of operations performed to mount an instance tree.
      */
     module MountLog: {
-      type entry;
 
-      let fromRenderedElement:
-        (Implementation.hostView, RenderedElement.t) => list(entry);
+      let mountRenderedElement:
+        (Implementation.hostView, RenderedElement.t) => unit;
 
-      let fromUpdateLog:
-        (Implementation.hostView, list(UpdateLog.entry)) => list(entry);
+      let applyUpdateLog:
+        (Implementation.hostView, list(UpdateLog.entry)) => unit;
 
-      let fromTopLevelUpdate:
-        (Implementation.hostView, option(RenderedElement.topLevelUpdate)) =>
-        list(entry);
+      let applyTopLevelUpdate:
+        (Implementation.hostView, RenderedElement.t, option(RenderedElement.topLevelUpdate)) =>
+        unit;
     };
 
     /**

@@ -900,8 +900,7 @@ let mountLog = [
       let _ = MountLog.mountRenderedElement(root, beforeUpdate);
 
       assertMountLog(
-        ~label=
-          "It correctly mounts top level list with static keys (for reorder)",
+        ~label="It correctly mounts top level list (for reorder)",
         [
           Implementation.BeginChanges,
           MountChild(root, {name: "Text", element: Text("x")}, 0),
@@ -962,7 +961,7 @@ let mountLog = [
 
       MountLog.applyTopLevelUpdate(root, afterUpdate, topLevelUpdateLog);
       assertMountLog(
-        ~label="It correctly mounts `Reordered topLevelUpdate",
+        ~label="It correctly mounts `ReplaceElements topLevelUpdate",
         [
           Implementation.BeginChanges,
           UnmountChild(root, {name: "Text", element: Text("x")}),
@@ -995,8 +994,7 @@ let mountLog = [
       let _ = MountLog.mountRenderedElement(root, beforeUpdate);
 
       assertMountLog(
-        ~label=
-          "It correctly mounts top level list with static keys (for prepend)",
+        ~label="It correctly mounts top level list (for prepend)",
         [
           Implementation.BeginChanges,
           MountChild(root, {name: "Text", element: Text("x")}, 0),

@@ -35,27 +35,18 @@ module Implementation = {
     };
   let memoizeInstance = (id, instance) => Hashtbl.add(map, id, instance);
 
-  let beginChanges = () => {
-    mountLog := [BeginChanges, ...mountLog^];
-  };
+  let beginChanges = () => mountLog := [BeginChanges, ...mountLog^];
 
-  let commitChanges = () => {
-    mountLog := [CommitChanges, ...mountLog^];
-  };
+  let commitChanges = () => mountLog := [CommitChanges, ...mountLog^];
 
-  let mountChild =
-    (~parent: hostView, ~child: hostView, ~position: int) => {
-      mountLog := [MountChild(parent, child, position), ...mountLog^];
-  };
+  let mountChild = (~parent: hostView, ~child: hostView, ~position: int) =>
+    mountLog := [MountChild(parent, child, position), ...mountLog^];
 
-  let unmountChild = (~parent: hostView, ~child: hostView) => {
+  let unmountChild = (~parent: hostView, ~child: hostView) =>
     mountLog := [UnmountChild(parent, child), ...mountLog^];
-  };
 
-  let remountChild =
-  (~parent: hostView, ~child: hostView, ~position: int) => {
+  let remountChild = (~parent: hostView, ~child: hostView, ~position: int) =>
     mountLog := [RemountChild(parent, child, position), ...mountLog^];
-  };
 };
 
 include ReactCore_Internal.Make(Implementation);

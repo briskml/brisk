@@ -121,7 +121,12 @@ module Make:
     /**
      * Log of operations performed to update an instance tree.
      */
-    module UpdateLog: {type entry; type t; let create: unit => t;};
+    module UpdateLog: {
+      type subtreeChange;
+      type entry;
+      type t;
+      let create: unit => t;
+    };
 
     module RenderedElement: {
       /** Type of a react element after rendering  */
@@ -149,15 +154,23 @@ module Make:
      * Log of operations performed to mount an instance tree.
      */
     module MountLog: {
-
       let mountRenderedElement:
         (Implementation.hostView, RenderedElement.t) => unit;
 
       let applyUpdateLog:
-        (Implementation.hostView, list(UpdateLog.entry)) => unit;
+        (
+          ~subtreeChange: option(UpdateLog.subtreeChange)=?,
+          Implementation.hostView,
+          list(UpdateLog.entry)
+        ) =>
+        unit;
 
       let applyTopLevelUpdate:
-        (Implementation.hostView, RenderedElement.t, option(RenderedElement.topLevelUpdate)) =>
+        (
+          Implementation.hostView,
+          RenderedElement.t,
+          option(RenderedElement.topLevelUpdate)
+        ) =>
         unit;
     };
 

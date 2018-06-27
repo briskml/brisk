@@ -779,16 +779,16 @@ let mountLog = [
            ~label=
              "It correctly prepares a mount log, ignoring non-native BoxWrapper",
            [
-            Implementation.BeginChanges,
-            MountChild(
+             Implementation.BeginChanges,
+             MountChild(
                {name: "root", element: View},
                {name: "Div", element: View},
-               0
+               0,
              ),
              MountChild(
                {name: "Div", element: View},
                {name: "Box", element: Text("ImABox")},
-               0
+               0,
              ),
              CommitChanges,
            ],
@@ -811,21 +811,21 @@ let mountLog = [
       |> expectHost(
            ~label="It mounts two moxes in a div",
            [
-            Implementation.BeginChanges,
-            MountChild(
+             Implementation.BeginChanges,
+             MountChild(
                {name: "root", element: View},
                {name: "Div", element: View},
-               0
+               0,
              ),
              MountChild(
                {name: "Div", element: View},
                {name: "Box", element: Text("ImABox1")},
-               0
+               0,
              ),
              MountChild(
                {name: "Div", element: View},
                {name: "Box", element: Text("ImABox2")},
-               1
+               1,
              ),
              CommitChanges,
            ],
@@ -864,6 +864,160 @@ let mountLog = [
           UnmountChild(root, {name: "Box", element: Text("ImABox1")}),
           UnmountChild(root, {name: "Box", element: Text("ImABox2")}),
           MountChild(root, {name: "Box", element: Text("ImABox3")}, 0),
+          CommitChanges,
+        ],
+        Implementation.mountLog^,
+      );
+    },
+  ),
+  (
+    "Test top level reorder",
+    `Quick,
+    () => {
+      let root = Implementation.{name: "root", element: View};
+
+      GlobalState.useTailHack := true;
+
+      let key1 = Key.create();
+      let key2 = Key.create();
+      let previousReactElement =
+        listToElement(
+          Components.[
+            <Text key=key1 title="x" />,
+            <Text key=key2 title="y" />,
+          ],
+        );
+
+      let nextReactElement =
+        listToElement(
+          Components.[
+            <Text key=key2 title="y" />,
+            <Text key=key1 title="x" />,
+          ],
+        );
+
+      let beforeUpdate = TestRenderer.render(previousReactElement);
+      let _ = MountLog.mountRenderedElement(root, beforeUpdate);
+
+      assertMountLog(
+        ~label=
+          "It correctly mounts top level list with static keys (for reorder)",
+        [
+          Implementation.BeginChanges,
+          MountChild(root, {name: "Text", element: Text("x")}, 0),
+          MountChild(root, {name: "Text", element: Text("y")}, 1),
+          CommitChanges,
+        ],
+        Implementation.mountLog^,
+      );
+
+      let (afterUpdate, topLevelUpdateLog) =
+        RenderedElement.update(
+          ~previousReactElement,
+          ~renderedElement=beforeUpdate,
+          nextReactElement,
+        );
+
+      MountLog.applyTopLevelUpdate(root, afterUpdate, topLevelUpdateLog);
+      assertMountLog(
+        ~label="It correctly mounts `Reordered topLevelUpdate",
+        [
+          Implementation.BeginChanges,
+          RemountChild(root, {name: "Text", element: Text("x")}, 0),
+          RemountChild(root, {name: "Text", element: Text("y")}, 0),
+          CommitChanges,
+        ],
+        Implementation.mountLog^,
+      );
+    },
+  ),
+  (
+    "Test top level replace elements",
+    `Quick,
+    () => {
+      let root = Implementation.{name: "root", element: View};
+
+      let previousReactElement = <Components.Text key=1 title="x" />;
+      let nextReactElement = <Components.Text key=2 title="y" />;
+
+      let beforeUpdate = TestRenderer.render(previousReactElement);
+      let _ = MountLog.mountRenderedElement(root, beforeUpdate);
+
+      assertMountLog(
+        ~label="It correctly mounts top level element (for replace elemets)",
+        [
+          Implementation.BeginChanges,
+          MountChild(root, {name: "Text", element: Text("x")}, 0),
+          CommitChanges,
+        ],
+        Implementation.mountLog^,
+      );
+
+      let (afterUpdate, topLevelUpdateLog) =
+        RenderedElement.update(
+          ~previousReactElement,
+          ~renderedElement=beforeUpdate,
+          nextReactElement,
+        );
+
+      MountLog.applyTopLevelUpdate(root, afterUpdate, topLevelUpdateLog);
+      assertMountLog(
+        ~label="It correctly mounts `Reordered topLevelUpdate",
+        [
+          Implementation.BeginChanges,
+          UnmountChild(root, {name: "Text", element: Text("x")}),
+          MountChild(root, {name: "Text", element: Text("y")}, 0),
+          CommitChanges,
+        ],
+        Implementation.mountLog^,
+      );
+    },
+  ),
+  (
+    "Test top level prepend",
+    `Quick,
+    () => {
+      let root = Implementation.{name: "root", element: View};
+
+      GlobalState.useTailHack := true;
+      let key1 = Key.create();
+      let key2 = Key.create();
+      let commonElement = [<Components.Text key=key1 title="x" />];
+
+      let previousReactElement = listToElement(commonElement);
+      let nextReactElement =
+        listToElement([
+          <Components.Text key=key2 title="y" />,
+          ...commonElement,
+        ]);
+
+      let beforeUpdate = TestRenderer.render(previousReactElement);
+      let _ = MountLog.mountRenderedElement(root, beforeUpdate);
+
+      assertMountLog(
+        ~label=
+          "It correctly mounts top level list with static keys (for prepend)",
+        [
+          Implementation.BeginChanges,
+          MountChild(root, {name: "Text", element: Text("x")}, 0),
+          CommitChanges,
+        ],
+        Implementation.mountLog^,
+      );
+
+      let (afterUpdate, topLevelUpdateLog) =
+        RenderedElement.update(
+          ~previousReactElement,
+          ~renderedElement=beforeUpdate,
+          nextReactElement,
+        );
+
+      MountLog.applyTopLevelUpdate(root, afterUpdate, topLevelUpdateLog);
+      assertMountLog(
+        ~label="It correctly mounts `Prepend topLevelUpdate",
+        [
+          Implementation.BeginChanges,
+          MountChild(root, {name: "Text", element: Text("y")}, 0),
           CommitChanges,
         ],
         Implementation.mountLog^,

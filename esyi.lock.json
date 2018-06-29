@@ -1,7 +1,29 @@
 {
-  "hash": "843597254ec9816da32ea2395ddd14b6",
+  "hash": "a6fd9e23555cc49715bb0d5408fd4678",
   "root": "brisk@path:.",
   "node": {
+    "xcpretty@0.2.8001": {
+      "record": {
+        "name": "xcpretty",
+        "version": "0.2.8001",
+        "source":
+          "archive:https://registry.npmjs.org/xcpretty/-/xcpretty-0.2.8001.tgz#sha1:acb4f02e9e1748c1847b61b9ee94416519422a50",
+        "files": [],
+        "opam": null
+      },
+      "dependencies": []
+    },
+    "xcodegen@1.9.2": {
+      "record": {
+        "name": "xcodegen",
+        "version": "1.9.2",
+        "source":
+          "archive:https://registry.npmjs.org/xcodegen/-/xcodegen-1.9.2.tgz#sha1:5e911cc11905036efc44a2cdd1e75267c1d60fa2",
+        "files": [],
+        "opam": null
+      },
+      "dependencies": []
+    },
     "refmterr@3.1.7": {
       "record": {
         "name": "refmterr",
@@ -52,8 +74,10 @@
         "@esy-ocaml/esy-installer@0.0.0", "@esy-ocaml/merlin@3.0.5005",
         "@esy-ocaml/reason@3.3.0", "@opam/alcotest@opam:0.8.3",
         "@opam/easy-format@opam:1.3.1", "@opam/jbuilder@opam:transition",
-        "@opam/ppx_deriving@opam:4.2.1", "@opam/simple-diff@opam:0.3",
-        "flex@github:briskml/flex#21dc063", "ocaml@4.6.4", "refmterr@3.1.7"
+        "@opam/ocp-indent@opam:1.6.1", "@opam/ppx_deriving@opam:4.2.1",
+        "@opam/simple-diff@opam:0.3", "flex@github:briskml/flex#21dc063",
+        "ocaml@4.6.4", "refmterr@3.1.7", "xcodegen@1.9.2",
+        "xcpretty@0.2.8001"
       ]
     },
     "@opam/yojson@opam:1.4.1": {
@@ -241,6 +265,47 @@
       "dependencies": [
         "@esy-ocaml/esy-installer@0.0.0", "@esy-ocaml/substs@0.0.1",
         "@opam/jbuilder@opam:transition"
+      ]
+    },
+    "@opam/ocp-indent@opam:1.6.1": {
+      "record": {
+        "name": "@opam/ocp-indent",
+        "version": "opam:1.6.1",
+        "source":
+          "archive:https://github.com/OCamlPro/ocp-indent/archive/1.6.1.tar.gz#md5:935d03f4f6376d687c46f350ff5eecdd",
+        "files": [],
+        "opam": {
+          "name": "ocp-indent",
+          "version": "1.6.1",
+          "opam":
+            "opam-version: \"1.2\"\nmaintainer: \"contact@ocamlpro.com\"\nauthors: [\n  \"Louis Gesbert <louis.gesbert@ocamlpro.com>\"\n  \"Thomas Gazagnaire <thomas@gazagnaire.org>\"\n  \"Jun Furuse\"\n]\nlicense: \"LGPL\"\ntags: [\"org:ocamlpro\" \"org:typerex\"]\nhomepage: \"http://www.typerex.org/ocp-indent.html\"\nbug-reports: \"https://github.com/OCamlPro/ocp-indent/issues\"\ndepends: [\n  \"ocp-build\" {build & >= \"1.99.6-beta\"}\n  \"cmdliner\" {>= \"1.0.0\"}\n  \"base-bytes\"\n]\nbuild: [\n  [\"./configure\" \"--prefix\" prefix]\n  [make]\n]\npost-messages:\n  \"\"\"\nThis package requires additional configuration for use in editors. Install package 'user-setup', or manually:\n\n* for Emacs, add these lines to ~/.emacs:\n  (add-to-list 'load-path \"%{share}%/emacs/site-lisp\")\n  (require 'ocp-indent)\n\n* for Vim, add this line to ~/.vimrc:\n  set rtp^=\"%{share}%/ocp-indent/vim\\\"\"\"\"\n    {success & !user-setup:installed}\ndev-repo: \"git+https://github.com/OCamlPro/ocp-indent.git\"",
+          "override": null
+        }
+      },
+      "dependencies": [
+        "@esy-ocaml/esy-installer@0.0.0", "@esy-ocaml/substs@0.0.1",
+        "@opam/base-bytes@opam:base", "@opam/cmdliner@opam:1.0.2",
+        "@opam/ocp-build@opam:1.99.20-beta"
+      ]
+    },
+    "@opam/ocp-build@opam:1.99.20-beta": {
+      "record": {
+        "name": "@opam/ocp-build",
+        "version": "opam:1.99.20-beta",
+        "source":
+          "archive:http://github.com/OCamlPro/ocp-build/archive/1.99.20-beta.tar.gz#md5:72d9c1b1a42d1873628e2d6e7529d8cb",
+        "files": [],
+        "opam": {
+          "name": "ocp-build",
+          "version": "1.99.20-beta",
+          "opam":
+            "opam-version: \"1.2\"\nmaintainer: \"Fabrice Le Fessant <fabrice.le_fessant@ocamlpro.com>\"\nauthors: \"Fabrice Le Fessant <fabrice.le_fessant@ocamlpro.com>\"\nhomepage: \"http://www.typerex.org/ocp-build.html\"\nbug-reports: \"https://github.com/OCamlPro/ocp-build/issues\"\ndepends: [\n  \"ocamlfind\"\n  \"cmdliner\" {>= \"1.0\"}\n]\nconflicts: [\n  \"typerex\" {< \"1.99.7\"}\n  \"typerex-build\"\n]\navailable: ocaml-version >= \"4.02.1\"\nbuild: [\n  [\"./configure\" \"--prefix\" \"%{prefix}%\"]\n  [make]\n]\ninstall: [make \"install\"]\nremove: [\n  [\"rm\" \"-f\" \"%{prefix}%/bin/ocp-build\"]\n  [\"rm\" \"-f\" \"%{prefix}%/bin/ocp-pp\"]\n  [\"rm\" \"-rf\" \"%{prefix}%/lib/ocaml/typerex/ocp-build\"]\n  [\"rm\" \"-rf\" \"%{prefix}%/lib/ocaml/typerex/ocplib-compat\"]\n  [\"rm\" \"-rf\" \"%{prefix}%/lib/ocaml/typerex/ocplib-debug\"]\n  [\"rm\" \"-rf\" \"%{prefix}%/lib/ocaml/typerex/ocplib-lang\"]\n  [\"rm\" \"-rf\" \"%{prefix}%/lib/ocaml/typerex/ocplib-subcmd\"]\n  [\"rm\" \"-rf\" \"%{prefix}%/lib/ocaml/typerex/ocplib-system\"]\n  [\"rm\" \"-rf\" \"%{prefix}%/lib/ocaml/typerex/ocplib-unix\"]\n  [\"rm\" \"-rf\" \"%{prefix}%/lib/ocaml/typerex/installed.ocp\"]\n  [\"rm\" \"-rf\" \"%{prefix}%/lib/ocaml/site-ocp2/ocp-build\"]\n  [\"sh\" \"-exc\" \"rmdir %{prefix}%/lib/ocaml/typerex || true\"]\n]\ndev-repo: \"git+https://github.com/OCamlPro/ocp-build.git\"",
+          "override": null
+        }
+      },
+      "dependencies": [
+        "@esy-ocaml/esy-installer@0.0.0", "@esy-ocaml/substs@0.0.1",
+        "@opam/cmdliner@opam:1.0.2", "@opam/ocamlfind@opam:1.8.0"
       ]
     },
     "@opam/ocamlfind@opam:1.8.0": {

@@ -5,13 +5,16 @@
   "repository": "https://github.com/briskml/brisk.git",
   "license": "MIT",
   "esy": {
-    "build": [["refmterr", "jbuilder", "build"]],
+    "build": [["refmterr", "jbuilder", "build", "@install"]],
     "buildsInSource": "_build"
   },
   "scripts": {
-    "build:dev": "refmterr jbuilder build --dev",
+    "build:dev": "refmterr jbuilder build @install --dev --no-buffer",
     "clean": "jbuilder clean",
-    "test": "refmterr jbuilder runtest --no-buffer"
+    "test": "refmterr jbuilder runtest --no-buffer",
+    "bootstrap:mac": "make -C BRTesterMac/mac bootstrap",
+    "run:mac": "make -C BRTesterMac/mac run",
+    "test:mac": "make -C BRTesterMac/mac test"
   },
   "dependencies": {
     "@esy-ocaml/esy-installer": "*",
@@ -28,7 +31,10 @@
     "@esy-ocaml/merlin": "^3.0.5",
     "@opam/alcotest": "^0.8.3",
     "@opam/easy-format": "^1.3.1",
+    "@opam/ocp-indent": "^1.6.1",
     "@opam/simple-diff": "0.3",
-    "ocaml": "~4.6.4"
+    "ocaml": "~4.6.4",
+    "xcodegen": "^1.9.2",
+    "xcpretty": "^0.2.8"
   }
 }

@@ -1,0 +1,13 @@
+(jbuild_version 1)
+
+(executable (
+ (name app)
+ (libraries (brisk_cocoa))
+ (modes (object))
+))
+
+(install (
+  (package brisk)
+  (section lib)
+  (files (app.o))
+))

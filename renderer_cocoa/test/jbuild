@@ -1,0 +1,10 @@
+(jbuild_version 1)
+
+(executables
+ ((names (test))
+  (libraries (alcotest brisk_cocoa))))
+
+(alias
+ ((name runtest)
+  (deps (test.exe))
+  (action (run ${<}))))

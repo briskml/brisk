@@ -1,0 +1,8 @@
+(jbuild_version 1)
+
+(library
+ ((name brisk_cocoa)
+  (public_name brisk.cocoa)
+  (synopsis "Cocoa renderer")
+  (libraries (brisk_core)))
+)

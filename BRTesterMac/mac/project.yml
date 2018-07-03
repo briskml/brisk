@@ -17,8 +17,8 @@ targets:
       - Sources
     settings:
       DEBUG_INFORMATION_FORMAT: "dwarf-with-dsym"
-      HEADER_SEARCH_PATHS: "$(OCAMLLIB_PATH)"
-      LIBRARY_SEARCH_PATHS: "$(OCAMLLIB_PATH)"
+      HEADER_SEARCH_PATHS: "$(STDLIB_PATH)"
+      LIBRARY_SEARCH_PATHS: "$(STDLIB_PATH)"
     configFiles:
       Debug: Resources/env.xcconfig
       Release: Resources/env.xcconfig
@@ -27,7 +27,7 @@ targets:
         - BriskMacTests_macOS
       gatherCoverageData: true
     dependencies:
-      - framework: $(OCAMLLIB_PATH)/libasmrun.a
+      - framework: $(STDLIB_PATH)/libasmrun.a
         embed: true
       - framework: $(BUILD_STORE_PATH)/brisk/app.o
         embed: true

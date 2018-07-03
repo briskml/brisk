@@ -9,5 +9,5 @@
 (install (
   (package brisk)
   (section lib)
-  (files (app.o))
+  (files ((app.exe.o as app.o)))
 ))

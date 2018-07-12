@@ -41,39 +41,38 @@ let rec formatInstance = instance => {
 let formatElement = instances =>
   List(("[", "", "]", list), instances |> List.map(formatInstance));
 
-let formatMountLogItem = TestReactCore.Implementation.(
-  fun
-  | BeginChanges =>
-    Atom("BeginChanges", atom)
-  | CommitChanges =>
-    Atom("CommitChanges", atom)
-  | MountChild(root, child, position) =>
-    List(
-      ("MountChild (", ",", ")", list),
-      [
-        makeField("root", Atom(show_hostView(root), atom)),
-        makeField("child", Atom(show_hostView(child), atom)),
-        makeField("position", Atom(string_of_int(position), atom)),
-      ],
-    )
-  | UnmountChild(root, child) =>
-    List(
-      ("UnmountChild (", ",", ")", list),
-      [
-        makeField("root", Atom(show_hostView(root), atom)),
-        makeField("child", Atom(show_hostView(child), atom)),
-      ],
-    )
-  | RemountChild(root, child, position) =>
-    List(
-      ("RemountChild (", ",", ")", list),
-      [
-        makeField("root", Atom(show_hostView(root), atom)),
-        makeField("child", Atom(show_hostView(child), atom)),
-        makeField("position", Atom(string_of_int(position), atom)),
-      ],
-    )
-);
+let formatMountLogItem =
+  TestReactCore.Implementation.(
+    fun
+    | BeginChanges => Atom("BeginChanges", atom)
+    | CommitChanges => Atom("CommitChanges", atom)
+    | MountChild(root, child, position) =>
+      List(
+        ("MountChild (", ",", ")", list),
+        [
+          makeField("root", Atom(show_hostView(root), atom)),
+          makeField("child", Atom(show_hostView(child), atom)),
+          makeField("position", Atom(string_of_int(position), atom)),
+        ],
+      )
+    | UnmountChild(root, child) =>
+      List(
+        ("UnmountChild (", ",", ")", list),
+        [
+          makeField("root", Atom(show_hostView(root), atom)),
+          makeField("child", Atom(show_hostView(child), atom)),
+        ],
+      )
+    | RemountChild(root, child, position) =>
+      List(
+        ("RemountChild (", ",", ")", list),
+        [
+          makeField("root", Atom(show_hostView(root), atom)),
+          makeField("child", Atom(show_hostView(child), atom)),
+          makeField("position", Atom(string_of_int(position), atom)),
+        ],
+      )
+  );
 
 let formatMountLog = mountLog =>
   List(("[", ",", "]", list), mountLog |> List.map(formatMountLogItem));

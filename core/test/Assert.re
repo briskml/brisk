@@ -119,7 +119,7 @@ let assertElement = (~label="", expected, rendered) =>
 let assertMountLog = (~label="", expected, actual) => {
   Implementation.mountLog := [];
   check(mountLog, label, expected, List.rev(actual));
-}
+};
 
 let assertUpdateLog = (~label="", expected, actual) =>
   check(updateLog, label, expected, TestRenderer.convertUpdateLog(actual));
@@ -149,7 +149,7 @@ let expectHost: type a. (~label: string=?, a, testHostItem(a)) => a =
     switch (prev) {
     | MountElement({hostRoot, renderedElement}) =>
       open TestRenderer;
-      MountLog.mountRenderedElement(hostRoot, renderedElement);
+      HostView.mountRenderedElement(hostRoot, renderedElement);
       let mountLog = Implementation.mountLog^;
       assertMountLog(~label?, expected, mountLog);
       mountLog;

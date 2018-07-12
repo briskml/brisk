@@ -846,7 +846,7 @@ let mountLog = [
       let nextReactElement = Components.(<Div> <Box title="ImABox3" /> </Div>);
 
       let beforeUpdate = TestRenderer.render(previousReactElement);
-      let _ = MountLog.mountRenderedElement(root, beforeUpdate);
+      let _ = HostView.mountRenderedElement(root, beforeUpdate);
       Implementation.mountLog := [];
 
       let (afterUpdate, topLevelUpdateLog) =
@@ -856,7 +856,7 @@ let mountLog = [
           nextReactElement,
         );
 
-      MountLog.applyTopLevelUpdate(root, afterUpdate, topLevelUpdateLog);
+      HostView.applyTopLevelUpdate(root, afterUpdate, topLevelUpdateLog);
       assertMountLog(
         ~label="It correctly mounts topLevelUpdate",
         [
@@ -897,7 +897,7 @@ let mountLog = [
         );
 
       let beforeUpdate = TestRenderer.render(previousReactElement);
-      let _ = MountLog.mountRenderedElement(root, beforeUpdate);
+      let _ = HostView.mountRenderedElement(root, beforeUpdate);
 
       assertMountLog(
         ~label="It correctly mounts top level list (for reorder)",
@@ -917,7 +917,7 @@ let mountLog = [
           nextReactElement,
         );
 
-      MountLog.applyTopLevelUpdate(root, afterUpdate, topLevelUpdateLog);
+      HostView.applyTopLevelUpdate(root, afterUpdate, topLevelUpdateLog);
       assertMountLog(
         ~label="It correctly mounts `Reordered topLevelUpdate",
         [
@@ -940,7 +940,7 @@ let mountLog = [
       let nextReactElement = <Components.Text key=2 title="y" />;
 
       let beforeUpdate = TestRenderer.render(previousReactElement);
-      let _ = MountLog.mountRenderedElement(root, beforeUpdate);
+      let _ = HostView.mountRenderedElement(root, beforeUpdate);
 
       assertMountLog(
         ~label="It correctly mounts top level element (for replace elemets)",
@@ -959,7 +959,7 @@ let mountLog = [
           nextReactElement,
         );
 
-      MountLog.applyTopLevelUpdate(root, afterUpdate, topLevelUpdateLog);
+      HostView.applyTopLevelUpdate(root, afterUpdate, topLevelUpdateLog);
       assertMountLog(
         ~label="It correctly mounts `ReplaceElements topLevelUpdate",
         [
@@ -991,7 +991,7 @@ let mountLog = [
         ]);
 
       let beforeUpdate = TestRenderer.render(previousReactElement);
-      let _ = MountLog.mountRenderedElement(root, beforeUpdate);
+      let _ = HostView.mountRenderedElement(root, beforeUpdate);
 
       assertMountLog(
         ~label="It correctly mounts top level list (for prepend)",
@@ -1010,7 +1010,7 @@ let mountLog = [
           nextReactElement,
         );
 
-      MountLog.applyTopLevelUpdate(root, afterUpdate, topLevelUpdateLog);
+      HostView.applyTopLevelUpdate(root, afterUpdate, topLevelUpdateLog);
       assertMountLog(
         ~label="It correctly mounts `Prepend topLevelUpdate",
         [

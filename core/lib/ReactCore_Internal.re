@@ -934,8 +934,11 @@ module Make = (Implementation: HostImplementation) => {
     };
   };
 
-  /** Log of operations performed to mount an instance tree. */
-  module MountLog = {
+  /**
+   * Functions for mounting/unmounting an instance tree from
+   * rendered element, update log, and top level update.
+   */
+  module HostView = {
     open Implementation;
 
     let getHostViewInstance = ({id, _}) =>

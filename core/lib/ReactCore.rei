@@ -151,9 +151,10 @@ module Make:
     };
 
     /**
-     * Log of operations performed to mount an instance tree.
+     * Functions for mounting/unmounting an instance tree from
+     * rendered element, update log, and top level update.
      */
-    module MountLog: {
+    module HostView: {
       let mountRenderedElement:
         (Implementation.hostView, RenderedElement.t) => unit;
 

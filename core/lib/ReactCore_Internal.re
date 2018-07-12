@@ -41,7 +41,7 @@ module Make = (Implementation: HostImplementation) => {
   module Key = {
     type t = int;
 
-    let equal = (x: t, y: t) => Pervasives.compare(x, y) == 0;
+    let equal = (==);
     let none = (-1);
     let dynamicKeyMagicNumber = 0;
     let create = () => {
@@ -977,12 +977,12 @@ module Make = (Implementation: HostImplementation) => {
         ~f,
       ) => {
         let {id, component, subElements, instanceSubTree, _} = instance;
-        let newHostRoot =
+        let newParentHostView =
           switch (component.elementType) {
           | React => parentHostView
           | Host => f(parentHostView, id, subElements.make, position)
           };
-        traverseRenderedElement(newHostRoot, instanceSubTree, f, 0);
+        traverseRenderedElement(newParentHostView, instanceSubTree, f, 0);
       };
 
     let mountInstanceUtil =
@@ -1064,7 +1064,7 @@ module Make = (Implementation: HostImplementation) => {
         unit =
       (~subtreeChange, ~parentHostView, ~oldInstance, ~newInstance, entry) =>
         switch (entry) {
-        /* The first `Nested update means our root hasn't changed, moving on to the subtree */
+        /* The first `Nested update means our top level host view hasn't changed, moving on to the subtree */
         | `Nested => ()
         | `NoChange =>
           switch (subtreeChange) {

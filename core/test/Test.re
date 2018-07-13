@@ -922,8 +922,8 @@ let mountLog = [
         ~label="It correctly mounts `Reordered topLevelUpdate",
         [
           Implementation.BeginChanges,
-          RemountChild(root, {name: "Text", element: Text("x")}, 0),
           RemountChild(root, {name: "Text", element: Text("y")}, 0),
+          RemountChild(root, {name: "Text", element: Text("x")}, 1),
           CommitChanges,
         ],
         Implementation.mountLog^,

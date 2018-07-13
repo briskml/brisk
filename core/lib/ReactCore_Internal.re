@@ -1058,27 +1058,17 @@ module Make = (Implementation: HostImplementation) => {
     let rec applyUpdateLogEntry:
       type state action elementType.
         (
-          ~subtreeChange: option(UpdateLog.subtreeChange),
           ~parentHostView: hostView,
           ~oldInstance: instance(state, action, elementType),
           ~newInstance: instance(state, action, elementType),
           UpdateLog.subtreeChange
         ) =>
         unit =
-      (~subtreeChange, ~parentHostView, ~oldInstance, ~newInstance, entry) =>
+      (~parentHostView, ~oldInstance, ~newInstance, entry) =>
         switch (entry) {
         /* The first `Nested update means our top level host view hasn't changed, moving on to the subtree */
-        | `Nested => ()
-        | `NoChange =>
-          switch (subtreeChange) {
-          | Some(`Reordered) =>
-            remountInstance(
-              ~parentHostView,
-              ~instance=newInstance,
-              ~position=0,
-            )
-          | _ => ()
-          }
+        | `Nested
+        | `NoChange => ()
         | `Reordered =>
           remountInstance(~parentHostView, ~instance=newInstance, ~position=0)
         | `PrependElement(renderedElement) =>
@@ -1112,7 +1102,6 @@ module Make = (Implementation: HostImplementation) => {
             )
           };
           applyUpdateLogEntry(
-            ~subtreeChange,
             ~parentHostView,
             ~oldInstance,
             ~newInstance,
@@ -1132,11 +1121,7 @@ module Make = (Implementation: HostImplementation) => {
     };
 
     let rec applyUpdateLogUtil =
-            (
-              ~subtreeChange: option(UpdateLog.subtreeChange),
-              parentHostView,
-              updateLog: list(UpdateLog.entry),
-            )
+            (parentHostView, updateLog: list(UpdateLog.entry))
             : unit =>
       UpdateLog.(
         switch (updateLog) {
@@ -1145,7 +1130,6 @@ module Make = (Implementation: HostImplementation) => {
             ...tl,
           ] =>
           applyUpdateLogEntry(
-            ~subtreeChange,
             ~parentHostView,
             ~oldInstance,
             ~newInstance,
@@ -1156,7 +1140,7 @@ module Make = (Implementation: HostImplementation) => {
             | `Nested => getHostViewInstance(oldInstance)
             | _ => parentHostView
             };
-          applyUpdateLogUtil(~subtreeChange, parentHostView, tl);
+          applyUpdateLogUtil(parentHostView, tl);
         | [
             ChangeComponent({
               oldOpaqueInstance: Instance(oldInstance),
@@ -1167,20 +1151,16 @@ module Make = (Implementation: HostImplementation) => {
           ] =>
           unmountInstance(~parentHostView, ~instance=oldInstance);
           mountInstance(~parentHostView, ~instance=newInstance, ~position=0);
-          applyUpdateLogUtil(~subtreeChange, parentHostView, tl);
+          applyUpdateLogUtil(parentHostView, tl);
         | [] => ()
         }
       );
 
     let applyUpdateLog =
-        (
-          ~subtreeChange: option(UpdateLog.subtreeChange)=None,
-          parentHostView,
-          updateLog: list(UpdateLog.entry),
-        )
+        (parentHostView, updateLog: list(UpdateLog.entry))
         : unit => {
       Implementation.beginChanges();
-      applyUpdateLogUtil(~subtreeChange, parentHostView, updateLog);
+      applyUpdateLogUtil(parentHostView, updateLog);
       Implementation.commitChanges();
     };
 
@@ -1194,11 +1174,20 @@ module Make = (Implementation: HostImplementation) => {
       switch (topLevelUpdate) {
       | Some({subtreeChange, updateLog}) when List.length(updateLog^) > 0 =>
         let updateLog = List.rev(updateLog^);
-        applyUpdateLog(
-          ~subtreeChange=Some((subtreeChange :> UpdateLog.subtreeChange)),
-          parentHostView,
-          updateLog,
-        );
+        Implementation.beginChanges();
+        applyUpdateLogUtil(parentHostView, updateLog);
+        switch (subtreeChange) {
+        | `Nested => ()
+        | `Reordered =>
+          traverseRenderedElement(
+            parentHostView,
+            renderedElement,
+            remountInstanceUtil(Implementation.remountChild),
+            0,
+          )
+        | _ => assert(false)
+        };
+        Implementation.commitChanges();
       | Some({
           subtreeChange: `ReplaceElements(oldRendered, newRendered),
           updateLog,

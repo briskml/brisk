@@ -159,12 +159,7 @@ module Make:
         (Implementation.hostView, RenderedElement.t) => unit;
 
       let applyUpdateLog:
-        (
-          ~subtreeChange: option(UpdateLog.subtreeChange)=?,
-          Implementation.hostView,
-          list(UpdateLog.entry)
-        ) =>
-        unit;
+        (Implementation.hostView, list(UpdateLog.entry)) => unit;
 
       let applyTopLevelUpdate:
         (

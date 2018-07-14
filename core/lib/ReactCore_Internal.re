@@ -5,6 +5,16 @@ module type HostImplementation = {
 
   let getInstance: int => option(hostView);
   let memoizeInstance: (int, hostView) => unit;
+
+  let beginChanges: unit => unit;
+
+  let mountChild:
+    (~parent: hostView, ~child: hostView, ~position: int) => unit;
+  let unmountChild: (~parent: hostView, ~child: hostView) => unit;
+  let remountChild:
+    (~parent: hostView, ~child: hostView, ~position: int) => unit;
+
+  let commitChanges: unit => unit;
 };
 
 module Make = (Implementation: HostImplementation) => {
@@ -30,6 +40,8 @@ module Make = (Implementation: HostImplementation) => {
 
   module Key = {
     type t = int;
+
+    let equal = (==);
     let none = (-1);
     let dynamicKeyMagicNumber = 0;
     let create = () => {
@@ -921,6 +933,295 @@ module Make = (Implementation: HostImplementation) => {
       (newRenderedElement, updateLog);
     };
   };
+
+  /**
+   * Functions for mounting/unmounting an instance tree from
+   * rendered element, update log, and top level update.
+   */
+  module HostView = {
+    open Implementation;
+
+    let getHostViewInstance = ({id, _}) =>
+      switch (getInstance(id)) {
+      | Some(hostView) => hostView
+      | None =>
+        /* TODO Check if this is possible */
+        print_endline(
+          "Root host view instance " ++ string_of_int(id) ++ " wasn't found",
+        );
+        assert(false);
+      };
+
+    let rec traverseRenderedElement =
+            (parentHostView, renderedElement, f, position) =>
+      switch (renderedElement) {
+      | IFlat(Instance(instance)) =>
+        processInstance(~parentHostView, ~instance, ~position, ~f)
+      | INested(_, elements) =>
+        List.iteri(
+          (position, element) =>
+            traverseRenderedElement(parentHostView, element, f, position),
+          elements,
+        )
+      }
+    and processInstance:
+      type state action elementType.
+        (
+          ~parentHostView: hostView,
+          ~instance: instance(state, action, elementType),
+          ~position: int,
+          ~f: (hostView, int, unit => hostView, int) => hostView
+        ) =>
+        unit =
+      (
+        ~parentHostView,
+        ~instance: instance(state, action, elementType),
+        ~position,
+        ~f,
+      ) => {
+        let {id, component, subElements, instanceSubTree, _} = instance;
+        let newParentHostView =
+          switch (component.elementType) {
+          | React => parentHostView
+          | Host => f(parentHostView, id, subElements.make, position)
+          };
+        traverseRenderedElement(newParentHostView, instanceSubTree, f, 0);
+      };
+
+    let mountInstanceUtil =
+        (implementationFunc, parentHostView, id, make, position) =>
+      switch (getInstance(id)) {
+      | Some(_) => parentHostView
+      | None =>
+        let hostView = make();
+        memoizeInstance(id, hostView);
+        implementationFunc(
+          ~parent=parentHostView,
+          ~child=hostView,
+          ~position,
+        );
+        hostView;
+      };
+
+    let mountInstance = (~parentHostView, ~instance, ~position) =>
+      processInstance(
+        ~parentHostView,
+        ~instance,
+        ~position=0,
+        ~f=mountInstanceUtil(Implementation.mountChild),
+      );
+
+    let remountInstanceUtil =
+        (implementationFunc, parentHostView, id, make, position) =>
+      switch (getInstance(id)) {
+      | Some(hostView) =>
+        implementationFunc(
+          ~parent=parentHostView,
+          ~child=hostView,
+          ~position,
+        );
+        hostView;
+      | None => parentHostView
+      };
+
+    let remountInstance = (~parentHostView, ~instance, ~position as _) =>
+      processInstance(
+        ~parentHostView,
+        ~instance,
+        ~position=0,
+        ~f=remountInstanceUtil(Implementation.remountChild),
+      );
+
+    let unmountInstanceUtil = (parentHostView, id, _, _) =>
+      switch (getInstance(id)) {
+      | Some(hostView) =>
+        Implementation.unmountChild(~parent=parentHostView, ~child=hostView);
+        hostView;
+      | None =>
+        /* TODO Determine if/when this case is even possible? */
+        print_endline(
+          "Host view instance "
+          ++ string_of_int(id)
+          ++ " wasn't found during rendered element unmount",
+        );
+        parentHostView;
+      };
+
+    let unmountInstance = (~parentHostView, ~instance) =>
+      processInstance(
+        ~parentHostView,
+        ~instance,
+        ~position=0,
+        ~f=unmountInstanceUtil,
+      );
+
+    let rec applyUpdateLogEntry:
+      type state action elementType.
+        (
+          ~parentHostView: hostView,
+          ~oldInstance: instance(state, action, elementType),
+          ~newInstance: instance(state, action, elementType),
+          UpdateLog.subtreeChange
+        ) =>
+        unit =
+      (~parentHostView, ~oldInstance, ~newInstance, entry) =>
+        switch (entry) {
+        /* The first `Nested update means our top level host view hasn't changed, moving on to the subtree */
+        | `Nested
+        | `NoChange => ()
+        | `Reordered =>
+          remountInstance(~parentHostView, ~instance=newInstance, ~position=0)
+        | `PrependElement(renderedElement) =>
+          traverseRenderedElement(
+            parentHostView,
+            renderedElement,
+            mountInstanceUtil(Implementation.mountChild),
+            0,
+          )
+        | `ReplaceElements(oldRendered, newRendered) =>
+          traverseRenderedElement(
+            parentHostView,
+            oldRendered,
+            unmountInstanceUtil,
+            0,
+          );
+          traverseRenderedElement(
+            parentHostView,
+            newRendered,
+            mountInstanceUtil(Implementation.mountChild),
+            0,
+          );
+        | `ContentChanged(subtreeReactChange) =>
+          let parentHostView = getHostViewInstance(oldInstance);
+          switch (newInstance.component.elementType) {
+          | React => assert(false)
+          | Host =>
+            newInstance.subElements.updateInstance(
+              Render.createSelf(~instance=newInstance),
+              parentHostView,
+            )
+          };
+          applyUpdateLogEntry(
+            ~parentHostView,
+            ~oldInstance,
+            ~newInstance,
+            (subtreeReactChange :> UpdateLog.subtreeChange),
+          );
+        };
+
+    let mountRenderedElement = (parentHostView, renderedElement) : unit => {
+      Implementation.beginChanges();
+      traverseRenderedElement(
+        parentHostView,
+        renderedElement,
+        mountInstanceUtil(Implementation.mountChild),
+        0,
+      );
+      Implementation.commitChanges();
+    };
+
+    let rec applyUpdateLogUtil =
+            (parentHostView, updateLog: list(UpdateLog.entry))
+            : unit =>
+      UpdateLog.(
+        switch (updateLog) {
+        | [
+            UpdateInstance({subTreeChanged, oldInstance, newInstance, _}),
+            ...tl,
+          ] =>
+          applyUpdateLogEntry(
+            ~parentHostView,
+            ~oldInstance,
+            ~newInstance,
+            subTreeChanged,
+          );
+          let parentHostView =
+            switch (subTreeChanged) {
+            | `Nested => getHostViewInstance(oldInstance)
+            | _ => parentHostView
+            };
+          applyUpdateLogUtil(parentHostView, tl);
+        | [
+            ChangeComponent({
+              oldOpaqueInstance: Instance(oldInstance),
+              newOpaqueInstance: Instance(newInstance),
+              _,
+            }),
+            ...tl,
+          ] =>
+          unmountInstance(~parentHostView, ~instance=oldInstance);
+          mountInstance(~parentHostView, ~instance=newInstance, ~position=0);
+          applyUpdateLogUtil(parentHostView, tl);
+        | [] => ()
+        }
+      );
+
+    let applyUpdateLog =
+        (parentHostView, updateLog: list(UpdateLog.entry))
+        : unit => {
+      Implementation.beginChanges();
+      applyUpdateLogUtil(parentHostView, updateLog);
+      Implementation.commitChanges();
+    };
+
+    let applyTopLevelUpdate =
+        (
+          parentHostView: hostView,
+          renderedElement: renderedElement,
+          topLevelUpdate: option(RenderedElement.topLevelUpdate),
+        )
+        : unit =>
+      switch (topLevelUpdate) {
+      | Some({subtreeChange, updateLog}) when List.length(updateLog^) > 0 =>
+        let updateLog = List.rev(updateLog^);
+        Implementation.beginChanges();
+        applyUpdateLogUtil(parentHostView, updateLog);
+        switch (subtreeChange) {
+        | `Nested => ()
+        | `Reordered =>
+          traverseRenderedElement(
+            parentHostView,
+            renderedElement,
+            remountInstanceUtil(Implementation.remountChild),
+            0,
+          )
+        | _ => assert(false)
+        };
+        Implementation.commitChanges();
+      | Some({
+          subtreeChange: `ReplaceElements(oldRendered, newRendered),
+          updateLog,
+        })
+          when List.length(updateLog^) == 0 =>
+        Implementation.beginChanges();
+        traverseRenderedElement(
+          parentHostView,
+          oldRendered,
+          unmountInstanceUtil,
+          0,
+        );
+        traverseRenderedElement(
+          parentHostView,
+          newRendered,
+          mountInstanceUtil(Implementation.mountChild),
+          0,
+        );
+        Implementation.commitChanges();
+      | Some({subtreeChange: `PrependElement(element), updateLog})
+          when List.length(updateLog^) == 0 =>
+        Implementation.beginChanges();
+        traverseRenderedElement(
+          parentHostView,
+          element,
+          mountInstanceUtil(Implementation.mountChild),
+          0,
+        );
+        Implementation.commitChanges();
+      | Some(_) => assert(false)
+      | None => ()
+      };
+  };
+
   let statelessComponent:
     (~useDynamicKey: bool=?, string) =>
     component(stateless, actionless, reactElement) =
@@ -945,6 +1246,7 @@ module Make = (Implementation: HostImplementation) => {
       ...basicComponent(~useDynamicKey?, debugName, Host),
       initialState: () => (),
     };
+
   let statefulNativeComponent:
     (~useDynamicKey: bool=?, string) =>
     componentSpec(

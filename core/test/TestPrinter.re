@@ -13,6 +13,12 @@ let makeProp = (key, value) =>
 let makeField = (key, value) =>
   Label((Atom(key ++ ":", atom), field), value);
 
+let componentName = component =>
+  switch (component) {
+  | InstanceAndComponent(component, _) => component.debugName
+  | Component(component) => component.debugName
+  };
+
 let rec formatInstance = instance => {
   let tag = componentName(instance.component);
   switch (instance.subtree) {
@@ -34,6 +40,42 @@ let rec formatInstance = instance => {
 
 let formatElement = instances =>
   List(("[", "", "]", list), instances |> List.map(formatInstance));
+
+let formatMountLogItem =
+  TestReactCore.Implementation.(
+    fun
+    | BeginChanges => Atom("BeginChanges", atom)
+    | CommitChanges => Atom("CommitChanges", atom)
+    | MountChild(root, child, position) =>
+      List(
+        ("MountChild (", ",", ")", list),
+        [
+          makeField("root", Atom(show_hostView(root), atom)),
+          makeField("child", Atom(show_hostView(child), atom)),
+          makeField("position", Atom(string_of_int(position), atom)),
+        ],
+      )
+    | UnmountChild(root, child) =>
+      List(
+        ("UnmountChild (", ",", ")", list),
+        [
+          makeField("root", Atom(show_hostView(root), atom)),
+          makeField("child", Atom(show_hostView(child), atom)),
+        ],
+      )
+    | RemountChild(root, child, position) =>
+      List(
+        ("RemountChild (", ",", ")", list),
+        [
+          makeField("root", Atom(show_hostView(root), atom)),
+          makeField("child", Atom(show_hostView(child), atom)),
+          makeField("position", Atom(string_of_int(position), atom)),
+        ],
+      )
+  );
+
+let formatMountLog = mountLog =>
+  List(("[", ",", "]", list), mountLog |> List.map(formatMountLogItem));
 
 let formatSubTreeChangeReact =
   fun
@@ -93,12 +135,15 @@ let formatTopLevelUpdateLog =
       ("TopLevelUpdate {", ",", "}", list),
       [
         makeField("subTreeChange", formatSubTreeChange(update.subtreeChange)),
-        makeField("updateLog", formatUpdateLog(update.updateLog^)),
+        makeField("updateLog", formatUpdateLog(update.updateLog)),
       ],
     );
 
 let printElement = (formatter, instances) =>
   Pretty.to_formatter(formatter, formatElement(instances));
+
+let printMountLog = (formatter, mountLog) =>
+  Pretty.to_formatter(formatter, formatMountLog(mountLog));
 
 let printUpdateLog = (formatter, updateLog) =>
   Pretty.to_formatter(formatter, formatUpdateLog(updateLog));

@@ -12,7 +12,7 @@ module Box = {
     printState: _ => title,
     render: _ => {
       children: listToElement([]),
-      make: () => Implementation.Text(title),
+      make: () => Implementation.{name: "Box", element: Text(title)},
       updateInstance: (_, _) => (),
       shouldReconfigureInstance: (~oldState, ~newState) =>
         oldState != newState,
@@ -28,7 +28,7 @@ module Div = {
     ...component,
     render: _ => {
       children: listToElement(children),
-      make: () => Implementation.View,
+      make: () => Implementation.{name: "Div", element: View},
       updateInstance: (_, _) => (),
       shouldReconfigureInstance: (~oldState as _, ~newState as _) => false,
     },
@@ -55,7 +55,7 @@ module Text = {
     printState: state => state,
     render: _ => {
       children: listToElement([]),
-      make: () => Implementation.Text(title),
+      make: () => Implementation.{name: "Text", element: Text(title)},
       updateInstance: (_, _) => (),
       shouldReconfigureInstance: (~oldState, ~newState) =>
         shouldUpdate(oldState, newState),

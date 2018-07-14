@@ -9,28 +9,26 @@
     "buildsInSource": "_build"
   },
   "scripts": {
-    "test": "esy jbuilder runtest --no-buffer"
-  },
-  "resolutions": {
-    "**/@opam/result": "1.2.0",
-    "**/@opam/lwt": "3.3.0",
-    "**/@opam/ocaml-migrate-parsetree": "1.0.10"
+    "build:dev": "refmterr jbuilder build --dev",
+    "clean": "jbuilder clean",
+    "test": "refmterr jbuilder runtest --no-buffer"
   },
   "dependencies": {
-    "@esy-ocaml/esy-installer": "^0.0.0",
-    "@esy-ocaml/reason": "facebook/reason#3629912",
-    "@opam/jbuilder": "^1.0.0-beta20",
-    "flex": "briskml/flex#b0f7a43",
+    "@esy-ocaml/esy-installer": "*",
+    "@esy-ocaml/reason": "^3.3.0",
+    "@opam/jbuilder": "*",
+    "@opam/ppx_deriving": "^4.2.1",
+    "flex": "briskml/flex#21dc063",
     "refmterr": "^3.1.7"
   },
   "peerDependencies": {
-    "ocaml": "~4.6.1"
+    "ocaml": "~4.6.4"
   },
   "devDependencies": {
     "@esy-ocaml/merlin": "^3.0.5",
     "@opam/alcotest": "^0.8.3",
     "@opam/easy-format": "^1.3.1",
-    "@opam/simple-diff": "^0.3.0",
-    "ocaml": "~4.6.1"
+    "@opam/simple-diff": "0.3",
+    "ocaml": "~4.6.4"
   }
 }

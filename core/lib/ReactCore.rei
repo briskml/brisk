@@ -2,6 +2,17 @@ module type HostImplementation = {
   type hostView;
   let getInstance: int => option(hostView);
   let memoizeInstance: (int, hostView) => unit;
+
+  let beginChanges: unit => unit;
+
+  let mountChild:
+    (~parent: hostView, ~child: hostView, ~position: int) => unit;
+  let unmountChild: (~parent: hostView, ~child: hostView) => unit;
+
+  let remountChild:
+    (~parent: hostView, ~child: hostView, ~position: int) => unit;
+
+  let commitChanges: unit => unit;
 };
 
 module Make:
@@ -110,7 +121,13 @@ module Make:
     /**
      * Log of operations performed to update an instance tree.
      */
-    module UpdateLog: {type t; let create: unit => t;};
+    module UpdateLog: {
+      type subtreeChange;
+      type entry;
+      type t;
+      let create: unit => t;
+    };
+
     module RenderedElement: {
       /** Type of a react element after rendering  */
       type t;
@@ -134,6 +151,26 @@ module Make:
     };
 
     /**
+     * Functions for mounting/unmounting an instance tree from
+     * rendered element, update log, and top level update.
+     */
+    module HostView: {
+      let mountRenderedElement:
+        (Implementation.hostView, RenderedElement.t) => unit;
+
+      let applyUpdateLog:
+        (Implementation.hostView, list(UpdateLog.entry)) => unit;
+
+      let applyTopLevelUpdate:
+        (
+          Implementation.hostView,
+          RenderedElement.t,
+          option(RenderedElement.topLevelUpdate)
+        ) =>
+        unit;
+    };
+
+    /**
      * RemoteAction provides a way to send actions to a remote component.
      * The sender creates a fresh RemoteAction and passes it down.
      * The recepient component calls subscribe in the didMount method.
@@ -149,6 +186,7 @@ module Make:
       let subscribe: (~act: 'action => unit, t('action)) => unit;
 
       /** Perform an action on the subscribed component. */
+
       let act: (t('action), ~action: 'action) => unit;
     };
   };

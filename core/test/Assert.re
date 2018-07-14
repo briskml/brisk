@@ -18,22 +18,38 @@ type testItem('a) =
                                                     option(flushUpdates),
                                                   );
 
+type mountElement = {
+  hostRoot: Implementation.hostView,
+  renderedElement,
+};
+
+type mount = list(Implementation.testMountEntry);
+
+type testHostItem('a) =
+  | MountElement(mountElement): testHostItem(mount);
+
 let renderedElement =
   Alcotest.testable(
     (formatter, t) => TestPrinter.printElement(formatter, t),
-    TestRenderer.compareElement,
+    TestRenderer.equal,
   );
 
 let topLevelUpdateLog =
   Alcotest.testable(
     (formatter, t) => TestPrinter.printTopLevelUpdateLog(formatter, t),
-    TestRenderer.compareTopLevelUpdateLog,
+    TestRenderer.equal_optionTestTopLevelUpdateLog,
+  );
+
+let mountLog =
+  Alcotest.testable(
+    (formatter, t) => TestPrinter.printMountLog(formatter, t),
+    Implementation.equal_testMountLog,
   );
 
 let updateLog =
   Alcotest.testable(
     (formatter, t) => TestPrinter.printUpdateLog(formatter, t),
-    TestRenderer.compareUpdateLog,
+    TestRenderer.equal_testUpdateLog,
   );
 
 module Diff = Simple_diff.Make(String);
@@ -100,6 +116,11 @@ let assertElement = (~label="", expected, rendered) =>
     TestRenderer.convertElement(rendered),
   );
 
+let assertMountLog = (~label="", expected, actual) => {
+  Implementation.mountLog := [];
+  check(mountLog, label, expected, List.rev(actual));
+};
+
 let assertUpdateLog = (~label="", expected, actual) =>
   check(updateLog, label, expected, TestRenderer.convertUpdateLog(actual));
 
@@ -122,6 +143,17 @@ let assertUpdate =
   assertElement(~label, expectedElement, actualElement);
   assertTopLevelUpdateLog(~label, expectedLog, actualLog);
 };
+
+let expectHost: type a. (~label: string=?, a, testHostItem(a)) => a =
+  (~label=?, expected, prev) =>
+    switch (prev) {
+    | MountElement({hostRoot, renderedElement}) =>
+      open TestRenderer;
+      HostView.mountRenderedElement(hostRoot, renderedElement);
+      let mountLog = Implementation.mountLog^;
+      assertMountLog(~label?, expected, mountLog);
+      mountLog;
+    };
 
 let expect:
   type a.
@@ -165,6 +197,7 @@ let expect:
 
 let start = reactElement => {
   GlobalState.reset();
+  Hashtbl.clear(Implementation.map);
   FirstRender(reactElement);
 };
 
@@ -173,10 +206,11 @@ let act = (~action, rAction, (oldRenderedElement, previousReactElement)) => {
   (oldRenderedElement, previousReactElement);
 };
 
+let mount = (hostRoot, renderedElement) =>
+  MountElement({hostRoot, renderedElement});
+
 let update = (nextReactElement, (oldRenderedElement, previousReactElement)) =>
   Update({nextReactElement, oldRenderedElement, previousReactElement});
 
 let flushPendingUpdates = ((oldRenderedElement, previousReactElement)) =>
   FlushUpdates(previousReactElement, oldRenderedElement);
-
-let done_ = ((_oldRenderedElement, _previousReactElement)) => ();

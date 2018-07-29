@@ -27,10 +27,8 @@ targets:
         - BriskMacTests_macOS
       gatherCoverageData: true
     dependencies:
-      - framework: $(STDLIB_PATH)/libasmrun.a
-        embed: true
       - framework: $(BUILD_STORE_PATH)/brisk/app.o
-        embed: true
+        embed: false
   BriskMacTests:
     type: bundle.unit-test
     platform: [macOS]

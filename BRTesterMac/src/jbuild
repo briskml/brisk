@@ -1,13 +1,18 @@
 (jbuild_version 1)
 
-(executable (
- (name app)
+(executable
+ ((name app)
  (libraries (brisk_cocoa))
- (modes (object))
+ (flags (:standard -runtime-variant d -verbose -g))
+ (link_flags (:standard
+  (-ccopt -g)
+  (-ccopt "-framework Cocoa")
+ ))
+ (modes (exe))
 ))
 
-(install (
-  (package brisk)
-  (section lib)
-  (files ((app.exe.o as app.o)))
-))
+(install
+  ((package brisk)
+  (section bin)
+  (files (app.exe)))
+)

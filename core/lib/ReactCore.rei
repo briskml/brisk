@@ -3,6 +3,8 @@ module type HostImplementation = {
   let getInstance: int => option(hostView);
   let memoizeInstance: (int, hostView) => unit;
 
+  let markAsDirty: unit => unit;
+
   let beginChanges: unit => unit;
 
   let mountChild:

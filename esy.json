@@ -12,20 +12,22 @@
     "build:dev": "refmterr jbuilder build @install --dev --no-buffer",
     "clean": "jbuilder clean",
     "test": "refmterr jbuilder runtest --no-buffer",
+    "bootstrap:cocoa": "make -C renderer_cocoa/lib bootstrap",
     "bootstrap:mac": "make -C BRTesterMac/mac bootstrap",
     "run:mac": "make -C BRTesterMac/mac run",
     "test:mac": "make -C BRTesterMac/mac test"
   },
   "dependencies": {
     "@esy-ocaml/esy-installer": "*",
-    "@esy-ocaml/reason": "^3.3.0",
+    "@esy-ocaml/reason": "facebook/reason#f4578da",
+    "@opam/merlin-extend": "*",
     "@opam/jbuilder": "*",
     "@opam/ppx_deriving": "^4.2.1",
     "flex": "briskml/flex#21dc063",
     "refmterr": "^3.1.7"
   },
   "peerDependencies": {
-    "ocaml": "~4.6.4"
+    "ocaml": "~4.7.0"
   },
   "devDependencies": {
     "@esy-ocaml/merlin": "^3.0.5",
@@ -33,8 +35,14 @@
     "@opam/easy-format": "^1.3.1",
     "@opam/ocp-indent": "^1.6.1",
     "@opam/simple-diff": "0.3",
-    "ocaml": "~4.6.4",
-    "xcodegen": "^1.9.2",
+    "ocaml": "~4.7.0",
+    "xcodegen": "^1.10.3",
     "xcpretty": "^0.2.8"
+  },
+  "resolutions": {
+    "**/@esy-ocaml/reason": "github:facebook/reason#f4578da",
+    "**/@opam/result": "1.2",
+    "**/@opam/merlin-extend": "0.3",
+    "**/@opam/jbuilder": "transition"
   }
 }

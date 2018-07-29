@@ -2,6 +2,5 @@
 
 (library
  ((name brisk_core)
-  (public_name brisk)
-  (libraries (flex)))
+  (public_name brisk))
 )

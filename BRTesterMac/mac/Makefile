@@ -21,7 +21,7 @@ bootstrap:
 
 build:
 	@echo "> Building the project"
-	@xcodebuild -scheme $(SCHEME) -configuration $(CONFIGURATION)
+	@xcodebuild -scheme $(SCHEME) -configuration $(CONFIGURATION) build
 
 test:
 	xcodebuild -scheme $(SCHEME) -configuration $(CONFIGURATION) clean build test | xcpretty && exit ${PIPESTATUS[0]}

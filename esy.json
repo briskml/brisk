@@ -21,7 +21,7 @@
     "@esy-ocaml/esy-installer": "*",
     "@esy-ocaml/reason": "facebook/reason#f4578da",
     "@opam/merlin-extend": "*",
-    "@opam/jbuilder": "*",
+    "@opam/dune": "^1.0.1",
     "@opam/ppx_deriving": "^4.2.1",
     "flex": "briskml/flex#21dc063",
     "refmterr": "^3.1.7"

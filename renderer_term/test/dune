@@ -1,0 +1,8 @@
+(executable
+ (name test)
+ (libraries alcotest brisk_term))
+
+(alias
+ (name runtest)
+ (deps test.exe)
+ (action (run %{deps})))

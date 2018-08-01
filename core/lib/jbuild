@@ -1,6 +1,0 @@
-(jbuild_version 1)
-
-(library
- ((name brisk_core)
-  (public_name brisk))
-)

@@ -1157,9 +1157,9 @@ module Make = (Implementation: HostImplementation) => {
       );
 
     let applyUpdateLog =
-        (parentHostView, updateLog: list(UpdateLog.entry)): unit => {
+        (parentHostView, updateLog: UpdateLog.t): unit => {
       Implementation.beginChanges();
-      applyUpdateLogUtil(parentHostView, updateLog);
+      applyUpdateLogUtil(parentHostView, updateLog^);
       Implementation.commitChanges();
     };
 

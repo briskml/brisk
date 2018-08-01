@@ -161,7 +161,7 @@ module Make:
         (Implementation.hostView, RenderedElement.t) => unit;
 
       let applyUpdateLog:
-        (Implementation.hostView, list(UpdateLog.entry)) => unit;
+        (Implementation.hostView, UpdateLog.t) => unit;
 
       let applyTopLevelUpdate:
         (

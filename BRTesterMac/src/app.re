@@ -7,26 +7,6 @@ module View = {
     React.(element(View.make(~layout, ~style, listToElement(children))));
 };
 
-let performLayout = (root: React.NativeCocoa.hostView) => {
-  React.Layout.(
-    layoutNode(
-      root.layoutNode,
-      Flex.FixedEncoding.cssUndefined,
-      Flex.FixedEncoding.cssUndefined,
-      Ltr,
-    )
-  );
-  let layout = root.layoutNode.layout;
-
-  NSView.setFrame(
-    root.view,
-    layout.left |> float_of_int,
-    layout.top |> float_of_int,
-    layout.width |> float_of_int,
-    layout.height |> float_of_int,
-  );
-};
-
 let render = element => {
   let app = Lazy.force(NSApplication.app);
 
@@ -50,17 +30,14 @@ let render = element => {
     };
 
     let w = NSWindow.makeWithContentRect(0., 0., 680., 468.);
-    w#windowDidResize(_ => performLayout(root));
+    w#windowDidResize(_ => React.RunLoop.performLayout(root));
     w#center;
     w#makeKeyAndOrderFront;
 
     w#setContentView(root.view);
 
-    let rendered =
-      ref(React.RenderedElement.render(React.element(element)));
-    ();
-    React.HostView.mountRenderedElement(root, rendered^);
-    performLayout(root);
+    React.RunLoop.run(root, React.element(element));
+
   });
   app#run;
 };

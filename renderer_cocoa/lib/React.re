@@ -60,7 +60,8 @@ module NativeCocoa = {
     NSView.free(id);
   };
 
-  let markAsDirty = () => ();
+  let isDirty = ref(false);
+  let markAsDirty = () => isDirty := true;
 
   let beginChanges = () => ();
 
@@ -78,6 +79,54 @@ module NativeCocoa = {
     ();
 };
 
-let run = render => Callback.register("React.run", render);
-
 include ReactCore.Make(NativeCocoa);
+
+module RunLoop = {
+  let performLayout = (root: NativeCocoa.hostView) => {
+    Layout.(
+      layoutNode(
+        root.layoutNode,
+        Flex.FixedEncoding.cssUndefined,
+        Flex.FixedEncoding.cssUndefined,
+        Ltr,
+      )
+    );
+    let layout = root.layoutNode.layout;
+
+    NSView.setFrame(
+      root.view,
+      layout.left |> float_of_int,
+      layout.top |> float_of_int,
+      layout.width |> float_of_int,
+      layout.height |> float_of_int,
+    );
+  };
+
+  let rec loop = (root: NativeCocoa.hostView, rendered: RenderedElement.t) =>
+    Lwt.(
+      return()
+      >>= (
+        () =>
+          return(
+            if (NativeCocoa.isDirty^ === true) {
+              let (nextElement, updateLog) =
+                RenderedElement.flushPendingUpdates(rendered);
+              HostView.applyUpdateLog(root, updateLog);
+              performLayout(root);
+              NativeCocoa.isDirty := false;
+              nextElement;
+            } else {
+              rendered;
+            },
+          )
+      )
+      >>= loop(root)
+    );
+
+  let run = (root: NativeCocoa.hostView, element: reactElement) => {
+    let rendered = RenderedElement.render(element);
+    HostView.mountRenderedElement(root, rendered);
+    performLayout(root);
+    Lwt_main.run(loop(root, rendered));
+  };
+};

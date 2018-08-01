@@ -27,7 +27,7 @@
     "refmterr": "^3.1.7"
   },
   "peerDependencies": {
-    "ocaml": "~4.7.0"
+    "ocaml": "~4.7.1"
   },
   "devDependencies": {
     "@esy-ocaml/merlin": "^3.0.5",
@@ -35,7 +35,7 @@
     "@opam/easy-format": "^1.3.1",
     "@opam/ocp-indent": "^1.6.1",
     "@opam/simple-diff": "0.3",
-    "ocaml": "~4.7.0",
+    "ocaml": "~4.7.1",
     "xcodegen": "^1.10.3",
     "xcpretty": "^0.2.8"
   },

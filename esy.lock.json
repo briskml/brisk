@@ -1,5 +1,5 @@
 {
-  "hash": "15f1374731bcf5882fe03a27020b7255",
+  "hash": "fdd1d41670dfa146da46df2f2a8bb383",
   "root": "brisk@path:.",
   "node": {
     "xcpretty@0.2.8001": {
@@ -75,11 +75,11 @@
         "@esy-ocaml/esy-installer@0.0.0", "@esy-ocaml/merlin@3.0.5005",
         "@esy-ocaml/reason@github:facebook/reason#f4578da",
         "@opam/alcotest@opam:0.8.3", "@opam/dune@opam:1.0.1",
-        "@opam/easy-format@opam:1.3.1", "@opam/merlin-extend@opam:0.3",
-        "@opam/ocp-indent@opam:1.6.1", "@opam/ppx_deriving@opam:4.2.1",
-        "@opam/simple-diff@opam:0.3", "flex@github:briskml/flex#21dc063",
-        "ocaml@4.7.1", "refmterr@3.1.7", "xcodegen@1.10.3",
-        "xcpretty@0.2.8001"
+        "@opam/easy-format@opam:1.3.1", "@opam/lwt@opam:4.1.0",
+        "@opam/merlin-extend@opam:0.3", "@opam/ocp-indent@opam:1.6.1",
+        "@opam/ppx_deriving@opam:4.2.1", "@opam/simple-diff@opam:0.3",
+        "flex@github:briskml/flex#21dc063", "ocaml@4.7.1", "refmterr@3.1.7",
+        "xcodegen@1.10.3", "xcpretty@0.2.8001"
       ]
     },
     "@opam/zed@opam:1.6": {

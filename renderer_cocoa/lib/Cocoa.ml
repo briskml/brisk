@@ -160,132 +160,64 @@ module NSView = struct
   type t = nsView
 
   external _NSView_make: unit -> t = "ml_NSView_make"
+  external _NSView_memoize: int -> t -> unit = "ml_NSView_memoize"
+  external _NSView_free: int -> unit = "ml_NSView_free"
 
-  external _NSView_memoize: int -> t -> unit =
-    "ml_NSView_memoize"
+  external _NSView_setBorderWidth: t -> float -> unit = "ml_NSView_setBorderWidth"
 
-  external _NSView_free: int -> unit =
-    "ml_NSView_free"
-
-  external _NSView_setBorderWidth: t -> float -> unit =
-    "ml_NSView_setBorderWidth"
-
-  external _NSView_setBorderColor:
-    t ->
-    float ->
-    float ->
-    float ->
-    float ->
-    unit =
+  external _NSView_setBorderColor: t -> float -> float -> float -> float -> unit =
     "ml_NSView_setBorderColor"
 
-  external _NSView_setBackgroundColor:
-    t ->
-    float ->
-    float ->
-    float ->
-    float ->
-    unit =
+  external _NSView_setBackgroundColor: t -> float -> float -> float -> float -> unit =
     "ml_NSView_setBackgroundColor"
 
-  external _NSView_addSubview: t -> t -> unit =
-    "ml_NSView_addSubview"
+  (* external _NSView_addSubview: t -> t -> t = "NSView_addSubview_byte" "NSView_addSubview" [@@noalloc] *)
+  external _NSView_addSubview: t -> t -> t = "ml_NSView_addSubview"
 
   (* external _NSView_insertSubviewAt: t -> t -> int -> unit =
      "ml_NSView_insertSubviewAt" *)
 
-  external _NSView_setFrame:
-    t ->
-    float ->
-    float ->
-    float ->
-    float ->
-    unit =
-    "ml_NSView_setFrame"
+  external _NSView_setFrame: t -> float -> float -> float -> float -> unit = "ml_NSView_setFrame"
 
-  let make =
-    let _ = print_endline ("making") in
-    _NSView_make
+  let make = _NSView_make
 
-  let memoize id view =
-    let _ = print_endline ("memoizing: " ^ (string_of_int id)) in
-    _NSView_memoize id view
+  let memoize = _NSView_memoize
   let free = _NSView_free
 
-  let setBorderWidth view = _NSView_setBorderWidth view
-  let setBorderColor view = _NSView_setBorderColor view
-  let setBackgroundColor view = _NSView_setBackgroundColor view
+  let setBorderWidth = _NSView_setBorderWidth
+  let setBorderColor = _NSView_setBorderColor
+  let setBackgroundColor = _NSView_setBackgroundColor
 
   let setFrame view = _NSView_setFrame view
 
   let addSubview view child (position: _) =
-    let _ = print_endline ("addsubview") in
     _NSView_addSubview view child
 end
 
 (* module NSButton = struct
-   type t = nsView
+   type t = NSView.t
 
-   external _NSView_make: unit -> t = "ml_NSView_make"
+   external _NSButton_make: unit -> t = "ml_NSButton_make"
+   external _NSButton_memoize: int -> t -> unit = "ml_NSButton_memoize"
+   external _NSButton_free: int -> unit = "ml_NSButton_free"
 
-   external _NSView_memoize: int -> t -> unit =
-    "ml_NSView_memoize"
+   external _NSButton_setFrame: t -> float -> float -> float -> float -> unit =
+    "ml_NSButton_setFrame"
 
-   external _NSView_free: int -> unit =
-    "ml_NSView_free"
+   external _NSButton_setTitle: t -> string -> t = "ml_NSButton_setTitle"
+   external _NSButton_setCallback: t -> (unit -> unit) -> t = "ml_NSButton_setCallback"
 
-   external _NSView_setBorderWidth: t -> float -> unit =
-    "ml_NSView_setBorderWidth"
+   let make = _NSButton_make
+   let memoize id btn = _NSButton_memoize id btn
+   let free = _NSButton_free
 
-   external _NSView_setBorderColor:
-    t ->
-    float ->
-    float ->
-    float ->
-    float ->
-    unit =
-    "ml_NSView_setBorderColor"
+   (* let setBorderWidth view = _NSView_setBorderWidth view
+     let setBorderColor view = _NSView_setBorderColor view
+     let setBackgroundColor view = _NSView_setBackgroundColor view *)
 
-   external _NSView_setBackgroundColor:
-    t ->
-    float ->
-    float ->
-    float ->
-    float ->
-    unit =
-    "ml_NSView_setBackgroundColor"
+   let setFrame = _NSButton_setFrame
 
-   external _NSView_addSubview: t -> t -> unit =
-    "ml_NSView_addSubview"
+   let setTitle = _NSButton_setTitle
+   let setCallback = _NSButton_setCallback
 
-   (* external _NSView_insertSubviewAt: t -> t -> int -> unit =
-     "ml_NSView_insertSubviewAt" *)
-
-   external _NSView_setFrame:
-    t ->
-    float ->
-    float ->
-    float ->
-    float ->
-    unit =
-    "ml_NSView_setFrame"
-
-   let make =
-    let _ = print_endline ("making") in
-    _NSView_make
-
-   let memoize id view =
-    let _ = print_endline ("memoizing: " ^ (string_of_int id)) in
-    _NSView_memoize id view
-   let free = _NSView_free
-
-   let setBorderWidth view = _NSView_setBorderWidth view
-   let setBorderColor view = _NSView_setBorderColor view
-   let setBackgroundColor view = _NSView_setBackgroundColor view
-
-   let setFrame view = _NSView_setFrame view
-
-   let addSubview view child (position: _) =
-    let _ = print_endline ("addsubview") in
-    _NSView_addSubview view child
    end *)

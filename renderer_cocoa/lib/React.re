@@ -50,7 +50,6 @@ module NativeCocoa = {
       Hashtbl.(mem(instanceMap, id) ? Some(find(instanceMap, id)) : None);
 
   let memoizeInstance = (id, instance) => {
-    print_endline("mem hashtbl: " ++ string_of_int(id));
     Hashtbl.add(instanceMap, id, instance);
     NSView.memoize(id, instance.view);
   };
@@ -70,7 +69,7 @@ module NativeCocoa = {
   let mountChild = (~parent: hostView, ~child: hostView, ~position: int) => {
     print_endline("mount child at" ++ string_of_int(position));
     cssNodeInsertChild(parent.layoutNode, child.layoutNode, position);
-    NSView.addSubview(parent.view, child.view, position);
+    NSView.addSubview(parent.view, child.view, position) |> ignore;
   };
 
   let unmountChild = (~parent: hostView, ~child: hostView) => ();

@@ -30,6 +30,7 @@ let render = element => {
     };
 
     let w = NSWindow.makeWithContentRect(0., 0., 680., 468.);
+
     w#windowDidResize(_ => React.RunLoop.performLayout(root));
     w#center;
     w#makeKeyAndOrderFront;
@@ -37,7 +38,6 @@ let render = element => {
     w#setContentView(root.view);
 
     React.RunLoop.run(root, React.element(element));
-
   });
   app#run;
 };
@@ -71,6 +71,26 @@ let render = element => {
                  alpha: 1.,
                },
              }
+             /* <Button
+                  layout=React.Layout.LayoutSupport.defaultStyle
+                  style=React.Layout.LayoutSupport.{
+                    ...defaultStyle,
+                    width: 100,
+                    height: 100,
+                  }
+                  title="Cell one"
+                  callback=(reduce(() => !state))
+                />
+                <Button
+                  layout=React.Layout.LayoutSupport.defaultStyle
+                  style=React.Layout.LayoutSupport.{
+                    ...defaultStyle,
+                    width: 100,
+                    height: 100,
+                  }
+                  title="Cell two"
+                  callback=(reduce(() => !state))
+                /> */
            />;
          } else {
            <View
@@ -96,6 +116,16 @@ let render = element => {
                  alpha: 1.,
                },
              }
+             /* <Button
+                  layout=React.Layout.LayoutSupport.defaultStyle
+                  style=React.Layout.LayoutSupport.{
+                    ...defaultStyle,
+                    width: 100,
+                    height: 100,
+                  }
+                  title="well"
+                  callback=(reduce(() => !state))
+                /> */
            />;
          },
      };
@@ -131,6 +161,4 @@ module Component = {
   };
 };
 
-render(<Component />);
-
-/* React.run(_ => render()); */
+Callback.register("React.run", _ => render(<Component />));

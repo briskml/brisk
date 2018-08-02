@@ -552,16 +552,10 @@ CAMLprim value ml_NSView_make()
 {
   CAMLparam0();
 
-  NSLog(@"c making");
-  NSView __block *view = nil;
-  // dispatch_sync(dispatch_get_main_queue(), ^{
+  NSView *view = nil;
   view = [NSView new];
-  view.layer.borderWidth = 0.5;
-  view.layer.borderColor = [[NSColor blackColor] CGColor];
-  // });
 
   [ml_NSViews_all addObject:view];
-  NSLog(@"c make view");
 
   CAMLreturn(Val_NSView(view));
 }
@@ -571,7 +565,6 @@ CAMLprim value ml_NSView_memoize(value id_v, value view_v)
   CAMLparam2(id_v, view_v);
   NSView *view = NSView_val(view_v);
 
-  NSLog(@"c memoizing");
   [ml_NSViews setObject:view forKey:@(Int_val(id_v))];
 
   CAMLreturn(Val_unit);
@@ -593,15 +586,13 @@ CAMLprim value ml_NSView_addSubview(value view_v, value child_v)
 
   [view addSubview:child];
 
-  CAMLreturn(Val_unit);
+  CAMLreturn(Val_NSView(view));
 }
 
 // CAMLprim value ml_NSView_insertSubviewAt(NSView *view, NSView *child, intnat pos_)
 // {
-//   dispatch_sync(dispatch_get_main_queue(), ^{
-//     [view addSubview:child];
-//     [view insertSubview:child atIndex:pos_];
-//   });
+//   [view addSubview:child];
+//   [view insertSubview:child atIndex:pos_];
 
 //   CAMLreturn(Val_unit);
 // }
@@ -645,10 +636,8 @@ CAMLprim value ml_NSView_setBorderColor(value view_v, value red_v, value green_v
   CGFloat green = Double_val(green_v);
   CGFloat alpha = Double_val(alpha_v);
 
-  // dispatch_sync(dispatch_get_main_queue(), ^{
   [view setWantsLayer:YES];
   [view.layer setBorderColor:[[NSColor colorWithRed:red green:green blue:blue alpha:alpha] CGColor]];
-  // });
 
   CAMLreturn(Val_unit);
 }
@@ -664,10 +653,8 @@ CAMLprim value ml_NSView_setBackgroundColor(value view_v, value red_v, value gre
   CGFloat green = Double_val(green_v);
   CGFloat alpha = Double_val(alpha_v);
 
-  // dispatch_sync(dispatch_get_main_queue(), ^{
   [view setWantsLayer:YES];
   [view.layer setBackgroundColor:[[NSColor colorWithRed:red green:green blue:blue alpha:alpha] CGColor]];
-  // });
 
   CAMLreturn(Val_unit);
 }

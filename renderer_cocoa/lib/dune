@@ -2,7 +2,8 @@
  (name brisk_cocoa)
  (public_name brisk.cocoa)
  (synopsis "Cocoa renderer and bindings")
- (libraries brisk_core flex lwt.unix)
+ (libraries brisk_core flex lwt lwt.unix)
+ (preprocess (pps lwt_ppx))
  (c_names Cocoa_stubs)
  (c_flags (:standard
   (-Wextra -Wall -Werror -O -g -std=c99 -pedantic-errors -Wsign-compare -Wshadow)

@@ -22,6 +22,7 @@
     "@esy-ocaml/reason": "facebook/reason#f4578da",
     "@opam/dune": "^1.0.1",
     "@opam/lwt": "^4.1.0",
+    "@opam/lwt_ppx": "^1.2.1",
     "@opam/merlin-extend": "*",
     "@opam/ppx_deriving": "^4.2.1",
     "flex": "briskml/flex#21dc063",

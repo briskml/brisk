@@ -25,7 +25,6 @@
 
 static NSMutableDictionary *ml_NSViews;
 static NSMutableArray *ml_NSViews_all;
-NSView *rootView;
 dispatch_queue_t ml_q;
 
 CAMLprim value ml_NSLog(value str)
@@ -432,8 +431,6 @@ CAMLprim value ml_NSWindow_makeWithContentRect(value winId, value x_v, value y_v
   CGFloat h = Double_val(h_v);
 
   NSRect contentRect = NSMakeRect(x, y, w, h);
-  rootView = [NSView new];
-  [ml_NSViews setObject:rootView forKey:@"ROOT"];
 
   NSUInteger styleMask =
       NSWindowStyleMaskTitled |
@@ -446,7 +443,6 @@ CAMLprim value ml_NSWindow_makeWithContentRect(value winId, value x_v, value y_v
                                                 backing:NSBackingStoreBuffered
                                                   defer:NO];
   [win setDelegate:[[MLWindowDelegate alloc] initWithId:winId]];
-  [win setContentView:rootView];
 
   CAMLreturn(Val_NSWindow(win));
 }
@@ -570,6 +566,13 @@ CAMLprim value ml_NSView_memoize(value id_v, value view_v)
   CAMLreturn(Val_unit);
 }
 
+CAMLprim value NSView_memoize(intnat id_, NSView *view)
+{
+  [ml_NSViews setObject:view forKey:@(id_)];
+
+  return Val_unit;
+}
+
 CAMLprim value ml_NSView_free(value id_v)
 {
   CAMLparam1(id_v);
@@ -584,9 +587,38 @@ CAMLprim value ml_NSView_addSubview(value view_v, value child_v)
   NSView *view = NSView_val(view_v);
   NSView *child = NSView_val(child_v);
 
-  [view addSubview:child];
+  if ([NSThread isMainThread])
+  {
+    NSLog(@"MAIN");
+    [view addSubview:child];
+  }
+  else
+  {
+    dispatch_sync(dispatch_get_main_queue(), ^{
+      NSLog(@"NOT MAIN");
+      [view addSubview:child];
+    });
+  }
 
   CAMLreturn(Val_NSView(view));
+}
+
+CAMLprim value NSView_addSubview(NSView *view, NSView *child)
+{
+  if ([NSThread isMainThread])
+  {
+    NSLog(@"MAIN");
+    [view addSubview:child];
+  }
+  else
+  {
+    dispatch_sync(dispatch_get_main_queue(), ^{
+      NSLog(@"NOT MAIN");
+      [view addSubview:child];
+    });
+  }
+
+  return Val_NSView(view);
 }
 
 // CAMLprim value ml_NSView_insertSubviewAt(NSView *view, NSView *child, intnat pos_)
@@ -612,6 +644,14 @@ CAMLprim value ml_NSView_setFrame(value view_v, value x_v, value y_v, value w_v,
   [view setFrame:rect];
 
   CAMLreturn(Val_unit);
+}
+
+CAMLprim value NSView_setFrame(NSView *view, double x, double y, double w, double h)
+{
+  NSRect rect = NSMakeRect(x, y, w, h);
+  [view setFrame:rect];
+
+  return Val_unit;
 }
 
 CAMLprim value ml_NSView_setBorderWidth(value view_v, value width_v)
@@ -657,4 +697,78 @@ CAMLprim value ml_NSView_setBackgroundColor(value view_v, value red_v, value gre
   [view.layer setBackgroundColor:[[NSColor colorWithRed:red green:green blue:blue alpha:alpha] CGColor]];
 
   CAMLreturn(Val_unit);
+}
+
+// NSButton
+CAMLprim value ml_NSButton_make()
+{
+  CAMLparam0();
+
+  NSButton *btn = nil;
+  btn = [NSButton alloc];
+  [ml_NSViews_all addObject:btn];
+
+  CAMLreturn(Val_NSButton(btn));
+}
+
+CAMLprim value ml_NSButton_memoize(value id_v, value btn_v)
+{
+  CAMLparam2(id_v, btn_v);
+  NSButton *btn = NSButton_val(btn_v);
+
+  [ml_NSViews setObject:btn forKey:@(Int_val(id_v))];
+
+  CAMLreturn(Val_unit);
+}
+
+CAMLprim value ml_NSButton_free(value id_v)
+{
+  CAMLparam1(id_v);
+
+  [ml_NSViews removeObjectForKey:@(Int_val(id_v))];
+  CAMLreturn(Val_unit);
+}
+
+CAMLprim value ml_NSButton_setFrame(value btn_v, value x_v, value y_v, value w_v, value h_v)
+{
+  CAMLparam5(btn_v, x_v, y_v, w_v, h_v);
+
+  NSButton *btn = NSButton_val(btn_v);
+
+  CGFloat x = Double_val(x_v);
+  CGFloat y = Double_val(y_v);
+  CGFloat w = Double_val(w_v);
+  CGFloat h = Double_val(h_v);
+
+  NSRect rect = NSMakeRect(x, y, w, h);
+  [btn setFrame:rect];
+
+  CAMLreturn(Val_unit);
+}
+
+CAMLprim value ml_NSButton_setCallback(value btn_v, value callback_v)
+{
+  CAMLparam2(btn_v, callback_v);
+
+  NSButton *btn = NSButton_val(btn_v);
+  // value __block callback = callback_v;
+
+  // caml_register_global_root(&callback);
+
+  // [btn setAction:^{
+  //   caml_callback(callback, Val_unit);
+  // }];
+
+  CAMLreturn(Val_NSButton(btn));
+}
+
+CAMLprim value ml_NSButton_setTitle(value btn_v, value str_v)
+{
+  CAMLparam2(btn_v, str_v);
+  NSButton *btn = NSButton_val(btn_v);
+  NSString *str = [NSString stringWithUTF8String:String_val(str_v)];
+  [btn setTitle:str];
+  NSLog(@"setting title: %@", str);
+
+  CAMLreturn(Val_NSButton(btn));
 }

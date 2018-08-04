@@ -2,7 +2,7 @@
  (name app)
  (libraries brisk_cocoa)
  (flags (:standard
-        ; (-runtime-variant _pic -verbose -g)
+        (-runtime-variant d -verbose -g)
  ))
  (modes object))
 

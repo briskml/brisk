@@ -161,6 +161,7 @@ module NSView = struct
 
   external _NSView_make: unit -> t = "ml_NSView_make"
   external _NSView_memoize: int -> t -> unit = "ml_NSView_memoize"
+
   external _NSView_free: int -> unit = "ml_NSView_free"
 
   external _NSView_setBorderWidth: t -> float -> unit = "ml_NSView_setBorderWidth"
@@ -171,7 +172,6 @@ module NSView = struct
   external _NSView_setBackgroundColor: t -> float -> float -> float -> float -> unit =
     "ml_NSView_setBackgroundColor"
 
-  (* external _NSView_addSubview: t -> t -> t = "NSView_addSubview_byte" "NSView_addSubview" [@@noalloc] *)
   external _NSView_addSubview: t -> t -> t = "ml_NSView_addSubview"
 
   (* external _NSView_insertSubviewAt: t -> t -> int -> unit =
@@ -194,30 +194,30 @@ module NSView = struct
     _NSView_addSubview view child
 end
 
-(* module NSButton = struct
-   type t = NSView.t
+module NSButton = struct
+  type t = NSView.t
 
-   external _NSButton_make: unit -> t = "ml_NSButton_make"
-   external _NSButton_memoize: int -> t -> unit = "ml_NSButton_memoize"
-   external _NSButton_free: int -> unit = "ml_NSButton_free"
+  external _NSButton_make: unit -> t = "ml_NSButton_make"
+  external _NSButton_memoize: int -> t -> unit = "ml_NSButton_memoize"
+  external _NSButton_free: int -> unit = "ml_NSButton_free"
 
-   external _NSButton_setFrame: t -> float -> float -> float -> float -> unit =
+  external _NSButton_setFrame: t -> float -> float -> float -> float -> unit =
     "ml_NSButton_setFrame"
 
-   external _NSButton_setTitle: t -> string -> t = "ml_NSButton_setTitle"
-   external _NSButton_setCallback: t -> (unit -> unit) -> t = "ml_NSButton_setCallback"
+  external _NSButton_setTitle: t -> string -> t = "ml_NSButton_setTitle"
+  external _NSButton_setCallback: t -> (unit -> unit) -> t = "ml_NSButton_setCallback"
 
-   let make = _NSButton_make
-   let memoize id btn = _NSButton_memoize id btn
-   let free = _NSButton_free
+  let make = _NSButton_make
+  let memoize id btn = _NSButton_memoize id btn
+  let free = _NSButton_free
 
-   (* let setBorderWidth view = _NSView_setBorderWidth view
+  (* let setBorderWidth view = _NSView_setBorderWidth view
      let setBorderColor view = _NSView_setBorderColor view
      let setBackgroundColor view = _NSView_setBackgroundColor view *)
 
-   let setFrame = _NSButton_setFrame
+  let setFrame = _NSButton_setFrame
 
-   let setTitle = _NSButton_setTitle
-   let setCallback = _NSButton_setCallback
+  let setTitle = _NSButton_setTitle
+  let setCallback = _NSButton_setCallback
 
-   end *)
+end

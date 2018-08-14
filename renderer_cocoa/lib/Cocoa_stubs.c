@@ -566,13 +566,6 @@ CAMLprim value ml_NSView_memoize(value id_v, value view_v)
   CAMLreturn(Val_unit);
 }
 
-CAMLprim value NSView_memoize(intnat id_, NSView *view)
-{
-  [ml_NSViews setObject:view forKey:@(id_)];
-
-  return Val_unit;
-}
-
 CAMLprim value ml_NSView_free(value id_v)
 {
   CAMLparam1(id_v);
@@ -587,38 +580,9 @@ CAMLprim value ml_NSView_addSubview(value view_v, value child_v)
   NSView *view = NSView_val(view_v);
   NSView *child = NSView_val(child_v);
 
-  if ([NSThread isMainThread])
-  {
-    NSLog(@"MAIN");
-    [view addSubview:child];
-  }
-  else
-  {
-    dispatch_sync(dispatch_get_main_queue(), ^{
-      NSLog(@"NOT MAIN");
-      [view addSubview:child];
-    });
-  }
+  [view addSubview:child];
 
   CAMLreturn(Val_NSView(view));
-}
-
-CAMLprim value NSView_addSubview(NSView *view, NSView *child)
-{
-  if ([NSThread isMainThread])
-  {
-    NSLog(@"MAIN");
-    [view addSubview:child];
-  }
-  else
-  {
-    dispatch_sync(dispatch_get_main_queue(), ^{
-      NSLog(@"NOT MAIN");
-      [view addSubview:child];
-    });
-  }
-
-  return Val_NSView(view);
 }
 
 // CAMLprim value ml_NSView_insertSubviewAt(NSView *view, NSView *child, intnat pos_)
@@ -644,14 +608,6 @@ CAMLprim value ml_NSView_setFrame(value view_v, value x_v, value y_v, value w_v,
   [view setFrame:rect];
 
   CAMLreturn(Val_unit);
-}
-
-CAMLprim value NSView_setFrame(NSView *view, double x, double y, double w, double h)
-{
-  NSRect rect = NSMakeRect(x, y, w, h);
-  [view setFrame:rect];
-
-  return Val_unit;
 }
 
 CAMLprim value ml_NSView_setBorderWidth(value view_v, value width_v)

@@ -33,10 +33,6 @@ let render = element => {
 
     let w = NSWindow.makeWithContentRect(0., 0., 680., 468.);
 
-    /* w#windowDidResize(_ => React.RunLoop.performLayout(root)); */
-    w#center;
-    w#makeKeyAndOrderFront;
-
     let root = {
       React.NativeCocoa.view: NSView.make(),
       layoutNode:
@@ -45,17 +41,21 @@ let render = element => {
           ~andStyle={
             ...React.Layout.LayoutSupport.defaultStyle,
             width: 320,
-            height: 240,
+            height: 460,
           },
           (),
         ),
     };
 
+    w#windowDidResize(_ => React.RunLoop.performLayout(root));
+    w#center;
+    w#makeKeyAndOrderFront;
+
     w#setContentView(root.view);
 
     let rendered = React.RenderedElement.render(React.element(element));
     React.HostView.mountRenderedElement(root, rendered);
-    /* React.RunLoop.performLayout(root); */
+    React.RunLoop.performLayout(root);
     /* React.RunLoop.run(root, React.element(element)); */
   });
   app#run;
@@ -146,44 +146,5 @@ module Component = {
       },
   };
 };
-
-/* module Component = {
-                                let otherComponent = React.statelessComponent("Other");
-                                let createElement = (~children, ()) => {
-                                  ...otherComponent,
-                                  render: ({state, reduce}) =>
-                                    <View
-                                      layout={
-                                        ...React.Layout.LayoutSupport.defaultStyle,
-                                        width: 100,
-                                        height: 100,
-                                      }
-                                      style={
-                                        borderWidth: 1.,
-                                        backgroundColor: {
-                                          red: 0.3,
-                                          green: 0.5,
-                                          blue: 0.3,
-                                          alpha: 1.,
-                                        },
-                                        borderColor: {
-                                          red: 0.,
-                                          green: 1.,
-                                          blue: 0.,
-                                          alpha: 1.,
-                                        },
-                                      }
-                                    />,
-                                };
-
-
-
-
-
-
-
-
-
-   }; */
 
 Callback.register("React.run", _ => render(<Component />));

@@ -5,13 +5,13 @@
   "repository": "https://github.com/briskml/brisk.git",
   "license": "MIT",
   "esy": {
-    "build": [["refmterr", "jbuilder", "build", "@install"]],
+    "build": [["jbuilder", "build", "@install"]],
     "buildsInSource": "_build"
   },
   "scripts": {
     "build:dev": "refmterr jbuilder build @install --dev --no-buffer",
     "clean": "jbuilder clean",
-    "test": "refmterr jbuilder runtest --no-buffer",
+    "test": "jbuilder runtest --no-buffer",
     "bootstrap:cocoa": "make -C renderer_cocoa/lib bootstrap",
     "bootstrap:mac": "make -C BRTesterMac/mac bootstrap",
     "run:mac": "make -C BRTesterMac/mac run",

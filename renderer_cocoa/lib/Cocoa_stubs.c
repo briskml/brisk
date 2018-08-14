@@ -705,7 +705,7 @@ CAMLprim value ml_NSButton_make()
   CAMLparam0();
 
   NSButton *btn = nil;
-  btn = [NSButton alloc];
+  btn = [NSButton new];
   [ml_NSViews_all addObject:btn];
 
   CAMLreturn(Val_NSButton(btn));

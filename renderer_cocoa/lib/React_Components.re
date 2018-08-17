@@ -19,8 +19,8 @@ module View = {
     ...component,
     render: _ => {
       make: () => {view: NSView.make(), layoutNode: makeLayoutNode(~layout)},
-      shouldReconfigureInstance: (~oldState: _, ~newState: _) => false,
-      updateInstance: (self, {view}) => {
+      shouldReconfigureInstance: (~oldState as _, ~newState as _) => false,
+      updateInstance: (_self, {view}) => {
         let {red, green, blue, alpha} = style.backgroundColor;
         NSView.setBackgroundColor(view, red, green, blue, alpha);
         NSView.setBorderWidth(view, style.borderWidth);
@@ -34,7 +34,7 @@ module View = {
 
 module Button = {
   let component = statelessNativeComponent("Button");
-  let make = (~title=?, ~layout, ~style=?, ~callback=?, children) => {
+  let make = (~title=?, ~layout, ~style=?, ~callback as _=?, children) => {
     ...component,
     render: _ => {
       make: () => {
@@ -52,8 +52,8 @@ module Button = {
 
         {view: btn, layoutNode: makeLayoutNode(~layout)};
       },
-      shouldReconfigureInstance: (~oldState: _, ~newState: _) => false,
-      updateInstance: (self, {view}) =>
+      shouldReconfigureInstance: (~oldState as _, ~newState as _) => false,
+      updateInstance: (_self, {view}) =>
         switch (style) {
         | Some(style) =>
           let {red, green, blue, alpha} = style.backgroundColor;

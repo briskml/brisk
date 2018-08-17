@@ -425,7 +425,7 @@ module Make = (Implementation: HostImplementation) => {
      */
     let rec renderElement =
             (~useKeyTable=?, Element(component) as element): opaqueInstance =>
-      switch (getOpaqueInstance(useKeyTable, element)) {
+      switch (getOpaqueInstance(~useKeyTable, element)) {
       | Some(opaqueInstance) =>
         /** Throwaway update log: this is a render so no need to keep an update log. */
         let updateLog = UpdateLog.create();
@@ -619,7 +619,7 @@ module Make = (Implementation: HostImplementation) => {
           let (self, pendingStateUpdates, id) =
             createInitialSelf(~component=nextComponent);
           let nextSubElements = nextComponent.render(self);
-          let (nextSubtree, newOpaqueInstance) = {
+          let (_nextSubtree, newOpaqueInstance) = {
             let nextSubtree =
               switch (nextComponent.elementType) {
               | React => renderReactElement(nextSubElements)
@@ -942,7 +942,7 @@ module Make = (Implementation: HostImplementation) => {
   module HostView = {
     open Implementation;
 
-    let getHostViewInstance = ({id, _}) =>
+    let getHostViewInstance = ({id}) =>
       switch (getInstance(id)) {
       | Some(hostView) => hostView
       | None =>
@@ -980,7 +980,7 @@ module Make = (Implementation: HostImplementation) => {
         ~position,
         ~f,
       ) => {
-        let {id, component, subElements, instanceSubTree, _} = instance;
+        let {id, component, subElements, instanceSubTree} = instance;
         let newParentHostView =
           switch (component.elementType) {
           | React => parentHostView
@@ -1004,7 +1004,7 @@ module Make = (Implementation: HostImplementation) => {
         hostView;
       };
 
-    let mountInstance = (~parentHostView, ~instance, ~position) =>
+    let mountInstance = (~parentHostView, ~instance, ~position as _) =>
       processInstance(
         ~parentHostView,
         ~instance,
@@ -1013,7 +1013,7 @@ module Make = (Implementation: HostImplementation) => {
       );
 
     let remountInstanceUtil =
-        (implementationFunc, parentHostView, id, make, position) =>
+        (implementationFunc, parentHostView, id, _make, position) =>
       switch (getInstance(id)) {
       | Some(hostView) =>
         implementationFunc(
@@ -1125,10 +1125,7 @@ module Make = (Implementation: HostImplementation) => {
             (parentHostView, updateLog: list(UpdateLog.entry)): unit =>
       UpdateLog.(
         switch (updateLog) {
-        | [
-            UpdateInstance({subTreeChanged, oldInstance, newInstance, _}),
-            ...tl,
-          ] =>
+        | [UpdateInstance({subTreeChanged, oldInstance, newInstance}), ...tl] =>
           applyUpdateLogEntry(
             ~parentHostView,
             ~oldInstance,
@@ -1156,8 +1153,7 @@ module Make = (Implementation: HostImplementation) => {
         }
       );
 
-    let applyUpdateLog =
-        (parentHostView, updateLog: UpdateLog.t): unit => {
+    let applyUpdateLog = (parentHostView, updateLog: UpdateLog.t): unit => {
       Implementation.beginChanges();
       applyUpdateLogUtil(parentHostView, updateLog^);
       Implementation.commitChanges();

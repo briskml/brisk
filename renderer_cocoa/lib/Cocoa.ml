@@ -190,7 +190,7 @@ module NSView = struct
 
   let setFrame view = _NSView_setFrame view
 
-  let addSubview view child (position: _) =
+  let addSubview view child _position =
     _NSView_addSubview view child
 end
 

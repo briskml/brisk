@@ -72,10 +72,9 @@ module NativeCocoa = {
     NSView.addSubview(parent.view, child.view, position) |> ignore;
   };
 
-  let unmountChild = (~parent: hostView, ~child: hostView) => ();
+  let unmountChild = (~parent as _, ~child as _) => ();
 
-  let remountChild = (~parent: hostView, ~child: hostView, ~position: int) =>
-    ();
+  let remountChild = (~parent as _, ~child as _, ~position as _) => ();
 };
 
 include ReactCore.Make(NativeCocoa);

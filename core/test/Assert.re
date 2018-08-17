@@ -14,9 +14,8 @@ type flushUpdates = (TestRenderer.t, list(TestRenderer.testUpdateEntry));
 type testItem('a) =
   | FirstRender(reactElement): testItem(TestRenderer.t)
   | Update(updateState): testItem(update)
-  | FlushUpdates(reactElement, renderedElement): testItem(
-                                                    option(flushUpdates),
-                                                  );
+  | FlushUpdates(reactElement, renderedElement)
+    : testItem(option(flushUpdates));
 
 type mountElement = {
   hostRoot: Implementation.hostView,
@@ -94,7 +93,7 @@ let line = (ppf, c) => {
 };
 
 let check = (t, msg, x, y) =>
-  if (! equal(t, x, y)) {
+  if (!equal(t, x, y)) {
     line(Fmt.stderr, '-');
     let expected =
       Fmt.strf("%a", pp(t), x)
@@ -148,7 +147,6 @@ let expectHost: type a. (~label: string=?, a, testHostItem(a)) => a =
   (~label=?, expected, prev) =>
     switch (prev) {
     | MountElement({hostRoot, renderedElement}) =>
-      open TestRenderer;
       HostView.mountRenderedElement(hostRoot, renderedElement);
       let mountLog = Implementation.mountLog^;
       assertMountLog(~label?, expected, mountLog);

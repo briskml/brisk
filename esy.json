@@ -5,13 +5,13 @@
   "repository": "https://github.com/briskml/brisk.git",
   "license": "MIT",
   "esy": {
-    "build": [["jbuilder", "build", "@install"]],
+    "build": [["dune", "build", "@install", "--profile=release"]],
     "buildsInSource": "_build"
   },
   "scripts": {
-    "build:dev": "refmterr jbuilder build @install --dev --no-buffer",
-    "clean": "jbuilder clean",
-    "test": "jbuilder runtest --no-buffer",
+    "build:dev": "refmterr dune build @install --no-buffer",
+    "clean": "dune clean",
+    "test": "dune runtest --no-buffer",
     "bootstrap:cocoa": "make -C renderer_cocoa/lib bootstrap",
     "bootstrap:mac": "make -C BRTesterMac/mac bootstrap",
     "run:mac": "make -C BRTesterMac/mac run",

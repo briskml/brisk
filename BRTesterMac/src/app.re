@@ -63,7 +63,7 @@ let render = element => {
 
 module Component = {
   let otherComponent = React.reducerComponent("Other");
-  let createElement = (~children, ()) => {
+  let createElement = (~children as _, ()) => {
     ...otherComponent,
     initialState: _ => false,
     reducer: (x, _) => React.Update(x),

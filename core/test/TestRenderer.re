@@ -2,7 +2,8 @@ open TestReactCore;
 
 type opaqueComponent =
   | Component(componentSpec('a, 'b, 'c, 'd)): opaqueComponent
-  | InstanceAndComponent(component('a, 'b, 'c), instance('a, 'b, 'c)): opaqueComponent;
+  | InstanceAndComponent(component('a, 'b, 'c), instance('a, 'b, 'c))
+    : opaqueComponent;
 
 let equal_opaqueComponent = (left, right) =>
   switch (left, right) {
@@ -103,7 +104,7 @@ and convertElement =
   | INested(_, elements) =>
     List.flatten(List.map(convertElement, elements));
 
-let rec convertSubTreeChangeReact = (x: UpdateLog.subtreeChangeReact) =>
+let convertSubTreeChangeReact = (x: UpdateLog.subtreeChangeReact) =>
   switch (x) {
   | `NoChange => `NoChange
   | `Nested => `Nested

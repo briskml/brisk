@@ -18,8 +18,11 @@ module View = {
   let make = (~layout, ~style, children) => {
     ...component,
     render: _ => {
-      make: () => {view: NSView.make(), layoutNode: makeLayoutNode(~layout)},
-      shouldReconfigureInstance: (~oldState as _, ~newState as _) => false,
+      make: () => {
+        let view = NSView.make();
+        {view, layoutNode: makeLayoutNode(~layout, view)};
+      },
+      shouldReconfigureInstance: (~oldState as _, ~newState as _) => true,
       updateInstance: (_self, {view}) => {
         let {red, green, blue, alpha} = style.backgroundColor;
         NSView.setBackgroundColor(view, red, green, blue, alpha);
@@ -30,11 +33,13 @@ module View = {
       children,
     },
   };
+  let createElement = (~layout, ~style, ~children, ()) =>
+    element(make(~layout, ~style, listToElement(children)));
 };
 
 module Button = {
   let component = statelessNativeComponent("Button");
-  let make = (~title=?, ~layout, ~style=?, ~callback as _=?, children) => {
+  let make = (~title=?, ~layout, ~style=?, ~callback=() => (), children) => {
     ...component,
     render: _ => {
       make: () => {
@@ -44,15 +49,18 @@ module Button = {
           | Some(title) => NSButton.setTitle(btn, title)
           | None => btn
           };
-        /* let btn =
-           switch (callback) {
-           | Some(callback) => NSButton.setCallback(btn, callback)
-           | None => btn
-           }; */
+        let btn =
+          NSButton.setCallback(
+            btn,
+            () => {
+              callback();
+              RunLoop.loop();
+            },
+          );
 
-        {view: btn, layoutNode: makeLayoutNode(~layout)};
+        {view: btn, layoutNode: makeLayoutNode(~layout, btn)};
       },
-      shouldReconfigureInstance: (~oldState as _, ~newState as _) => false,
+      shouldReconfigureInstance: (~oldState as _, ~newState as _) => true,
       updateInstance: (_self, {view}) =>
         switch (style) {
         | Some(style) =>
@@ -67,4 +75,9 @@ module Button = {
       children,
     },
   };
+  let createElement =
+      (~layout, ~style=?, ~title=?, ~callback=?, ~children, ()) =>
+    element(
+      make(~layout, ~style?, ~title?, ~callback?, listToElement(children)),
+    );
 };

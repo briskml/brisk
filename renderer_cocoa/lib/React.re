@@ -2,14 +2,18 @@ open Brisk_core;
 open Cocoa;
 
 module Node = {
-  type context = unit;
-  let nullContext = ();
+  type context = NSView.t;
+  let nullContext = NSView.make();
 };
 
 module Layout = Flex.Layout.Create(Node, Flex.FloatEncoding);
 
-let makeLayoutNode = (~layout) =>
-  Layout.LayoutSupport.createNode(~withChildren=[||], ~andStyle=layout, ());
+let makeLayoutNode = (~layout, hostView) =>
+  Layout.LayoutSupport.createNode(
+    ~withChildren=[||],
+    ~andStyle=layout,
+    hostView,
+  );
 
 module NativeCocoa = {
   [@deriving (show({with_path: false}), eq)]
@@ -72,7 +76,10 @@ module NativeCocoa = {
     NSView.addSubview(parent.view, child.view, position) |> ignore;
   };
 
-  let unmountChild = (~parent as _, ~child as _) => ();
+  let unmountChild = (~parent as _, ~child) => {
+    print_endline("unmount child");
+    NSView.removeSubview(child.view) |> ignore;
+  };
 
   let remountChild = (~parent as _, ~child as _, ~position as _) => ();
 };
@@ -80,51 +87,56 @@ module NativeCocoa = {
 include ReactCore.Make(NativeCocoa);
 
 module RunLoop = {
-  let performLayout = (root: NativeCocoa.hostView) => {
+  let rootRef = ref(None);
+  let renderedRef = ref(None);
+
+  let rec traverseAndRunLayout = (node: Layout.LayoutSupport.LayoutTypes.node) => {
     Layout.(
       layoutNode(
-        root.layoutNode,
+        node,
         Flex.FixedEncoding.cssUndefined,
         Flex.FixedEncoding.cssUndefined,
         Ltr,
       )
     );
-    let layout = root.layoutNode.layout;
+
+    let layout = node.layout;
 
     NSView.setFrame(
-      root.view,
+      node.context,
       layout.left |> float_of_int,
       layout.top |> float_of_int,
       layout.width |> float_of_int,
       layout.height |> float_of_int,
     );
+
+    node.children |> Array.iter(child => traverseAndRunLayout(child));
   };
 
-  let rec loop = (root: NativeCocoa.hostView, rendered: RenderedElement.t) =>
-    Lwt.(
-      return()
-      >>= (
-        () =>
-          return(
-            if (NativeCocoa.isDirty^ === true) {
-              let (nextElement, updateLog) =
-                RenderedElement.flushPendingUpdates(rendered);
-              HostView.applyUpdateLog(root, updateLog);
-              performLayout(root);
-              NativeCocoa.isDirty := false;
-              nextElement;
-            } else {
-              rendered;
-            },
-          )
-      )
-      >>= loop(root)
-    );
+  let performLayout = (root: NativeCocoa.hostView) =>
+    traverseAndRunLayout(root.layoutNode);
+
+  let loop = () =>
+    switch (rootRef^, renderedRef^) {
+    | (Some(root), Some(rendered)) =>
+      if (NativeCocoa.isDirty^ === true) {
+        print_endline("logging");
+        let (nextElement, updateLog) =
+          RenderedElement.flushPendingUpdates(rendered);
+        HostView.applyUpdateLog(root, updateLog);
+        performLayout(root);
+        NativeCocoa.isDirty := false;
+        renderedRef := Some(nextElement);
+      }
+    | _ => ignore()
+    };
 
   let run = (root: NativeCocoa.hostView, element: reactElement) => {
     let rendered = RenderedElement.render(element);
     HostView.mountRenderedElement(root, rendered);
     performLayout(root);
-    Lwt_main.run(loop(root, rendered));
+
+    rootRef := Some(root);
+    renderedRef := Some(rendered);
   };
 };

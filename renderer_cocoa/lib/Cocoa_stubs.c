@@ -17,14 +17,53 @@
 #define Val_NSWindow(v) ((value)(v))
 #define NSWindow_val(v) ((__bridge NSWindow *)(value)(v))
 
-#define Val_NSView(v) ((value)(v))
-#define NSView_val(v) ((__bridge NSView *)(value)(v))
+@interface View : NSView
+@end
 
-#define Val_NSButton(v) ((value)(v))
-#define NSButton_val(v) ((__bridge NSButton *)(value)(v))
+@implementation View
 
-static NSMutableDictionary *ml_NSViews;
-static NSMutableArray *ml_NSViews_all;
+- (BOOL)isFlipped
+{
+  return YES;
+}
+
+@end
+
+typedef void (^ActionBlock)();
+
+@interface Button : NSButton
+
+@property(nonatomic, copy) ActionBlock _actionBlock;
+
+- (void)onClick:(ActionBlock)action;
+@end
+
+@implementation Button
+
+- (void)onClick:(ActionBlock)action
+{
+  self._actionBlock = action;
+  [self setTarget:self];
+  [self setAction:@selector(callActionBlock:)];
+}
+
+- (void)callActionBlock:(id)sender
+{
+  NSLog(@"sending");
+#pragma unused(sender)
+  self._actionBlock();
+}
+@end
+
+#define Val_View(v) ((value)(v))
+#define View_val(v) ((__bridge View *)(value)(v))
+
+#define Val_Button(v) ((value)(v))
+#define Button_val(v) ((__bridge Button *)(value)(v))
+
+static NSMutableDictionary *ml_Views;
+static NSMutableArray *ml_Views_all;
+// static NSMutableArray *ml_Callbacks_all;
 dispatch_queue_t ml_q;
 
 CAMLprim value ml_NSLog(value str)
@@ -65,8 +104,8 @@ enum
   {
     applicationId = appId;
   }
-  ml_NSViews = [NSMutableDictionary new];
-  ml_NSViews_all = [NSMutableArray new];
+  ml_Views = [NSMutableDictionary new];
+  ml_Views_all = [NSMutableArray new];
   return self;
 }
 
@@ -478,7 +517,7 @@ CAMLprim value ml_NSWindow_contentView(value win_v)
   CAMLparam1(win_v);
   NSWindow *win = NSWindow_val(win_v);
 
-  CAMLreturn(Val_NSView(win.contentView));
+  CAMLreturn(Val_View(win.contentView));
 }
 
 CAMLprim value ml_NSWindow_title(value win_v)
@@ -500,10 +539,10 @@ CAMLprim value ml_NSWindow_setContentView(value win_v, value view_v)
 {
   CAMLparam1(win_v);
   NSWindow *win = NSWindow_val(win_v);
-  NSView *view = NSView_val(view_v);
+  View *view = View_val(view_v);
 
-  [view setWantsLayer:YES];
-  [view.layer setBackgroundColor:[[NSColor colorWithRed:10 green:10 blue:10 alpha:1] CGColor]];
+  // [view setWantsLayer:YES];
+
   [win setContentView:view];
 
   CAMLreturn(Val_unit);
@@ -543,25 +582,25 @@ CAMLprim value ml_NSApplication_run(value appId)
   CAMLreturn(Val_unit);
 }
 
-// NSView
+// View
 CAMLprim value ml_NSView_make()
 {
   CAMLparam0();
 
-  NSView *view = nil;
-  view = [NSView new];
+  View *view = nil;
+  view = [View new];
 
-  [ml_NSViews_all addObject:view];
+  [ml_Views_all addObject:view];
 
-  CAMLreturn(Val_NSView(view));
+  CAMLreturn(Val_View(view));
 }
 
 CAMLprim value ml_NSView_memoize(value id_v, value view_v)
 {
   CAMLparam2(id_v, view_v);
-  NSView *view = NSView_val(view_v);
+  View *view = View_val(view_v);
 
-  [ml_NSViews setObject:view forKey:@(Int_val(id_v))];
+  [ml_Views setObject:view forKey:@(Int_val(id_v))];
 
   CAMLreturn(Val_unit);
 }
@@ -570,22 +609,22 @@ CAMLprim value ml_NSView_free(value id_v)
 {
   CAMLparam1(id_v);
 
-  [ml_NSViews removeObjectForKey:@(Int_val(id_v))];
+  [ml_Views removeObjectForKey:@(Int_val(id_v))];
   CAMLreturn(Val_unit);
 }
 
 CAMLprim value ml_NSView_addSubview(value view_v, value child_v)
 {
   CAMLparam2(view_v, child_v);
-  NSView *view = NSView_val(view_v);
-  NSView *child = NSView_val(child_v);
+  View *view = View_val(view_v);
+  View *child = View_val(child_v);
 
   [view addSubview:child];
 
-  CAMLreturn(Val_NSView(view));
+  CAMLreturn(Val_View(view));
 }
 
-// CAMLprim value ml_NSView_insertSubviewAt(NSView *view, NSView *child, intnat pos_)
+// CAMLprim value ml_NSView_insertSubviewAt(View *view, View *child, intnat pos_)
 // {
 //   [view addSubview:child];
 //   [view insertSubview:child atIndex:pos_];
@@ -593,11 +632,21 @@ CAMLprim value ml_NSView_addSubview(value view_v, value child_v)
 //   CAMLreturn(Val_unit);
 // }
 
+CAMLprim value ml_NSView_removeSubview(value child_v)
+{
+  CAMLparam1(child_v);
+  View *child = View_val(child_v);
+
+  [child removeFromSuperview];
+
+  CAMLreturn(Val_unit);
+}
+
 CAMLprim value ml_NSView_setFrame(value view_v, value x_v, value y_v, value w_v, value h_v)
 {
   CAMLparam5(view_v, x_v, y_v, w_v, h_v);
 
-  NSView *view = NSView_val(view_v);
+  View *view = View_val(view_v);
 
   CGFloat x = Double_val(x_v);
   CGFloat y = Double_val(y_v);
@@ -614,7 +663,7 @@ CAMLprim value ml_NSView_setBorderWidth(value view_v, value width_v)
 {
   CAMLparam2(view_v, width_v);
 
-  NSView *view = NSView_val(view_v);
+  View *view = View_val(view_v);
 
   [view.layer setBorderWidth:Int_val(width_v)];
 
@@ -625,11 +674,11 @@ CAMLprim value ml_NSView_setBorderColor(value view_v, value red_v, value green_v
 {
   CAMLparam5(view_v, red_v, blue_v, green_v, alpha_v);
 
-  NSView *view = NSView_val(view_v);
+  View *view = View_val(view_v);
 
-  CGFloat red = Double_val(red_v);
-  CGFloat blue = Double_val(blue_v);
-  CGFloat green = Double_val(green_v);
+  CGFloat red = Double_val(red_v) / 255;
+  CGFloat blue = Double_val(blue_v) / 255;
+  CGFloat green = Double_val(green_v) / 255;
   CGFloat alpha = Double_val(alpha_v);
 
   [view setWantsLayer:YES];
@@ -642,11 +691,11 @@ CAMLprim value ml_NSView_setBackgroundColor(value view_v, value red_v, value gre
 {
   CAMLparam5(view_v, red_v, blue_v, green_v, alpha_v);
 
-  NSView *view = NSView_val(view_v);
+  View *view = View_val(view_v);
 
-  CGFloat red = Double_val(red_v);
-  CGFloat blue = Double_val(blue_v);
-  CGFloat green = Double_val(green_v);
+  CGFloat red = Double_val(red_v) / 255;
+  CGFloat blue = Double_val(blue_v) / 255;
+  CGFloat green = Double_val(green_v) / 255;
   CGFloat alpha = Double_val(alpha_v);
 
   [view setWantsLayer:YES];
@@ -660,19 +709,19 @@ CAMLprim value ml_NSButton_make()
 {
   CAMLparam0();
 
-  NSButton *btn = nil;
-  btn = [NSButton new];
-  [ml_NSViews_all addObject:btn];
+  Button *btn = nil;
+  btn = [Button new];
+  [ml_Views_all addObject:btn];
 
-  CAMLreturn(Val_NSButton(btn));
+  CAMLreturn(Val_Button(btn));
 }
 
 CAMLprim value ml_NSButton_memoize(value id_v, value btn_v)
 {
   CAMLparam2(id_v, btn_v);
-  NSButton *btn = NSButton_val(btn_v);
+  Button *btn = Button_val(btn_v);
 
-  [ml_NSViews setObject:btn forKey:@(Int_val(id_v))];
+  [ml_Views setObject:btn forKey:@(Int_val(id_v))];
 
   CAMLreturn(Val_unit);
 }
@@ -681,7 +730,7 @@ CAMLprim value ml_NSButton_free(value id_v)
 {
   CAMLparam1(id_v);
 
-  [ml_NSViews removeObjectForKey:@(Int_val(id_v))];
+  [ml_Views removeObjectForKey:@(Int_val(id_v))];
   CAMLreturn(Val_unit);
 }
 
@@ -689,7 +738,7 @@ CAMLprim value ml_NSButton_setFrame(value btn_v, value x_v, value y_v, value w_v
 {
   CAMLparam5(btn_v, x_v, y_v, w_v, h_v);
 
-  NSButton *btn = NSButton_val(btn_v);
+  Button *btn = Button_val(btn_v);
 
   CGFloat x = Double_val(x_v);
   CGFloat y = Double_val(y_v);
@@ -706,25 +755,26 @@ CAMLprim value ml_NSButton_setCallback(value btn_v, value callback_v)
 {
   CAMLparam2(btn_v, callback_v);
 
-  NSButton *btn = NSButton_val(btn_v);
-  // value __block callback = callback_v;
+  Button *btn = Button_val(btn_v);
+  value callback = callback_v;
 
-  // caml_register_global_root(&callback);
+  caml_register_global_root(&callback);
 
-  // [btn setAction:^{
-  //   caml_callback(callback, Val_unit);
-  // }];
+  [btn onClick:^{
+    NSLog(@"sent");
+    caml_callback(callback, Val_unit);
+  }];
 
-  CAMLreturn(Val_NSButton(btn));
+  CAMLreturn(Val_Button(btn));
 }
 
 CAMLprim value ml_NSButton_setTitle(value btn_v, value str_v)
 {
   CAMLparam2(btn_v, str_v);
-  NSButton *btn = NSButton_val(btn_v);
+  Button *btn = Button_val(btn_v);
   NSString *str = [NSString stringWithUTF8String:String_val(str_v)];
   [btn setTitle:str];
   NSLog(@"setting title: %@", str);
 
-  CAMLreturn(Val_NSButton(btn));
+  CAMLreturn(Val_Button(btn));
 }

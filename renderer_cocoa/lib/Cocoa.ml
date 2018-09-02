@@ -173,6 +173,7 @@ module NSView = struct
     "ml_NSView_setBackgroundColor"
 
   external _NSView_addSubview: t -> t -> t = "ml_NSView_addSubview"
+  external _NSView_removeSubview: t -> unit = "ml_NSView_removeSubview"
 
   (* external _NSView_insertSubviewAt: t -> t -> int -> unit =
      "ml_NSView_insertSubviewAt" *)
@@ -192,6 +193,10 @@ module NSView = struct
 
   let addSubview view child _position =
     _NSView_addSubview view child
+
+  let removeSubview child =
+    _NSView_removeSubview child
+
 end
 
 module NSButton = struct

@@ -2,27 +2,6 @@ open Brisk_cocoa;
 open Cocoa;
 open React_Components;
 
-module View = {
-  let createElement = (~layout, ~style, ~children, ()) =>
-    React.(element(View.make(~layout, ~style, listToElement(children))));
-};
-
-module Button = {
-  let createElement =
-      (~layout, ~style=?, ~title=?, ~callback=?, ~children, ()) =>
-    React.(
-      element(
-        Button.make(
-          ~layout,
-          ~style?,
-          ~title?,
-          ~callback?,
-          listToElement(children),
-        ),
-      )
-    );
-};
-
 let render = element => {
   let app = Lazy.force(NSApplication.app);
 
@@ -34,29 +13,29 @@ let render = element => {
     let w = NSWindow.makeWithContentRect(0., 0., 680., 468.);
 
     let root = {
-      React.NativeCocoa.view: NSView.make(),
-      layoutNode:
-        React.Layout.LayoutSupport.createNode(
-          ~withChildren=[||],
-          ~andStyle={
-            ...React.Layout.LayoutSupport.defaultStyle,
-            width: 320,
-            height: 460,
-          },
-          (),
-        ),
+      let view = NSView.make();
+      {
+        React.NativeCocoa.view,
+        layoutNode:
+          React.Layout.LayoutSupport.createNode(
+            ~withChildren=[||],
+            ~andStyle={
+              ...React.Layout.LayoutSupport.defaultStyle,
+              width: 400,
+              height: 460,
+            },
+            view,
+          ),
+      };
     };
 
-    w#windowDidResize(_ => React.RunLoop.performLayout(root));
     w#center;
     w#makeKeyAndOrderFront;
-
     w#setContentView(root.view);
 
-    let rendered = React.RenderedElement.render(React.element(element));
-    React.HostView.mountRenderedElement(root, rendered);
-    React.RunLoop.performLayout(root);
-    /* React.RunLoop.run(root, React.element(element)); */
+    w#windowDidResize(_ => React.RunLoop.performLayout(root));
+
+    React.RunLoop.run(root, React.element(element));
   });
   app#run;
 };
@@ -113,17 +92,15 @@ module Component = {
         <View
           layout=React.Layout.LayoutSupport.{
             ...defaultStyle,
-            width: 100,
-            height: 100,
-            paddingTop: 80,
-            paddingBottom: 80,
+            width: 200,
+            height: 400,
           }
           style={
             borderWidth: 1.,
             backgroundColor: {
-              red: 0.3,
-              green: 0.2,
-              blue: 0.1,
+              red: 80.,
+              green: 161.,
+              blue: 79.,
               alpha: 1.,
             },
             borderColor: {
@@ -137,9 +114,9 @@ module Component = {
             layout=React.Layout.LayoutSupport.{
               ...defaultStyle,
               width: 100,
-              height: 100,
+              height: 40,
             }
-            title="well"
+            title="Well"
             callback=(reduce(() => !state))
           />
         </View>;

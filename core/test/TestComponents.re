@@ -109,3 +109,12 @@ module UpdateAlternateClicks = {
     subtree: [<Text id=(id + 1) title=text />],
   };
 };
+
+module ToggleClicks = {
+  let createElement = (~id=1, ~state, ~children, ()) => {
+    id,
+    component: Component(Components.ToggleClicks.component),
+    state,
+    subtree: children,
+  };
+};

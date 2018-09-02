@@ -1134,7 +1134,8 @@ module Make = (Implementation: HostImplementation) => {
           );
           let parentHostView =
             switch (subTreeChanged) {
-            | `Nested => getHostViewInstance(oldInstance)
+            | `Nested when List.length(tl) > 0 =>
+              getHostViewInstance(oldInstance)
             | _ => parentHostView
             };
           applyUpdateLogUtil(parentHostView, tl);
@@ -1155,7 +1156,8 @@ module Make = (Implementation: HostImplementation) => {
 
     let applyUpdateLog = (parentHostView, updateLog: UpdateLog.t): unit => {
       Implementation.beginChanges();
-      applyUpdateLogUtil(parentHostView, updateLog^);
+      let updateLog = List.rev(updateLog^);
+      applyUpdateLogUtil(parentHostView, updateLog);
       Implementation.commitChanges();
     };
 

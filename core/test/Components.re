@@ -216,3 +216,25 @@ module UpdateAlternateClicks = {
   let createElement = (~rAction, ~children as _, ()) =>
     element(make(~rAction, ()));
 };
+
+module ToggleClicks = {
+  type action =
+    | Click;
+  let component = reducerComponent("ToggleClicks");
+  let make = (~rAction, _children) => {
+    ...component,
+    initialState: () => false,
+    printState: state => string_of_bool(state),
+    reducer: (Click, state) => Update(!state),
+    render: ({state, act}) => {
+      RemoteAction.subscribe(~act, rAction);
+      if (state) {
+        <Div> <Text title="cell1" /> <Text title="cell2" /> </Div>;
+      } else {
+        <Div> <Text title="well" /> </Div>;
+      };
+    },
+  };
+  let createElement = (~rAction, ~children as _, ()) =>
+    element(make(~rAction, ()));
+};

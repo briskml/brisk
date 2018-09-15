@@ -1,15 +1,15 @@
-#include <Cocoa/Cocoa.h>
+#import <Cocoa/Cocoa.h>
 
 #define CAML_NAME_SPACE
 
-#include <caml/mlvalues.h>
-#include <caml/memory.h>
-#include <caml/callback.h>
-#include <caml/alloc.h>
-#include <caml/bigarray.h>
-#include <caml/custom.h>
-#include <caml/fail.h>
-#include <caml/threads.h>
+#import <caml/mlvalues.h>
+#import <caml/memory.h>
+#import <caml/callback.h>
+#import <caml/alloc.h>
+#import <caml/bigarray.h>
+#import <caml/custom.h>
+#import <caml/fail.h>
+#import <caml/threads.h>
 
 #define Val_NSApplication(v) ((value)(v))
 #define NSApplication_val(v) ((__bridge NSApplication *)(value)(v))
@@ -47,10 +47,8 @@ typedef void (^ActionBlock)();
   [self setAction:@selector(callActionBlock:)];
 }
 
-- (void)callActionBlock:(id)sender
+- (void)callActionBlock:(id)__unused sender
 {
-  NSLog(@"sending");
-#pragma unused(sender)
   self._actionBlock();
 }
 @end
@@ -63,8 +61,6 @@ typedef void (^ActionBlock)();
 
 static NSMutableDictionary *ml_Views;
 static NSMutableArray *ml_Views_all;
-// static NSMutableArray *ml_Callbacks_all;
-dispatch_queue_t ml_q;
 
 CAMLprim value ml_NSLog(value str)
 {
@@ -101,7 +97,7 @@ enum
 
 - (void)applicationWillTerminate:(NSNotification *)__unused not
 {
-  // Insert code here to tear down your application
+  // applicationWillTerminate
 }
 
 - (void)applicationWillFinishLaunching:(NSNotification *)__unused not
@@ -121,8 +117,6 @@ enum
 
 - (void)applicationDidFinishLaunching:(NSNotification *)__unused not
 {
-  // ml_q = dispatch_queue_create(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
-
   static value *closure_f = NULL;
 
   if (closure_f == NULL)
@@ -255,7 +249,7 @@ CAMLprim value ml_NSWindow_setContentView(value win_v, value view_v)
   NSWindow *win = NSWindow_val(win_v);
   View *view = View_val(view_v);
 
-  // [view setWantsLayer:YES];
+  [view setWantsLayer:YES];
 
   [win setContentView:view];
 
@@ -338,14 +332,6 @@ CAMLprim value ml_NSView_addSubview(value view_v, value child_v)
   CAMLreturn(Val_View(view));
 }
 
-// CAMLprim value ml_NSView_insertSubviewAt(View *view, View *child, intnat pos_)
-// {
-//   [view addSubview:child];
-//   [view insertSubview:child atIndex:pos_];
-
-//   CAMLreturn(Val_unit);
-// }
-
 CAMLprim value ml_NSView_removeSubview(value child_v)
 {
   CAMLparam1(child_v);
@@ -386,13 +372,13 @@ CAMLprim value ml_NSView_setBorderWidth(value view_v, value width_v)
 
 CAMLprim value ml_NSView_setBorderColor(value view_v, value red_v, value green_v, value blue_v, value alpha_v)
 {
-  CAMLparam5(view_v, red_v, blue_v, green_v, alpha_v);
+  CAMLparam5(view_v, red_v, green_v, blue_v, alpha_v);
 
   View *view = View_val(view_v);
 
   CGFloat red = Double_val(red_v) / 255;
-  CGFloat blue = Double_val(blue_v) / 255;
   CGFloat green = Double_val(green_v) / 255;
+  CGFloat blue = Double_val(blue_v) / 255;
   CGFloat alpha = Double_val(alpha_v);
 
   [view setWantsLayer:YES];
@@ -430,24 +416,6 @@ CAMLprim value ml_NSButton_make()
   CAMLreturn(Val_Button(btn));
 }
 
-CAMLprim value ml_NSButton_memoize(value id_v, value btn_v)
-{
-  CAMLparam2(id_v, btn_v);
-  Button *btn = Button_val(btn_v);
-
-  [ml_Views setObject:btn forKey:@(Int_val(id_v))];
-
-  CAMLreturn(Val_unit);
-}
-
-CAMLprim value ml_NSButton_free(value id_v)
-{
-  CAMLparam1(id_v);
-
-  [ml_Views removeObjectForKey:@(Int_val(id_v))];
-  CAMLreturn(Val_unit);
-}
-
 CAMLprim value ml_NSButton_setFrame(value btn_v, value x_v, value y_v, value w_v, value h_v)
 {
   CAMLparam5(btn_v, x_v, y_v, w_v, h_v);
@@ -475,7 +443,6 @@ CAMLprim value ml_NSButton_setCallback(value btn_v, value callback_v)
   caml_register_global_root(&callback);
 
   [btn onClick:^{
-    NSLog(@"sent");
     caml_callback(callback, Val_unit);
   }];
 
@@ -488,7 +455,6 @@ CAMLprim value ml_NSButton_setTitle(value btn_v, value str_v)
   Button *btn = Button_val(btn_v);
   NSString *str = [NSString stringWithUTF8String:String_val(str_v)];
   [btn setTitle:str];
-  NSLog(@"setting title: %@", str);
 
   CAMLreturn(Val_Button(btn));
 }

@@ -35,6 +35,9 @@ module Implementation = {
     };
   let memoizeInstance = (id, instance) => Hashtbl.add(map, id, instance);
 
+  let isDirty = ref(false);
+  let markAsDirty = () => isDirty := true;
+
   let beginChanges = () => mountLog := [BeginChanges, ...mountLog^];
 
   let commitChanges = () => mountLog := [CommitChanges, ...mountLog^];

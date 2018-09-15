@@ -1,10 +1,10 @@
-open Flex;
-
 module type HostImplementation = {
   type hostView;
 
   let getInstance: int => option(hostView);
   let memoizeInstance: (int, hostView) => unit;
+
+  let markAsDirty: unit => unit;
 
   let beginChanges: unit => unit;
 
@@ -307,15 +307,17 @@ module Make = (Implementation: HostImplementation) => {
   };
 
   module Render = {
-    let createSelf = (~state, ~component, ~pendingStateUpdates) : self(_) => {
+    let createSelf = (~state, ~component, ~pendingStateUpdates): self(_) => {
       state,
       reduce: (payloadToAction, payload) => {
         let action = payloadToAction(payload);
         let stateUpdate = component.reducer(action);
+        Implementation.markAsDirty();
         pendingStateUpdates := [stateUpdate, ...pendingStateUpdates^];
       },
       act: action => {
         let stateUpdate = component.reducer(action);
+        Implementation.markAsDirty();
         pendingStateUpdates := [stateUpdate, ...pendingStateUpdates^];
       },
     };
@@ -422,9 +424,8 @@ module Make = (Implementation: HostImplementation) => {
      * instances.
      */
     let rec renderElement =
-            (~useKeyTable=?, Element(component) as element)
-            : opaqueInstance =>
-      switch (getOpaqueInstance(useKeyTable, element)) {
+            (~useKeyTable=?, Element(component) as element): opaqueInstance =>
+      switch (getOpaqueInstance(~useKeyTable, element)) {
       | Some(opaqueInstance) =>
         /** Throwaway update log: this is a render so no need to keep an update log. */
         let updateLog = UpdateLog.create();
@@ -450,7 +451,7 @@ module Make = (Implementation: HostImplementation) => {
           element,
         });
       }
-    and renderReactElement = (~useKeyTable=?, reactElement) : renderedElement =>
+    and renderReactElement = (~useKeyTable=?, reactElement): renderedElement =>
       mapReactElement(renderElement(~useKeyTable?), reactElement)
     /**
      * Update a previously rendered instance tree according to a new Element.
@@ -530,7 +531,7 @@ module Make = (Implementation: HostImplementation) => {
            * The second part covers willReceiveProps.
            */
           let stateChanged =
-            ! stateNotUpdated || newState !== updatedInstance.iState;
+            !stateNotUpdated || newState !== updatedInstance.iState;
           let updatedInstanceWithNewState = {
             ...updatedInstanceWithNewElement,
             iState: newState,
@@ -571,7 +572,7 @@ module Make = (Implementation: HostImplementation) => {
                 )
               };
             switch (stateChanged, subTreeChange) {
-            | (false, `NoChange) when ! contentChanged => originalOpaqueInstance
+            | (false, `NoChange) when !contentChanged => originalOpaqueInstance
             | (stateChanged, subTreeChanged) =>
               let subTreeChanged =
                 contentChanged ?
@@ -618,7 +619,7 @@ module Make = (Implementation: HostImplementation) => {
           let (self, pendingStateUpdates, id) =
             createInitialSelf(~component=nextComponent);
           let nextSubElements = nextComponent.render(self);
-          let (nextSubtree, newOpaqueInstance) = {
+          let (_nextSubtree, newOpaqueInstance) = {
             let nextSubtree =
               switch (nextComponent.elementType) {
               | React => renderReactElement(nextSubElements)
@@ -695,8 +696,8 @@ module Make = (Implementation: HostImplementation) => {
           when
             List.length(nextReactElements)
             === List.length(oldRenderedElements)
-            &&
-            List.length(nextReactElements) === List.length(oldReactElements) =>
+            && List.length(nextReactElements)
+            === List.length(oldReactElements) =>
         let keyTable =
           switch (useKeyTable) {
           | None => OpaqueInstanceHash.createKeyTable(oldRenderedElement)
@@ -886,7 +887,7 @@ module Make = (Implementation: HostImplementation) => {
 
     let listToRenderedElement = renderedElements =>
       INested("List", renderedElements);
-    let render = reactElement : t => Render.renderReactElement(reactElement);
+    let render = reactElement: t => Render.renderReactElement(reactElement);
     let update =
         (~previousReactElement, ~renderedElement: t, reactElement)
         : (t, option(topLevelUpdate)) => {
@@ -923,7 +924,7 @@ module Make = (Implementation: HostImplementation) => {
      * Flush the pending updates in an instance tree.
      * TODO: invoke lifecycles
      */
-    let flushPendingUpdates = (renderedElement: t) : (t, UpdateLog.t) => {
+    let flushPendingUpdates = (renderedElement: t): (t, UpdateLog.t) => {
       let updateLog = UpdateLog.create();
       let newRenderedElement =
         Render.mapRenderedElement(
@@ -941,7 +942,7 @@ module Make = (Implementation: HostImplementation) => {
   module HostView = {
     open Implementation;
 
-    let getHostViewInstance = ({id, _}) =>
+    let getHostViewInstance = ({id}) =>
       switch (getInstance(id)) {
       | Some(hostView) => hostView
       | None =>
@@ -979,7 +980,7 @@ module Make = (Implementation: HostImplementation) => {
         ~position,
         ~f,
       ) => {
-        let {id, component, subElements, instanceSubTree, _} = instance;
+        let {id, component, subElements, instanceSubTree} = instance;
         let newParentHostView =
           switch (component.elementType) {
           | React => parentHostView
@@ -1003,7 +1004,7 @@ module Make = (Implementation: HostImplementation) => {
         hostView;
       };
 
-    let mountInstance = (~parentHostView, ~instance, ~position) =>
+    let mountInstance = (~parentHostView, ~instance, ~position as _) =>
       processInstance(
         ~parentHostView,
         ~instance,
@@ -1012,7 +1013,7 @@ module Make = (Implementation: HostImplementation) => {
       );
 
     let remountInstanceUtil =
-        (implementationFunc, parentHostView, id, make, position) =>
+        (implementationFunc, parentHostView, id, _make, position) =>
       switch (getInstance(id)) {
       | Some(hostView) =>
         implementationFunc(
@@ -1109,7 +1110,7 @@ module Make = (Implementation: HostImplementation) => {
           );
         };
 
-    let mountRenderedElement = (parentHostView, renderedElement) : unit => {
+    let mountRenderedElement = (parentHostView, renderedElement): unit => {
       Implementation.beginChanges();
       traverseRenderedElement(
         parentHostView,
@@ -1121,14 +1122,10 @@ module Make = (Implementation: HostImplementation) => {
     };
 
     let rec applyUpdateLogUtil =
-            (parentHostView, updateLog: list(UpdateLog.entry))
-            : unit =>
+            (parentHostView, updateLog: list(UpdateLog.entry)): unit =>
       UpdateLog.(
         switch (updateLog) {
-        | [
-            UpdateInstance({subTreeChanged, oldInstance, newInstance, _}),
-            ...tl,
-          ] =>
+        | [UpdateInstance({subTreeChanged, oldInstance, newInstance}), ...tl] =>
           applyUpdateLogEntry(
             ~parentHostView,
             ~oldInstance,
@@ -1137,7 +1134,8 @@ module Make = (Implementation: HostImplementation) => {
           );
           let parentHostView =
             switch (subTreeChanged) {
-            | `Nested => getHostViewInstance(oldInstance)
+            | `Nested when List.length(tl) > 0 =>
+              getHostViewInstance(oldInstance)
             | _ => parentHostView
             };
           applyUpdateLogUtil(parentHostView, tl);
@@ -1156,10 +1154,9 @@ module Make = (Implementation: HostImplementation) => {
         }
       );
 
-    let applyUpdateLog =
-        (parentHostView, updateLog: list(UpdateLog.entry))
-        : unit => {
+    let applyUpdateLog = (parentHostView, updateLog: UpdateLog.t): unit => {
       Implementation.beginChanges();
+      let updateLog = List.rev(updateLog^);
       applyUpdateLogUtil(parentHostView, updateLog);
       Implementation.commitChanges();
     };
@@ -1270,7 +1267,7 @@ module Make = (Implementation: HostImplementation) => {
       key != component.key ? {...component, key} : component;
     Flat(Element(componentWithKey));
   };
-  let arrayToElement = (a: array(reactElement)) : reactElement =>
+  let arrayToElement = (a: array(reactElement)): reactElement =>
     Nested("Array", Array.to_list(a));
   let listToElement = l => Nested("List", l);
 

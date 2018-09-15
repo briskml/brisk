@@ -973,6 +973,56 @@ let mountLog = [
     },
   ),
   (
+    "Test subtree replace elements",
+    `Quick,
+    () => {
+      let root = Implementation.{name: "root", element: View};
+      let rAction = RemoteAction.create();
+
+      let previousReactElement = Components.(<ToggleClicks rAction />);
+
+      let beforeUpdate = TestRenderer.render(previousReactElement);
+      let _ = HostView.mountRenderedElement(root, beforeUpdate);
+
+      let div = Implementation.{name: "Div", element: View};
+      let well = Implementation.{name: "Text", element: Text("well")};
+
+      assertMountLog(
+        ~label="It correctly mounts the tree",
+        [
+          Implementation.BeginChanges,
+          MountChild(root, div, 0),
+          MountChild(div, well, 0),
+          CommitChanges,
+        ],
+        Implementation.mountLog^,
+      );
+
+      RemoteAction.act(~action=Components.ToggleClicks.Click, rAction);
+
+      let (_, pendingUpdates) =
+        RenderedElement.flushPendingUpdates(beforeUpdate);
+
+      let _ = HostView.applyUpdateLog(root, pendingUpdates);
+
+      let cell1 = Implementation.{name: "Text", element: Text("cell1")};
+      let cell2 = Implementation.{name: "Text", element: Text("cell2")};
+
+      /* FIXME: UnmountChild is supposed to be called with its direct parent, not the root */
+      assertMountLog(
+        ~label="It correctly remounts subtree",
+        [
+          Implementation.BeginChanges,
+          UnmountChild(root, well),
+          MountChild(root, cell1, 0),
+          MountChild(root, cell2, 1),
+          CommitChanges,
+        ],
+        Implementation.mountLog^,
+      );
+    },
+  ),
+  (
     "Test top level prepend",
     `Quick,
     () => {

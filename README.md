@@ -1,6 +1,6 @@
 # Brisk
 
-[![CircleCI](https://circleci.com/gh/briskml/brisk/tree/master.svg?style=svg)](https://circleci.com/gh/briskml/brisk/tree/master)
+[![Build Status](https://dev.azure.com/briskml/brisk/_apis/build/status/Azure%20DevOps)](https://dev.azure.com/briskml/brisk/_build/latest?definitionId=1)
 
 Cross-platform set of tools for building native UIs with Reason/OCaml.
 

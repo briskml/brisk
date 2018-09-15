@@ -1,0 +1,9 @@
+(executable
+ (name test)
+ (libraries alcotest easy-format simple-diff brisk_core)
+ (preprocess (pps ppx_deriving.std)))
+
+(alias
+ (name runtest)
+ (deps test.exe)
+ (action (run %{deps})))

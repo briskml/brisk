@@ -1,0 +1,12 @@
+(executable
+ (name app)
+ (libraries brisk_cocoa)
+ (flags (:standard
+        (-runtime-variant d -verbose -g)
+ ))
+ (modes object))
+
+(install
+  (package brisk)
+  (section bin)
+  (files (app.exe.o as app.o)))

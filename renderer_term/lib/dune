@@ -1,8 +1,5 @@
-(jbuild_version 1)
-
 (library
- ((name brisk_term)
+  (name brisk_term)
   (public_name brisk.term)
   (synopsis "Terminal renderer bindings")
-  (libraries (brisk_core)))
-)
+  (libraries brisk_core))

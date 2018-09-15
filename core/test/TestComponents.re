@@ -46,7 +46,7 @@ module BoxWrapper = {
 };
 
 module ChangeCounter = {
-  let createElement = (~id, ~label, ~counter, ~children: _, ()) => {
+  let createElement = (~id, ~label, ~counter, ~children as _, ()) => {
     component: Component(Components.ChangeCounter.component),
     id,
     state: Printf.sprintf("[%i, %s]", counter, label),
@@ -55,7 +55,7 @@ module ChangeCounter = {
 };
 
 module Text = {
-  let createElement = (~id, ~title, ~children: _, ()) => {
+  let createElement = (~id, ~title, ~children as _, ()) => {
     id,
     component: Component(Components.Text.component),
     state: title,
@@ -65,7 +65,7 @@ module Text = {
 
 module ButtonWrapper = {
   open Components;
-  let createElement = (~id, ~children: _, ()) => {
+  let createElement = (~id, ~children as _, ()) => {
     id,
     component: Component(ButtonWrapper.component),
     state: "",
@@ -88,7 +88,7 @@ module ButtonWrapper = {
 };
 
 module ButtonWrapperWrapper = {
-  let createElement = (~id, ~nestedText, ~children: _, ()) => {
+  let createElement = (~id, ~nestedText, ~children as _, ()) => {
     id,
     component: Component(Components.ButtonWrapperWrapper.component),
     state: "",
@@ -102,10 +102,19 @@ module ButtonWrapperWrapper = {
 };
 
 module UpdateAlternateClicks = {
-  let createElement = (~id=1, ~state, ~text, ~children: _, ()) => {
+  let createElement = (~id=1, ~state, ~text, ~children as _, ()) => {
     id,
     component: Component(Components.UpdateAlternateClicks.component),
     state,
     subtree: [<Text id=(id + 1) title=text />],
+  };
+};
+
+module ToggleClicks = {
+  let createElement = (~id=1, ~state, ~children, ()) => {
+    id,
+    component: Component(Components.ToggleClicks.component),
+    state,
+    subtree: children,
   };
 };

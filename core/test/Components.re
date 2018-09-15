@@ -78,7 +78,7 @@ module BoxWrapper = {
       twoBoxes ?
         <Div> <Box title /> <Box title /> </Div> : <Div> <Box title /> </Div>,
   };
-  let createElement = (~key=?, ~title=?, ~twoBoxes=?, ~children, ()) =>
+  let createElement = (~key=?, ~title=?, ~twoBoxes=?, ~children as _, ()) =>
     element(~key?, make(~title?, ~twoBoxes?, ~onClick=(), ()));
 };
 
@@ -153,11 +153,13 @@ module ChangeCounter = {
           {mostRecentLabel: label, numChanges: state.numChanges + 1};
         } :
         state,
-    render: ({state: {numChanges, mostRecentLabel}}) => Nested("", []),
+    render: ({state: {numChanges: _, mostRecentLabel: _}}) =>
+      Nested("", []),
     printState: ({numChanges, mostRecentLabel}) =>
       "[" ++ string_of_int(numChanges) ++ ", " ++ mostRecentLabel ++ "]",
   };
-  let createElement = (~label, ~children, ()) => element(make(~label, ()));
+  let createElement = (~label, ~children as _, ()) =>
+    element(make(~label, ()));
 };
 
 module StatelessButton = {
@@ -167,7 +169,7 @@ module StatelessButton = {
     ...component,
     render: _self => <Div />,
   };
-  let createElement = (~initialClickCount=?, ~test=?, ~children, ()) =>
+  let createElement = (~initialClickCount=?, ~test=?, ~children as _, ()) =>
     element(make(~initialClickCount?, ~test?, ()));
 };
 
@@ -176,12 +178,12 @@ module ButtonWrapper = {
   let component = statelessComponent("ButtonWrapper");
   let make = (~wrappedText="default", _children) => {
     ...component,
-    render: ({state}) =>
+    render: ({state: _}) =>
       <StatelessButton
         initialClickCount=("wrapped:" ++ wrappedText ++ ":wrapped")
       />,
   };
-  let createElement = (~wrappedText=?, ~children, ()) =>
+  let createElement = (~wrappedText=?, ~children as _, ()) =>
     element(make(~wrappedText?, ()));
 };
 
@@ -192,7 +194,7 @@ module ButtonWrapperWrapper = {
     ...component,
     render: _ => <Div> (stringToElement(wrappedText)) buttonWrapperJsx </Div>,
   };
-  let createElement = (~wrappedText=?, ~children, ()) =>
+  let createElement = (~wrappedText=?, ~children as _, ()) =>
     element(make(~wrappedText?, ()));
 };
 
@@ -211,6 +213,28 @@ module UpdateAlternateClicks = {
       stringToElement(string_of_int(state));
     },
   };
-  let createElement = (~rAction, ~children, ()) =>
+  let createElement = (~rAction, ~children as _, ()) =>
+    element(make(~rAction, ()));
+};
+
+module ToggleClicks = {
+  type action =
+    | Click;
+  let component = reducerComponent("ToggleClicks");
+  let make = (~rAction, _children) => {
+    ...component,
+    initialState: () => false,
+    printState: state => string_of_bool(state),
+    reducer: (Click, state) => Update(!state),
+    render: ({state, act}) => {
+      RemoteAction.subscribe(~act, rAction);
+      if (state) {
+        <Div> <Text title="cell1" /> <Text title="cell2" /> </Div>;
+      } else {
+        <Div> <Text title="well" /> </Div>;
+      };
+    },
+  };
+  let createElement = (~rAction, ~children as _, ()) =>
     element(make(~rAction, ()));
 };

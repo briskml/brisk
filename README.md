@@ -1,7 +1,5 @@
 # Brisk
 
-[![CircleCI](https://circleci.com/gh/briskml/brisk/tree/master.svg?style=svg)](https://circleci.com/gh/briskml/brisk/tree/master)
-
 Cross-platform set of tools for building native UIs with Reason/OCaml.
 
 The goal of the project is to help developers create desktop and mobile apps with the ease of React Native and performance of native machine code. It's the best of both worlds: speed and portability, simplicity and great APIs.

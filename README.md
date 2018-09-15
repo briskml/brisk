@@ -1,5 +1,7 @@
 # Brisk
 
+[![Build Status](https://dev.azure.com/briskml/brisk/_apis/build/status/Azure%20DevOps)](https://dev.azure.com/briskml/brisk/_build/latest?definitionId=1)
+
 Cross-platform set of tools for building native UIs with Reason/OCaml.
 
 The goal of the project is to help developers create desktop and mobile apps with the ease of React Native and performance of native machine code. It's the best of both worlds: speed and portability, simplicity and great APIs.

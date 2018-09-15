@@ -1,3 +1,15 @@
 (env
  (_ (flags (:standard -w -9))))
 (ignored_subdirs (node_modules))
+
+(alias
+ (name mac)
+ (deps
+   (glob_files BRTesterMac/src/*)
+   (alias install)))
+
+(alias
+ (name linux)
+ (deps
+   (glob_files core/lib/*)
+   (glob_files renderer_term/lib/*)))

@@ -91,15 +91,6 @@ module RunLoop = {
   let renderedRef = ref(None);
 
   let rec traverseAndRunLayout = (node: Layout.LayoutSupport.LayoutTypes.node) => {
-    Layout.(
-      layoutNode(
-        node,
-        Flex.FixedEncoding.cssUndefined,
-        Flex.FixedEncoding.cssUndefined,
-        Ltr,
-      )
-    );
-
     let layout = node.layout;
 
     NSView.setFrame(
@@ -113,14 +104,23 @@ module RunLoop = {
     node.children |> Array.iter(child => traverseAndRunLayout(child));
   };
 
-  let performLayout = (root: NativeCocoa.hostView) =>
-    traverseAndRunLayout(root.layoutNode);
+  let performLayout = (root: NativeCocoa.hostView) => {
+    let node = root.layoutNode;
+    Layout.(
+      layoutNode(
+        node,
+        Flex.FixedEncoding.cssUndefined,
+        Flex.FixedEncoding.cssUndefined,
+        Ltr,
+      )
+    );
+    traverseAndRunLayout(node);
+  };
 
   let loop = () =>
     switch (rootRef^, renderedRef^) {
     | (Some(root), Some(rendered)) =>
       if (NativeCocoa.isDirty^ === true) {
-        print_endline("logging");
         let (nextElement, updateLog) =
           RenderedElement.flushPendingUpdates(rendered);
         HostView.applyUpdateLog(root, updateLog);

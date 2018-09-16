@@ -44,19 +44,17 @@ module Button = {
     render: _ => {
       make: () => {
         let btn = NSButton.make();
-        let btn =
-          switch (title) {
-          | Some(title) => NSButton.setTitle(btn, title)
-          | None => btn
-          };
-        let btn =
-          NSButton.setCallback(
-            btn,
-            () => {
-              callback();
-              RunLoop.loop();
-            },
-          );
+        switch (title) {
+        | Some(title) => NSButton.setTitle(btn, title)
+        | None => ()
+        };
+        NSButton.setCallback(
+          btn,
+          () => {
+            callback();
+            RunLoop.loop();
+          },
+        );
 
         {view: btn, layoutNode: makeLayoutNode(~layout, btn)};
       },

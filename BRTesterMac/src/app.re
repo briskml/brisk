@@ -31,6 +31,7 @@ let render = element => {
 
     w#center;
     w#makeKeyAndOrderFront;
+    w#setTitle("BriskMac");
     w#setContentView(root.view);
 
     w#windowDidResize(_ => React.RunLoop.performLayout(root));
@@ -57,15 +58,15 @@ module Component = {
           style={
             borderWidth: 1.,
             backgroundColor: {
-              red: 0.3,
-              green: 0.5,
-              blue: 0.3,
+              red: 0.,
+              green: 255.,
+              blue: 0.,
               alpha: 1.,
             },
             borderColor: {
               red: 0.,
-              green: 1.,
-              blue: 0.,
+              green: 0.,
+              blue: 255.,
               alpha: 1.,
             },
           }>
@@ -76,7 +77,7 @@ module Component = {
               height: 100,
             }
             title="Cell one"
-            callback=(reduce(() => !state))
+            callback={reduce(() => !state)}
           />
           <Button
             layout={
@@ -85,7 +86,7 @@ module Component = {
               height: 100,
             }
             title="Cell two"
-            callback=(reduce(() => !state))
+            callback={reduce(() => !state)}
           />
         </View>;
       } else {
@@ -98,15 +99,15 @@ module Component = {
           style={
             borderWidth: 1.,
             backgroundColor: {
-              red: 80.,
-              green: 161.,
-              blue: 79.,
+              red: 255.,
+              green: 0.,
+              blue: 0.,
               alpha: 1.,
             },
             borderColor: {
               red: 0.,
-              green: 0.,
-              blue: 1.,
+              green: 255.,
+              blue: 0.,
               alpha: 1.,
             },
           }>
@@ -117,7 +118,7 @@ module Component = {
               height: 40,
             }
             title="Well"
-            callback=(reduce(() => !state))
+            callback={reduce(() => !state)}
           />
         </View>;
       },

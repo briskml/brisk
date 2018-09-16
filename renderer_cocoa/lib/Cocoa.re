@@ -21,10 +21,8 @@ type nsWindow;
 type nsView;
 
 module NSApplication = {
-  external _NSApplication_NSApp: int => nsApp =
-    "ml_NSApplication_NSApp" "ml_NSApplication_NSApp";
-  external _NSApplication_run: nsApp => unit =
-    "ml_NSApplication_run" "ml_NSApplication_run";
+  external _NSApplication_NSApp: int => nsApp = "ml_NSApplication_NSApp";
+  external _NSApplication_run: nsApp => unit = "ml_NSApplication_run";
 
   class type t = {
     pub run: unit;
@@ -72,7 +70,8 @@ module NSApplication = {
 
   let applicationDelegate = (id, sel) =>
     switch (T.find(application_table, id)) {
-    | exception Not_found => ()
+    | exception Not_found =>
+      Printf.ksprintf(prerr_endline, "NSApp #%d has been GCed", id)
     | del =>
       switch (sel) {
       | ApplicationWillFinishLaunching => del.applicationWillFinishLaunching()
@@ -84,21 +83,37 @@ module NSApplication = {
 };
 
 module NSWindow = {
+  [@noalloc]
   external _NSWindow_makeWithContentRect:
-    (int, float, float, float, float) => nsWindow =
-    "ml_NSWindow_makeWithContentRect";
+    (
+      [@untagged] int,
+      [@unboxed] float,
+      [@unboxed] float,
+      [@unboxed] float,
+      [@unboxed] float
+    ) =>
+    nsWindow =
+    "ml_NSWindow_makeWithContentRect_bc" "ml_NSWindow_makeWithContentRect";
 
-  external _NSWindow_isVisible: nsWindow => bool = "ml_NSWindow_isVisible";
-  external _NSWindow_center: nsWindow => unit = "ml_NSWindow_center";
+  [@noalloc]
+  external _NSWindow_isVisible: nsWindow => bool =
+    "ml_NSWindow_isVisible_bc" "ml_NSWindow_isVisible";
+  [@noalloc]
+  external _NSWindow_center: nsWindow => unit =
+    "ml_NSWindow_center_bc" "ml_NSWindow_center";
+  [@noalloc]
   external _NSWindow_makeKeyAndOrderFront: nsWindow => unit =
-    "ml_NSWindow_makeKeyAndOrderFront";
+    "ml_NSWindow_makeKeyAndOrderFront_bc" "ml_NSWindow_makeKeyAndOrderFront";
+  [@noalloc]
   external _NSWindow_setTitle: (nsWindow, string) => unit =
     "ml_NSWindow_setTitle";
   external _NSWindow_title: nsWindow => string = "ml_NSWindow_title";
+  [@noalloc]
   external _NSWindow_contentView: nsWindow => nsView =
-    "ml_NSWindow_contentView";
+    "ml_NSWindow_contentView_bc" "ml_NSWindow_contentView";
+  [@noalloc]
   external _NSWindow_setContentView: (nsWindow, nsView) => unit =
-    "ml_NSWindow_setContentView";
+    "ml_NSWindow_setContentView_bc" "ml_NSWindow_setContentView";
 
   class type t = {
     pub isVisible: bool;
@@ -160,25 +175,62 @@ module NSWindow = {
 module NSView = {
   type t = nsView;
 
-  external _NSView_make: unit => t = "ml_NSView_make";
-  external _NSView_memoize: (int, t) => unit = "ml_NSView_memoize";
+  [@noalloc]
+  external _NSView_make: unit => t = "ml_NSView_make_bc" "ml_NSView_make";
+  [@noalloc]
+  external _NSView_memoize: ([@untagged] int, t) => unit =
+    "ml_NSView_memoize_bc" "ml_NSView_memoize";
 
-  external _NSView_free: int => unit = "ml_NSView_free";
+  [@noalloc]
+  external _NSView_free: ([@untagged] int) => unit =
+    "ml_NSView_free_bc" "ml_NSView_free";
 
-  external _NSView_setBorderWidth: (t, float) => unit =
-    "ml_NSView_setBorderWidth";
+  [@noalloc]
+  external _NSView_setBorderWidth: (t, [@unboxed] float) => unit =
+    "ml_NSView_setBorderWidth_bc" "ml_NSView_setBorderWidth";
 
-  external _NSView_setBorderColor: (t, float, float, float, float) => unit =
-    "ml_NSView_setBorderColor";
+  [@noalloc]
+  external _NSView_setBorderColor:
+    (
+      t,
+      [@unboxed] float,
+      [@unboxed] float,
+      [@unboxed] float,
+      [@unboxed] float
+    ) =>
+    unit =
+    "ml_NSView_setBorderColor_bc" "ml_NSView_setBorderColor";
 
-  external _NSView_setBackgroundColor: (t, float, float, float, float) => unit =
-    "ml_NSView_setBackgroundColor";
+  [@noalloc]
+  external _NSView_setBackgroundColor:
+    (
+      t,
+      [@unboxed] float,
+      [@unboxed] float,
+      [@unboxed] float,
+      [@unboxed] float
+    ) =>
+    unit =
+    "ml_NSView_setBackgroundColor_bc" "ml_NSView_setBackgroundColor";
 
-  external _NSView_addSubview: (t, t) => t = "ml_NSView_addSubview";
-  external _NSView_removeSubview: t => unit = "ml_NSView_removeSubview";
+  [@noalloc]
+  external _NSView_addSubview: (t, t) => unit =
+    "ml_NSView_addSubview_bc" "ml_NSView_addSubview";
+  [@noalloc]
+  external _NSView_removeSubview: t => unit =
+    "ml_NSView_removeSubview_bc" "ml_NSView_removeSubview";
 
-  external _NSView_setFrame: (t, float, float, float, float) => unit =
-    "ml_NSView_setFrame";
+  [@noalloc]
+  external _NSView_setFrame:
+    (
+      t,
+      [@unboxed] float,
+      [@unboxed] float,
+      [@unboxed] float,
+      [@unboxed] float
+    ) =>
+    unit =
+    "ml_NSView_setFrame_bc" "ml_NSView_setFrame";
 
   let make = _NSView_make;
 
@@ -188,9 +240,9 @@ module NSView = {
   let addSubview = (view, child, _position) =>
     _NSView_addSubview(view, child);
 
-  let removeSubview = child => _NSView_removeSubview(child);
+  let removeSubview = _NSView_removeSubview;
 
-  let setFrame = view => _NSView_setFrame(view);
+  let setFrame = _NSView_setFrame;
 
   let setBorderWidth = _NSView_setBorderWidth;
   let setBorderColor = _NSView_setBorderColor;
@@ -200,18 +252,17 @@ module NSView = {
 module NSButton = {
   type t = NSView.t;
 
-  external _NSButton_make: unit => t = "ml_NSButton_make";
+  [@noalloc]
+  external _NSButton_make: unit => t =
+    "ml_NSButton_make_bc" "ml_NSButton_make";
 
-  external _NSButton_setFrame: (t, float, float, float, float) => unit =
-    "ml_NSButton_setFrame";
-
-  external _NSButton_setTitle: (t, string) => t = "ml_NSButton_setTitle";
-  external _NSButton_setCallback: (t, unit => unit) => t =
-    "ml_NSButton_setCallback";
+  [@noalloc]
+  external _NSButton_setTitle: (t, string) => unit = "ml_NSButton_setTitle";
+  [@noalloc]
+  external _NSButton_setCallback: (t, unit => unit) => unit =
+  "ml_NSButton_setCallback";
 
   let make = _NSButton_make;
-
-  let setFrame = _NSButton_setFrame;
 
   let setTitle = _NSButton_setTitle;
 

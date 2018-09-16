@@ -39,7 +39,7 @@ module NativeCocoa = {
       node.children = fill;
     };
     for (i in node.childrenCount downto index + 1) {
-      node.children[i] = node.children[(i - 1)];
+      node.children[i] = node.children[i - 1];
     };
     node.childrenCount = node.childrenCount + 1;
     node.children[index] = child;
@@ -71,15 +71,12 @@ module NativeCocoa = {
   let commitChanges = () => ();
 
   let mountChild = (~parent: hostView, ~child: hostView, ~position: int) => {
-    print_endline("mount child at" ++ string_of_int(position));
     cssNodeInsertChild(parent.layoutNode, child.layoutNode, position);
-    NSView.addSubview(parent.view, child.view, position) |> ignore;
+    NSView.addSubview(parent.view, child.view, position);
   };
 
-  let unmountChild = (~parent as _, ~child) => {
-    print_endline("unmount child");
-    NSView.removeSubview(child.view) |> ignore;
-  };
+  let unmountChild = (~parent as _, ~child) =>
+    NSView.removeSubview(child.view);
 
   let remountChild = (~parent as _, ~child as _, ~position as _) => ();
 };

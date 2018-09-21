@@ -22,7 +22,7 @@
   "dependencies": {
     "@esy-ocaml/esy-installer": "*",
     "@esy-ocaml/reason": "facebook/reason#52c5b11",
-    "@opam/dune": "^1.1.1",
+    "@opam/dune": "^1.2.1",
     "@opam/lwt": "^4.1.0",
     "@opam/lwt_ppx": "^1.2.1",
     "@opam/merlin-extend": "*",

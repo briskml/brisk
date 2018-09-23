@@ -1,12 +1,12 @@
 .phone: bootstrap
 
-STDLIB_PATH=$$(ocamlc -where)
-BUILD_STORE_PATH=../../_build/install/default/lib
-
 CONFIGURATION="Debug"
 SCHEME="BriskCocoa"
 
 bootstrap:
+	$(eval STDLIB_PATH := $(shell ocamlc -where))
+	$(eval BUILD_STORE_PATH := $(abspath ../../_build/default))
+
 	@echo "> Boostrapping .xcodeproj"
 	@rm -rf ./Cocoa.xcodeproj
 	@echo "STDLIB_PATH=$(STDLIB_PATH)" > ./env.xcconfig
@@ -15,4 +15,4 @@ bootstrap:
 
 build:
 	@echo "> Building the Cocoa bindings"
-	@xcodebuild -scheme $(SCHEME) -configuration $(CONFIGURATION)
+	@xcodebuild -scheme $(SCHEME) -configuration $(CONFIGURATION) build

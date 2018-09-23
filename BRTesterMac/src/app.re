@@ -5,7 +5,13 @@ open React_Components;
 let render = element => {
   let app = Lazy.force(NSApplication.app);
 
-  app#applicationWillFinishLaunching(_ => log("app will finish"));
+  let appName = "BriskMac";
+
+  app#applicationWillFinishLaunching(_ => {
+    log("app will finish");
+    let menu = Menu.makeMainMenu(appName);
+    NSApplication.setMenu(~kind=Main, menu);
+  });
 
   app#applicationDidFinishLaunching(_ => {
     log("app did finish");
@@ -31,7 +37,7 @@ let render = element => {
 
     window#center;
     window#makeKeyAndOrderFront;
-    window#setTitle("BriskMac");
+    window#setTitle(appName);
     window#setContentView(root.view);
 
     window#windowDidResize(_ => React.RunLoop.performLayout(root));

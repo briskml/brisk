@@ -10,7 +10,7 @@ let render = element => {
   app#applicationDidFinishLaunching(_ => {
     log("app did finish");
 
-    let w = NSWindow.makeWithContentRect(0., 0., 680., 468.);
+    let window = NSWindow.makeWithContentRect(0., 0., 680., 468.);
 
     let root = {
       let view = NSView.make();
@@ -29,12 +29,12 @@ let render = element => {
       };
     };
 
-    w#center;
-    w#makeKeyAndOrderFront;
-    w#setTitle("BriskMac");
-    w#setContentView(root.view);
+    window#center;
+    window#makeKeyAndOrderFront;
+    window#setTitle("BriskMac");
+    window#setContentView(root.view);
 
-    w#windowDidResize(_ => React.RunLoop.performLayout(root));
+    window#windowDidResize(_ => React.RunLoop.performLayout(root));
 
     React.RunLoop.run(root, React.element(element));
   });

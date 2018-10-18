@@ -192,7 +192,7 @@ module NSApplication = {
   let applicationDelegate = (id, sel) =>
     switch (T.find(application_table, id)) {
     | exception Not_found =>
-      Printf.ksprintf(prerr_endline, "NSApp #%d has been GCed", id)
+      Printf.sprintf("NSApp #%d has been GCed", id) |> failwith
     | del =>
       switch (sel) {
       | ApplicationWillFinishLaunching => del.applicationWillFinishLaunching()
@@ -295,7 +295,7 @@ module NSWindow = {
   let windowDelegate = (id, sel) =>
     switch (T.find(window_table, id)) {
     | exception Not_found =>
-      Printf.ksprintf(prerr_endline, "Window #%d has been GCed", id)
+      Printf.sprintf("Window #%d has been GCed", id) |> failwith
     | del =>
       switch (sel) {
       | WindowDidResize => del.windowDidResize()

@@ -40,9 +40,17 @@ let render = element => {
     window#setTitle(appName);
     window#setContentView(root.view);
 
-    window#windowDidResize(_ => React.RunLoop.performLayout(root));
+    window#windowDidResize(_ => {
+      let height = window#contentHeight;
+      React.RunLoop.setWindowHeight(height);
+      React.RunLoop.performLayout(~height, root);
+    });
 
-    React.RunLoop.run(root, React.element(element));
+    React.RunLoop.run(
+      ~height=window#contentHeight,
+      root,
+      React.element(element),
+    );
   });
   app#run;
 };

@@ -42,10 +42,6 @@
 
 @implementation View
 
-- (BOOL)isFlipped {
-  return YES;
-}
-
 @end
 
 typedef void (^ActionBlock)();
@@ -248,6 +244,14 @@ CAMLprim value ml_NSWindow_contentView_bc(value win_v) {
 }
 
 View *ml_NSWindow_contentView(NSWindow *win) { return win.contentView; }
+
+double ml_NSWindow_contentHeight(NSWindow *win) {
+  return (double)[win contentRectForFrameRect:win.frame].size.height;
+}
+
+double ml_NSWindow_contentWidth(NSWindow *win) {
+  return (double)[win contentRectForFrameRect:win.frame].size.width;
+}
 
 CAMLprim value ml_NSWindow_setContentView_bc(value win_v, value view_v) {
   CAMLparam1(win_v);

@@ -237,6 +237,12 @@ module NSWindow = {
   [@noalloc]
   external _NSWindow_setContentView: (nsWindow, nsView) => unit =
     "ml_NSWindow_setContentView_bc" "ml_NSWindow_setContentView";
+  [@noalloc]
+  external _NSWindow_contentWidth: nsWindow => [@unboxed] float =
+    "ml_NSWindow_contentWidth" "ml_NSWindow_contentWidth";
+  [@noalloc]
+  external _NSWindow_contentHeight: nsWindow => [@unboxed] float =
+    "ml_NSWindow_contentHeight" "ml_NSWindow_contentHeight";
 
   class type t = {
     pub isVisible: bool;
@@ -246,6 +252,8 @@ module NSWindow = {
     pub title: string;
     pub contentView: nsView;
     pub setContentView: nsView => unit;
+    pub contentWidth: unit => float;
+    pub contentHeight: unit => float;
     pub windowDidResize: (unit => unit) => unit;
   };
 
@@ -275,6 +283,8 @@ module NSWindow = {
       pub title = _NSWindow_title(win);
       pub contentView = _NSWindow_contentView(win);
       pub setContentView = v => _NSWindow_setContentView(win, v);
+      pub contentWidth = _NSWindow_contentWidth(win);
+      pub contentHeight = _NSWindow_contentHeight(win);
       pub windowDidResize = f => del.windowDidResize = f
     };
   };

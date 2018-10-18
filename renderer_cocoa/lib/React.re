@@ -86,22 +86,30 @@ include ReactCore.Make(NativeCocoa);
 module RunLoop = {
   let rootRef = ref(None);
   let renderedRef = ref(None);
+  let heightRef = ref(0.);
 
-  let rec traverseAndRunLayout = (node: Layout.LayoutSupport.LayoutTypes.node) => {
+  let setWindowHeight = height => heightRef := height;
+
+  let rec traverseAndRunLayout =
+          (~height, node: Layout.LayoutSupport.LayoutTypes.node) => {
     let layout = node.layout;
+
+    let nodeTop = float_of_int(layout.top);
+    let nodeHeight = layout.height |> float_of_int;
+    let flippedTop = height -. nodeHeight -. nodeTop;
 
     NSView.setFrame(
       node.context,
       layout.left |> float_of_int,
-      layout.top |> float_of_int,
+      flippedTop,
       layout.width |> float_of_int,
-      layout.height |> float_of_int,
+      nodeHeight,
     );
 
-    node.children |> Array.iter(child => traverseAndRunLayout(child));
+    node.children |> Array.iter(child => traverseAndRunLayout(~height=nodeHeight, child));
   };
 
-  let performLayout = (root: NativeCocoa.hostView) => {
+  let performLayout = (~height, root: NativeCocoa.hostView) => {
     let node = root.layoutNode;
     Layout.(
       layoutNode(
@@ -111,7 +119,7 @@ module RunLoop = {
         Ltr,
       )
     );
-    traverseAndRunLayout(node);
+    traverseAndRunLayout(~height, node);
   };
 
   let loop = () =>
@@ -121,17 +129,19 @@ module RunLoop = {
         let (nextElement, updateLog) =
           RenderedElement.flushPendingUpdates(rendered);
         HostView.applyUpdateLog(root, updateLog);
-        performLayout(root);
+        performLayout(~height=heightRef^, root);
         NativeCocoa.isDirty := false;
         renderedRef := Some(nextElement);
       }
     | _ => ignore()
     };
 
-  let run = (root: NativeCocoa.hostView, element: reactElement) => {
+  let run = (~height, root: NativeCocoa.hostView, element: reactElement) => {
     let rendered = RenderedElement.render(element);
     HostView.mountRenderedElement(root, rendered);
-    performLayout(root);
+    performLayout(~height, root);
+
+    setWindowHeight(height);
 
     rootRef := Some(root);
     renderedRef := Some(rendered);

@@ -219,24 +219,22 @@ module NSWindow = {
     "ml_NSWindow_makeWithContentRect_bc" "ml_NSWindow_makeWithContentRect";
 
   [@noalloc]
-  external _NSWindow_isVisible: nsWindow => bool =
-    "ml_NSWindow_isVisible_bc" "ml_NSWindow_isVisible";
+  external _NSWindow_isVisible: nsWindow => bool = "ml_NSWindow_isVisible";
   [@noalloc]
-  external _NSWindow_center: nsWindow => unit =
-    "ml_NSWindow_center_bc" "ml_NSWindow_center";
+  external _NSWindow_center: nsWindow => unit = "ml_NSWindow_center";
   [@noalloc]
   external _NSWindow_makeKeyAndOrderFront: nsWindow => unit =
-    "ml_NSWindow_makeKeyAndOrderFront_bc" "ml_NSWindow_makeKeyAndOrderFront";
+    "ml_NSWindow_makeKeyAndOrderFront";
   [@noalloc]
   external _NSWindow_setTitle: (nsWindow, string) => unit =
     "ml_NSWindow_setTitle";
   external _NSWindow_title: nsWindow => string = "ml_NSWindow_title";
   [@noalloc]
   external _NSWindow_contentView: nsWindow => nsView =
-    "ml_NSWindow_contentView_bc" "ml_NSWindow_contentView";
+    "ml_NSWindow_contentView";
   [@noalloc]
   external _NSWindow_setContentView: (nsWindow, nsView) => unit =
-    "ml_NSWindow_setContentView_bc" "ml_NSWindow_setContentView";
+    "ml_NSWindow_setContentView";
   [@noalloc]
   external _NSWindow_contentWidth: nsWindow => [@unboxed] float =
     "ml_NSWindow_contentWidth" "ml_NSWindow_contentWidth";
@@ -347,11 +345,9 @@ module NSView = {
     "ml_NSView_setBackgroundColor_bc" "ml_NSView_setBackgroundColor";
 
   [@noalloc]
-  external _NSView_addSubview: (t, t) => unit =
-    "ml_NSView_addSubview_bc" "ml_NSView_addSubview";
+  external _NSView_addSubview: (t, t) => unit = "ml_NSView_addSubview";
   [@noalloc]
-  external _NSView_removeSubview: t => unit =
-    "ml_NSView_removeSubview_bc" "ml_NSView_removeSubview";
+  external _NSView_removeSubview: t => unit = "ml_NSView_removeSubview";
 
   [@noalloc]
   external _NSView_setFrame:
@@ -385,9 +381,7 @@ module NSView = {
 module NSButton = {
   type t = NSView.t;
 
-  [@noalloc]
-  external _NSButton_make: unit => t =
-    "ml_NSButton_make_bc" "ml_NSButton_make";
+  [@noalloc] external _NSButton_make: unit => t = "ml_NSButton_make";
 
   [@noalloc]
   external _NSButton_setTitle: (t, string) => unit = "ml_NSButton_setTitle";

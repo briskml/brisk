@@ -202,48 +202,20 @@ NSWindow *ml_NSWindow_makeWithContentRect(intnat winId, double x, double y,
   return win;
 }
 
-CAMLprim value ml_NSWindow_center_bc(value win_v) {
-  CAMLparam1(win_v);
-  NSWindow *win = NSWindow_val(win_v);
-  [win center];
-  CAMLreturn(Val_unit);
-}
-
 void ml_NSWindow_center(NSWindow *win) { [win center]; }
-
-CAMLprim value ml_NSWindow_makeKeyAndOrderFront_bc(value win_v) {
-  CAMLparam1(win_v);
-  NSWindow *win = NSWindow_val(win_v);
-  [win makeKeyAndOrderFront:nil];
-
-  CAMLreturn(Val_unit);
-}
 
 void ml_NSWindow_makeKeyAndOrderFront(NSWindow *win) {
   [win makeKeyAndOrderFront:nil];
 }
 
-CAMLprim value ml_NSWindow_isVisible_bc(value win_v) {
-  CAMLparam1(win_v);
-  NSWindow *win = NSWindow_val(win_v);
-  BOOL b = [win isVisible];
-
-  CAMLreturn(Val_bool(b));
-}
-
-BOOL ml_NSWindow_isVisible(NSWindow *win) {
-  BOOL b = [win isVisible];
-  return b;
-}
-
-CAMLprim value ml_NSWindow_contentView_bc(value win_v) {
-  CAMLparam1(win_v);
-  NSWindow *win = NSWindow_val(win_v);
-
-  CAMLreturn(Val_View(win.contentView));
-}
+BOOL ml_NSWindow_isVisible(NSWindow *win) { return [win isVisible]; }
 
 View *ml_NSWindow_contentView(NSWindow *win) { return win.contentView; }
+
+void ml_NSWindow_setContentView(NSWindow *win, View *view) {
+  [view setWantsLayer:YES];
+  [win setContentView:view];
+}
 
 double ml_NSWindow_contentHeight(NSWindow *win) {
   return (double)[win contentRectForFrameRect:win.frame].size.height;
@@ -251,23 +223,6 @@ double ml_NSWindow_contentHeight(NSWindow *win) {
 
 double ml_NSWindow_contentWidth(NSWindow *win) {
   return (double)[win contentRectForFrameRect:win.frame].size.width;
-}
-
-CAMLprim value ml_NSWindow_setContentView_bc(value win_v, value view_v) {
-  CAMLparam1(win_v);
-  NSWindow *win = NSWindow_val(win_v);
-  View *view = View_val(view_v);
-
-  [view setWantsLayer:YES];
-
-  [win setContentView:view];
-
-  CAMLreturn(Val_unit);
-}
-
-void ml_NSWindow_setContentView(NSWindow *win, View *view) {
-  [view setWantsLayer:YES];
-  [win setContentView:view];
 }
 
 CAMLprim value ml_NSWindow_title(NSWindow *win) {
@@ -598,79 +553,45 @@ View *ml_NSView_make() {
   return view;
 }
 
-CAMLprim value ml_NSView_memoize_bc(value id_v, value view_v) {
-  CAMLparam2(id_v, view_v);
-  View *view = View_val(view_v);
-
-  [ml_Views setObject:view forKey:@(Int_val(id_v))];
-
-  CAMLreturn(Val_unit);
-}
-
 void ml_NSView_memoize(intnat id_v, View *view) {
   [ml_Views setObject:view forKey:@(id_v)];
 }
 
-CAMLprim value ml_NSView_free_bc(value id_v) {
-  CAMLparam1(id_v);
+CAMLprim value ml_NSView_memoize_bc(value id_v, value view_v) {
+  CAMLparam2(id_v, view_v);
+  View *view = View_val(view_v);
 
-  [ml_Views removeObjectForKey:@(Int_val(id_v))];
+  ml_NSView_memoize(Int_val(id_v), view);
+
   CAMLreturn(Val_unit);
 }
 
 void ml_NSView_free(intnat id_v) { [ml_Views removeObjectForKey:@(id_v)]; }
 
-CAMLprim value ml_NSView_addSubview_bc(value view_v, value child_v) {
-  CAMLparam2(view_v, child_v);
-  View *view = View_val(view_v);
-  View *child = View_val(child_v);
+CAMLprim value ml_NSView_free_bc(value id_v) {
+  CAMLparam1(id_v);
 
-  [view addSubview:child];
+  ml_NSView_free(Int_val(id_v));
 
   CAMLreturn(Val_unit);
 }
 
 void ml_NSView_addSubview(View *view, View *child) { [view addSubview:child]; }
 
-CAMLprim value ml_NSView_removeSubview_bc(value child_v) {
-  CAMLparam1(child_v);
-  View *child = View_val(child_v);
-
-  [child removeFromSuperview];
-
-  CAMLreturn(Val_unit);
-}
-
 void ml_NSView_removeSubview(View *child) { [child removeFromSuperview]; }
-
-CAMLprim value ml_NSView_setFrame_bc(value view_v, value x_v, value y_v,
-                                     value w_v, value h_v) {
-  CAMLparam5(view_v, x_v, y_v, w_v, h_v);
-
-  View *view = View_val(view_v);
-
-  CGFloat x = Double_val(x_v);
-  CGFloat y = Double_val(y_v);
-  CGFloat w = Double_val(w_v);
-  CGFloat h = Double_val(h_v);
-
-  NSRect rect = NSMakeRect(x, y, w, h);
-  [view setFrame:rect];
-
-  CAMLreturn(Val_unit);
-}
 
 void ml_NSView_setFrame(View *view, double x, double y, double w, double h) {
   NSRect rect = NSMakeRect(x, y, w, h);
   [view setFrame:rect];
 }
 
-CAMLprim value ml_NSView_setBorderWidth_bc(value view_v, value width_v) {
-  CAMLparam2(view_v, width_v);
-
+CAMLprim value ml_NSView_setFrame_bc(value view_v, value x_v, value y_v,
+                                     value w_v, value h_v) {
+  CAMLparam5(view_v, x_v, y_v, w_v, h_v);
   View *view = View_val(view_v);
 
-  [view.layer setBorderWidth:Int_val(width_v)];
+  ml_NSView_setFrame(view, Double_val(x_v), Double_val(y_v), Double_val(w_v),
+                     Double_val(h_v));
 
   CAMLreturn(Val_unit);
 }
@@ -679,23 +600,11 @@ void ml_NSView_setBorderWidth(View *view, double width) {
   [view.layer setBorderWidth:width];
 }
 
-CAMLprim value ml_NSView_setBorderColor_bc(value view_v, value red_v,
-                                           value green_v, value blue_v,
-                                           value alpha_v) {
-  CAMLparam5(view_v, red_v, green_v, blue_v, alpha_v);
-
+CAMLprim value ml_NSView_setBorderWidth_bc(value view_v, value width_v) {
+  CAMLparam2(view_v, width_v);
   View *view = View_val(view_v);
 
-  CGFloat red = Double_val(red_v) / 255;
-  CGFloat green = Double_val(green_v) / 255;
-  CGFloat blue = Double_val(blue_v) / 255;
-  CGFloat alpha = Double_val(alpha_v);
-
-  [view setWantsLayer:YES];
-  [view.layer setBorderColor:[[NSColor colorWithRed:red
-                                              green:green
-                                               blue:blue
-                                              alpha:alpha] CGColor]];
+  ml_NSView_setBorderWidth(view, Double_val(width_v));
 
   CAMLreturn(Val_unit);
 }
@@ -713,23 +622,14 @@ void ml_NSView_setBorderColor(View *view, double red_v, double green_v,
                                               alpha:alpha] CGColor]];
 }
 
-CAMLprim value ml_NSView_setBackgroundColor_bc(value view_v, value red_v,
-                                               value green_v, value blue_v,
-                                               value alpha_v) {
-  CAMLparam5(view_v, red_v, blue_v, green_v, alpha_v);
-
+CAMLprim value ml_NSView_setBorderColor_bc(value view_v, value red_v,
+                                           value green_v, value blue_v,
+                                           value alpha_v) {
+  CAMLparam5(view_v, red_v, green_v, blue_v, alpha_v);
   View *view = View_val(view_v);
 
-  CGFloat red = Double_val(red_v) / 255;
-  CGFloat blue = Double_val(blue_v) / 255;
-  CGFloat green = Double_val(green_v) / 255;
-  CGFloat alpha = Double_val(alpha_v);
-
-  [view setWantsLayer:YES];
-  [view.layer setBackgroundColor:[[NSColor colorWithRed:red
-                                                  green:green
-                                                   blue:blue
-                                                  alpha:alpha] CGColor]];
+  ml_NSView_setBorderColor(view, Double_val(red_v), Double_val(green_v),
+                           Double_val(blue_v), Double_val(alpha_v));
 
   CAMLreturn(Val_unit);
 }
@@ -747,16 +647,19 @@ void ml_NSView_setBackgroundColor(View *view, double red_v, double green_v,
                                                   alpha:alpha] CGColor]];
 }
 
-// NSButton
-CAMLprim value ml_NSButton_make_bc() {
-  CAMLparam0();
+CAMLprim value ml_NSView_setBackgroundColor_bc(value view_v, value red_v,
+                                               value green_v, value blue_v,
+                                               value alpha_v) {
+  CAMLparam5(view_v, red_v, blue_v, green_v, alpha_v);
+  View *view = View_val(view_v);
 
-  Button *btn = [Button new];
-  [ml_Views_all addObject:btn];
+  ml_NSView_setBackgroundColor(view, Double_val(red_v), Double_val(blue_v),
+                               Double_val(green_v), Double_val(alpha_v));
 
-  CAMLreturn(Val_Button(btn));
+  CAMLreturn(Val_unit);
 }
 
+// NSButton
 Button *ml_NSButton_make() {
   Button *btn = [Button new];
   [ml_Views_all addObject:btn];

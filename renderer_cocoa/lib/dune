@@ -1,11 +1,18 @@
+(copy_files stubs/*.c)
+(copy_files stubs/*.h)
+
 (library
  (name brisk_cocoa)
  (public_name brisk.cocoa)
  (synopsis "Cocoa renderer and bindings")
  (libraries brisk_core flex lwt)
  (preprocess (pps lwt_ppx))
- (install_c_headers brisk_cocoa)
- (c_names Cocoa_stubs)
+ (install_c_headers brisk_cocoa
+                    brisk_cocoa_view
+                    brisk_cocoa_button)
+ (c_names Cocoa_stubs
+          NSView_stubs
+          NSButton_stubs)
  (c_flags (:standard
   (-Wextra -Wall -Werror -O -g -std=c99 -pedantic-errors -Wsign-compare -Wshadow)
   (-x objective-c))))

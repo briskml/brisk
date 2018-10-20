@@ -72,7 +72,7 @@ module NativeCocoa = {
 
   let mountChild = (~parent: hostView, ~child: hostView, ~position: int) => {
     cssNodeInsertChild(parent.layoutNode, child.layoutNode, position);
-    NSView.addSubview(parent.view, child.view, position);
+    NSView.addSubview(parent.view, child.view);
   };
 
   let unmountChild = (~parent as _, ~child) =>

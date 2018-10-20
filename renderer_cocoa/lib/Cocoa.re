@@ -185,50 +185,20 @@ external registerLoop: (unit => unit) => unit = "ml_registerLoop";
 module NSView = {
   type t = nsView;
 
-  [@noalloc] external _NSView_make: unit => t = "ml_NSView_make";
+  [@noalloc] external make: unit => t = "ml_NSView_make";
   [@noalloc]
-  external _NSView_memoize: ([@untagged] int, t) => unit =
+  external memoize: ([@untagged] int, t) => unit =
     "ml_NSView_memoize_bc" "ml_NSView_memoize";
 
   [@noalloc]
-  external _NSView_free: ([@untagged] int) => unit =
+  external free: ([@untagged] int) => unit =
     "ml_NSView_free_bc" "ml_NSView_free";
 
-  [@noalloc]
-  external _NSView_setBorderWidth: (t, [@unboxed] float) => unit =
-    "ml_NSView_setBorderWidth_bc" "ml_NSView_setBorderWidth";
+  [@noalloc] external addSubview: (t, t) => unit = "ml_NSView_addSubview";
+  [@noalloc] external removeSubview: t => unit = "ml_NSView_removeSubview";
 
   [@noalloc]
-  external _NSView_setBorderColor:
-    (
-      t,
-      [@unboxed] float,
-      [@unboxed] float,
-      [@unboxed] float,
-      [@unboxed] float
-    ) =>
-    unit =
-    "ml_NSView_setBorderColor_bc" "ml_NSView_setBorderColor";
-
-  [@noalloc]
-  external _NSView_setBackgroundColor:
-    (
-      t,
-      [@unboxed] float,
-      [@unboxed] float,
-      [@unboxed] float,
-      [@unboxed] float
-    ) =>
-    unit =
-    "ml_NSView_setBackgroundColor_bc" "ml_NSView_setBackgroundColor";
-
-  [@noalloc]
-  external _NSView_addSubview: (t, t) => unit = "ml_NSView_addSubview";
-  [@noalloc]
-  external _NSView_removeSubview: t => unit = "ml_NSView_removeSubview";
-
-  [@noalloc]
-  external _NSView_setFrame:
+  external setFrame:
     (
       t,
       [@unboxed] float,
@@ -239,37 +209,41 @@ module NSView = {
     unit =
     "ml_NSView_setFrame_bc" "ml_NSView_setFrame";
 
-  let make = _NSView_make;
+  [@noalloc]
+  external setBorderWidth: (nsView, [@unboxed] float) => unit =
+    "ml_NSView_setBorderWidth_bc" "ml_NSView_setBorderWidth";
 
-  let memoize = _NSView_memoize;
-  let free = _NSView_free;
+  [@noalloc]
+  external setBorderColor:
+    (
+      nsView,
+      [@unboxed] float,
+      [@unboxed] float,
+      [@unboxed] float,
+      [@unboxed] float
+    ) =>
+    unit =
+    "ml_NSView_setBorderColor_bc" "ml_NSView_setBorderColor";
 
-  let addSubview = (view, child, _position) =>
-    _NSView_addSubview(view, child);
-
-  let removeSubview = _NSView_removeSubview;
-
-  let setFrame = _NSView_setFrame;
-
-  let setBorderWidth = _NSView_setBorderWidth;
-  let setBorderColor = _NSView_setBorderColor;
-  let setBackgroundColor = _NSView_setBackgroundColor;
+  [@noalloc]
+  external setBackgroundColor:
+    (
+      nsView,
+      [@unboxed] float,
+      [@unboxed] float,
+      [@unboxed] float,
+      [@unboxed] float
+    ) =>
+    unit =
+    "ml_NSView_setBackgroundColor_bc" "ml_NSView_setBackgroundColor";
 };
 
 module NSButton = {
   type t = NSView.t;
 
-  [@noalloc] external _NSButton_make: unit => t = "ml_NSButton_make";
+  [@noalloc] external make: unit => t = "ml_NSButton_make";
 
+  [@noalloc] external setTitle: (t, string) => unit = "ml_NSButton_setTitle";
   [@noalloc]
-  external _NSButton_setTitle: (t, string) => unit = "ml_NSButton_setTitle";
-  [@noalloc]
-  external _NSButton_setCallback: (t, unit => unit) => unit =
-    "ml_NSButton_setCallback";
-
-  let make = _NSButton_make;
-
-  let setTitle = _NSButton_setTitle;
-
-  let setCallback = _NSButton_setCallback;
+  external setCallback: (t, unit => unit) => unit = "ml_NSButton_setCallback";
 };

@@ -48,13 +48,7 @@ module Button = {
         | Some(title) => NSButton.setTitle(btn, title)
         | None => ()
         };
-        NSButton.setCallback(
-          btn,
-          () => {
-            callback();
-            RunLoop.loop();
-          },
-        );
+        NSButton.setCallback(btn, () => callback());
 
         {view: btn, layoutNode: makeLayoutNode(~layout, btn)};
       },

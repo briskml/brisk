@@ -1,5 +1,14 @@
 #include "brisk_cocoa.h"
 
+static NSMutableDictionary *ml_Views;
+static NSMutableArray *ml_Views_all;
+
+CAMLprim value ml_NSLog(value str) {
+  CAMLparam1(str);
+  NSLog(@"%s", String_val(str));
+  CAMLreturn(Val_unit);
+}
+
 value Val_some(value some_v) {
   CAMLparam1(some_v);
   CAMLlocal1(some);
@@ -16,25 +25,16 @@ value Val_some(value some_v) {
 
 @implementation Button
 
-- (void)onClick:(ActionBlock)action {
-  self._actionBlock = action;
+- (void)onClick:(Callback)action {
+  self._callback = action;
   [self setTarget:self];
-  [self setAction:@selector(callActionBlock:)];
+  [self setAction:@selector(performCallback:)];
 }
 
-- (void)callActionBlock:(id)__unused sender {
-  self._actionBlock();
+- (void)performCallback:(id)__unused sender {
+  self._callback();
 }
 @end
-
-static NSMutableDictionary *ml_Views;
-static NSMutableArray *ml_Views_all;
-
-CAMLprim value ml_NSLog(value str) {
-  CAMLparam1(str);
-  NSLog(@"%s", String_val(str));
-  CAMLreturn(Val_unit);
-}
 
 @implementation MLApplicationDelegate {
   intnat applicationId;
@@ -192,6 +192,22 @@ void ml_NSApplication_run(NSApplication *app) {
   @autoreleasepool {
     [app run];
   }
+}
+
+void ml_registerLoop(value callback_v) {
+  CAMLparam1(callback_v);
+
+  caml_register_generational_global_root(&callback_v);
+
+  CFRunLoopObserverRef observer = CFRunLoopObserverCreateWithHandler(
+      NULL, kCFRunLoopAllActivities, YES, 0,
+      ^(CFRunLoopObserverRef observerRef __unused,
+        CFRunLoopActivity activity __unused) {
+        caml_callback(callback_v, Val_unit);
+      });
+
+  CFRunLoopAddObserver(CFRunLoopGetCurrent(), observer, kCFRunLoopCommonModes);
+  CAMLreturn0;
 }
 
 // View

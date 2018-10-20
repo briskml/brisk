@@ -34,16 +34,16 @@ CAMLprim value ml_NSLog(value str);
 
 // Cocoa-specific
 
-typedef void (^ActionBlock)();
+typedef void (^Callback)();
 
 @interface View : NSView
 @end
 
 @interface Button : NSButton
 
-@property(nonatomic, copy) ActionBlock _actionBlock;
+@property(nonatomic, copy) Callback _callback;
 
-- (void)onClick:(ActionBlock)action;
+- (void)onClick:(Callback)action;
 @end
 
 @interface MLApplicationDelegate : NSObject <NSApplicationDelegate>

@@ -88,7 +88,10 @@ module RunLoop = {
   let renderedRef = ref(None);
   let heightRef = ref(0.);
 
-  let setWindowHeight = height => heightRef := height;
+  let setWindowHeight = height => {
+    heightRef := height;
+    NativeCocoa.markAsDirty();
+  };
 
   let rec traverseAndRunLayout =
           (~height, node: Layout.LayoutSupport.LayoutTypes.node) => {
@@ -106,7 +109,8 @@ module RunLoop = {
       nodeHeight,
     );
 
-    node.children |> Array.iter(child => traverseAndRunLayout(~height=nodeHeight, child));
+    node.children
+    |> Array.iter(child => traverseAndRunLayout(~height=nodeHeight, child));
   };
 
   let performLayout = (~height, root: NativeCocoa.hostView) => {
@@ -139,11 +143,11 @@ module RunLoop = {
   let run = (~height, root: NativeCocoa.hostView, element: reactElement) => {
     let rendered = RenderedElement.render(element);
     HostView.mountRenderedElement(root, rendered);
-    performLayout(~height, root);
 
     setWindowHeight(height);
-
     rootRef := Some(root);
     renderedRef := Some(rendered);
+
+    registerLoop(_ => loop());
   };
 };

@@ -1,6 +1,5 @@
 open Brisk_cocoa;
 open Cocoa;
-open React_Components;
 
 let render = element => {
   let app = Lazy.force(NSApplication.app);
@@ -23,10 +22,10 @@ let render = element => {
       {
         React.NativeCocoa.view,
         layoutNode:
-          React.Layout.LayoutSupport.createNode(
+          Layout.LayoutSupport.createNode(
             ~withChildren=[||],
             ~andStyle={
-              ...React.Layout.LayoutSupport.defaultStyle,
+              ...Layout.LayoutSupport.defaultStyle,
               width: 400,
               height: 460,
             },
@@ -63,28 +62,18 @@ module Component = {
       if (state) {
         <View
           layout={
-            ...React.Layout.LayoutSupport.defaultStyle,
+            ...Layout.LayoutSupport.defaultStyle,
             width: 100,
             height: 100,
           }
-          style={
-            borderWidth: 1.,
-            backgroundColor: {
-              red: 0.,
-              green: 255.,
-              blue: 0.,
-              alpha: 1.,
-            },
-            borderColor: {
-              red: 0.,
-              green: 0.,
-              blue: 255.,
-              alpha: 1.,
-            },
-          }>
+          style=[
+            `background(`rgb((0, 255, 0))),
+            `borderColor(`rgb((0, 0, 255))),
+            `borderWidth(`pt(1.)),
+          ]>
           <Button
             layout={
-              ...React.Layout.LayoutSupport.defaultStyle,
+              ...Layout.LayoutSupport.defaultStyle,
               width: 100,
               height: 100,
             }
@@ -93,7 +82,7 @@ module Component = {
           />
           <Button
             layout={
-              ...React.Layout.LayoutSupport.defaultStyle,
+              ...Layout.LayoutSupport.defaultStyle,
               width: 100,
               height: 100,
             }
@@ -103,28 +92,18 @@ module Component = {
         </View>;
       } else {
         <View
-          layout=React.Layout.LayoutSupport.{
+          layout=Layout.LayoutSupport.{
             ...defaultStyle,
             width: 200,
             height: 400,
           }
-          style={
-            borderWidth: 1.,
-            backgroundColor: {
-              red: 255.,
-              green: 0.,
-              blue: 0.,
-              alpha: 1.,
-            },
-            borderColor: {
-              red: 0.,
-              green: 255.,
-              blue: 0.,
-              alpha: 1.,
-            },
-          }>
+          style=[
+            `background(`rgb((255, 0, 0))),
+            `borderColor(`rgb((0, 255, 0))),
+            `borderWidth(`pt(1.)),
+          ]>
           <Button
-            layout=React.Layout.LayoutSupport.{
+            layout=Layout.LayoutSupport.{
               ...defaultStyle,
               width: 100,
               height: 40,

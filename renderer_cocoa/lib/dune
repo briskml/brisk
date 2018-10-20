@@ -1,6 +1,8 @@
 (copy_files stubs/*.c)
 (copy_files stubs/*.h)
 
+(copy_files components/*.re)
+
 (library
  (name brisk_cocoa)
  (public_name brisk.cocoa)

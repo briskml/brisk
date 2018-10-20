@@ -2,6 +2,9 @@
  (name brisk_cocoa_menu)
  (public_name brisk.cocoa_menu)
  (synopsis "Cocoa NSMenu bindings")
+ (wrapped false)
+ (libraries brisk_cocoa)
+ (install_c_headers brisk_cocoa_menu)
  (c_names NSMenu_stubs)
  (c_flags (:standard
   (-Wextra -Wall -Werror -O -g -std=c99 -pedantic-errors -Wsign-compare -Wshadow)

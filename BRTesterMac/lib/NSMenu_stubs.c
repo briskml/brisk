@@ -1,68 +1,7 @@
-#import <Cocoa/Cocoa.h>
+#include "brisk_cocoa_menu.h"
 
-#define CAML_NAME_SPACE
-
-#import <caml/memory.h>
-
-#define Val_NSMenu(v) ((value)(v))
-#define NSMenu_val(v) ((__bridge NSMenu *)(value)(v))
-
-#define Val_NSMenuItem(v) ((value)(v))
-#define NSMenuItem_val(v) ((__bridge NSMenuItem *)(value)(v))
-
-enum {
-  // Apple
-  ActionOrderFrontStandardAboutPanel,
-  ActionHide,
-  ActionHideOtherApplications,
-  ActionUnhideAllApplications,
-  ActionTerminate,
-  // File
-  ActionClose,
-  ActionRunPageLayout,
-  ActionPrint,
-  // Edit
-  ActionUndo,
-  ActionRedo,
-  ActionCut,
-  ActionCopy,
-  ActionPaste,
-  ActionPasteAsPlainText,
-  ActionDelete,
-  ActionSelectAll,
-  // Find
-  ActionFind,
-  ActionFindNext,
-  ActionFindPrevious,
-  ActionFindUseSelection,
-  ActionJumpToSelection,
-  // Spelling
-  ActionShowGuessPanel,
-  ActionCheckSpelling,
-  ActionCheckSpellingContinuously,
-  // Window
-  ActionMinimize,
-  ActionZoom,
-  ActionBringAllInFront,
-  // Help
-  ActionHelp
-};
-
-enum {
-  TargetNSApp,
-};
-
-enum {
-  KindApple,
-  KindMain,
-  KindServices,
-  KindWindows,
-};
-
-CAMLprim value ml_NSApplication_setMenu(value kind_v, value menu_v) {
-  CAMLparam2(kind_v, menu_v);
-
-  NSMenu *menu = NSMenu_val(menu_v);
+CAMLprim value ml_NSApplication_setMenu(NSMenu *menu, value kind_v) {
+  CAMLparam1(kind_v);
 
   switch (Int_val(kind_v)) {
   case KindApple:
@@ -92,10 +31,8 @@ CAMLprim value ml_NSMenu_make(value title_v) {
   CAMLreturn(Val_NSMenu(menu));
 }
 
-CAMLprim value ml_NSMenu_addItem(value menu_v, value title_v) {
-  CAMLparam2(menu_v, title_v);
-
-  NSMenu *menu = NSMenu_val(menu_v);
+CAMLprim value ml_NSMenu_addItem(NSMenu *menu, value title_v) {
+  CAMLparam1(title_v);
 
   NSString *title = [NSString stringWithUTF8String:String_val(title_v)];
 
@@ -113,10 +50,8 @@ void ml_NSMenu_addSeparatorItem(NSMenu *menu) {
   [menu addItem:[NSMenuItem separatorItem]];
 }
 
-CAMLprim value ml_NSMenuItem_setTarget(value item_v, value target_v) {
-  CAMLparam2(item_v, target_v);
-
-  NSMenuItem *item = NSMenuItem_val(item_v);
+CAMLprim value ml_NSMenuItem_setTarget(NSMenuItem *item, value target_v) {
+  CAMLparam1(target_v);
 
   if (Is_long(target_v)) {
     switch (Int_val(target_v)) {
@@ -131,10 +66,8 @@ CAMLprim value ml_NSMenuItem_setTarget(value item_v, value target_v) {
   CAMLreturn(Val_unit);
 }
 
-CAMLprim value ml_NSMenuItem_setAction(value item_v, value action_v) {
-  CAMLparam2(item_v, action_v);
-
-  NSMenuItem *item = NSMenuItem_val(item_v);
+CAMLprim value ml_NSMenuItem_setAction(NSMenuItem *item, value action_v) {
+  CAMLparam1(action_v);
 
   SEL action = NULL;
 
@@ -235,11 +168,10 @@ CAMLprim value ml_NSMenuItem_setAction(value item_v, value action_v) {
   CAMLreturn(Val_unit);
 }
 
-CAMLprim value ml_NSMenuItem_setKeyEquivalent(value item_v, value key_v,
+CAMLprim value ml_NSMenuItem_setKeyEquivalent(NSMenuItem *item, value key_v,
                                               value option_modifier_v) {
-  CAMLparam3(item_v, key_v, option_modifier_v);
+  CAMLparam2(key_v, option_modifier_v);
 
-  NSMenuItem *item = NSMenuItem_val(item_v);
   NSString *key = [NSString stringWithUTF8String:String_val(key_v)];
 
   [item setKeyEquivalent:key];

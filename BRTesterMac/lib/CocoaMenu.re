@@ -63,7 +63,7 @@ module NSMenu = {
   type target =
     | NSApp;
 
-  external _NSApplication_setMenu: (kind, nsMenu) => unit =
+  external _NSApplication_setMenu: (nsMenu, kind) => unit =
     "ml_NSApplication_setMenu";
 
   external _NSMenu_make: string => nsMenu = "ml_NSMenu_make";
@@ -132,5 +132,5 @@ module NSMenu = {
     };
   };
 
-  let add = (~kind, menu) => _NSApplication_setMenu(kind, menu#get);
+  let add = (~kind, menu) => _NSApplication_setMenu(menu#get, kind);
 };

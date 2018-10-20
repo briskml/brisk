@@ -1,50 +1,17 @@
-#import <Cocoa/Cocoa.h>
+#include "brisk_cocoa.h"
 
-#define CAML_NAME_SPACE
+value Val_some(value some_v) {
+  CAMLparam1(some_v);
+  CAMLlocal1(some);
 
-#import <caml/alloc.h>
-#import <caml/bigarray.h>
-#import <caml/callback.h>
-#import <caml/custom.h>
-#import <caml/fail.h>
-#import <caml/memory.h>
-#import <caml/mlvalues.h>
-#import <caml/threads.h>
+  some = caml_alloc(1, 0);
+  Store_field(some, 0, some_v);
 
-#define Val_NSApplication(v) ((value)(v))
-#define NSApplication_val(v) ((__bridge NSApplication *)(value)(v))
-
-#define Val_NSWindow(v) ((value)(v))
-#define NSWindow_val(v) ((__bridge NSWindow *)(value)(v))
-
-#define Val_none Val_int(0)
-
-// static value Val_some(value some_v) {
-//   CAMLparam1(some_v);
-//   CAMLlocal1(some);
-
-//   some = caml_alloc(1, 0);
-//   Store_field(some, 0, some_v);
-
-//   CAMLreturn(some);
-// }
-
-#define Some_val(v) Field(v, 0)
-
-@interface View : NSView
-@end
+  CAMLreturn(some);
+}
 
 @implementation View
 
-@end
-
-typedef void (^ActionBlock)();
-
-@interface Button : NSButton
-
-@property(nonatomic, copy) ActionBlock _actionBlock;
-
-- (void)onClick:(ActionBlock)action;
 @end
 
 @implementation Button
@@ -60,12 +27,6 @@ typedef void (^ActionBlock)();
 }
 @end
 
-#define Val_View(v) ((value)(v))
-#define View_val(v) ((__bridge View *)(value)(v))
-
-#define Val_Button(v) ((value)(v))
-#define Button_val(v) ((__bridge Button *)(value)(v))
-
 static NSMutableDictionary *ml_Views;
 static NSMutableArray *ml_Views_all;
 
@@ -75,17 +36,11 @@ CAMLprim value ml_NSLog(value str) {
   CAMLreturn(Val_unit);
 }
 
-@interface MLApplicationDelegate : NSObject <NSApplicationDelegate>
-
-@end
-
-enum { ApplicationWillFinishLaunching, ApplicationDidFinishLaunching };
-
 @implementation MLApplicationDelegate {
-  value applicationId;
+  intnat applicationId;
 }
 
-- (instancetype)initWithId:(value)appId {
+- (instancetype)initWithId:(intnat)appId {
   if (self = [super init]) {
     applicationId = appId;
   }
@@ -106,7 +61,7 @@ enum { ApplicationWillFinishLaunching, ApplicationDidFinishLaunching };
   }
 
   if (closure_f != NULL) {
-    caml_callback2(*closure_f, applicationId,
+    caml_callback2(*closure_f, Val_int(applicationId),
                    Val_int(ApplicationWillFinishLaunching));
   }
 }
@@ -119,18 +74,12 @@ enum { ApplicationWillFinishLaunching, ApplicationDidFinishLaunching };
   }
 
   if (closure_f != NULL) {
-    caml_callback2(*closure_f, applicationId,
+    caml_callback2(*closure_f, Val_int(applicationId),
                    Val_int(ApplicationDidFinishLaunching));
   }
 }
 
 @end
-
-@interface MLWindowDelegate : NSObject <NSWindowDelegate>
-
-@end
-
-enum { WindowDidResize };
 
 @implementation MLWindowDelegate {
   intnat windowId;
@@ -155,30 +104,6 @@ enum { WindowDidResize };
 
 @end
 
-CAMLprim value ml_NSWindow_makeWithContentRect_bc(value winId, value x_v,
-                                                  value y_v, value w_v,
-                                                  value h_v) {
-  CAMLparam5(winId, x_v, y_v, w_v, h_v);
-  CGFloat x = Double_val(x_v);
-  CGFloat y = Double_val(y_v);
-  CGFloat w = Double_val(w_v);
-  CGFloat h = Double_val(h_v);
-
-  NSRect contentRect = NSMakeRect(x, y, w, h);
-
-  NSUInteger styleMask = NSWindowStyleMaskTitled | NSWindowStyleMaskClosable |
-                         NSWindowStyleMaskMiniaturizable |
-                         NSWindowStyleMaskResizable;
-
-  NSWindow *win = [[NSWindow alloc] initWithContentRect:contentRect
-                                              styleMask:styleMask
-                                                backing:NSBackingStoreBuffered
-                                                  defer:NO];
-  [win setDelegate:[[MLWindowDelegate alloc] initWithId:winId]];
-
-  CAMLreturn(Val_NSWindow(win));
-}
-
 NSWindow *ml_NSWindow_makeWithContentRect(intnat winId, double x, double y,
                                           double w, double h) {
   NSRect contentRect = NSMakeRect(x, y, w, h);
@@ -194,6 +119,18 @@ NSWindow *ml_NSWindow_makeWithContentRect(intnat winId, double x, double y,
   [win setDelegate:[[MLWindowDelegate alloc] initWithId:winId]];
 
   return win;
+}
+
+CAMLprim value ml_NSWindow_makeWithContentRect_bc(value winId, value x_v,
+                                                  value y_v, value w_v,
+                                                  value h_v) {
+  CAMLparam5(winId, x_v, y_v, w_v, h_v);
+
+  NSWindow *win = ml_NSWindow_makeWithContentRect(
+      Int_val(winId), Double_val(x_v), Double_val(y_v), Double_val(w_v),
+      Double_val(h_v));
+
+  CAMLreturn(Val_NSWindow(win));
 }
 
 void ml_NSWindow_center(NSWindow *win) { [win center]; }
@@ -246,33 +183,18 @@ CAMLprim value ml_NSApplication_NSApp(value appId) {
   NSApplication *app = [NSApplication sharedApplication];
   [app setActivationPolicy:NSApplicationActivationPolicyRegular];
   [app activateIgnoringOtherApps:YES];
-  [app setDelegate:[[MLApplicationDelegate alloc] initWithId:appId]];
+  [app setDelegate:[[MLApplicationDelegate alloc] initWithId:Int_val(appId)]];
 
   CAMLreturn(Val_NSApplication(app));
 }
 
-CAMLprim value ml_NSApplication_run(value appId) {
-  CAMLparam1(appId);
-
+void ml_NSApplication_run(NSApplication *app) {
   @autoreleasepool {
-    NSApplication *app = [NSApplication sharedApplication];
     [app run];
   }
-
-  CAMLreturn(Val_unit);
 }
 
 // View
-CAMLprim value ml_NSView_make_bc() {
-  CAMLparam0();
-
-  View *view = [View new];
-
-  [ml_Views_all addObject:view];
-
-  CAMLreturn(Val_View(view));
-}
-
 View *ml_NSView_make() {
   View *view = [View new];
   [ml_Views_all addObject:view];
@@ -284,9 +206,8 @@ void ml_NSView_memoize(intnat id_v, View *view) {
   [ml_Views setObject:view forKey:@(id_v)];
 }
 
-CAMLprim value ml_NSView_memoize_bc(value id_v, value view_v) {
-  CAMLparam2(id_v, view_v);
-  View *view = View_val(view_v);
+CAMLprim value ml_NSView_memoize_bc(value id_v, View *view) {
+  CAMLparam1(id_v);
 
   ml_NSView_memoize(Int_val(id_v), view);
 
@@ -312,10 +233,9 @@ void ml_NSView_setFrame(View *view, double x, double y, double w, double h) {
   [view setFrame:rect];
 }
 
-CAMLprim value ml_NSView_setFrame_bc(value view_v, value x_v, value y_v,
+CAMLprim value ml_NSView_setFrame_bc(View *view, value x_v, value y_v,
                                      value w_v, value h_v) {
-  CAMLparam5(view_v, x_v, y_v, w_v, h_v);
-  View *view = View_val(view_v);
+  CAMLparam4(x_v, y_v, w_v, h_v);
 
   ml_NSView_setFrame(view, Double_val(x_v), Double_val(y_v), Double_val(w_v),
                      Double_val(h_v));
@@ -327,9 +247,8 @@ void ml_NSView_setBorderWidth(View *view, double width) {
   [view.layer setBorderWidth:width];
 }
 
-CAMLprim value ml_NSView_setBorderWidth_bc(value view_v, value width_v) {
-  CAMLparam2(view_v, width_v);
-  View *view = View_val(view_v);
+CAMLprim value ml_NSView_setBorderWidth_bc(View *view, value width_v) {
+  CAMLparam1(width_v);
 
   ml_NSView_setBorderWidth(view, Double_val(width_v));
 
@@ -349,11 +268,10 @@ void ml_NSView_setBorderColor(View *view, double red_v, double green_v,
                                               alpha:alpha] CGColor]];
 }
 
-CAMLprim value ml_NSView_setBorderColor_bc(value view_v, value red_v,
+CAMLprim value ml_NSView_setBorderColor_bc(View *view, value red_v,
                                            value green_v, value blue_v,
                                            value alpha_v) {
-  CAMLparam5(view_v, red_v, green_v, blue_v, alpha_v);
-  View *view = View_val(view_v);
+  CAMLparam4(red_v, green_v, blue_v, alpha_v);
 
   ml_NSView_setBorderColor(view, Double_val(red_v), Double_val(green_v),
                            Double_val(blue_v), Double_val(alpha_v));
@@ -374,11 +292,10 @@ void ml_NSView_setBackgroundColor(View *view, double red_v, double green_v,
                                                   alpha:alpha] CGColor]];
 }
 
-CAMLprim value ml_NSView_setBackgroundColor_bc(value view_v, value red_v,
+CAMLprim value ml_NSView_setBackgroundColor_bc(View *view, value red_v,
                                                value green_v, value blue_v,
                                                value alpha_v) {
-  CAMLparam5(view_v, red_v, blue_v, green_v, alpha_v);
-  View *view = View_val(view_v);
+  CAMLparam4(red_v, blue_v, green_v, alpha_v);
 
   ml_NSView_setBackgroundColor(view, Double_val(red_v), Double_val(blue_v),
                                Double_val(green_v), Double_val(alpha_v));

@@ -183,8 +183,7 @@ module NSWindow = {
 module NSView = {
   type t = nsView;
 
-  [@noalloc]
-  external _NSView_make: unit => t = "ml_NSView_make_bc" "ml_NSView_make";
+  [@noalloc] external _NSView_make: unit => t = "ml_NSView_make";
   [@noalloc]
   external _NSView_memoize: ([@untagged] int, t) => unit =
     "ml_NSView_memoize_bc" "ml_NSView_memoize";

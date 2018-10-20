@@ -9,8 +9,8 @@ let render = element => {
 
   app#applicationWillFinishLaunching(_ => {
     log("app will finish");
-    let _ = Menu.makeMainMenu(appName);
-    ();
+    let menu = Menu.makeMainMenu(appName);
+    CocoaMenu.NSMenu.add(~kind=Main, menu);
   });
 
   app#applicationDidFinishLaunching(_ => {

@@ -1,4 +1,3 @@
-open Brisk_cocoa_menu;
 open CocoaMenu;
 
 let makeApplicationMenu = appName => {
@@ -189,8 +188,6 @@ let makeMainMenu = appName => {
   let help = mainMenu#addItem("Help");
   let submenu = makeHelpMenu(appName);
   mainMenu#setSubmenu(help, submenu);
-
-  NSMenu.add(~kind=Main, mainMenu);
 
   mainMenu;
 };

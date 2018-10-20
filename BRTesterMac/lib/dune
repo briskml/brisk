@@ -1,0 +1,8 @@
+(library
+ (name brisk_cocoa_menu)
+ (public_name brisk.cocoa_menu)
+ (synopsis "Cocoa NSMenu bindings")
+ (c_names NSMenu_stubs)
+ (c_flags (:standard
+  (-Wextra -Wall -Werror -O -g -std=c99 -pedantic-errors -Wsign-compare -Wshadow)
+  (-x objective-c))))

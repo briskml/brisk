@@ -1,9 +1,9 @@
-open Brisk_cocoa;
-open Cocoa;
+open Brisk_cocoa_menu;
+open CocoaMenu;
 
 let makeApplicationMenu = appName => {
   let submenu = NSMenu.make("Apple");
-  NSApplication.setMenu(~kind=Apple, submenu);
+  NSMenu.add(~kind=Apple, submenu);
 
   let _ =
     submenu#addItem(
@@ -19,7 +19,7 @@ let makeApplicationMenu = appName => {
   let services = submenu#addItem("Services");
   let servicesMenu = NSMenu.make("Services");
   submenu#setSubmenu(services, servicesMenu);
-  NSApplication.setMenu(~kind=Services, servicesMenu);
+  NSMenu.add(~kind=Services, servicesMenu);
   let _ = submenu#addSeparatorItem;
 
   let _ =
@@ -143,7 +143,7 @@ let makeEditMenu = () => {
 
 let makeWindowMenu = () => {
   let submenu = NSMenu.make("Window");
-  NSApplication.setMenu(~kind=Windows, submenu);
+  NSMenu.add(~kind=Windows, submenu);
 
   let _ = submenu#addItem(~action=Minimize, ~key="m", "Minimize");
   let _ = submenu#addItem(~action=Zoom, "Zoom");
@@ -189,6 +189,8 @@ let makeMainMenu = appName => {
   let help = mainMenu#addItem("Help");
   let submenu = makeHelpMenu(appName);
   mainMenu#setSubmenu(help, submenu);
+
+  NSMenu.add(~kind=Main, mainMenu);
 
   mainMenu;
 };

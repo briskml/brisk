@@ -14,7 +14,6 @@
     "test": "dune runtest --no-buffer",
     "build:mac": "esy b dune build @mac --no-buffer --profile=release",
     "build:linux": "esy b dune build @linux --no-buffer --profile=release",
-    "bootstrap:cocoa": "make -C renderer_cocoa/lib bootstrap",
     "bootstrap:mac": "make -C BRTesterMac/mac bootstrap",
     "run:mac": "make -C BRTesterMac/mac run",
     "test:mac": "make -C BRTesterMac/mac test"

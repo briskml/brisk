@@ -3,12 +3,13 @@
 
 #define CAML_NAME_SPACE
 
-#include <Cocoa/Cocoa.h>
+#import <Cocoa/Cocoa.h>
 
-#include <caml/alloc.h>
-#include <caml/callback.h>
-#include <caml/memory.h>
-#include <caml/mlvalues.h>
+#import <caml/alloc.h>
+#import <caml/callback.h>
+#import <caml/memory.h>
+#import <caml/mlvalues.h>
+#import <caml/threads.h>
 
 // OCaml-specific
 #define Val_none Val_int(0)

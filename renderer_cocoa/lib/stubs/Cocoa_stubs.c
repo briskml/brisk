@@ -189,20 +189,34 @@ void ml_NSApplication_run(NSApplication *app) {
   }
 }
 
-void ml_registerLoop(value callback_v) {
-  CAMLparam1(callback_v);
+dispatch_semaphore_t caml_thread_sema = dispatch_semaphore_create(0);
 
-  caml_register_generational_global_root(&callback_v);
+void caml_call(void (^block)()) {
+  dispatch_semaphore_wait(caml_thread_sema, DISPATCH_TIME_FOREVER);
+  caml_acquire_runtime_system();
+  block();
+  caml_release_runtime_system();
+  dispatch_semaphore_signal(caml_thread_sema);
+}
 
-  CFRunLoopObserverRef observer = CFRunLoopObserverCreateWithHandler(
-      NULL, kCFRunLoopAllActivities, YES, 0,
-      ^(CFRunLoopObserverRef observerRef __unused,
-        CFRunLoopActivity activity __unused) {
-        caml_callback(callback_v, Val_unit);
-      });
 
-  CFRunLoopAddObserver(CFRunLoopGetCurrent(), observer, kCFRunLoopCommonModes);
-  CAMLreturn0;
+void ml_lwt_iter() {
+  dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+    caml_call(^{
+      intnat should_schedule = caml_callback(*caml_named_value("Brisk_lwt_iter"), Val_unit);
+      if (should_schedule == 1) {
+        ml_lwt_iter();
+      }
+    });
+  });
+}
+
+void ml_schedule_layout_flush() {
+  dispatch_async(dispatch_get_main_queue(), ^{
+    caml_call(^{
+      caml_callback(*caml_named_value("Brisk_flush"), Val_unit);
+    });
+  });
 }
 
 // View

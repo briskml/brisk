@@ -241,9 +241,42 @@ module NSView = {
 module NSButton = {
   type t = NSView.t;
 
+  type buttonType =
+    | MomentaryLight
+    | PushOnPushOff
+    | Toggle
+    | Switch
+    | Radio
+    | MomentaryChange
+    | OnOff
+    | MomentaryPushIn;
+
+  type bezelStyle =
+    | Rounded
+    | RegularSquare
+    | ThickSquare
+    | ThickerSquare
+    | Disclosure
+    | ShadowlessSquare
+    | Circular
+    | TexturedSquare
+    | HelpButton;
+
   [@noalloc] external make: unit => t = "ml_NSButton_make";
 
   [@noalloc] external setTitle: (t, string) => unit = "ml_NSButton_setTitle";
   [@noalloc]
   external setCallback: (t, unit => unit) => unit = "ml_NSButton_setCallback";
+
+  [@noalloc]
+  external setButtonType: (t, buttonType) => unit =
+    "ml_NSButton_setButtonType_bc" "ml_NSButton_setButtonType";
+
+  [@noalloc]
+  external setBezelStyle: (t, bezelStyle) => unit =
+    "ml_NSButton_setBezelStyle_bc" "ml_NSButton_setBezelStyle";
+
+  [@noalloc]
+  external setIsBordered: (t, bool) => unit =
+    "ml_NSButton_setIsBordered_bc" "ml_NSButton_setIsBordered";
 };

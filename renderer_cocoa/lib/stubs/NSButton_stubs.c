@@ -42,3 +42,36 @@ CAMLprim value ml_NSButton_setTitle(Button *btn, value str_v) {
 
   CAMLreturn(Val_unit);
 }
+
+void ml_NSButton_setButtonType(Button *btn, intnat type) {
+  [btn setButtonType:type];
+}
+
+CAMLprim value ml_NSButton_setButtonType_bc(Button *btn, value type_v) {
+  CAMLparam1(type_v);
+
+  ml_NSButton_setButtonType(btn, Int_val(type_v));
+  CAMLreturn(Val_unit);
+}
+
+void ml_NSButton_setBezelStyle(Button *btn, intnat bezel) {
+  [btn setBezelStyle:bezel];
+}
+
+CAMLprim value ml_NSButton_setBezelStyle_bc(Button *btn, value bezel_v) {
+  CAMLparam1(bezel_v);
+
+  ml_NSButton_setBezelStyle(btn, Int_val(bezel_v));
+  CAMLreturn(Val_unit);
+}
+
+void ml_NSButton_setIsBordered(Button *btn, BOOL bordered) {
+  btn.bordered = bordered;
+}
+
+CAMLprim value ml_NSButton_setIsBordered_bc(Button *btn, value bordered_v) {
+  CAMLparam1(bordered_v);
+
+  ml_NSButton_setIsBordered(btn, Bool_val(bordered_v));
+  CAMLreturn(Val_unit);
+}

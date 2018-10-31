@@ -1,57 +1,6 @@
 open Brisk_cocoa;
 open Cocoa;
 
-let render = element => {
-  let app = Lazy.force(NSApplication.app);
-
-  let appName = "BriskMac";
-
-  app#applicationWillFinishLaunching(_ => {
-    log("app will finish");
-    let menu = Menu.makeMainMenu(appName);
-    CocoaMenu.NSMenu.add(~kind=Main, menu);
-  });
-
-  app#applicationDidFinishLaunching(_ => {
-    log("app did finish");
-
-    let window = NSWindow.makeWithContentRect(0., 0., 680., 468.);
-
-    let root = {
-      let view = NSView.make();
-      {
-        React.NativeCocoa.view,
-        layoutNode:
-          Layout.LayoutSupport.createNode(
-            ~withChildren=[||],
-            ~andStyle={
-              ...Layout.LayoutSupport.defaultStyle,
-              width: 400,
-              height: 460,
-            },
-            view,
-          ),
-      };
-    };
-
-    window#center;
-    window#makeKeyAndOrderFront;
-    window#setTitle(appName);
-    window#setContentView(root.view);
-
-    window#windowDidResize(_ =>
-      React.RunLoop.setWindowHeight(window#contentHeight)
-    );
-
-    React.RunLoop.run(
-      ~height=window#contentHeight,
-      root,
-      React.element(element),
-    );
-  });
-  app#run;
-};
-
 module Component = {
   let otherComponent = React.reducerComponent("Other");
   let createElement = (~children as _, ()) => {
@@ -116,4 +65,52 @@ module Component = {
   };
 };
 
-Callback.register("React.run", _ => render(<Component />));
+let () = {
+  Callback.register("Brisk.flush", React.RunLoop.loop);
+  let app = Lazy.force(NSApplication.app);
+
+  let appName = "BriskMac";
+
+  app#applicationWillFinishLaunching(_ => {
+    log("app will finish");
+    let menu = Menu.makeMainMenu(appName);
+    CocoaMenu.NSMenu.add(~kind=Main, menu);
+  });
+
+  app#applicationDidFinishLaunching(_ => {
+    let window = NSWindow.makeWithContentRect(0., 0., 680., 468.);
+
+    let root = {
+      let view = NSView.make();
+      {
+        React.NativeCocoa.view,
+        layoutNode:
+          Layout.LayoutSupport.createNode(
+            ~withChildren=[||],
+            ~andStyle={
+              ...Layout.LayoutSupport.defaultStyle,
+              width: 400,
+              height: 460,
+            },
+            view,
+          ),
+      };
+    };
+
+    window#center;
+    window#makeKeyAndOrderFront;
+    window#setTitle(appName);
+    window#setContentView(root.view);
+
+    window#windowDidResize(_ =>
+      React.RunLoop.setWindowHeight(window#contentHeight)
+    );
+
+    React.RunLoop.run(
+      ~height=window#contentHeight,
+      root,
+      React.element(<Component />),
+    );
+  });
+  app#run;
+};

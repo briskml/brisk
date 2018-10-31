@@ -10,8 +10,6 @@
 
 int main(int argc, const char *argv[])
 {
-  caml_main((char_os **) argv);
-  value *react_run = caml_named_value("React.run");
-  caml_callback(*react_run, Val_unit);
+  caml_main(argv);
   return 0;
 }

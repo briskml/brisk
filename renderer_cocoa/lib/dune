@@ -7,7 +7,7 @@
  (name brisk_cocoa)
  (public_name brisk.cocoa)
  (synopsis "Cocoa renderer and bindings")
- (libraries brisk_core flex lwt)
+ (libraries brisk_core flex lwt.unix)
  (preprocess (pps lwt_ppx))
  (install_c_headers brisk_cocoa
                     brisk_cocoa_view

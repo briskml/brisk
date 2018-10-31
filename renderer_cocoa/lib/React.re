@@ -27,8 +27,7 @@ module NativeCocoa = {
     NSView.free(id);
   };
 
-  let isDirty = ref(false);
-  let markAsDirty = () => isDirty := true;
+  [@noalloc] external markAsDirty: unit => unit = "ml_schedule_layout_flush";
 
   let beginChanges = () => ();
 
@@ -93,14 +92,11 @@ module RunLoop = {
   let loop = () =>
     switch (rootRef^, renderedRef^) {
     | (Some(root), Some(rendered)) =>
-      if (NativeCocoa.isDirty^ === true) {
         let (nextElement, updateLog) =
           RenderedElement.flushPendingUpdates(rendered);
         HostView.applyUpdateLog(root, updateLog);
         performLayout(~height=heightRef^, root);
-        NativeCocoa.isDirty := false;
         renderedRef := Some(nextElement);
-      }
     | _ => ignore()
     };
 
@@ -111,7 +107,5 @@ module RunLoop = {
     setWindowHeight(height);
     rootRef := Some(root);
     renderedRef := Some(rendered);
-
-    registerLoop(_ => loop());
-  };
+      };
 };

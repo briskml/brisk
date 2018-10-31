@@ -180,8 +180,6 @@ module NSWindow = {
   let () = Callback.register("NSWindow.delegate", windowDelegate);
 };
 
-external registerLoop: (unit => unit) => unit = "ml_registerLoop";
-
 module NSView = {
   type t = nsView;
 

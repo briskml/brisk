@@ -22,7 +22,7 @@ let make = (~title=?, ~layout, ~style=[], ~callback=() => (), children) => {
       | Some(title) => NSButton.setTitle(btn, title)
       | None => ()
       };
-      NSButton.setCallback(btn, () => callback());
+      NSButton.setCallback(btn, callback);
 
       {view: btn, layoutNode: makeLayoutNode(~layout, btn)};
     },

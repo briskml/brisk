@@ -2,6 +2,7 @@
 
 NSMutableDictionary *ml_Views;
 NSMutableArray *ml_Views_all;
+dispatch_semaphore_t caml_thread_sema;
 
 value Val_some(value some_v) {
   CAMLparam1(some_v);
@@ -15,7 +16,6 @@ value Val_some(value some_v) {
 
 CAMLprim value ml_NSLog(value str) {
   CAMLparam1(str);
-  NSLog(@"%s", String_val(str));
   CAMLreturn(Val_unit);
 }
 
@@ -41,6 +41,7 @@ enum { WindowDidResize };
   }
   ml_Views = [NSMutableDictionary new];
   ml_Views_all = [NSMutableArray new];
+  caml_thread_sema = dispatch_semaphore_create(1);
   return self;
 }
 
@@ -189,13 +190,13 @@ void ml_NSApplication_run(NSApplication *app) {
   }
 }
 
-dispatch_semaphore_t caml_thread_sema = dispatch_semaphore_create(0);
 
 void caml_call(void (^block)()) {
   dispatch_semaphore_wait(caml_thread_sema, DISPATCH_TIME_FOREVER);
-  caml_acquire_runtime_system();
+  // This should only be called when we call from outside of OCaml I suppose
+  // caml_acquire_runtime_system();
   block();
-  caml_release_runtime_system();
+  // caml_release_runtime_system();
   dispatch_semaphore_signal(caml_thread_sema);
 }
 
@@ -214,7 +215,7 @@ void ml_lwt_iter() {
 void ml_schedule_layout_flush() {
   dispatch_async(dispatch_get_main_queue(), ^{
     caml_call(^{
-      caml_callback(*caml_named_value("Brisk_flush"), Val_unit);
+      caml_callback(*caml_named_value("Brisk.flush"), Val_unit);
     });
   });
 }

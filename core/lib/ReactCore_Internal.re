@@ -18,6 +18,7 @@ module type HostImplementation = {
 };
 
 module Make = (Implementation: HostImplementation) => {
+
   module GlobalState = {
     let debug = ref(true);
     let componentKeyCounter = ref(0);

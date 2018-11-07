@@ -194,21 +194,25 @@ void ml_NSApplication_run(NSApplication *app) {
 void caml_call(void (^block)()) {
   dispatch_semaphore_wait(caml_thread_sema, DISPATCH_TIME_FOREVER);
   // This should only be called when we call from outside of OCaml I suppose
-  // caml_acquire_runtime_system();
+  caml_c_thread_register();
+  caml_acquire_runtime_system();
   block();
-  // caml_release_runtime_system();
+  caml_release_runtime_system();
   dispatch_semaphore_signal(caml_thread_sema);
 }
 
 
-void ml_lwt_iter() {
+CAMLprim void ml_lwt_iter() {
+    NSLog(@"ITER ENTER");
   dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+    NSLog(@"ITER async ENTER");
     caml_call(^{
-      intnat should_schedule = caml_callback(*caml_named_value("Brisk_lwt_iter"), Val_unit);
-      if (should_schedule == 1) {
-        ml_lwt_iter();
-      }
+      /*intnat should_schedule = */caml_callback(*caml_named_value("Brisk_lwt_iter"), Val_unit);
+      // if (should_schedule == 1) {
+      // }
     });
+    NSLog(@"ITER async leave");
+    ml_lwt_iter();
   });
 }
 

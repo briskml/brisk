@@ -1,14 +1,18 @@
 open Brisk_cocoa;
 open Cocoa;
+open Lwt.Infix;
+
+[@noalloc] external lwt_start: unit => unit = "ml_lwt_iter";
 
 module Component = {
   let otherComponent = React.reducerComponent("Other");
   let createElement = (~children as _, ()) => {
     ...otherComponent,
-    initialState: _ => false,
+    initialState: _ => None,
     reducer: (x, _) => React.Update(x),
     render: ({state, reduce}) =>
-      if (state) {
+      switch (state) {
+      | Some(code) =>
         <View
           layout={
             ...Layout.LayoutSupport.defaultStyle,
@@ -26,8 +30,8 @@ module Component = {
               width: 100,
               height: 100,
             }
-            title="Cell one"
-            callback={reduce(() => !state)}
+            title={Cohttp.Code.string_of_status(code)}
+            callback={reduce(() => None)}
           />
           <Button
             layout={
@@ -36,14 +40,13 @@ module Component = {
               height: 100,
             }
             title="Cell two"
-            callback={reduce(() => !state)}
+            callback={reduce(() => None)}
           />
-        </View>;
-      } else {
+        </View>
+      | None =>
         <View
           layout=Layout.LayoutSupport.{
             ...defaultStyle,
-            width: 200,
             height: 400,
           }
           style=[
@@ -54,19 +57,51 @@ module Component = {
           <Button
             layout=Layout.LayoutSupport.{
               ...defaultStyle,
-              width: 100,
+              width: 600,
               height: 40,
             }
-            title="Well"
-            callback={reduce(() => !state)}
+            title="Youre gonna have to wait a bit"
+            callback={
+                       let callback = reduce(code => code);
+                       (
+                         () => {
+                           lwt_start();
+                           print_endline("Started");
+                           ignore(
+                             Cohttp_lwt_unix.Client.get(
+                               Uri.of_string("http://example.com"),
+                             )
+                             >>= (
+                               ((response, _body)) => {
+                                 print_endline("Finished");
+                                 Lwt.return(
+                                   callback(
+                                     Some(Cohttp.Response.status(response)),
+                                   ),
+                                 );
+                               }
+                             ),
+                           );
+                         }
+                       );
+                     }
           />
-        </View>;
+        </View>
       },
   };
 };
 
+let lwt_iter = () => {
+  print_endline("iter");
+  Lwt.wakeup_paused ();
+  Lwt_engine.iter(Lwt.paused_count () == 0);
+  Lwt.wakeup_paused ();
+  print_endline("iter finish");
+}
+
 let () = {
   Callback.register("Brisk.flush", React.RunLoop.loop);
+  Callback.register("Brisk_lwt_iter", lwt_iter);
   let app = Lazy.force(NSApplication.app);
 
   let appName = "BriskMac";
@@ -112,5 +147,4 @@ let () = {
       React.element(<Component />),
     );
   });
-  app#run;
 };

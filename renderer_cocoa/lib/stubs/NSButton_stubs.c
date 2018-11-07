@@ -28,7 +28,9 @@ CAMLprim value ml_NSButton_setCallback(Button *btn, value callback_v) {
   caml_register_global_root(&callback);
 
   [btn onClick:^{
+    caml_acquire_runtime_system();
     caml_callback(callback, Val_unit);
+    caml_release_runtime_system();
   }];
 
   CAMLreturn(Val_unit);

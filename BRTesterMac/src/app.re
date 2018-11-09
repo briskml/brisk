@@ -2,9 +2,9 @@ open Brisk_cocoa;
 open Cocoa;
 open Lwt.Infix;
 
-[@noalloc] external lwt_start: unit => unit = "ml_lwt_iter";
-
 module Component = {
+  [@noalloc] external lwt_start: unit => unit = "ml_lwt_iter";
+
   let otherComponent = React.reducerComponent("Other");
   let createElement = (~children as _, ()) => {
     ...otherComponent,
@@ -30,7 +30,7 @@ module Component = {
               width: 100,
               height: 100,
             }
-            title={Cohttp.Code.string_of_status(code)}
+            title={string_of_int(code)}
             callback={reduce(() => None)}
           />
           <Button
@@ -45,10 +45,7 @@ module Component = {
         </View>
       | None =>
         <View
-          layout=Layout.LayoutSupport.{
-            ...defaultStyle,
-            height: 400,
-          }
+          layout=Layout.LayoutSupport.{...defaultStyle, height: 400}
           style=[
             `background(`rgb((255, 0, 0))),
             `borderColor(`rgb((0, 255, 0))),
@@ -66,21 +63,9 @@ module Component = {
                        (
                          () => {
                            lwt_start();
-                           print_endline("Started");
                            ignore(
-                             Cohttp_lwt_unix.Client.get(
-                               Uri.of_string("http://example.com"),
-                             )
-                             >>= (
-                               ((response, _body)) => {
-                                 print_endline("Finished");
-                                 Lwt.return(
-                                   callback(
-                                     Some(Cohttp.Response.status(response)),
-                                   ),
-                                 );
-                               }
-                             ),
+                             Lwt_unix.sleep(1.)
+                             >>= (_ => Lwt.return(callback(Some(100)))),
                            );
                          }
                        );
@@ -100,51 +85,54 @@ let lwt_iter = () => {
 }
 
 let () = {
-  Callback.register("Brisk.flush", React.RunLoop.loop);
+  Callback.register("Brisk_flush_layout", React.RunLoop.flushAndLayout);
   Callback.register("Brisk_lwt_iter", lwt_iter);
-  let app = Lazy.force(NSApplication.app);
+
+  NSApplication.init();
 
   let appName = "BriskMac";
+  NSApplication.setDelegateCallbacks(
+    ~applicationWillFinishLaunching=
+      () => {
+        let menu = Menu.makeMainMenu(appName);
+        CocoaMenu.NSMenu.add(~kind=Main, menu);
+      },
+    ~applicationDidFinishLaunching=
+      () => {
+        let window = NSWindow.makeWithContentRect(0., 0., 680., 468.);
 
-  app#applicationWillFinishLaunching(_ => {
-    log("app will finish");
-    let menu = Menu.makeMainMenu(appName);
-    CocoaMenu.NSMenu.add(~kind=Main, menu);
-  });
+        let root = {
+          let view = NSView.make();
+          {
+            React.NativeCocoa.view,
+            layoutNode:
+              Layout.LayoutSupport.createNode(
+                ~withChildren=[||],
+                ~andStyle={
+                  ...Layout.LayoutSupport.defaultStyle,
+                  width: 400,
+                  height: 460,
+                },
+                view,
+              ),
+          };
+        };
 
-  app#applicationDidFinishLaunching(_ => {
-    let window = NSWindow.makeWithContentRect(0., 0., 680., 468.);
+        window#center;
+        window#makeKeyAndOrderFront;
+        window#setTitle(appName);
+        window#setContentView(root.view);
 
-    let root = {
-      let view = NSView.make();
-      {
-        React.NativeCocoa.view,
-        layoutNode:
-          Layout.LayoutSupport.createNode(
-            ~withChildren=[||],
-            ~andStyle={
-              ...Layout.LayoutSupport.defaultStyle,
-              width: 400,
-              height: 460,
-            },
-            view,
-          ),
-      };
-    };
+        window#windowDidResize(_ =>
+          React.RunLoop.setWindowHeight(window#contentHeight)
+        );
 
-    window#center;
-    window#makeKeyAndOrderFront;
-    window#setTitle(appName);
-    window#setContentView(root.view);
-
-    window#windowDidResize(_ =>
-      React.RunLoop.setWindowHeight(window#contentHeight)
-    );
-
-    React.RunLoop.run(
-      ~height=window#contentHeight,
-      root,
-      React.element(<Component />),
-    );
-  });
+        React.RunLoop.renderAndMount(
+          ~height=window#contentHeight,
+          root,
+          React.element(<Component />),
+        );
+      },
+    (),
+  );
 };

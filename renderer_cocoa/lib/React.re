@@ -3,7 +3,7 @@ open Cocoa;
 
 module NativeCocoa = {
   [@deriving (show({with_path: false}), eq)]
-  type hostElement = nsView;
+  type hostElement = CocoaClass.view;
 
   [@deriving (show({with_path: false}), eq)]
   type hostView = {
@@ -19,12 +19,10 @@ module NativeCocoa = {
 
   let memoizeInstance = (id, instance) => {
     Hashtbl.add(instanceMap, id, instance);
-    NSView.memoize(id, instance.view);
   };
 
   let freeInstance = id => {
     Hashtbl.remove(instanceMap, id);
-    NSView.free(id);
   };
 
   [@noalloc] external markAsDirty: unit => unit = "ml_schedule_layout_flush";
@@ -56,7 +54,7 @@ module RunLoop = {
     NativeCocoa.markAsDirty();
   };
 
-  let rec traverseAndRunLayout =
+  let rec traverseAndApplyLayout =
           (~height, node: Layout.LayoutSupport.LayoutTypes.node) => {
     let layout = node.layout;
 
@@ -73,7 +71,7 @@ module RunLoop = {
     );
 
     node.children
-    |> Array.iter(child => traverseAndRunLayout(~height=nodeHeight, child));
+    |> Array.iter(child => traverseAndApplyLayout(~height=nodeHeight, child));
   };
 
   let performLayout = (~height, root: NativeCocoa.hostView) => {
@@ -86,26 +84,26 @@ module RunLoop = {
         Ltr,
       )
     );
-    traverseAndRunLayout(~height, node);
+    traverseAndApplyLayout(~height, node);
   };
 
-  let loop = () =>
+  let flushAndLayout = () =>
     switch (rootRef^, renderedRef^) {
     | (Some(root), Some(rendered)) =>
-        let (nextElement, updateLog) =
-          RenderedElement.flushPendingUpdates(rendered);
-        HostView.applyUpdateLog(root, updateLog);
-        performLayout(~height=heightRef^, root);
-        renderedRef := Some(nextElement);
+      let (nextElement, updateLog) =
+        RenderedElement.flushPendingUpdates(rendered);
+      HostView.applyUpdateLog(root, updateLog);
+      performLayout(~height=heightRef^, root);
+      renderedRef := Some(nextElement);
     | _ => ignore()
     };
 
-  let run = (~height, root: NativeCocoa.hostView, element: reactElement) => {
+  let renderAndMount = (~height, root: NativeCocoa.hostView, element: reactElement) => {
     let rendered = RenderedElement.render(element);
     HostView.mountRenderedElement(root, rendered);
 
     setWindowHeight(height);
     rootRef := Some(root);
     renderedRef := Some(rendered);
-      };
+  };
 };

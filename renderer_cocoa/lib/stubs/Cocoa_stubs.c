@@ -1,7 +1,13 @@
-#include "brisk_cocoa.h"
+#define CAML_NAME_SPACE
+#import "Cocoa_stubs.h"
+#import "BriskApplicationDelegate.h"
+#import "BriskWindowDelegate.h"
+#import <caml/alloc.h>
+#import <caml/callback.h>
+#import <caml/memory.h>
+#import <caml/mlvalues.h>
+#import <caml/threads.h>
 
-NSMutableDictionary *ml_Views;
-NSMutableArray *ml_Views_all;
 dispatch_semaphore_t caml_thread_sema;
 
 value Val_some(value some_v) {
@@ -19,88 +25,7 @@ CAMLprim value ml_NSLog(value str) {
   CAMLreturn(Val_unit);
 }
 
-@interface MLApplicationDelegate : NSObject <NSApplicationDelegate>
-
-@end
-
-enum { ApplicationWillFinishLaunching, ApplicationDidFinishLaunching };
-
-@interface MLWindowDelegate : NSObject <NSWindowDelegate>
-
-@end
-
-enum { WindowDidResize };
-
-@implementation MLApplicationDelegate {
-  intnat applicationId;
-}
-
-- (instancetype)initWithId:(intnat)appId {
-  if (self = [super init]) {
-    applicationId = appId;
-  }
-  ml_Views = [NSMutableDictionary new];
-  ml_Views_all = [NSMutableArray new];
-  caml_thread_sema = dispatch_semaphore_create(1);
-  return self;
-}
-
-- (void)applicationWillTerminate:(NSNotification *)__unused not{
-  // applicationWillTerminate
-}
-
-- (void)applicationWillFinishLaunching:(NSNotification *)__unused not{
-  static value *closure_f = NULL;
-
-  if (closure_f == NULL) {
-    closure_f = caml_named_value("NSApp.delegate");
-  }
-
-  if (closure_f != NULL) {
-    caml_callback2(*closure_f, Val_int(applicationId),
-                   Val_int(ApplicationWillFinishLaunching));
-  }
-}
-
-- (void)applicationDidFinishLaunching:(NSNotification *)__unused not{
-  static value *closure_f = NULL;
-
-  if (closure_f == NULL) {
-    closure_f = caml_named_value("NSApp.delegate");
-  }
-
-  if (closure_f != NULL) {
-    caml_callback2(*closure_f, Val_int(applicationId),
-                   Val_int(ApplicationDidFinishLaunching));
-  }
-}
-
-@end
-
-@implementation MLWindowDelegate {
-  intnat windowId;
-}
-
-- (instancetype)initWithId:(intnat)winId {
-  if (self = [super init]) {
-    windowId = winId;
-  }
-  return self;
-}
-
-- (void)windowDidResize:(NSNotification *)__unused aNotification {
-  static value *closure_f = NULL;
-
-  if (closure_f == NULL) {
-    closure_f = caml_named_value("NSWindow.delegate");
-  }
-
-  caml_callback2(*closure_f, Val_int(windowId), Val_int(WindowDidResize));
-}
-
-@end
-
-NSWindow *ml_NSWindow_makeWithContentRect(intnat winId, double x, double y,
+NSWindow *ml_NSWindow_makeWithContentRect(double x, double y,
                                           double w, double h) {
   NSRect contentRect = NSMakeRect(x, y, w, h);
 
@@ -112,21 +37,28 @@ NSWindow *ml_NSWindow_makeWithContentRect(intnat winId, double x, double y,
                                               styleMask:styleMask
                                                 backing:NSBackingStoreBuffered
                                                   defer:NO];
-  [win setDelegate:[[MLWindowDelegate alloc] initWithId:winId]];
+  [win setDelegate:[BriskWindowDelegate new]];
 
   return win;
 }
 
-CAMLprim value ml_NSWindow_makeWithContentRect_bc(value winId, value x_v,
+CAMLprim value ml_NSWindow_setOnWindowDidResize(NSWindow *window, value callback) {
+  CAMLparam1(callback);
+  [(BriskWindowDelegate *)[window delegate] setOnWindowDidResize:callback];
+  CAMLreturn(Val_unit);
+}
+
+CAMLprim value ml_NSWindow_makeWithContentRect_bc(value x_v,
                                                   value y_v, value w_v,
                                                   value h_v) {
-  CAMLparam5(winId, x_v, y_v, w_v, h_v);
+  CAMLparam4(x_v, y_v, w_v, h_v);
 
   NSWindow *win = ml_NSWindow_makeWithContentRect(
-      Int_val(winId), Double_val(x_v), Double_val(y_v), Double_val(w_v),
-      Double_val(h_v));
+    Double_val(x_v), Double_val(y_v), Double_val(w_v),
+    Double_val(h_v)
+  );
 
-  CAMLreturn(Val_NSWindow(win));
+  CAMLreturn((value)win);
 }
 
 void ml_NSWindow_center(NSWindow *win) { [win center]; }
@@ -144,6 +76,7 @@ void ml_NSWindow_setContentView(NSWindow *win, NSView *view) {
   [win setContentView:view];
 }
 
+// A separate bytecode version is probably needed
 double ml_NSWindow_contentHeight(NSWindow *win) {
   return (double)[win contentRectForFrameRect:win.frame].size.height;
 }
@@ -174,24 +107,35 @@ CAMLprim value ml_NSWindow_setTitle(NSWindow *win, value str_v) {
   CAMLreturn(Val_unit);
 }
 
-CAMLprim value ml_NSApplication_NSApp(value appId) {
-  CAMLparam1(appId);
+NSMutableSet *retainedViews;
+
+void brisk_init() {
+  retainedViews = [NSMutableSet new];
+  caml_thread_sema = dispatch_semaphore_create(1);
+}
+
+void ml_NSApplication_configure() {
+  brisk_init();
   NSApplication *app = [NSApplication sharedApplication];
   [app setActivationPolicy:NSApplicationActivationPolicyRegular];
   [app activateIgnoringOtherApps:YES];
-  [app setDelegate:[[MLApplicationDelegate alloc] initWithId:Int_val(appId)]];
-
-  CAMLreturn(Val_NSApplication(app));
+  [app setDelegate:[BriskApplicationDelegate new]];
+}
+CAMLprim void run_lwt_iter_if_needed() {
+  /*
+  dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+    brisk_caml_call(^{
+      intnat should_schedule = caml_callback(*caml_named_value("Brisk_lwt_iter"), Val_unit);
+      if (should_schedule == 1) {
+        ml_lwt_iter();
+      }
+    });
+    ml_lwt_iter();
+  });
+  */
 }
 
-void ml_NSApplication_run(NSApplication *app) {
-  @autoreleasepool {
-    [app run];
-  }
-}
-
-
-void caml_call(void (^block)()) {
+void brisk_caml_call(void (^block)()) {
   dispatch_semaphore_wait(caml_thread_sema, DISPATCH_TIME_FOREVER);
   // This should only be called when we call from outside of OCaml I suppose
   caml_c_thread_register();
@@ -199,29 +143,44 @@ void caml_call(void (^block)()) {
   block();
   caml_release_runtime_system();
   dispatch_semaphore_signal(caml_thread_sema);
+  run_lwt_iter_if_needed();
 }
 
-
 CAMLprim void ml_lwt_iter() {
-    NSLog(@"ITER ENTER");
   dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-    NSLog(@"ITER async ENTER");
-    caml_call(^{
+    brisk_caml_call(^{
       /*intnat should_schedule = */caml_callback(*caml_named_value("Brisk_lwt_iter"), Val_unit);
       // if (should_schedule == 1) {
       // }
     });
-    NSLog(@"ITER async leave");
+    sleep(5);
     ml_lwt_iter();
   });
 }
 
+void flush_and_layout_sync() {
+  caml_callback(*caml_named_value("Brisk_flush_layout"), Val_unit);
+}
+
 void ml_schedule_layout_flush() {
   dispatch_async(dispatch_get_main_queue(), ^{
-    caml_call(^{
-      caml_callback(*caml_named_value("Brisk.flush"), Val_unit);
+    brisk_caml_call(^{
+      flush_and_layout_sync();
     });
   });
 }
 
-// View
+void brisk_caml_call_and_flush(void (^block)()) {
+  brisk_caml_call(^{
+    block();
+    flush_and_layout_sync();
+  });
+}
+
+void retainView(NSView *view) {
+  [retainedViews addObject:view];
+}
+
+void releaseView(NSView *view) {
+  [retainedViews removeObject:view];
+}

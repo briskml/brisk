@@ -2,122 +2,93 @@
    Cocoa bindings for OCaml.
    Original project by Nicolás Ojeda Bär © https://github.com/nojb/ocaml-cocoa
 */
-module T =
-  Ephemeron.K1.Make({
-    type t = int;
 
-    let equal = (==);
-    let hash = Hashtbl.hash;
-  });
-
-external _NSLog: string => unit = "ml_NSLog";
-
-let log = fmt => Printf.ksprintf(_NSLog, fmt);
-
-type nsApp;
-
-type nsWindow;
-
-type nsView;
+module CocoaClass = {
+  type window;
+  type view;
+  type application;
+};
 
 module NSApplication = {
-  external _NSApplication_NSApp: int => nsApp = "ml_NSApplication_NSApp";
-  external _NSApplication_run: nsApp => unit = "ml_NSApplication_run";
+  type t = CocoaClass.application;
 
-  class type t = {
-    pub run: unit;
-    pub applicationWillFinishLaunching: (unit => unit) => unit;
-    pub applicationDidFinishLaunching: (unit => unit) => unit;
-  };
+  external init: unit => unit = "ml_NSApplication_configure";
 
-  type applicationDelegate = {
-    mutable applicationWillFinishLaunching: unit => unit,
-    mutable applicationDidFinishLaunching: unit => unit,
-  };
-
-  let delegate = () => {
-    applicationWillFinishLaunching: () => (),
-    applicationDidFinishLaunching: () => (),
-  };
-
-  let application_table = T.create(1);
-  let app_id = ref(0);
-
-  let app =
-    lazy {
-      let id = {
-        incr(app_id);
-        app_id^;
-      };
-      let app = _NSApplication_NSApp(id);
-      let del = delegate();
-
-      T.add(application_table, id, del);
-
-      {
-        as _;
-        pub run = _NSApplication_run(app);
-        pub applicationWillFinishLaunching = f =>
-          del.applicationWillFinishLaunching = f;
-        pub applicationDidFinishLaunching = f =>
-          del.applicationDidFinishLaunching = f
-      };
+  let isInitialized = ref(false);
+  let init = () =>
+    if (isInitialized^ === false) {
+      init();
+      isInitialized := true;
     };
 
-  type delegateSelector =
-    | ApplicationWillFinishLaunching
-    | ApplicationDidFinishLaunching;
+  let identity_f = () => ();
 
-  let applicationDelegate = (id, sel) =>
-    switch (T.find(application_table, id)) {
-    | exception Not_found =>
-      Printf.sprintf("NSApp #%d has been GCed", id) |> failwith
-    | del =>
-      switch (sel) {
-      | ApplicationWillFinishLaunching => del.applicationWillFinishLaunching()
-      | ApplicationDidFinishLaunching => del.applicationDidFinishLaunching()
-      }
+  exception NSAppNotInitialized;
+
+  let setDelegateCallbacks =
+      (
+        ~applicationWillTerminate=identity_f,
+        ~applicationWillFinishLaunching=identity_f,
+        ~applicationDidFinishLaunching=identity_f,
+        (),
+      ) => {
+    if (! isInitialized^) {
+      raise(NSAppNotInitialized);
     };
-
-  let () = Callback.register("NSApp.delegate", applicationDelegate);
+    Callback.register(
+      "NSAppDelegate.applicationWillTerminate",
+      applicationWillTerminate,
+    );
+    Callback.register(
+      "NSAppDelegate.applicationWillFinishLaunching",
+      applicationWillFinishLaunching,
+    );
+    Callback.register(
+      "NSAppDelegate.applicationDidFinishLaunching",
+      applicationDidFinishLaunching,
+    );
+  };
 };
 
 module NSWindow = {
   [@noalloc]
   external _NSWindow_makeWithContentRect:
     (
-      [@untagged] int,
       [@unboxed] float,
       [@unboxed] float,
       [@unboxed] float,
       [@unboxed] float
     ) =>
-    nsWindow =
+    CocoaClass.window =
     "ml_NSWindow_makeWithContentRect_bc" "ml_NSWindow_makeWithContentRect";
 
   [@noalloc]
-  external _NSWindow_isVisible: nsWindow => bool = "ml_NSWindow_isVisible";
+  external _NSWindow_isVisible: CocoaClass.window => bool =
+    "ml_NSWindow_isVisible";
   [@noalloc]
-  external _NSWindow_center: nsWindow => unit = "ml_NSWindow_center";
+  external _NSWindow_center: CocoaClass.window => unit = "ml_NSWindow_center";
   [@noalloc]
-  external _NSWindow_makeKeyAndOrderFront: nsWindow => unit =
+  external _NSWindow_makeKeyAndOrderFront: CocoaClass.window => unit =
     "ml_NSWindow_makeKeyAndOrderFront";
   [@noalloc]
-  external _NSWindow_setTitle: (nsWindow, string) => unit =
+  external _NSWindow_setTitle: (CocoaClass.window, string) => unit =
     "ml_NSWindow_setTitle";
-  external _NSWindow_title: nsWindow => string = "ml_NSWindow_title";
+  external _NSWindow_title: CocoaClass.window => string = "ml_NSWindow_title";
   [@noalloc]
-  external _NSWindow_contentView: nsWindow => nsView =
+  external _NSWindow_contentView: CocoaClass.window => CocoaClass.view =
     "ml_NSWindow_contentView";
   [@noalloc]
-  external _NSWindow_setContentView: (nsWindow, nsView) => unit =
+  external _NSWindow_setContentView:
+    (CocoaClass.window, CocoaClass.view) => unit =
     "ml_NSWindow_setContentView";
   [@noalloc]
-  external _NSWindow_contentWidth: nsWindow => [@unboxed] float =
+  external _NSWindow_contentWidth: CocoaClass.window => [@unboxed] float =
     "ml_NSWindow_contentWidth" "ml_NSWindow_contentWidth";
   [@noalloc]
-  external _NSWindow_contentHeight: nsWindow => [@unboxed] float =
+  external _NSWindow_contentHeight: CocoaClass.window => [@unboxed] float =
     "ml_NSWindow_contentHeight" "ml_NSWindow_contentHeight";
+  external setOnWindowDidResize: (CocoaClass.window, unit => unit) => unit =
+    "ml_NSWindow_setOnWindowDidResize";
 
   class type t = {
     pub isVisible: bool;
@@ -125,29 +96,15 @@ module NSWindow = {
     pub makeKeyAndOrderFront: unit;
     pub setTitle: string => unit;
     pub title: string;
-    pub contentView: nsView;
-    pub setContentView: nsView => unit;
+    pub contentView: CocoaClass.view;
+    pub setContentView: CocoaClass.view => unit;
     pub contentWidth: unit => float;
     pub contentHeight: unit => float;
     pub windowDidResize: (unit => unit) => unit;
   };
 
-  type windowDelegate = {mutable windowDidResize: unit => unit};
-
-  let delegate = () => {windowDidResize: () => ()};
-
-  let win_id = ref(0);
-  let window_table = T.create(0);
-
   let makeWithContentRect = (x, y, w, h) => {
-    let id = {
-      incr(win_id);
-      win_id^;
-    };
-    let win = _NSWindow_makeWithContentRect(id, x, y, w, h);
-    let del = delegate();
-
-    T.add(window_table, id, del);
+    let win = _NSWindow_makeWithContentRect(x, y, w, h);
 
     {
       as _;
@@ -160,38 +117,15 @@ module NSWindow = {
       pub setContentView = v => _NSWindow_setContentView(win, v);
       pub contentWidth = _NSWindow_contentWidth(win);
       pub contentHeight = _NSWindow_contentHeight(win);
-      pub windowDidResize = f => del.windowDidResize = f
+      pub windowDidResize = f => setOnWindowDidResize(win, f)
     };
   };
-
-  type windowDelegateSelector =
-    | WindowDidResize;
-
-  let windowDelegate = (id, sel) =>
-    switch (T.find(window_table, id)) {
-    | exception Not_found =>
-      Printf.sprintf("Window #%d has been GCed", id) |> failwith
-    | del =>
-      switch (sel) {
-      | WindowDidResize => del.windowDidResize()
-      }
-    };
-
-  let () = Callback.register("NSWindow.delegate", windowDelegate);
 };
 
 module NSView = {
-  type t = nsView;
+  type t = CocoaClass.view;
 
   [@noalloc] external make: unit => t = "ml_NSView_make";
-  [@noalloc]
-  external memoize: ([@untagged] int, t) => unit =
-    "ml_NSView_memoize_bc" "ml_NSView_memoize";
-
-  [@noalloc]
-  external free: ([@untagged] int) => unit =
-    "ml_NSView_free_bc" "ml_NSView_free";
-
   [@noalloc] external addSubview: (t, t) => unit = "ml_NSView_addSubview";
   [@noalloc] external removeSubview: t => unit = "ml_NSView_removeSubview";
 
@@ -208,13 +142,13 @@ module NSView = {
     "ml_NSView_setFrame_bc" "ml_NSView_setFrame";
 
   [@noalloc]
-  external setBorderWidth: (nsView, [@unboxed] float) => unit =
+  external setBorderWidth: (CocoaClass.view, [@unboxed] float) => unit =
     "ml_NSView_setBorderWidth_bc" "ml_NSView_setBorderWidth";
 
   [@noalloc]
   external setBorderColor:
     (
-      nsView,
+      CocoaClass.view,
       [@unboxed] float,
       [@unboxed] float,
       [@unboxed] float,
@@ -226,7 +160,7 @@ module NSView = {
   [@noalloc]
   external setBackgroundColor:
     (
-      nsView,
+      CocoaClass.view,
       [@unboxed] float,
       [@unboxed] float,
       [@unboxed] float,

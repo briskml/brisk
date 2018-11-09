@@ -1,39 +1,23 @@
-#include "brisk_cocoa_view.h"
+#import "NSView_stubs.h"
+#import <caml/alloc.h>
+#import <caml/callback.h>
+#import <caml/memory.h>
+#import <caml/mlvalues.h>
 
 NSView *ml_NSView_make() {
   NSView *view = [NSView new];
-  [ml_Views_all addObject:view];
+  retainView(view);
 
   return view;
-}
-
-void ml_NSView_memoize(intnat id_v, NSView *view) {
-  [ml_Views setObject:view forKey:@(id_v)];
-}
-
-CAMLprim value ml_NSView_memoize_bc(value id_v, NSView *view) {
-  CAMLparam1(id_v);
-
-  ml_NSView_memoize(Int_val(id_v), view);
-
-  CAMLreturn(Val_unit);
-}
-
-void ml_NSView_free(intnat id_v) { [ml_Views removeObjectForKey:@(id_v)]; }
-
-CAMLprim value ml_NSView_free_bc(value id_v) {
-  CAMLparam1(id_v);
-
-  ml_NSView_free(Int_val(id_v));
-
-  CAMLreturn(Val_unit);
 }
 
 void ml_NSView_addSubview(NSView *view, NSView *child) {
   [view addSubview:child];
 }
 
-void ml_NSView_removeSubview(NSView *child) { [child removeFromSuperview]; }
+void ml_NSView_removeSubview(NSView *child) { 
+  [child removeFromSuperview];
+}
 
 void ml_NSView_setFrame(NSView *view, double x, double y, double w, double h) {
   NSRect rect = NSMakeRect(x, y, w, h);

@@ -14,6 +14,8 @@ int main(int argc, const char *argv[])
 {
   caml_main((char_os **) argv);
   caml_release_runtime_system();
-  [[NSApplication sharedApplication] run];
+  @autoreleasepool {
+    [[NSApplication sharedApplication] run];
+  }
   return 0;
 }

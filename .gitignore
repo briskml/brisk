@@ -5,3 +5,4 @@ _build
 .merlin
 *.log
 *.install
+default.profraw

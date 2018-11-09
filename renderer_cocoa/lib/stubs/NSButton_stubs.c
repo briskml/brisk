@@ -1,37 +1,41 @@
-#include "brisk_cocoa_button.h"
+#import "NSButton_stubs.h"
+#define CAML_NAME_SPACE
+#import <caml/alloc.h>
+#import <caml/callback.h>
+#import <caml/memory.h>
 
 @implementation Button
 
-- (void)onClick:(Callback)action {
-  self._callback = action;
+- (void)setCallback:(value)callback {
+  if (self._callback) {
+    value prevCallback = self._callback;
+    caml_remove_global_root(&prevCallback);
+  }
+  caml_register_global_root(&callback);
+  self._callback = callback;
   [self setTarget:self];
-  [self setAction:@selector(performCallback:)];
+  [self setAction:@selector(performCallback)];
 }
 
-- (void)performCallback:(id)__unused sender {
-  self._callback();
+- (void)performCallback {
+  brisk_caml_call(^{
+    caml_callback(self._callback, Val_unit);
+  });
 }
 @end
 
 Button *ml_NSButton_make() {
   Button *btn = [Button new];
-  [ml_Views_all addObject:btn];
+  retainView(btn);
 
   return btn;
 }
 
 CAMLprim value ml_NSButton_setCallback(Button *btn, value callback_v) {
   CAMLparam1(callback_v);
-
   value callback = callback_v;
 
-  caml_register_global_root(&callback);
-
-  [btn onClick:^{
-    caml_acquire_runtime_system();
-    caml_callback(callback, Val_unit);
-    caml_release_runtime_system();
-  }];
+  [btn setCallback:callback];
 
   CAMLreturn(Val_unit);
 }

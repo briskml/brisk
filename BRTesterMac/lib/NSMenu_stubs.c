@@ -1,4 +1,10 @@
-#include "brisk_cocoa_menu.h"
+#import "NSMenu_stubs.h"
+#import <Cocoa/Cocoa.h>
+#define CAML_NAME_SPACE
+#import <caml/mlvalues.h>
+#import <caml/memory.h>
+#import <caml/alloc.h>
+#import <caml/callback.h>
 
 CAMLprim value ml_NSApplication_setMenu(NSMenu *menu, value kind_v) {
   CAMLparam1(kind_v);
@@ -28,7 +34,7 @@ CAMLprim value ml_NSMenu_make(value title_v) {
   NSString *title = [NSString stringWithUTF8String:String_val(title_v)];
   NSMenu *menu = [[NSMenu alloc] initWithTitle:title];
 
-  CAMLreturn(Val_NSMenu(menu));
+  CAMLreturn((value)menu);
 }
 
 CAMLprim value ml_NSMenu_addItem(NSMenu *menu, value title_v) {
@@ -39,7 +45,7 @@ CAMLprim value ml_NSMenu_addItem(NSMenu *menu, value title_v) {
   NSMenuItem *item =
       [menu addItemWithTitle:title action:NULL keyEquivalent:@""];
 
-  CAMLreturn(Val_NSMenuItem(item));
+  CAMLreturn((value)item);
 }
 
 void ml_NSMenu_removeItem(NSMenu *menu, NSMenuItem *item) {

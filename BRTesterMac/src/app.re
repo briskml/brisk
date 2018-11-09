@@ -77,12 +77,10 @@ module Component = {
 };
 
 let lwt_iter = () => {
-  print_endline("iter");
-  Lwt.wakeup_paused ();
-  Lwt_engine.iter(Lwt.paused_count () == 0);
-  Lwt.wakeup_paused ();
-  print_endline("iter finish");
-}
+  Lwt.wakeup_paused();
+  Lwt_engine.iter(false);
+  Lwt.wakeup_paused();
+};
 
 let () = {
   Callback.register("Brisk_flush_layout", React.RunLoop.flushAndLayout);

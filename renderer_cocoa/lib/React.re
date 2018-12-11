@@ -40,6 +40,8 @@ module NativeCocoa = {
     NSView.removeSubview(child.view);
 
   let remountChild = (~parent as _, ~child as _, ~position as _) => ();
+
+  let hostViewFromGroup = (_) => assert(false);
 };
 
 include ReactCore.Make(NativeCocoa);
@@ -90,9 +92,9 @@ module RunLoop = {
   let flushAndLayout = () =>
     switch (rootRef^, renderedRef^) {
     | (Some(root), Some(rendered)) =>
-      let (nextElement, updateLog) =
+      let nextElement =
         RenderedElement.flushPendingUpdates(rendered);
-      HostView.applyUpdateLog(root, updateLog);
+      /* Lazy.force(nextElement); */
       performLayout(~height=heightRef^, root);
       renderedRef := Some(nextElement);
     | _ => ignore()
@@ -100,8 +102,7 @@ module RunLoop = {
 
   let renderAndMount = (~height, root: NativeCocoa.hostView, element: reactElement) => {
     let rendered = RenderedElement.render(element);
-    HostView.mountRenderedElement(root, rendered);
-
+    /* HostView.mountRenderedElement(root, rendered); */
     setWindowHeight(height);
     rootRef := Some(root);
     renderedRef := Some(rendered);

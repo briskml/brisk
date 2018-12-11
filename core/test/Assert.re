@@ -1,6 +1,7 @@
 open Alcotest;
 open TestReactCore;
 
+/*
 type updateState = {
   previousReactElement: reactElement,
   oldRenderedElement: renderedElement,
@@ -17,15 +18,17 @@ type testItem('a) =
   | FlushUpdates(reactElement, renderedElement)
     : testItem(option(flushUpdates));
 
+*/
 type mountElement = {
   hostRoot: Implementation.hostView,
   renderedElement,
 };
 
 type mount = list(Implementation.testMountEntry);
-
+ 
 type testHostItem('a) =
   | MountElement(mountElement): testHostItem(mount);
+/*
 
 let renderedElement =
   Alcotest.testable(
@@ -38,6 +41,7 @@ let topLevelUpdateLog =
     (formatter, t) => TestPrinter.printTopLevelUpdateLog(formatter, t),
     TestRenderer.equal_optionTestTopLevelUpdateLog,
   );
+  */
 
 let mountLog =
   Alcotest.testable(
@@ -45,11 +49,13 @@ let mountLog =
     Implementation.equal_testMountLog,
   );
 
+/*
 let updateLog =
   Alcotest.testable(
     (formatter, t) => TestPrinter.printUpdateLog(formatter, t),
     TestRenderer.equal_testUpdateLog,
   );
+*/
 
 module Diff = Simple_diff.Make(String);
 
@@ -106,6 +112,7 @@ let check = (t, msg, x, y) =>
     let diff = diffOutput(expected, actual);
     Fmt.strf("%s:\n\n%s\n", msg, diff) |> failwith;
   };
+/*
 
 let assertElement = (~label="", expected, rendered) =>
   check(
@@ -114,11 +121,13 @@ let assertElement = (~label="", expected, rendered) =>
     expected,
     TestRenderer.convertElement(rendered),
   );
+*/
 
 let assertMountLog = (~label="", expected, actual) => {
   Implementation.mountLog := [];
   check(mountLog, label, expected, List.rev(actual));
 };
+/*
 
 let assertUpdateLog = (~label="", expected, actual) =>
   check(updateLog, label, expected, TestRenderer.convertUpdateLog(actual));
@@ -142,6 +151,7 @@ let assertUpdate =
   assertElement(~label, expectedElement, actualElement);
   assertTopLevelUpdateLog(~label, expectedLog, actualLog);
 };
+  */
 
 let expectHost: type a. (~label: string=?, a, testHostItem(a)) => a =
   (~label=?, expected, prev) =>
@@ -153,6 +163,7 @@ let expectHost: type a. (~label: string=?, a, testHostItem(a)) => a =
       mountLog;
     };
 
+/*
 let expect:
   type a.
     (~label: string=?, a, testItem(a)) => (RenderedElement.t, reactElement) =
@@ -203,12 +214,15 @@ let act = (~action, rAction, (oldRenderedElement, previousReactElement)) => {
   RemoteAction.act(rAction, ~action);
   (oldRenderedElement, previousReactElement);
 };
+*/
 
 let mount = (hostRoot, renderedElement) =>
   MountElement({hostRoot, renderedElement});
 
+/*
 let update = (nextReactElement, (oldRenderedElement, previousReactElement)) =>
   Update({nextReactElement, oldRenderedElement, previousReactElement});
 
 let flushPendingUpdates = ((oldRenderedElement, previousReactElement)) =>
   FlushUpdates(previousReactElement, oldRenderedElement);
+  */

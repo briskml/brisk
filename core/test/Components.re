@@ -154,7 +154,7 @@ module ChangeCounter = {
         } :
         state,
     render: ({state: {numChanges: _, mostRecentLabel: _}}) =>
-      Nested("", []),
+      Nested([]),
     printState: ({numChanges, mostRecentLabel}) =>
       "[" ++ string_of_int(numChanges) ++ ", " ++ mostRecentLabel ++ "]",
   };

@@ -11,7 +11,7 @@ let equal_opaqueComponent = (left, right) =>
   | (InstanceAndComponent(_, _), InstanceAndComponent(_, _)) =>
     assert(false)
   | (Component(justComponent), InstanceAndComponent(comp, instance)) =>
-    comp.handedOffInstance := Some((instance, instance));
+    comp.handedOffInstance := Some(instance);
     let result =
       switch (justComponent.handedOffInstance^) {
       | Some(_) => true
@@ -20,7 +20,7 @@ let equal_opaqueComponent = (left, right) =>
     comp.handedOffInstance := None;
     result;
   | (InstanceAndComponent(comp, instance), Component(justComponent)) =>
-    comp.handedOffInstance := Some((instance, instance));
+    comp.handedOffInstance := Some(instance);
     let result =
       switch (justComponent.handedOffInstance^) {
       | Some(_) => true
@@ -89,7 +89,7 @@ type testTopLevelUpdateLog = {
 type optionTestTopLevelUpdateLog = option(testTopLevelUpdateLog);
 
 let rec convertInstance:
-  'state 'action 'elementType .
+  'state 'action 'elementType.
   instance('state, 'action, 'elementType) => testInstance
  =
   ({component, id, instanceSubTree, iState} as instance) => {
@@ -101,10 +101,10 @@ let rec convertInstance:
 and convertElement =
   fun
   | IFlat(Instance(instance)) => [convertInstance(instance)]
-  | INested(_, elements) =>
+  | INested(elements, _) =>
     List.flatten(List.map(convertElement, elements));
 
-let convertSubTreeChangeReact = (x: UpdateLog.subtreeChangeReact) =>
+let convertSubTreeChangeReact = x =>
   switch (x) {
   | `NoChange => `NoChange
   | `Nested => `Nested
@@ -125,52 +125,54 @@ let convertSubTreeChange =
 
 let render = element => RenderedElement.render(element);
 
-let convertUpdateLog = (updateLog: UpdateLog.t) => {
-  let rec convertUpdateLog = (updateLogRef: list(UpdateLog.entry)) =>
-    switch (updateLogRef) {
-    | [] => []
-    | [
-        UpdateLog.UpdateInstance({
-          oldInstance,
-          newInstance,
-          stateChanged,
-          subTreeChanged,
-        }),
-        ...t,
-      ] => [
-        UpdateInstance({
-          oldInstance: convertInstance(oldInstance),
-          newInstance: convertInstance(newInstance),
-          stateChanged,
-          subTreeChanged: convertSubTreeChange(subTreeChanged),
-        }),
-        ...convertUpdateLog(t),
-      ]
-    | [
-        UpdateLog.ChangeComponent({
-          oldOpaqueInstance: Instance(oldInstance),
-          newOpaqueInstance: Instance(newInstance),
-        }),
-        ...t,
-      ] => [
-        ChangeComponent({
-          oldInstance: convertInstance(oldInstance),
-          newInstance: convertInstance(newInstance),
-          oldSubtree: convertElement(oldInstance.instanceSubTree),
-          newSubtree: convertElement(newInstance.instanceSubTree),
-        }),
-        ...convertUpdateLog(t),
-      ]
-    };
-  List.rev(convertUpdateLog(updateLog^));
-};
+/*
+ let convertUpdateLog = (updateLog: UpdateLog.t) => {
+   let rec convertUpdateLog = (updateLogRef: list(UpdateLog.entry)) =>
+     switch (updateLogRef) {
+     | [] => []
+     | [
+         UpdateLog.UpdateInstance({
+           oldInstance,
+           newInstance,
+           stateChanged,
+           subTreeChanged,
+         }),
+         ...t,
+       ] => [
+         UpdateInstance({
+           oldInstance: convertInstance(oldInstance),
+           newInstance: convertInstance(newInstance),
+           stateChanged,
+           subTreeChanged: convertSubTreeChange(subTreeChanged),
+         }),
+         ...convertUpdateLog(t),
+       ]
+     | [
+         UpdateLog.ChangeComponent({
+           oldOpaqueInstance: Instance(oldInstance),
+           newOpaqueInstance: Instance(newInstance),
+         }),
+         ...t,
+       ] => [
+         ChangeComponent({
+           oldInstance: convertInstance(oldInstance),
+           newInstance: convertInstance(newInstance),
+           oldSubtree: convertElement(oldInstance.instanceSubTree),
+           newSubtree: convertElement(newInstance.instanceSubTree),
+         }),
+         ...convertUpdateLog(t),
+       ]
+     };
+   List.rev(convertUpdateLog(updateLog^));
+ };
 
-let convertTopLevelUpdateLog:
-  option(RenderedElement.topLevelUpdate) => option(testTopLevelUpdateLog) =
-  fun
-  | Some(topLevelUpdate) =>
-    Some({
-      subtreeChange: convertSubTreeChange(topLevelUpdate.subtreeChange),
-      updateLog: convertUpdateLog(topLevelUpdate.RenderedElement.updateLog),
-    })
-  | None => None;
+ let convertTopLevelUpdateLog:
+   option(RenderedElement.topLevelUpdate) => option(testTopLevelUpdateLog) =
+   fun
+   | Some(topLevelUpdate) =>
+     Some({
+       subtreeChange: convertSubTreeChange(topLevelUpdate.subtreeChange),
+       updateLog: convertUpdateLog(topLevelUpdate.RenderedElement.updateLog),
+     })
+   | None => None;
+   */

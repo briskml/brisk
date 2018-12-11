@@ -1,3 +1,4 @@
+/*
 open TestRenderer;
 
 module Box = {
@@ -118,3 +119,4 @@ module ToggleClicks = {
     subtree: children,
   };
 };
+*/

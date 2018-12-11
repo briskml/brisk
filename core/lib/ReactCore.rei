@@ -3,6 +3,8 @@ module type HostImplementation = {
   let getInstance: int => option(hostView);
   let memoizeInstance: (int, hostView) => unit;
 
+  let hostViewFromGroup: list(hostView) => hostView;
+
   let markAsDirty: unit => unit;
 
   let beginChanges: unit => unit;
@@ -19,7 +21,7 @@ module type HostImplementation = {
 
 module Make:
   (Implementation: HostImplementation) =>
-  {
+   {
     module GlobalState: {
       let debug: ref(bool);
       let reset: unit => unit;
@@ -30,7 +32,10 @@ module Make:
        */
       let useTailHack: ref(bool);
     };
-    module Key: {type t; let create: unit => t;};
+    module Key: {
+      type t;
+      let create: unit => t;
+    };
     type sideEffects;
     type update('state, 'action) =
       | NoUpdate
@@ -60,7 +65,7 @@ module Make:
       ('payload => 'action) => Callback.t('payload);
     type self('state, 'action) = {
       state: 'state,
-      reduce: 'payload .reduce('payload, 'action),
+      reduce: 'payload. reduce('payload, 'action),
       act: 'action => unit,
     };
 
@@ -88,7 +93,6 @@ module Make:
       didMount: self('state, 'action) => unit,
       didUpdate: oldNewSelf('state, 'action) => unit,
       willUnmount: self('state, 'action) => unit /* TODO: currently unused */,
-      willUpdate: oldNewSelf('state, 'action) => unit,
       shouldUpdate: oldNewSelf('state, 'action) => bool,
       render: self('state, 'action) => 'elementType,
       initialState: unit => 'initialState,
@@ -116,60 +120,30 @@ module Make:
     let element:
       (~key: Key.t=?, component('state, 'action, 'elementType)) =>
       reactElement;
-    let arrayToElement: array(reactElement) => reactElement;
     let listToElement: list(reactElement) => reactElement;
     let logString: string => unit;
-
-    /**
-     * Log of operations performed to update an instance tree.
-     */
-    module UpdateLog: {
-      type subtreeChange;
-      type entry;
-      type t;
-      let create: unit => t;
-    };
 
     module RenderedElement: {
       /** Type of a react element after rendering  */
       type t;
-      type topLevelUpdate;
       let listToRenderedElement: list(t) => t;
 
       /** Render one element by creating new instances. */
       let render: reactElement => t;
 
       /** Update a rendered element when a new react element is received. */
+      type subtreeChange;
+
       let update:
         (
           ~previousReactElement: reactElement,
           ~renderedElement: t,
           reactElement
         ) =>
-        (t, option(topLevelUpdate));
+        (subtreeChange, t);
 
       /** Flush pending state updates (and possibly add new ones). */
-      let flushPendingUpdates: t => (t, UpdateLog.t);
-    };
-
-    /**
-     * Functions for mounting/unmounting an instance tree from
-     * rendered element, update log, and top level update.
-     */
-    module HostView: {
-      let mountRenderedElement:
-        (Implementation.hostView, RenderedElement.t) => unit;
-
-      let applyUpdateLog:
-        (Implementation.hostView, UpdateLog.t) => unit;
-
-      let applyTopLevelUpdate:
-        (
-          Implementation.hostView,
-          RenderedElement.t,
-          option(RenderedElement.topLevelUpdate)
-        ) =>
-        unit;
+      let flushPendingUpdates: t => t;
     };
 
     /**

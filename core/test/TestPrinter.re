@@ -1,4 +1,6 @@
+/*
 open TestRenderer;
+*/
 open Easy_format;
 
 let list = {...list, align_closing: true};
@@ -13,6 +15,7 @@ let makeProp = (key, value) =>
 let makeField = (key, value) =>
   Label((Atom(key ++ ":", atom), field), value);
 
+  /*
 let componentName = component =>
   switch (component) {
   | InstanceAndComponent(component, _) => component.debugName
@@ -40,6 +43,7 @@ let rec formatInstance = instance => {
 
 let formatElement = instances =>
   List(("[", "", "]", list), instances |> List.map(formatInstance));
+*/
 
 let formatMountLogItem =
   TestReactCore.Implementation.(
@@ -77,6 +81,7 @@ let formatMountLogItem =
 let formatMountLog = mountLog =>
   List(("[", ",", "]", list), mountLog |> List.map(formatMountLogItem));
 
+  /*
 let formatSubTreeChangeReact =
   fun
   | `Reordered => Atom("`Reordered", atom)
@@ -141,12 +146,15 @@ let formatTopLevelUpdateLog =
 
 let printElement = (formatter, instances) =>
   Pretty.to_formatter(formatter, formatElement(instances));
+  */
 
 let printMountLog = (formatter, mountLog) =>
   Pretty.to_formatter(formatter, formatMountLog(mountLog));
 
+  /*
 let printUpdateLog = (formatter, updateLog) =>
   Pretty.to_formatter(formatter, formatUpdateLog(updateLog));
 
 let printTopLevelUpdateLog = (formatter, topLevelUpdate) =>
   Pretty.to_formatter(formatter, formatTopLevelUpdateLog(topLevelUpdate));
+*/

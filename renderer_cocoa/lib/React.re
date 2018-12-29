@@ -13,18 +13,6 @@ module NativeCocoa = {
 
   let instanceMap: Hashtbl.t(int, hostView) = Hashtbl.create(1000);
 
-  let getInstance: int => option(hostView) =
-    id =>
-      Hashtbl.(mem(instanceMap, id) ? Some(find(instanceMap, id)) : None);
-
-  let memoizeInstance = (id, instance) => {
-    Hashtbl.add(instanceMap, id, instance);
-  };
-
-  let freeInstance = id => {
-    Hashtbl.remove(instanceMap, id);
-  };
-
   [@noalloc] external markAsDirty: unit => unit = "ml_schedule_layout_flush";
 
   let beginChanges = () => ();
@@ -34,14 +22,15 @@ module NativeCocoa = {
   let mountChild = (~parent: hostView, ~child: hostView, ~position: int) => {
     Layout.cssNodeInsertChild(parent.layoutNode, child.layoutNode, position);
     NSView.addSubview(parent.view, child.view);
+    parent;
   };
 
-  let unmountChild = (~parent as _, ~child) =>
+  let unmountChild = (~parent, ~child) => {
     NSView.removeSubview(child.view);
+    parent;
+  }
 
-  let remountChild = (~parent as _, ~child as _, ~position as _) => ();
-
-  let hostViewFromGroup = (_) => assert(false);
+  let remountChild = (~parent, ~child as _, ~from as _, ~to_ as _) => parent;
 };
 
 include ReactCore.Make(NativeCocoa);
@@ -101,7 +90,7 @@ module RunLoop = {
     };
 
   let renderAndMount = (~height, root: NativeCocoa.hostView, element: reactElement) => {
-    let rendered = RenderedElement.render(element);
+    let rendered = RenderedElement.render(root, element);
     /* HostView.mountRenderedElement(root, rendered); */
     setWindowHeight(height);
     rootRef := Some(root);

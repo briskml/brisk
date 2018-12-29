@@ -1,8 +1,11 @@
 open TestReactCore;
 
 type opaqueComponent =
-  | Component(componentSpec('a, 'b, 'c, 'd)): opaqueComponent
-  | InstanceAndComponent(component('a, 'b, 'c), instance('a, 'b, 'c))
+  | Component(componentSpec('a, 'b, 'c, 'd, 'e)): opaqueComponent
+  | InstanceAndComponent(
+      component('a, 'b, 'c, 'd),
+      instance('a, 'b, 'c, 'd),
+    )
     : opaqueComponent;
 
 let equal_opaqueComponent = (left, right) =>
@@ -89,8 +92,8 @@ type testTopLevelUpdateLog = {
 type optionTestTopLevelUpdateLog = option(testTopLevelUpdateLog);
 
 let rec convertInstance:
-  'state 'action 'elementType.
-  instance('state, 'action, 'elementType) => testInstance
+  'state 'action 'elementType 'outputNode.
+  instance('state, 'action, 'elementType, 'outputNode) => testInstance
  =
   ({component, id, instanceSubTree, iState} as instance) => {
     component: InstanceAndComponent(component, instance),
@@ -123,7 +126,7 @@ let convertSubTreeChange =
   | `PrependElement(_) as x
   | `ReplaceElements(_, _) as x => convertSubTreeChangeReact(x);
 
-let render = element => RenderedElement.render(element);
+let render = (root, element) => RenderedElement.render(root, element);
 
 /*
  let convertUpdateLog = (updateLog: UpdateLog.t) => {

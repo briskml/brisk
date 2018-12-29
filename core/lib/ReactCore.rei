@@ -1,20 +1,16 @@
 module type HostImplementation = {
   type hostView;
-  let getInstance: int => option(hostView);
-  let memoizeInstance: (int, hostView) => unit;
-
-  let hostViewFromGroup: list(hostView) => hostView;
 
   let markAsDirty: unit => unit;
 
   let beginChanges: unit => unit;
 
   let mountChild:
-    (~parent: hostView, ~child: hostView, ~position: int) => unit;
-  let unmountChild: (~parent: hostView, ~child: hostView) => unit;
+    (~parent: hostView, ~child: hostView, ~position: int) => hostView;
+  let unmountChild: (~parent: hostView, ~child: hostView) => hostView;
 
   let remountChild:
-    (~parent: hostView, ~child: hostView, ~position: int) => unit;
+    (~parent: hostView, ~child: hostView, ~from: int, ~to_: int) => hostView;
 
   let commitChanges: unit => unit;
 };
@@ -79,16 +75,16 @@ module Make:
         (~oldState: 'state, ~newState: 'state) => bool,
       children: reactElement,
     };
-    type elementType('concreteElementType, 'state, 'action);
-    type instance('state, 'action, 'elementType);
+    type elementType('concreteElementType, 'outputNodeType, 'state, 'action);
+    type instance('state, 'action, 'elementType, 'outputNodeType);
     type oldNewSelf('state, 'action) = {
       oldSelf: self('state, 'action),
       newSelf: self('state, 'action),
     };
-    type handedOffInstance('state, 'action, 'elementType);
-    type componentSpec('state, 'initialState, 'action, 'elementType) = {
+    type handedOffInstance('state, 'action, 'elementType, 'outputNodeType);
+    type componentSpec('state, 'initialState, 'action, 'elementType, 'outputNode) = {
       debugName: string,
-      elementType: elementType('elementType, 'state, 'action),
+      elementType: elementType('elementType, 'outputNode, 'state, 'action),
       willReceiveProps: self('state, 'action) => 'state,
       didMount: self('state, 'action) => unit,
       didUpdate: oldNewSelf('state, 'action) => unit,
@@ -98,27 +94,29 @@ module Make:
       initialState: unit => 'initialState,
       reducer: ('action, 'state) => update('state, 'action),
       printState: 'state => string /* for internal debugging */,
-      handedOffInstance: handedOffInstance('state, 'action, 'elementType),
+      handedOffInstance: handedOffInstance('state, 'action, 'elementType, 'outputNode),
       key: Key.t,
     };
-    type component('state, 'action, 'elementType) =
-      componentSpec('state, 'state, 'action, 'elementType);
+    type component('state, 'action, 'elementType, 'outputNodeType) =
+      componentSpec('state, 'state, 'action, 'elementType, 'outputNodeType);
     type stateless = unit;
     type actionless = unit;
+    type hostOutputNode;
+    type syntheticOutputNode;
     let statelessComponent:
       (~useDynamicKey: bool=?, string) =>
-      component(stateless, actionless, reactElement);
+      component(stateless, actionless, reactElement, syntheticOutputNode);
     let statefulComponent:
       (~useDynamicKey: bool=?, string) =>
-      componentSpec('state, stateless, actionless, reactElement);
+      componentSpec('state, stateless, actionless, reactElement, syntheticOutputNode);
     let reducerComponent:
       (~useDynamicKey: bool=?, string) =>
-      componentSpec('state, stateless, 'action, reactElement);
+      componentSpec('state, stateless, 'action, reactElement, syntheticOutputNode);
     let statelessNativeComponent:
       (~useDynamicKey: bool=?, string) =>
-      component(stateless, actionless, nativeElement(stateless, actionless));
+      component(stateless, actionless, nativeElement(stateless, actionless), hostOutputNode);
     let element:
-      (~key: Key.t=?, component('state, 'action, 'elementType)) =>
+      (~key: Key.t=?, component('state, 'action, 'elementType, 'hostOutputNode)) =>
       reactElement;
     let listToElement: list(reactElement) => reactElement;
     let logString: string => unit;
@@ -126,13 +124,12 @@ module Make:
     module RenderedElement: {
       /** Type of a react element after rendering  */
       type t;
-      let listToRenderedElement: list(t) => t;
 
       /** Render one element by creating new instances. */
-      let render: reactElement => t;
+      let render: (Implementation.hostView, reactElement) => t;
 
       /** Update a rendered element when a new react element is received. */
-      type subtreeChange;
+      type subtreePatch;
 
       let update:
         (
@@ -140,7 +137,7 @@ module Make:
           ~renderedElement: t,
           reactElement
         ) =>
-        (subtreeChange, t);
+        (subtreePatch, t);
 
       /** Flush pending state updates (and possibly add new ones). */
       let flushPendingUpdates: t => t;

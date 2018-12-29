@@ -71,7 +71,7 @@ module BoxWrapper = {
   let component = statelessComponent("BoxWrapper");
   let make =
       (~title="ImABox", ~twoBoxes=false, ~onClick as _=?, _children)
-      : component(stateless, unit, reactElement) => {
+      : component(stateless, unit, reactElement, syntheticOutputNode) => {
     ...component,
     initialState: () => (),
     render: _self =>

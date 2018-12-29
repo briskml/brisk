@@ -19,10 +19,7 @@ type testItem('a) =
     : testItem(option(flushUpdates));
 
 */
-type mountElement = {
-  hostRoot: Implementation.hostView,
-  renderedElement,
-};
+type mountElement = RenderedElement.t;
 
 type mount = list(Implementation.testMountEntry);
  
@@ -156,8 +153,8 @@ let assertUpdate =
 let expectHost: type a. (~label: string=?, a, testHostItem(a)) => a =
   (~label=?, expected, prev) =>
     switch (prev) {
-    | MountElement({hostRoot, renderedElement}) =>
-      HostView.mountRenderedElement(hostRoot, renderedElement);
+    | MountElement(renderedElement) =>
+      HostView.mountRenderedElement(renderedElement);
       let mountLog = Implementation.mountLog^;
       assertMountLog(~label?, expected, mountLog);
       mountLog;
@@ -216,8 +213,8 @@ let act = (~action, rAction, (oldRenderedElement, previousReactElement)) => {
 };
 */
 
-let mount = (hostRoot, renderedElement) =>
-  MountElement({hostRoot, renderedElement});
+let mount = (renderedElement) =>
+  MountElement(renderedElement);
 
 /*
 let update = (nextReactElement, (oldRenderedElement, previousReactElement)) =>

@@ -212,7 +212,7 @@ module Make = (Implementation: HostImplementation) => {
      */
     id: int,
     /**
-     * top secret
+     * A reference to the output node(s) of a given element.
      */
     hostInstance: 'outputNode,
   }
@@ -310,16 +310,6 @@ module Make = (Implementation: HostImplementation) => {
           | React => InstanceSubtree.toList(instanceSubTree)
           };
     };
-    /*
-     let reorder =
-         (
-           ~parent: opaqueInstance,
-           ~child: opaqueInstance,
-           ~from: int,
-           ~to_: int,
-         ) =>
-       ();
-       */
   };
 
   let logString = txt => GlobalState.debug^ ? print_endline(txt) : ();
@@ -374,11 +364,53 @@ module Make = (Implementation: HostImplementation) => {
         ListTR.concat(ListTR.map(mapRenderedElement(f), l))
       };
 
-    let apply:
+    let prependElement = (~parent, ~children) =>
+      lazy {
+        let parent = Lazy.force(parent);
+        List.fold_left(
+          (parent, child) =>
+            Implementation.mountChild(
+              ~parent,
+              ~child=Lazy.force(child),
+              ~position=0,
+            ),
+          parent,
+          children,
+        );
+      };
+
+    let replaceSubtree = (~parent, ~prevChildren, ~nextChildren) =>
+      lazy {
+        let parent = Lazy.force(parent);
+        let unmountedParent =
+          List.fold_left(
+            (parent, child) =>
+              Implementation.unmountChild(~parent, ~child=Lazy.force(child)),
+            parent,
+            prevChildren,
+          );
+        List.fold_left(
+          (parent, child) =>
+            Implementation.mountChild(
+              ~parent,
+              ~child=Lazy.force(child),
+              ~position=0,
+            ),
+          unmountedParent,
+          nextChildren,
+        );
+      };
+
+    let reorder = (~parent, ~child, ~from, ~to_) => {
+      let parent = Lazy.force(parent);
+      Implementation.remountChild(~parent, ~child, ~from, ~to_);
+    };
+
+    let rec apply:
       type a s typ outputNode.
         (
           ~instance: instance(s, a, typ, outputNode),
-          ~nearestHostOutputNode: hostOutputNode,
+          ~nearestHostOutputNode: ref(hostOutputNode),
           (t, renderedElement)
         ) =>
         instance(s, a, typ, outputNode) =
@@ -419,100 +451,87 @@ module Make = (Implementation: HostImplementation) => {
         | `PrependElement(renderedElement) =>
           let children = OutputTree.InstanceSubtree.toList(renderedElement);
           switch (elementType) {
-          | React => {
+          | React =>
+            nearestHostOutputNode :=
+              prependElement(~parent=nearestHostOutputNode^, ~children);
+            {
               ...instance,
               instanceSubTree: nextInstanceSubTree,
-              hostInstance:
-                List.append(
-                  List.map(
-                    child =>
-                      lazy (
-                        Implementation.mountChild(
-                          ~parent=Lazy.force(nearestHostOutputNode),
-                          ~child=Lazy.force(child),
-                          ~position=0,
-                        )
-                      ),
-                    children,
-                  ),
-                  instance.hostInstance,
-                ),
-            }
+              hostInstance: List.append(children, instance.hostInstance),
+            };
           | Host => {
               ...instance,
               instanceSubTree: nextInstanceSubTree,
               hostInstance:
-                lazy {
-                  let prevInstance = Lazy.force(prevHostInstance);
-                  List.fold_left(
-                    (instance, child) =>
-                      Implementation.mountChild(
-                        ~parent=instance,
-                        ~child=Lazy.force(child),
-                        ~position=0,
-                      ),
-                    prevInstance,
-                    children,
-                  );
-                },
+                prependElement(~parent=nearestHostOutputNode^, ~children),
             }
           };
         | `ReplaceSubtree(prev, next) =>
-        /* TODO: START HERE */
-          let prevChildren = OutputTree.InstanceSubtree.toList(prev);
           let nextChildren = OutputTree.InstanceSubtree.toList(next);
+          let prevChildren = OutputTree.InstanceSubtree.toList(prev);
           switch (elementType) {
-          | React => {
+          | React =>
+            nearestHostOutputNode :=
+              replaceSubtree(
+                ~parent=nearestHostOutputNode^,
+                ~prevChildren=OutputTree.InstanceSubtree.toList(prev),
+                ~nextChildren,
+              );
+            {
               ...instance,
               instanceSubTree: nextInstanceSubTree,
-              hostInstance:
-                List.map(
-                  child =>
-                    lazy (
-                      Implementation.mountChild(
-                        ~parent=Lazy.force(nearestHostOutputNode),
-                        ~child=Lazy.force(child),
-                        ~position=0,
-                      )
-                    ),
-                  children,
-                ),
-            }
+              hostInstance: nextChildren,
+            };
           | Host => {
               ...instance,
               instanceSubTree: nextInstanceSubTree,
               hostInstance:
-                lazy {
-                  let prevInstance = Lazy.force(prevHostInstance);
-                  List.fold_left(
-                    (instance, child) =>
-                      Implementation.mountChild(
-                        ~parent=instance,
-                        ~child=Lazy.force(child),
-                        ~position=0,
-                      ),
-                    prevInstance,
-                    children,
-                  );
-                },
+                replaceSubtree(
+                  ~parent=prevHostInstance,
+                  ~prevChildren,
+                  ~nextChildren,
+                ),
             }
           };
 
-        | `UpdateGroup(_l) => instance
+        | `UpdateGroup(updateGroup) =>
+          List.fold_left(
+            (instance, updateGroupChange) =>
+              applyGroupChange(
+                ~instance,
+                ~nearestHostOutputNode,
+                ~updateGroupChange,
+                ~nextInstanceSubTree,
+              ),
+            instance,
+            updateGroup,
+          )
         }
     and applyGroupChange:
       type a s typ outputNode.
         (
           ~instance: instance(s, a, typ, outputNode),
-          ~nearestHostOutputNode: hostOutputNode,
-          (updateGroupChange, renderedElement)
+          ~nearestHostOutputNode: ref(hostOutputNode),
+          ~updateGroupChange: updateGroupChange,
+          ~nextInstanceSubTree: renderedElement
         ) =>
         instance(s, a, typ, outputNode) =
       (
         ~instance,
         ~nearestHostOutputNode,
-        (subtreeChange, nextInstanceSubTree),
-      ) => instance;
+        ~updateGroupChange,
+        ~nextInstanceSubTree,
+      ) =>
+        switch (updateGroupChange) {
+        | `Reordered(_from, _to_)
+        | `ReorderedAndNestedChange(_from, _to_) => instance
+        | `TopLevelChange(change) =>
+          apply(
+            ~instance,
+            ~nearestHostOutputNode,
+            (change, nextInstanceSubTree),
+          )
+        };
   };
 
   module Render = {
@@ -688,7 +707,7 @@ module Make = (Implementation: HostImplementation) => {
     and update =
         (
           ~updateInstanceState=?,
-          ~nearestHostOutputNode: hostOutputNode,
+          ~nearestHostOutputNode: ref(hostOutputNode),
           originalOpaqueInstance,
           Element(nextComponent) as nextElement,
         )
@@ -783,8 +802,8 @@ module Make = (Implementation: HostImplementation) => {
                     } :
                     updatedInstanceWithNewState;
                 };
-                let nearestHostOutputNode: hostOutputNode =
-                  instanceWithNewHostView.hostInstance;
+                let nearestHostOutputNode: ref(hostOutputNode) =
+                  ref(instanceWithNewHostView.hostInstance);
                 updateRenderedElementTopLevel(
                   ~updateInstanceState?,
                   ~nearestHostOutputNode,
@@ -843,7 +862,7 @@ module Make = (Implementation: HostImplementation) => {
           ~updateInstanceState=?,
           ~useKeyTable=?,
           ~absoluteSubtreeIndex=?,
-          ~nearestHostOutputNode: hostOutputNode,
+          ~nearestHostOutputNode: ref(hostOutputNode),
           ~oldRenderedElement,
           ~oldReactElement,
           ~nextReactElement,
@@ -982,7 +1001,7 @@ module Make = (Implementation: HostImplementation) => {
           /* This is a unique index of an element within a subtree,
             * thanks to tracking it we can efficiently manage moves of within a subtree
            */
-          ~nearestHostOutputNode: hostOutputNode,
+          ~nearestHostOutputNode: ref(hostOutputNode),
           ~absoluteSubtreeIndex,
           ~oldRenderedElement,
           ~oldReactElement,
@@ -1143,7 +1162,10 @@ module Make = (Implementation: HostImplementation) => {
     /**
      * Rendering produces a list of instance trees.
      */
-    type t = renderedElement;
+    type t = {
+      nearestHostOutputNode: hostOutputNode,
+      renderedElement,
+    };
 
     let getSubtreeSize =
       fun
@@ -1155,29 +1177,52 @@ module Make = (Implementation: HostImplementation) => {
         renderedElements,
         List.map(getSubtreeSize, renderedElements) |> List.fold_left((+), 0),
       );
-    let render = (reactElement): t => Render.Instance.ofList(reactElement);
-    type subtreeChange = SubtreeChange.t;
+    let render = (nearestHostOutputNode: Implementation.hostView, reactElement): t => {
+      renderedElement: Render.Instance.ofList(reactElement),
+      nearestHostOutputNode: Lazy.from_val(nearestHostOutputNode),
+    };
+    type subtreePatch = SubtreeChange.t;
     let update =
-        (~previousReactElement, ~renderedElement: t, nextReactElement)
-        : (SubtreeChange.t, t) => {
+        (
+          ~previousReactElement,
+          ~renderedElement as {renderedElement, nearestHostOutputNode}: t,
+          nextReactElement,
+        )
+        : (subtreePatch, t) => {
+      let nearestHostOutputNode = ref(nearestHostOutputNode);
       let (change, elem) =
         Render.updateRenderedElementTopLevel(
           ~oldRenderedElement=renderedElement,
           ~oldReactElement=previousReactElement,
+          ~nearestHostOutputNode,
           ~nextReactElement,
           (),
         );
-      (change, elem);
+      (
+        change,
+        {
+          renderedElement: elem,
+          nearestHostOutputNode: nearestHostOutputNode^,
+        },
+      );
     };
 
     /**
      * Flush the pending updates in an instance tree.
      * TODO: invoke lifecycles
      */
-    let flushPendingUpdates = (renderedElement: t): t => {
+    let flushPendingUpdates =
+        ({renderedElement, nearestHostOutputNode}: t): t => {
+      let nearestHostOutputNode = ref(nearestHostOutputNode);
       let newRenderedElement =
-        mapRenderedElement(Render.flushPendingUpdates, renderedElement);
-      newRenderedElement;
+        mapRenderedElement(
+          Render.flushPendingUpdates(~nearestHostOutputNode),
+          renderedElement,
+        );
+      {
+        renderedElement: newRenderedElement,
+        nearestHostOutputNode: nearestHostOutputNode^,
+      };
     };
   };
 

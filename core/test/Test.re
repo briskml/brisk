@@ -774,8 +774,8 @@ let mountLog = [
     () => {
       let root = Implementation.{name: "root", element: View};
 
-      TestRenderer.render(<Components.BoxWrapper />)
-      |> mount(root)
+      TestRenderer.render(root, <Components.BoxWrapper />)
+      |> mount
       |> expectHost(
            ~label=
              "It correctly prepares a mount log, ignoring non-native BoxWrapper",
@@ -804,11 +804,12 @@ let mountLog = [
       let root = Implementation.{name: "root", element: View};
 
       TestRenderer.render(
+        root,
         Components.(
           <Div> <Box title="ImABox1" /> <Box title="ImABox2" /> </Div>
         ),
       )
-      |> mount(root)
+      |> mount
       |> expectHost(
            ~label="It mounts two moxes in a div",
            [
@@ -845,8 +846,8 @@ let mountLog = [
           <Div> <Box title="ImABox1" /> <Box title="ImABox2" /> </Div>
         );
 
-      let beforeUpdate = TestRenderer.render(previousReactElement);
-      let _ = HostView.mountRenderedElement(root, beforeUpdate);
+      let beforeUpdate = TestRenderer.render(root, previousReactElement);
+      let _ = HostView.mountRenderedElement(beforeUpdate);
       Implementation.mountLog := [];
 
       let (topLevelUpdate, afterUpdate) =
@@ -857,7 +858,6 @@ let mountLog = [
         );
 
       HostView.applyTopLevelUpdate(
-        root,
         afterUpdate,
         (topLevelUpdate :> HostView.change),
       );
@@ -900,7 +900,7 @@ let mountLog = [
           ],
         );
 
-      let beforeUpdate = TestRenderer.render(previousReactElement);
+      let beforeUpdate = TestRenderer.render(root, previousReactElement);
       /* let _ = HostView.mountRenderedElement(root, beforeUpdate); */
 
       assertMountLog(
@@ -943,7 +943,7 @@ let mountLog = [
       let previousReactElement = <Components.Text key=1 title="x" />;
       let nextReactElement = <Components.Text key=2 title="y" />;
 
-      let beforeUpdate = TestRenderer.render(previousReactElement);
+      let beforeUpdate = TestRenderer.render(root, previousReactElement);
       /* let _ = HostView.mountRenderedElement(root, beforeUpdate); */
 
       assertMountLog(
@@ -985,7 +985,7 @@ let mountLog = [
 
       let previousReactElement = Components.(<ToggleClicks rAction />);
 
-      let beforeUpdate = TestRenderer.render(previousReactElement);
+      let beforeUpdate = TestRenderer.render(root, previousReactElement);
       /*let _ = HostView.mountRenderedElement(root, beforeUpdate);*/
 
       let div = Implementation.{name: "Div", element: View};
@@ -1043,7 +1043,7 @@ let mountLog = [
           ...commonElement,
         ]);
 
-      let beforeUpdate = TestRenderer.render(previousReactElement);
+      let beforeUpdate = TestRenderer.render(root, previousReactElement);
       /*let _ = HostView.mountRenderedElement(root, beforeUpdate);*/
 
       assertMountLog(

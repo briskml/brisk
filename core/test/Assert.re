@@ -2,43 +2,43 @@ open Alcotest;
 open TestReactCore;
 
 /*
-type updateState = {
-  previousReactElement: reactElement,
-  oldRenderedElement: renderedElement,
-  nextReactElement: reactElement,
-};
+ type updateState = {
+   previousReactElement: reactElement,
+   oldRenderedElement: renderedElement,
+   nextReactElement: reactElement,
+ };
 
-type update = (TestRenderer.t, option(TestRenderer.testTopLevelUpdateLog));
+ type update = (TestRenderer.t, option(TestRenderer.testTopLevelUpdateLog));
 
-type flushUpdates = (TestRenderer.t, list(TestRenderer.testUpdateEntry));
+ type flushUpdates = (TestRenderer.t, list(TestRenderer.testUpdateEntry));
 
-type testItem('a) =
-  | FirstRender(reactElement): testItem(TestRenderer.t)
-  | Update(updateState): testItem(update)
-  | FlushUpdates(reactElement, renderedElement)
-    : testItem(option(flushUpdates));
+ type testItem('a) =
+   | FirstRender(reactElement): testItem(TestRenderer.t)
+   | Update(updateState): testItem(update)
+   | FlushUpdates(reactElement, renderedElement)
+     : testItem(option(flushUpdates));
 
-*/
+ */
 type mountElement = RenderedElement.t;
 
 type mount = list(Implementation.testMountEntry);
- 
+
 type testHostItem('a) =
   | MountElement(mountElement): testHostItem(mount);
 /*
 
-let renderedElement =
-  Alcotest.testable(
-    (formatter, t) => TestPrinter.printElement(formatter, t),
-    TestRenderer.equal,
-  );
+ let renderedElement =
+   Alcotest.testable(
+     (formatter, t) => TestPrinter.printElement(formatter, t),
+     TestRenderer.equal,
+   );
 
-let topLevelUpdateLog =
-  Alcotest.testable(
-    (formatter, t) => TestPrinter.printTopLevelUpdateLog(formatter, t),
-    TestRenderer.equal_optionTestTopLevelUpdateLog,
-  );
-  */
+ let topLevelUpdateLog =
+   Alcotest.testable(
+     (formatter, t) => TestPrinter.printTopLevelUpdateLog(formatter, t),
+     TestRenderer.equal_optionTestTopLevelUpdateLog,
+   );
+   */
 
 let mountLog =
   Alcotest.testable(
@@ -47,45 +47,67 @@ let mountLog =
   );
 
 /*
-let updateLog =
-  Alcotest.testable(
-    (formatter, t) => TestPrinter.printUpdateLog(formatter, t),
-    TestRenderer.equal_testUpdateLog,
-  );
-*/
-
-module Diff = Simple_diff.Make(String);
+ let updateLog =
+   Alcotest.testable(
+     (formatter, t) => TestPrinter.printUpdateLog(formatter, t),
+     TestRenderer.equal_testUpdateLog,
+   );
+ */
 
 let diffOutput = (expected, actual) => {
-  open Diff;
   let gray = string => "\027[90m" ++ string ++ "\027[39m";
   let red = string => "\027[31m" ++ string ++ "\027[39m";
   let green = string => "\027[32m" ++ string ++ "\027[39m";
-  let diff = get_diff(expected, actual);
+  module Diff = Patience_diff_lib.Patience_diff;
+  module StringDiff = Patience_diff_lib.Patience_diff.String;
+  let diff =
+    StringDiff.get_hunks(
+      ~transform=x => x,
+      ~big_enough=?None,
+      ~context=-1,
+      ~mine=expected,
+      ~other=actual,
+    );
   diff
+  |> Diff.Hunks.ranges
   |> List.map(
        fun
-       | Equal(lines) =>
+       | Diff.Range.Same(lines) =>
          gray(
            String.concat(
              "\n",
-             lines |> Array.map(line => " " ++ line) |> Array.to_list,
+             Array.map(((line, _)) => " " ++ line, lines) |> Array.to_list,
            ),
          )
-       | Deleted(lines) =>
+       | Old(lines) =>
          red(
            String.concat(
              "\n",
              lines |> Array.map(line => "-" ++ line) |> Array.to_list,
            ),
          )
-       | Added(lines) =>
+       | New(lines) =>
          green(
            String.concat(
              "\n",
              lines |> Array.map(line => "+" ++ line) |> Array.to_list,
            ),
-         ),
+         )
+       | Replace(expected, actual) =>
+         red(
+           String.concat(
+             "\n",
+             actual |> Array.map(line => "-" ++ line) |> Array.to_list,
+           ),
+         )
+         ++ "\n"
+         ++ green(
+              String.concat(
+                "\n",
+                expected |> Array.map(line => "+" ++ line) |> Array.to_list,
+              ),
+            )
+       | Unified(_) => failwith("UNEXPECTED FAILURE"),
      )
   |> String.concat("\n");
 };
@@ -111,14 +133,14 @@ let check = (t, msg, x, y) =>
   };
 /*
 
-let assertElement = (~label="", expected, rendered) =>
-  check(
-    renderedElement,
-    label,
-    expected,
-    TestRenderer.convertElement(rendered),
-  );
-*/
+ let assertElement = (~label="", expected, rendered) =>
+   check(
+     renderedElement,
+     label,
+     expected,
+     TestRenderer.convertElement(rendered),
+   );
+ */
 
 let assertMountLog = (~label="", expected, actual) => {
   Implementation.mountLog := [];
@@ -126,29 +148,29 @@ let assertMountLog = (~label="", expected, actual) => {
 };
 /*
 
-let assertUpdateLog = (~label="", expected, actual) =>
-  check(updateLog, label, expected, TestRenderer.convertUpdateLog(actual));
+ let assertUpdateLog = (~label="", expected, actual) =>
+   check(updateLog, label, expected, TestRenderer.convertUpdateLog(actual));
 
-let assertTopLevelUpdateLog = (~label="", expected, actual) =>
-  check(
-    topLevelUpdateLog,
-    label,
-    expected,
-    TestRenderer.convertTopLevelUpdateLog(actual),
-  );
+ let assertTopLevelUpdateLog = (~label="", expected, actual) =>
+   check(
+     topLevelUpdateLog,
+     label,
+     expected,
+     TestRenderer.convertTopLevelUpdateLog(actual),
+   );
 
-let assertFlushUpdate =
-    (~label="", (expectedElement, expectedLog), (actualElement, actualLog)) => {
-  assertElement(~label, expectedElement, actualElement);
-  assertUpdateLog(~label, expectedLog, actualLog);
-};
+ let assertFlushUpdate =
+     (~label="", (expectedElement, expectedLog), (actualElement, actualLog)) => {
+   assertElement(~label, expectedElement, actualElement);
+   assertUpdateLog(~label, expectedLog, actualLog);
+ };
 
-let assertUpdate =
-    (~label="", (expectedElement, expectedLog), (actualElement, actualLog)) => {
-  assertElement(~label, expectedElement, actualElement);
-  assertTopLevelUpdateLog(~label, expectedLog, actualLog);
-};
-  */
+ let assertUpdate =
+     (~label="", (expectedElement, expectedLog), (actualElement, actualLog)) => {
+   assertElement(~label, expectedElement, actualElement);
+   assertTopLevelUpdateLog(~label, expectedLog, actualLog);
+ };
+   */
 
 let expectHost: type a. (~label: string=?, a, testHostItem(a)) => a =
   (~label=?, expected, prev) =>
@@ -161,65 +183,64 @@ let expectHost: type a. (~label: string=?, a, testHostItem(a)) => a =
     };
 
 /*
-let expect:
-  type a.
-    (~label: string=?, a, testItem(a)) => (RenderedElement.t, reactElement) =
-  (~label=?, expected, prev) =>
-    switch (prev) {
-    | Update({nextReactElement, oldRenderedElement, previousReactElement}) =>
-      let (newRenderedElement, _) as actual =
-        RenderedElement.update(
-          ~previousReactElement,
-          ~renderedElement=oldRenderedElement,
-          nextReactElement,
-        );
-      assertUpdate(~label?, expected, actual);
-      (newRenderedElement, nextReactElement);
-    | FirstRender(previousReactElement) =>
-      open TestRenderer;
-      let oldRenderedElement = render(previousReactElement);
-      assertElement(~label?, expected, oldRenderedElement);
-      (oldRenderedElement, previousReactElement);
-    | FlushUpdates(previousReactElement, oldRenderedElement) =>
-      let (newRenderedElement, _) as actual =
-        RenderedElement.flushPendingUpdates(oldRenderedElement);
-      switch (expected) {
-      | Some(expected) =>
-        assertFlushUpdate(~label?, expected, actual);
-        (newRenderedElement, previousReactElement);
-      | None =>
-        check(
-          bool,
-          switch (label) {
-          | None => "It is memoized"
-          | Some(x) => x
-          },
-          oldRenderedElement === newRenderedElement,
-          true,
-        );
-        (newRenderedElement, previousReactElement);
-      };
-    };
+ let expect:
+   type a.
+     (~label: string=?, a, testItem(a)) => (RenderedElement.t, reactElement) =
+   (~label=?, expected, prev) =>
+     switch (prev) {
+     | Update({nextReactElement, oldRenderedElement, previousReactElement}) =>
+       let (newRenderedElement, _) as actual =
+         RenderedElement.update(
+           ~previousReactElement,
+           ~renderedElement=oldRenderedElement,
+           nextReactElement,
+         );
+       assertUpdate(~label?, expected, actual);
+       (newRenderedElement, nextReactElement);
+     | FirstRender(previousReactElement) =>
+       open TestRenderer;
+       let oldRenderedElement = render(previousReactElement);
+       assertElement(~label?, expected, oldRenderedElement);
+       (oldRenderedElement, previousReactElement);
+     | FlushUpdates(previousReactElement, oldRenderedElement) =>
+       let (newRenderedElement, _) as actual =
+         RenderedElement.flushPendingUpdates(oldRenderedElement);
+       switch (expected) {
+       | Some(expected) =>
+         assertFlushUpdate(~label?, expected, actual);
+         (newRenderedElement, previousReactElement);
+       | None =>
+         check(
+           bool,
+           switch (label) {
+           | None => "It is memoized"
+           | Some(x) => x
+           },
+           oldRenderedElement === newRenderedElement,
+           true,
+         );
+         (newRenderedElement, previousReactElement);
+       };
+     };
 
-let start = reactElement => {
-  GlobalState.reset();
-  Hashtbl.clear(Implementation.map);
-  FirstRender(reactElement);
-};
+ let start = reactElement => {
+   GlobalState.reset();
+   Hashtbl.clear(Implementation.map);
+   FirstRender(reactElement);
+ };
 
-let act = (~action, rAction, (oldRenderedElement, previousReactElement)) => {
-  RemoteAction.act(rAction, ~action);
-  (oldRenderedElement, previousReactElement);
-};
-*/
+ let act = (~action, rAction, (oldRenderedElement, previousReactElement)) => {
+   RemoteAction.act(rAction, ~action);
+   (oldRenderedElement, previousReactElement);
+ };
+ */
 
-let mount = (renderedElement) =>
-  MountElement(renderedElement);
+let mount = renderedElement => MountElement(renderedElement);
 
 /*
-let update = (nextReactElement, (oldRenderedElement, previousReactElement)) =>
-  Update({nextReactElement, oldRenderedElement, previousReactElement});
+ let update = (nextReactElement, (oldRenderedElement, previousReactElement)) =>
+   Update({nextReactElement, oldRenderedElement, previousReactElement});
 
-let flushPendingUpdates = ((oldRenderedElement, previousReactElement)) =>
-  FlushUpdates(previousReactElement, oldRenderedElement);
-  */
+ let flushPendingUpdates = ((oldRenderedElement, previousReactElement)) =>
+   FlushUpdates(previousReactElement, oldRenderedElement);
+   */

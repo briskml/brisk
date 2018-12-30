@@ -811,12 +811,12 @@ let mountLog = [
       )
       |> mount
       |> expectHost(
-           ~label="It mounts two moxes in a div",
+           ~label="It mounts two boxes in a div",
            [
              Implementation.BeginChanges,
              MountChild(
                {name: "Div", element: View},
-               {name: "Box", element: Text("ImABox1")},
+               {name: "Box", element: Text("ImABox2")},
                0,
              ),
              MountChild(

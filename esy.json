@@ -25,6 +25,7 @@
     "@opam/lwt_ppx": "^1.2.1",
     "@opam/ppx_deriving": "^4.2.1",
     "@opam/cohttp-lwt-unix": "^1.0.0",
+    "@opam/patience_diff": "*",
     "flex": "briskml/flex#66cc37f"
   },
   "peerDependencies": {

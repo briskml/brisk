@@ -176,7 +176,7 @@ let expectHost: type a. (~label: string=?, a, testHostItem(a)) => a =
   (~label=?, expected, prev) =>
     switch (prev) {
     | MountElement(renderedElement) =>
-      HostView.mountRenderedElement(renderedElement);
+      RenderedElement.executeHostViewUpdates(renderedElement) |> ignore;
       let mountLog = Implementation.mountLog^;
       assertMountLog(~label?, expected, mountLog);
       mountLog;

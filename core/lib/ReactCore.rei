@@ -82,7 +82,13 @@ module Make:
       newSelf: self('state, 'action),
     };
     type handedOffInstance('state, 'action, 'elementType, 'outputNodeType);
-    type componentSpec('state, 'initialState, 'action, 'elementType, 'outputNode) = {
+    type componentSpec(
+      'state,
+      'initialState,
+      'action,
+      'elementType,
+      'outputNode,
+    ) = {
       debugName: string,
       elementType: elementType('elementType, 'outputNode, 'state, 'action),
       willReceiveProps: self('state, 'action) => 'state,
@@ -94,7 +100,8 @@ module Make:
       initialState: unit => 'initialState,
       reducer: ('action, 'state) => update('state, 'action),
       printState: 'state => string /* for internal debugging */,
-      handedOffInstance: handedOffInstance('state, 'action, 'elementType, 'outputNode),
+      handedOffInstance:
+        handedOffInstance('state, 'action, 'elementType, 'outputNode),
       key: Key.t,
     };
     type component('state, 'action, 'elementType, 'outputNodeType) =
@@ -108,15 +115,35 @@ module Make:
       component(stateless, actionless, reactElement, syntheticOutputNode);
     let statefulComponent:
       (~useDynamicKey: bool=?, string) =>
-      componentSpec('state, stateless, actionless, reactElement, syntheticOutputNode);
+      componentSpec(
+        'state,
+        stateless,
+        actionless,
+        reactElement,
+        syntheticOutputNode,
+      );
     let reducerComponent:
       (~useDynamicKey: bool=?, string) =>
-      componentSpec('state, stateless, 'action, reactElement, syntheticOutputNode);
+      componentSpec(
+        'state,
+        stateless,
+        'action,
+        reactElement,
+        syntheticOutputNode,
+      );
     let statelessNativeComponent:
       (~useDynamicKey: bool=?, string) =>
-      component(stateless, actionless, nativeElement(stateless, actionless), hostOutputNode);
+      component(
+        stateless,
+        actionless,
+        nativeElement(stateless, actionless),
+        hostOutputNode,
+      );
     let element:
-      (~key: Key.t=?, component('state, 'action, 'elementType, 'hostOutputNode)) =>
+      (
+        ~key: Key.t=?,
+        component('state, 'action, 'elementType, 'hostOutputNode)
+      ) =>
       reactElement;
     let listToElement: list(reactElement) => reactElement;
     let logString: string => unit;
@@ -137,10 +164,12 @@ module Make:
           ~renderedElement: t,
           reactElement
         ) =>
-        (subtreePatch, t);
+        t;
 
       /** Flush pending state updates (and possibly add new ones). */
       let flushPendingUpdates: t => t;
+
+      let executeHostViewUpdates: t => Implementation.hostView;
     };
 
     /**

@@ -816,7 +816,7 @@ let mountLog = [
              Implementation.BeginChanges,
              MountChild(
                {name: "Div", element: View},
-               {name: "Box", element: Text("ImABox2")},
+               {name: "Box", element: Text("ImABox1")},
                0,
              ),
              MountChild(
@@ -847,27 +847,27 @@ let mountLog = [
         );
 
       let beforeUpdate = TestRenderer.render(root, previousReactElement);
-      let _ = HostView.mountRenderedElement(beforeUpdate);
+      RenderedElement.executeHostViewUpdates(beforeUpdate) |> ignore;
       Implementation.mountLog := [];
 
-      let (topLevelUpdate, afterUpdate) =
+      let afterUpdate =
         RenderedElement.update(
           ~previousReactElement,
           ~renderedElement=beforeUpdate,
           Components.(<Div> <Box title="ImABox3" /> </Div>),
         );
 
-      HostView.applyTopLevelUpdate(
-        afterUpdate,
-        (topLevelUpdate :> HostView.change),
-      );
+      ignore(RenderedElement.executeHostViewUpdates(afterUpdate));
+
+      let divView = Implementation.{name: "Div", element: View};
+
       assertMountLog(
         ~label="It correctly mounts topLevelUpdate",
         [
           Implementation.BeginChanges,
-          UnmountChild(root, {name: "Box", element: Text("ImABox1")}),
-          UnmountChild(root, {name: "Box", element: Text("ImABox2")}),
-          MountChild(root, {name: "Box", element: Text("ImABox3")}, 0),
+          UnmountChild(divView, {name: "Box", element: Text("ImABox1")}),
+          UnmountChild(divView, {name: "Box", element: Text("ImABox2")}),
+          MountChild(divView, {name: "Box", element: Text("ImABox3")}, 0),
           CommitChanges,
         ],
         Implementation.mountLog^,
@@ -901,7 +901,7 @@ let mountLog = [
         );
 
       let beforeUpdate = TestRenderer.render(root, previousReactElement);
-      /* let _ = HostView.mountRenderedElement(root, beforeUpdate); */
+      RenderedElement.executeHostViewUpdates(beforeUpdate) |> ignore;
 
       assertMountLog(
         ~label="It correctly mounts top level list (for reorder)",
@@ -914,16 +914,17 @@ let mountLog = [
         Implementation.mountLog^,
       );
 
-      let _afterUpdate =
+      let afterUpdate =
         RenderedElement.update(
           ~previousReactElement,
           ~renderedElement=beforeUpdate,
           nextReactElement,
         );
 
-      /* HostView.applyTopLevelUpdate(root, afterUpdate, topLevelUpdateLog);*/
+      RenderedElement.executeHostViewUpdates(afterUpdate) |> ignore;
+
       assertMountLog(
-        ~label="It correctly mounts `Reordered topLevelUpdate",
+        ~label="It correctly mounts reordered topLevelUpdate",
         [
           Implementation.BeginChanges,
           RemountChild(root, {name: "Text", element: Text("y")}, 0),

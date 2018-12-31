@@ -278,7 +278,8 @@ module Make = (Implementation: HostImplementation) => {
                | Host => [hostInstance, ...acc]
                },
              [],
-           );
+           )
+        |> List.rev;
     };
 
     module Node = {
@@ -474,7 +475,7 @@ module Make = (Implementation: HostImplementation) => {
             nearestHostOutputNode :=
               replaceSubtree(
                 ~parent=nearestHostOutputNode^,
-                ~prevChildren=OutputTree.InstanceSubtree.toList(prev),
+                ~prevChildren,
                 ~nextChildren,
               );
             {
@@ -631,10 +632,13 @@ module Make = (Implementation: HostImplementation) => {
          */
         let subElements = component.render(self);
         let instanceSubTree =
-          switch (component.elementType) {
-          | React => ofList(subElements: reactElement)
-          | Host => ofList(subElements.children)
-          };
+          (
+            switch (component.elementType) {
+            | React => (subElements: reactElement)
+            | Host => subElements.children
+            }
+          )
+          |> ofList;
         Instance({
           id,
           iState: self.state,
@@ -764,7 +768,7 @@ module Make = (Implementation: HostImplementation) => {
             let updatedInstanceWithNewSubtree =
               switch (nextComponent.elementType) {
               | React =>
-                updateRenderedElementTopLevel(
+                updateInstanceSubtree(
                   ~updateInstanceState?,
                   ~nearestHostOutputNode,
                   ~oldRenderedElement=instanceSubTree,
@@ -804,7 +808,7 @@ module Make = (Implementation: HostImplementation) => {
                 };
                 let nearestHostOutputNode: ref(hostOutputNode) =
                   ref(instanceWithNewHostView.hostInstance);
-                updateRenderedElementTopLevel(
+                updateInstanceSubtree(
                   ~updateInstanceState?,
                   ~nearestHostOutputNode,
                   ~oldRenderedElement=instanceSubTree,
@@ -857,7 +861,7 @@ module Make = (Implementation: HostImplementation) => {
      *
      * `keyTable` is a hash table containing all keys in the reactElement tree.
      */
-    and updateRenderedElementTopLevel =
+    and updateInstanceSubtree =
         (
           ~updateInstanceState=?,
           ~useKeyTable=?,
@@ -1096,7 +1100,7 @@ module Make = (Implementation: HostImplementation) => {
         };
       | (_, _, _) =>
         let (subtreeChange, renderedElement) =
-          updateRenderedElementTopLevel(
+          updateInstanceSubtree(
             ~absoluteSubtreeIndex,
             ~updateInstanceState?,
             ~nearestHostOutputNode,
@@ -1177,9 +1181,28 @@ module Make = (Implementation: HostImplementation) => {
         renderedElements,
         List.map(getSubtreeSize, renderedElements) |> List.fold_left((+), 0),
       );
-    let render = (nearestHostOutputNode: Implementation.hostView, reactElement): t => {
-      renderedElement: Render.Instance.ofList(reactElement),
-      nearestHostOutputNode: Lazy.from_val(nearestHostOutputNode),
+    let render =
+        (nearestHostOutputNode: Implementation.hostView, reactElement): t => {
+      let renderedElement = Render.Instance.ofList(reactElement);
+      {
+        renderedElement,
+        nearestHostOutputNode:
+          lazy (
+            OutputTree.InstanceSubtree.toList(renderedElement)
+            |> List.fold_left(
+                 ((position, parent), child) => (
+                   position + 1,
+                   Implementation.mountChild(
+                     ~parent,
+                     ~child=Lazy.force(child),
+                     ~position,
+                   ),
+                 ),
+                 (0, nearestHostOutputNode),
+               )
+            |> snd
+          ),
+      };
     };
     type subtreePatch = SubtreeChange.t;
     let update =
@@ -1188,23 +1211,44 @@ module Make = (Implementation: HostImplementation) => {
           ~renderedElement as {renderedElement, nearestHostOutputNode}: t,
           nextReactElement,
         )
-        : (subtreePatch, t) => {
+        : t => {
       let nearestHostOutputNode = ref(nearestHostOutputNode);
       let (change, elem) =
-        Render.updateRenderedElementTopLevel(
+        Render.updateInstanceSubtree(
           ~oldRenderedElement=renderedElement,
           ~oldReactElement=previousReactElement,
           ~nearestHostOutputNode,
           ~nextReactElement,
           (),
         );
-      (
-        change,
-        {
-          renderedElement: elem,
-          nearestHostOutputNode: nearestHostOutputNode^,
-        },
-      );
+      {
+        renderedElement: elem,
+        nearestHostOutputNode:
+          switch (change) {
+          | `UpdateGroup(_)
+          | `NoChange => nearestHostOutputNode^
+          | `Nested =>
+            lazy {
+              let instance = Lazy.force(nearestHostOutputNode^);
+              List.iter(
+                x => ignore(Lazy.force(x)),
+                OutputTree.InstanceSubtree.toList(elem),
+              );
+              instance;
+            }
+          | `PrependElement(children) =>
+            SubtreeChange.prependElement(
+              ~parent=nearestHostOutputNode^,
+              ~children=OutputTree.InstanceSubtree.toList(children),
+            )
+          | `ReplaceSubtree(prev, next) =>
+            SubtreeChange.replaceSubtree(
+              ~parent=nearestHostOutputNode^,
+              ~prevChildren=OutputTree.InstanceSubtree.toList(prev),
+              ~nextChildren=OutputTree.InstanceSubtree.toList(next),
+            )
+          },
+      };
     };
 
     /**
@@ -1223,6 +1267,13 @@ module Make = (Implementation: HostImplementation) => {
         renderedElement: newRenderedElement,
         nearestHostOutputNode: nearestHostOutputNode^,
       };
+    };
+
+    let executeHostViewUpdates = ({nearestHostOutputNode}) => {
+      Implementation.beginChanges();
+      let hostView = Lazy.force(nearestHostOutputNode);
+      Implementation.commitChanges();
+      hostView;
     };
   };
 

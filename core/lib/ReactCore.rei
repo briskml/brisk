@@ -156,8 +156,6 @@ module Make:
       let render: (Implementation.hostView, reactElement) => t;
 
       /** Update a rendered element when a new react element is received. */
-      type subtreePatch;
-
       let update:
         (
           ~previousReactElement: reactElement,

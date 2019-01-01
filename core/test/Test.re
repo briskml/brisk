@@ -767,7 +767,7 @@ open Assert;
  ];
  */
 
-let mountLog = [
+let core = [
   (
     "Test rendered element mount",
     `Quick,
@@ -848,6 +848,7 @@ let mountLog = [
 
       let beforeUpdate = TestRenderer.render(root, previousReactElement);
       RenderedElement.executeHostViewUpdates(beforeUpdate) |> ignore;
+
       Implementation.mountLog := [];
 
       let afterUpdate =
@@ -892,14 +893,6 @@ let mountLog = [
           ],
         );
 
-      let nextReactElement =
-        listToElement(
-          Components.[
-            <Text key=key2 title="y" />,
-            <Text key=key1 title="x" />,
-          ],
-        );
-
       let beforeUpdate = TestRenderer.render(root, previousReactElement);
       RenderedElement.executeHostViewUpdates(beforeUpdate) |> ignore;
 
@@ -913,6 +906,14 @@ let mountLog = [
         ],
         Implementation.mountLog^,
       );
+
+      let nextReactElement =
+        listToElement(
+          Components.[
+            <Text key=key2 title="y" />,
+            <Text key=key1 title="x" />,
+          ],
+        );
 
       let afterUpdate =
         RenderedElement.update(
@@ -945,7 +946,7 @@ let mountLog = [
       let nextReactElement = <Components.Text key=2 title="y" />;
 
       let beforeUpdate = TestRenderer.render(root, previousReactElement);
-      /* let _ = HostView.mountRenderedElement(root, beforeUpdate); */
+      RenderedElement.executeHostViewUpdates(beforeUpdate) |> ignore;
 
       assertMountLog(
         ~label="It correctly mounts top level element (for replace elemets)",
@@ -957,14 +958,14 @@ let mountLog = [
         Implementation.mountLog^,
       );
 
-      let _afterUpdate =
+      let afterUpdate =
         RenderedElement.update(
           ~previousReactElement,
           ~renderedElement=beforeUpdate,
           nextReactElement,
         );
 
-      /* HostView.applyTopLevelUpdate(root, afterUpdate, topLevelUpdateLog);*/
+      RenderedElement.executeHostViewUpdates(afterUpdate) |> ignore;
       assertMountLog(
         ~label="It correctly mounts `ReplaceElements topLevelUpdate",
         [
@@ -987,7 +988,7 @@ let mountLog = [
       let previousReactElement = Components.(<ToggleClicks rAction />);
 
       let beforeUpdate = TestRenderer.render(root, previousReactElement);
-      /*let _ = HostView.mountRenderedElement(root, beforeUpdate);*/
+      RenderedElement.executeHostViewUpdates(beforeUpdate) |> ignore;
 
       let div = Implementation.{name: "Div", element: View};
       let well = Implementation.{name: "Text", element: Text("well")};
@@ -1005,9 +1006,9 @@ let mountLog = [
 
       RemoteAction.act(~action=Components.ToggleClicks.Click, rAction);
 
-      let _ = RenderedElement.flushPendingUpdates(beforeUpdate);
-
-      /*let _ = HostView.applyUpdateLog(root, pendingUpdates);*/
+      RenderedElement.flushPendingUpdates(beforeUpdate)
+      |> RenderedElement.executeHostViewUpdates
+      |> ignore;
 
       let cell1 = Implementation.{name: "Text", element: Text("cell1")};
       let cell2 = Implementation.{name: "Text", element: Text("cell2")};
@@ -1045,7 +1046,7 @@ let mountLog = [
         ]);
 
       let beforeUpdate = TestRenderer.render(root, previousReactElement);
-      /*let _ = HostView.mountRenderedElement(root, beforeUpdate);*/
+      RenderedElement.executeHostViewUpdates(beforeUpdate) |> ignore;
 
       assertMountLog(
         ~label="It correctly mounts top level list (for prepend)",
@@ -1057,16 +1058,16 @@ let mountLog = [
         Implementation.mountLog^,
       );
 
-      let _afterUpdate =
-        RenderedElement.update(
-          ~previousReactElement,
-          ~renderedElement=beforeUpdate,
-          nextReactElement,
-        );
+      RenderedElement.update(
+        ~previousReactElement,
+        ~renderedElement=beforeUpdate,
+        nextReactElement,
+      )
+      |> RenderedElement.executeHostViewUpdates
+      |> ignore;
 
-      /* HostView.applyTopLevelUpdate(root, afterUpdate, topLevelUpdateLog);*/
       assertMountLog(
-        ~label="It correctly mounts `Prepend topLevelUpdate",
+        ~label="It correctly mounts prepend topLevelUpdate",
         [
           Implementation.BeginChanges,
           MountChild(root, {name: "Text", element: Text("y")}, 0),
@@ -1084,5 +1085,5 @@ print_endline("");
 Alcotest.run(
   ~argv=[|"--verbose --color"|],
   "Brisk",
-  [/*("Core", core), */ ("MountLog", mountLog)],
+  [/*("Core", core), */ ("Core", core)],
 );

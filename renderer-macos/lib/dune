@@ -1,0 +1,25 @@
+(copy_files stubs/*.c)
+(copy_files stubs/*.h)
+
+(copy_files components/*.re)
+
+(library
+ (name brisk_renderer_macos)
+ (public_name brisk-renderer-macos)
+ (synopsis "Cocoa renderer and bindings")
+ (libraries brisk-core brisk-renderer)
+ (install_c_headers Cocoa_stubs
+                    NSView_stubs
+                    NSButton_stubs
+                    NSMenu_stubs
+                    BriskApplicationDelegate
+                    BriskWindowDelegate)
+ (c_names Cocoa_stubs
+          NSView_stubs
+          NSButton_stubs
+          NSMenu_stubs
+          BriskApplicationDelegate
+          BriskWindowDelegate)
+ (c_flags (:standard
+  (-Wextra -Wall -Werror -O -g -std=c99 -pedantic-errors -Wsign-compare -Wshadow)
+  (-x objective-c))))

@@ -1,2 +1,1 @@
-(lang dune 1.4)
-(name brisk)
+(lang dune 1.6)

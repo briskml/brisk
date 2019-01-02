@@ -15,21 +15,17 @@ jobs:
           esy install
         displayName: "Install dependencies"
       - script: |
+          esy build:core
+          esy test:core
+        displayName: "Build and test core"
+      - script: |
           esy build:mac
-        displayName: "Build"
-      - script: |
-          esy test core
-        displayName: "Test core"
-      - script: |
-          esy test renderer_term
-        displayName: "Test term renderer"
-      - script: |
-          esy test renderer_cocoa
-        displayName: "Test cocoa renderer"
+          esy test:mac
+        displayName: "Build and test renderer-macos"
       - script: |
           esy bootstrap:mac
-          esy test:mac
-        displayName: "Compile and test BRTesterMac"
+          esy build:tester_mac
+        displayName: "Build and test tester-macos"
   - job: Linux
     pool:
       vmImage: "Ubuntu 16.04"
@@ -43,11 +39,6 @@ jobs:
           esy install
         displayName: "Install dependencies"
       - script: |
-          esy build:linux
-        displayName: "Build"
-      - script: |
-          esy test core
-        displayName: "Test core"
-      - script: |
-          esy test renderer_term
-        displayName: "Test term renderer"
+          esy build:core
+          esy test:core
+        displayName: "Build and test core"

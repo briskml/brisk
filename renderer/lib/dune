@@ -1,0 +1,6 @@
+
+(library
+ (name brisk_renderer)
+ (public_name brisk-renderer)
+ (synopsis "Common renderer primitives and helpers")
+ (libraries color flex))

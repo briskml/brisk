@@ -43,20 +43,32 @@ module Text = {
    * It's because make returns a host element and there's no way to know if a Host element
    * is not changed.
    * */
+  type state = {
+    current: string,
+    prev: string,
+  };
   let component = statefulNativeComponent("Text");
   let shouldUpdate = (!=);
   let make = (~title="ImABox", _children) => {
     ...component,
-    initialState: () => title,
-    willReceiveProps: _ => title,
+    initialState: () => {current: title, prev: title},
+    willReceiveProps: ({state: {current}}) => {
+      current: title,
+      prev: current,
+    },
     shouldUpdate:
       ({oldSelf: {state: oldState}, newSelf: {state: newState}}) =>
       shouldUpdate(oldState, newState),
-    printState: state => state,
+    printState: _ => "",
     render: _ => {
       children: listToElement([]),
       make: () => Implementation.{name: "Text", element: Text(title)},
-      updateInstance: (_, _) => (),
+      updateInstance: ({state: {current, prev}}, _) =>
+        Implementation.mountLog :=
+          [
+            Implementation.ChangeText(prev, current),
+            ...Implementation.mountLog^,
+          ],
       shouldReconfigureInstance: (~oldState, ~newState) =>
         shouldUpdate(oldState, newState),
     },
@@ -90,7 +102,7 @@ module BoxItemDynamic = {
   let make = (~title="ImABox", _children: list(reactElement)) => {
     ...component,
     printState: _ => title,
-    render: _self => listToElement([]),
+    render: _self => stringToElement(title),
   };
   let createElement = (~title, ~children, ()) =>
     element(make(~title, children));
@@ -153,8 +165,7 @@ module ChangeCounter = {
           {mostRecentLabel: label, numChanges: state.numChanges + 1};
         } :
         state,
-    render: ({state: {numChanges: _, mostRecentLabel: _}}) =>
-      Nested([]),
+    render: ({state: {numChanges: _, mostRecentLabel: _}}) => Nested([]),
     printState: ({numChanges, mostRecentLabel}) =>
       "[" ++ string_of_int(numChanges) ++ ", " ++ mostRecentLabel ++ "]",
   };
@@ -180,7 +191,7 @@ module ButtonWrapper = {
     ...component,
     render: ({state: _}) =>
       <StatelessButton
-        initialClickCount=("wrapped:" ++ wrappedText ++ ":wrapped")
+        initialClickCount={"wrapped:" ++ wrappedText ++ ":wrapped"}
       />,
   };
   let createElement = (~wrappedText=?, ~children as _, ()) =>
@@ -192,7 +203,7 @@ module ButtonWrapperWrapper = {
   let component = statelessComponent("ButtonWrapperWrapper");
   let make = (~wrappedText="default", _children) => {
     ...component,
-    render: _ => <Div> (stringToElement(wrappedText)) buttonWrapperJsx </Div>,
+    render: _ => <Div> {stringToElement(wrappedText)} buttonWrapperJsx </Div>,
   };
   let createElement = (~wrappedText=?, ~children as _, ()) =>
     element(make(~wrappedText?, ()));

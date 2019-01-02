@@ -17,12 +17,11 @@ module Implementation = {
     | CommitChanges
     | MountChild(hostView, hostView, int)
     | UnmountChild(hostView, hostView)
-    | RemountChild(hostView, hostView, int);
+    | RemountChild(hostView, hostView, int)
+    | ChangeText(string, string);
 
   [@deriving eq]
   type testMountLog = list(testMountEntry);
-
-  let map: Hashtbl.t(int, hostView) = Hashtbl.create(1000);
 
   let mountLog = ref([]);
 

@@ -115,7 +115,7 @@ let core = [
            ~label="It reorders only one element",
            [
              Implementation.BeginChanges,
-             RemountChild(root, text("y"), 0),
+             RemountChild(root, text("y"), 1, 0),
              CommitChanges,
            ],
          )
@@ -376,7 +376,7 @@ let core = [
            ~label="It reverses the items list in the BoxList",
            Implementation.[
              BeginChanges,
-             RemountChild(root, text("Hello"), 0),
+             RemountChild(root, text("Hello"), 1, 0),
              CommitChanges,
            ],
          )
@@ -423,7 +423,7 @@ let core = [
            ~label="It reverses the boxes list in the BoxList",
            Implementation.[
              BeginChanges,
-             RemountChild(root, text("Hello"), 0),
+             RemountChild(root, text("Hello"), 1, 0),
              CommitChanges,
            ],
          )
@@ -457,11 +457,13 @@ let core = [
            )
         |> executeSideEffects
         |> expect(
-             ~label="It adds new element before BoxItemDynamic",
+             ~label="It adds new element before BoxItemDynamic (it replaces the whole tree)",
              Implementation.[
                BeginChanges,
+               UnmountChild(root, text("box to move")),
                ChangeText("before", "before"),
                MountChild(root, text("before"), 0),
+               MountChild(root, text("box to move"), 1),
                CommitChanges,
              ],
            );
@@ -509,7 +511,7 @@ let core = [
            ~label="It reorders the list",
            Implementation.[
              BeginChanges,
-             RemountChild(root, box("Box2unchanged"), 0),
+             RemountChild(root, box("Box2unchanged"), 1, 0),
              CommitChanges,
            ],
          )
@@ -618,11 +620,10 @@ let core = [
          )
       |> executeSideEffects
       |> expect(
-           ~label=
-             "it reorders the list",
+           ~label="it reorders the list",
            Implementation.[
              BeginChanges,
-             RemountChild(root, text("y"), 0),
+             RemountChild(root, text("y"), 1, 0),
              CommitChanges,
            ],
          )

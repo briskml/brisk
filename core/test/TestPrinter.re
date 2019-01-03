@@ -34,13 +34,14 @@ let formatMountLogItem =
           makeField("child", Atom(show_node(child), atom)),
         ],
       )
-    | RemountChild(root, child, position) =>
+    | RemountChild(root, child, from, to_) =>
       List(
         ("RemountChild (", ",", ")", list),
         [
           makeField("root", Atom(show_node(root), atom)),
           makeField("child", Atom(show_node(child), atom)),
-          makeField("position", Atom(string_of_int(position), atom)),
+          makeField("from", Atom(string_of_int(from), atom)),
+          makeField("to", Atom(string_of_int(to_), atom)),
         ],
       )
     | ChangeText(from_, to_) =>

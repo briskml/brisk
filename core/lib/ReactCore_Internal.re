@@ -386,15 +386,18 @@ module Make = (OutputTree: OutputTree) => {
       lazy {
         let parent = Lazy.force(parent);
         List.fold_left(
-          (parent, child) =>
+          ((position, parent), child) => (
+            position + 1,
             OutputTree.insertNode(
               ~parent,
               ~child=Lazy.force(child),
-              ~position=0,
+              ~position,
             ),
-          parent,
+          ),
+          (0, parent),
           children,
-        );
+        )
+        |> snd;
       };
 
     let replaceSubtree = (~parent, ~prevChildren, ~nextChildren) =>
@@ -408,15 +411,18 @@ module Make = (OutputTree: OutputTree) => {
             prevChildren,
           );
         List.fold_left(
-          (parent, child) =>
+          ((position, parent), child) => (
+            position + 1,
             OutputTree.insertNode(
               ~parent,
               ~child=Lazy.force(child),
-              ~position=0,
+              ~position,
             ),
-          unmountedParent,
+          ),
+          (0, unmountedParent),
           nextChildren,
-        );
+        )
+        |> snd;
       };
 
     let reorder =
@@ -591,6 +597,12 @@ module Make = (OutputTree: OutputTree) => {
         instance.iState === nextState ?
           instance : {...instance, iState: nextState};
       };
+
+    type childElementUpdate = {
+      updatedRenderedElement: renderedElement,
+      /* This represents the way previously rendered elements have been shifted due to moves */
+      indexShift: int,
+    };
 
     /**
      * Initial render of an Element. Recurses to produce the entire tree of
@@ -791,7 +803,10 @@ module Make = (OutputTree: OutputTree) => {
                   updatedInstanceWithNewState;
               };
 
-              let {nearestHostOutputNode: hostInstance, instanceForest: nextInstanceSubtree} =
+              let {
+                nearestHostOutputNode: hostInstance,
+                instanceForest: nextInstanceSubtree,
+              } =
                 updateInstanceSubtree(
                   ~shouldExecutePendingUpdates,
                   ~nearestHostOutputNode=instanceWithNewHostView.hostInstance: outputNodeContainer,
@@ -897,7 +912,13 @@ module Make = (OutputTree: OutputTree) => {
               oldReactElement,
               nextReactElement,
             ) => {
-              let {nearestHostOutputNode, instanceForest} =
+              let {
+                indexShift,
+                updatedRenderedElement: {
+                  nearestHostOutputNode,
+                  instanceForest,
+                },
+              } =
                 updateChildRenderedElement(
                   ~shouldExecutePendingUpdates?,
                   ~useKeyTable=keyTable,
@@ -912,7 +933,8 @@ module Make = (OutputTree: OutputTree) => {
                 nearestHostOutputNode,
                 [instanceForest, ...renderedElements],
                 prevSubtreeSize
-                + InstanceForest.getSubtreeSize(instanceForest),
+                + InstanceForest.getSubtreeSize(instanceForest)
+                - indexShift,
               );
             },
             oldInstanceForests,
@@ -962,6 +984,7 @@ module Make = (OutputTree: OutputTree) => {
             instanceForest: newInstanceForest,
           };
         } else {
+          /* TODO: this should cause updateOpaqueInstance */
           let (nearestHostOutputNode, newOpaqueInstance) =
             updateOpaqueInstance(
               ~shouldExecutePendingUpdates?,
@@ -1028,7 +1051,7 @@ module Make = (OutputTree: OutputTree) => {
           ~nextReactElement,
           (),
         )
-        : renderedElement =>
+        : childElementUpdate =>
       switch (oldInstanceForest, oldReactElement, nextReactElement) {
       /*
        * Key Policy for syntheticElement.
@@ -1079,15 +1102,18 @@ module Make = (OutputTree: OutputTree) => {
         | `NewElement =>
           let newInstanceForest = IFlat(newOpaqueInstance);
           {
-            nearestHostOutputNode:
-              SubtreeChange.replaceSubtree(
-                ~parent=nearestHostOutputNode,
-                ~prevChildren=
-                  InstanceForest.outputTreeNodes(oldInstanceForest),
-                ~nextChildren=
-                  InstanceForest.outputTreeNodes(newInstanceForest),
-              ),
-            instanceForest: newInstanceForest,
+            updatedRenderedElement: {
+              nearestHostOutputNode:
+                SubtreeChange.replaceSubtree(
+                  ~parent=nearestHostOutputNode,
+                  ~prevChildren=
+                    InstanceForest.outputTreeNodes(oldInstanceForest),
+                  ~nextChildren=
+                    InstanceForest.outputTreeNodes(newInstanceForest),
+                ),
+              instanceForest: newInstanceForest,
+            },
+            indexShift: 0,
           };
         | `NoChangeOrNested(previousIndex) =>
           let changed = oldOpaqueInstance !== newOpaqueInstance;
@@ -1095,46 +1121,57 @@ module Make = (OutputTree: OutputTree) => {
             changed ? IFlat(newOpaqueInstance) : oldInstanceForest;
           if (oldKey != nextKey) {
             {
-              nearestHostOutputNode:
-                SubtreeChange.reorder(
-                  ~parent=nearestHostOutputNode,
-                  ~instance=newOpaqueInstance,
-                  ~from=previousIndex,
-                  ~to_=absoluteSubtreeIndex,
-                ),
-              instanceForest: element,
+              updatedRenderedElement: {
+                nearestHostOutputNode:
+                  previousIndex != absoluteSubtreeIndex ?
+                    SubtreeChange.reorder(
+                      ~parent=nearestHostOutputNode,
+                      ~instance=newOpaqueInstance,
+                      ~from=previousIndex,
+                      ~to_=absoluteSubtreeIndex,
+                    ) :
+                    nearestHostOutputNode,
+                instanceForest: element,
+              },
+              indexShift: InstanceForest.getSubtreeSize(element),
             };
           } else {
             {
-              nearestHostOutputNode:
-                if (changed) {
-                  lazy {
-                    let instance = Lazy.force(nearestHostOutputNode);
-                    List.iter(
-                      x => ignore(Lazy.force(x)),
-                      InstanceForest.outputTreeNodes(element),
-                    );
-                    instance;
-                  };
-                } else {
-                  nearestHostOutputNode;
-                },
-              instanceForest: element,
+              updatedRenderedElement: {
+                nearestHostOutputNode:
+                  if (changed) {
+                    lazy {
+                      let instance = Lazy.force(nearestHostOutputNode);
+                      List.iter(
+                        x => ignore(Lazy.force(x)),
+                        InstanceForest.outputTreeNodes(element),
+                      );
+                      instance;
+                    };
+                  } else {
+                    nearestHostOutputNode;
+                  },
+                instanceForest: element,
+              },
+              indexShift: 0,
             };
           };
         };
-      | (_, _, _) =>
-        updateInstanceSubtree(
-          ~absoluteSubtreeIndex,
-          ~shouldExecutePendingUpdates?,
-          ~nearestHostOutputNode,
-          /* Not sure about this */
-          ~useKeyTable?,
-          ~oldInstanceForest,
-          ~oldReactElement,
-          ~nextReactElement,
-          (),
-        )
+      | (_, _, _) => {
+          updatedRenderedElement:
+            updateInstanceSubtree(
+              ~absoluteSubtreeIndex,
+              ~shouldExecutePendingUpdates?,
+              ~nearestHostOutputNode,
+              /* Not sure about this */
+              ~useKeyTable?,
+              ~oldInstanceForest,
+              ~oldReactElement,
+              ~nextReactElement,
+              (),
+            ),
+          indexShift: 0,
+        }
       };
 
     /**

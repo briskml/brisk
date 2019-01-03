@@ -18,7 +18,7 @@ module Implementation = {
     | CommitChanges
     | MountChild(node, node, int)
     | UnmountChild(node, node)
-    | RemountChild(node, node, int)
+    | RemountChild(node, node, int, int)
     | ChangeText(string, string);
 
   [@deriving eq]
@@ -47,8 +47,8 @@ module Implementation = {
     parent;
   };
 
-  let moveNode = (~parent: node, ~child: node, ~from as _: int, ~to_: int) => {
-    mountLog := [RemountChild(parent, child, to_), ...mountLog^];
+  let moveNode = (~parent: node, ~child: node, ~from: int, ~to_: int) => {
+    mountLog := [RemountChild(parent, child, from, to_), ...mountLog^];
     parent;
   };
 };

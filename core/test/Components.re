@@ -161,13 +161,12 @@ module ChangeCounter = {
     willReceiveProps: ({state, reduce}) =>
       label != state.mostRecentLabel ?
         {
-          print_endline("Will receive props");
           reduce(() => (), ());
           reduce(() => (), ());
           {mostRecentLabel: label, numChanges: state.numChanges + 1};
         } :
         state,
-    render: ({state: {numChanges: _, mostRecentLabel: _}}) => Nested([]),
+    render: ({state: {numChanges: _, mostRecentLabel: _}}) => listToElement([]),
     printState: ({numChanges, mostRecentLabel}) =>
       "[" ++ string_of_int(numChanges) ++ ", " ++ mostRecentLabel ++ "]",
   };

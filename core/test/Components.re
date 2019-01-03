@@ -13,7 +13,7 @@ module Box = {
     render: _ => {
       children: listToElement([]),
       make: () => Implementation.{name: "Box", element: Text(title)},
-      updateInstance: (_, _) => (),
+      updateInstance: (_, b) => b,
       shouldReconfigureInstance: (~oldState, ~newState) =>
         oldState != newState,
     },
@@ -29,7 +29,7 @@ module Div = {
     render: _ => {
       children: listToElement(children),
       make: () => Implementation.{name: "Div", element: View},
-      updateInstance: (_, _) => (),
+      updateInstance: (_, d) => d,
       shouldReconfigureInstance: (~oldState as _, ~newState as _) => false,
     },
   };
@@ -63,12 +63,14 @@ module Text = {
     render: _ => {
       children: listToElement([]),
       make: () => Implementation.{name: "Text", element: Text(title)},
-      updateInstance: ({state: {current, prev}}, _) =>
+      updateInstance: ({state: {current, prev}}, t) => {
         Implementation.mountLog :=
           [
             Implementation.ChangeText(prev, current),
             ...Implementation.mountLog^,
-          ],
+          ];
+        t;
+      },
       shouldReconfigureInstance: (~oldState, ~newState) =>
         shouldUpdate(oldState, newState),
     },
@@ -83,7 +85,7 @@ module BoxWrapper = {
   let component = statelessComponent("BoxWrapper");
   let make =
       (~title="ImABox", ~twoBoxes=false, ~onClick as _=?, _children)
-      : component(stateless, unit, reactElement, syntheticOutputNode) => {
+      : syntheticComponentSpec(stateless, unit) => {
     ...component,
     initialState: () => (),
     render: _self =>
@@ -99,7 +101,7 @@ module BoxWrapper = {
  */
 module BoxItemDynamic = {
   let component = statelessComponent(~useDynamicKey=true, "BoxItemDynamic");
-  let make = (~title="ImABox", _children: list(reactElement)) => {
+  let make = (~title="ImABox", _children: list(syntheticElement)) => {
     ...component,
     printState: _ => title,
     render: _self => stringToElement(title),

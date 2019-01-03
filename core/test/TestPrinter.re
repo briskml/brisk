@@ -1,6 +1,3 @@
-/*
- open TestRenderer;
- */
 open Easy_format;
 
 let list = {...list, align_closing: true};
@@ -24,8 +21,8 @@ let formatMountLogItem =
       List(
         ("MountChild (", ",", ")", list),
         [
-          makeField("root", Atom(show_hostView(root), atom)),
-          makeField("child", Atom(show_hostView(child), atom)),
+          makeField("root", Atom(show_node(root), atom)),
+          makeField("child", Atom(show_node(child), atom)),
           makeField("position", Atom(string_of_int(position), atom)),
         ],
       )
@@ -33,16 +30,16 @@ let formatMountLogItem =
       List(
         ("UnmountChild (", ",", ")", list),
         [
-          makeField("root", Atom(show_hostView(root), atom)),
-          makeField("child", Atom(show_hostView(child), atom)),
+          makeField("root", Atom(show_node(root), atom)),
+          makeField("child", Atom(show_node(child), atom)),
         ],
       )
     | RemountChild(root, child, position) =>
       List(
         ("RemountChild (", ",", ")", list),
         [
-          makeField("root", Atom(show_hostView(root), atom)),
-          makeField("child", Atom(show_hostView(child), atom)),
+          makeField("root", Atom(show_node(root), atom)),
+          makeField("child", Atom(show_node(child), atom)),
           makeField("position", Atom(string_of_int(position), atom)),
         ],
       )

@@ -98,13 +98,13 @@ let assertMountLog = (~label="", expected, actual) => {
 };
 
 type testState = {
-  reactElement,
+  syntheticElement,
   renderedElement: RenderedElement.t,
 };
 
-let render = (root, reactElement) => {
-  reactElement,
-  renderedElement: RenderedElement.render(root, reactElement),
+let render = (root, syntheticElement) => {
+  syntheticElement,
+  renderedElement: RenderedElement.render(root, syntheticElement),
 };
 
 let reset = x => {
@@ -113,18 +113,18 @@ let reset = x => {
 };
 
 let update =
-    (nextReactElement, {reactElement: previousReactElement, renderedElement}) => {
-  reactElement: nextReactElement,
+    (nextReactElement, {syntheticElement: previousElement, renderedElement}) => {
+  syntheticElement: nextReactElement,
   renderedElement:
     RenderedElement.update(
-      ~previousReactElement,
+      ~previousElement,
       ~renderedElement,
       nextReactElement,
     ),
 };
 
-let flushPendingUpdates = ({renderedElement, reactElement}) => {
-  reactElement,
+let flushPendingUpdates = ({renderedElement, syntheticElement}) => {
+  syntheticElement,
   renderedElement: RenderedElement.flushPendingUpdates(renderedElement),
 };
 

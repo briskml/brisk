@@ -1,22 +1,18 @@
-module type HostImplementation = {
-  type hostView;
+module type OutputTree = {
+  type node;
 
-  let markAsDirty: unit => unit;
+  let markAsStale: unit => unit;
 
   let beginChanges: unit => unit;
-
-  let mountChild:
-    (~parent: hostView, ~child: hostView, ~position: int) => hostView;
-  let unmountChild: (~parent: hostView, ~child: hostView) => hostView;
-
-  let remountChild:
-    (~parent: hostView, ~child: hostView, ~from: int, ~to_: int) => hostView;
-
   let commitChanges: unit => unit;
+
+  let insertNode: (~parent: node, ~child: node, ~position: int) => node;
+  let deleteNode: (~parent: node, ~child: node) => node;
+  let moveNode: (~parent: node, ~child: node, ~from: int, ~to_: int) => node;
 };
 
 module Make:
-  (Implementation: HostImplementation) =>
+  (OutputTree: OutputTree) =>
    {
     module GlobalState: {
       let debug: ref(bool);
@@ -28,14 +24,12 @@ module Make:
        */
       let useTailHack: ref(bool);
     };
+
     module Key: {
       type t;
       let create: unit => t;
     };
-    type sideEffects;
-    type update('state, 'action) =
-      | NoUpdate
-      | Update('state);
+
     module Callback: {
       /**
        * Type for callbacks
@@ -57,31 +51,42 @@ module Make:
       /** Chain two callbacks by executing the first before the second one */
       let chain: (t('payload), t('payload)) => t('payload);
     };
+
     type reduce('payload, 'action) =
       ('payload => 'action) => Callback.t('payload);
+
     type self('state, 'action) = {
       state: 'state,
       reduce: 'payload. reduce('payload, 'action),
       act: 'action => unit,
     };
 
-    /** Type of a react element before rendering */
-    type reactElement;
-    type nativeElement('state, 'action) = {
-      make: unit => Implementation.hostView,
+    /** Type of element returned from render */
+    type syntheticElement;
+
+    /** Type of element that renders an output node */
+    type outputTreeElement('state, 'action) = {
+      make: unit => OutputTree.node,
       updateInstance:
-        (self('state, 'action), Implementation.hostView) => unit,
+        (self('state, 'action), OutputTree.node) => OutputTree.node,
       shouldReconfigureInstance:
         (~oldState: 'state, ~newState: 'state) => bool,
-      children: reactElement,
+      children: syntheticElement,
     };
+
     type elementType('concreteElementType, 'outputNodeType, 'state, 'action);
-    type instance('state, 'action, 'elementType, 'outputNodeType);
+
     type oldNewSelf('state, 'action) = {
       oldSelf: self('state, 'action),
       newSelf: self('state, 'action),
     };
+
+    type update('state, 'action) =
+      | NoUpdate
+      | Update('state);
+
     type handedOffInstance('state, 'action, 'elementType, 'outputNodeType);
+
     type componentSpec(
       'state,
       'initialState,
@@ -106,68 +111,70 @@ module Make:
     };
     type component('state, 'action, 'elementType, 'outputNodeType) =
       componentSpec('state, 'state, 'action, 'elementType, 'outputNodeType);
+
     type stateless = unit;
     type actionless = unit;
-    type hostOutputNode;
-    type syntheticOutputNode;
-    let statelessComponent:
-      (~useDynamicKey: bool=?, string) =>
-      component(stateless, actionless, reactElement, syntheticOutputNode);
-    let statefulComponent:
-      (~useDynamicKey: bool=?, string) =>
-      componentSpec(
-        'state,
-        stateless,
-        actionless,
-        reactElement,
-        syntheticOutputNode,
-      );
-    let reducerComponent:
-      (~useDynamicKey: bool=?, string) =>
+    type outputNodeGroup;
+    type outputNodeContainer;
+
+    type syntheticComponentSpec('state, 'action) =
       componentSpec(
         'state,
         stateless,
         'action,
-        reactElement,
-        syntheticOutputNode,
+        syntheticElement,
+        outputNodeGroup,
       );
+
+    type outputTreeComponentSpec('state, 'action) =
+      componentSpec(
+        'state,
+        stateless,
+        'action,
+        outputTreeElement('state, 'action),
+        outputNodeContainer,
+      );
+
+    let statelessComponent:
+      (~useDynamicKey: bool=?, string) =>
+      syntheticComponentSpec(stateless, actionless);
+    let statefulComponent:
+      (~useDynamicKey: bool=?, string) =>
+      syntheticComponentSpec('state, actionless);
+    let reducerComponent:
+      (~useDynamicKey: bool=?, string) =>
+      syntheticComponentSpec('state, 'action);
     let statelessNativeComponent:
       (~useDynamicKey: bool=?, string) =>
-      component(
-        stateless,
-        actionless,
-        nativeElement(stateless, actionless),
-        hostOutputNode,
-      );
+      outputTreeComponentSpec(stateless, actionless);
     let element:
       (
         ~key: Key.t=?,
         component('state, 'action, 'elementType, 'hostOutputNode)
       ) =>
-      reactElement;
-    let listToElement: list(reactElement) => reactElement;
-    let logString: string => unit;
+      syntheticElement;
+    let listToElement: list(syntheticElement) => syntheticElement;
 
     module RenderedElement: {
       /** Type of a react element after rendering  */
       type t;
 
       /** Render one element by creating new instances. */
-      let render: (Implementation.hostView, reactElement) => t;
+      let render: (OutputTree.node, syntheticElement) => t;
 
       /** Update a rendered element when a new react element is received. */
       let update:
         (
-          ~previousReactElement: reactElement,
+          ~previousElement: syntheticElement,
           ~renderedElement: t,
-          reactElement
+          syntheticElement
         ) =>
         t;
 
       /** Flush pending state updates (and possibly add new ones). */
       let flushPendingUpdates: t => t;
 
-      let executeHostViewUpdates: t => Implementation.hostView;
+      let executeHostViewUpdates: t => OutputTree.node;
     };
 
     /**

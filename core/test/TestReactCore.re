@@ -4,9 +4,10 @@ module Implementation = {
   [@deriving (show({with_path: false}), eq)]
   type hostElement =
     | Text(string)
-    | View
+    | View;
+
   [@deriving (show({with_path: false}), eq)]
-  and hostView = {
+  type node = {
     name: string,
     element: hostElement,
   };
@@ -15,9 +16,9 @@ module Implementation = {
   type testMountEntry =
     | BeginChanges
     | CommitChanges
-    | MountChild(hostView, hostView, int)
-    | UnmountChild(hostView, hostView)
-    | RemountChild(hostView, hostView, int)
+    | MountChild(node, node, int)
+    | UnmountChild(node, node)
+    | RemountChild(node, node, int)
     | ChangeText(string, string);
 
   [@deriving eq]
@@ -26,28 +27,27 @@ module Implementation = {
   let mountLog = ref([]);
 
   let isDirty = ref(false);
-  let markAsDirty = () => isDirty := true;
+  let markAsStale = () => isDirty := true;
 
   let beginChanges = () => mountLog := [BeginChanges, ...mountLog^];
 
   let commitChanges = () => mountLog := [CommitChanges, ...mountLog^];
 
-  let mountChild = (~parent: hostView, ~child: hostView, ~position: int) => {
+  let insertNode = (~parent: node, ~child: node, ~position: int) => {
     switch (child.element) {
     | _ => mountLog := [MountChild(parent, child, position), ...mountLog^]
     };
     parent;
   };
 
-  let unmountChild = (~parent: hostView, ~child: hostView) => {
+  let deleteNode = (~parent: node, ~child: node) => {
     switch (child.element) {
     | _ => mountLog := [UnmountChild(parent, child), ...mountLog^]
     };
     parent;
   };
 
-  let remountChild =
-      (~parent: hostView, ~child: hostView, ~from as _: int, ~to_: int) => {
+  let moveNode = (~parent: node, ~child: node, ~from as _: int, ~to_: int) => {
     mountLog := [RemountChild(parent, child, to_), ...mountLog^];
     parent;
   };

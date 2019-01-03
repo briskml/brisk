@@ -27,7 +27,7 @@ let make = (~title=?, ~layout, ~style=[], ~callback=() => (), children) => {
       {view: btn, layoutNode: makeLayoutNode(~layout, btn)};
     },
     shouldReconfigureInstance: (~oldState as _, ~newState as _) => true,
-    updateInstance: (_self, {view}) =>
+    updateInstance: (_self, {view} as node) => {
       style
       |> List.iter(attr =>
            switch (attr) {
@@ -41,7 +41,9 @@ let make = (~title=?, ~layout, ~style=[], ~callback=() => (), children) => {
              let w = convertWidth(width);
              NSView.setBorderWidth(view, w);
            }
-         ),
+         );
+      node;
+    },
     children,
   },
 };

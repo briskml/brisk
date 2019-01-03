@@ -470,7 +470,7 @@ let core = [
     `Quick,
     () => {
       let box = <Components.BoxItemDynamic title="box to move" />;
-      let {renderedElement: {renderedElement: beforeUpdate}} as testState =
+      let {renderedElement: {instanceForest: beforeUpdate}} as testState =
         render(box)
         |> executeSideEffects
         |> expect(
@@ -482,7 +482,7 @@ let core = [
                CommitChanges,
              ],
            );
-      let {renderedElement: {renderedElement: afterUpdate}} =
+      let {renderedElement: {instanceForest: afterUpdate}} =
         testState
         |> update(
              Nested([Components.stringToElement("before"), Nested([box])]),

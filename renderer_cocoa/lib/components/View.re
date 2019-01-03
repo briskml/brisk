@@ -20,7 +20,7 @@ let make = (~layout, ~style=[], children) => {
       {view, layoutNode: makeLayoutNode(~layout, view)};
     },
     shouldReconfigureInstance: (~oldState as _, ~newState as _) => true,
-    updateInstance: (_self, {view}) =>
+    updateInstance: (_self, {view} as node) => {
       style
       |> List.iter(attr =>
            switch (attr) {
@@ -34,7 +34,9 @@ let make = (~layout, ~style=[], children) => {
              let w = convertWidth(width);
              NSView.setBorderWidth(view, w);
            }
-         ),
+         );
+      node;
+    },
     children,
   },
 };

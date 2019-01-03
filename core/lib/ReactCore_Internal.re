@@ -790,23 +790,21 @@ module Make = (OutputTree: OutputTree) => {
                   } :
                   updatedInstanceWithNewState;
               };
-              let nearestHostOutputNode: outputNodeContainer =
-                instanceWithNewHostView.hostInstance;
-              let {nearestHostOutputNode, instanceForest: nextInstanceSubtree} =
+
+              let {nearestHostOutputNode: hostInstance, instanceForest: nextInstanceSubtree} =
                 updateInstanceSubtree(
                   ~shouldExecutePendingUpdates,
-                  ~nearestHostOutputNode,
+                  ~nearestHostOutputNode=instanceWithNewHostView.hostInstance: outputNodeContainer,
                   ~oldInstanceForest=instanceSubTree,
                   ~oldReactElement=subElements.children,
                   ~nextReactElement=nextSubElements.children,
                   (),
                 );
-              let hostInstance: outputNodeContainer = nearestHostOutputNode;
               if (nextInstanceSubtree
                   !== instanceWithNewHostView.instanceSubTree) {
                 (
                   /* FIXME AKI */
-                  hostInstance,
+                  nearestHostOutputNode,
                   Obj.magic({
                     ...instanceWithNewHostView,
                     instanceSubTree: nextInstanceSubtree,
@@ -815,7 +813,7 @@ module Make = (OutputTree: OutputTree) => {
                   }),
                 );
               } else {
-                (hostInstance, instanceWithNewHostView);
+                (nearestHostOutputNode, instanceWithNewHostView);
               };
             };
           if (updatedInstanceWithNewSubtree === updatedInstanceWithNewState

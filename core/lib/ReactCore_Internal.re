@@ -455,16 +455,23 @@ module Make = (OutputTree: OutputTree) => {
           ~parent: OutputTree.node,
           ~from: int,
           ~to_: int,
-        ) =>
+        ) => {
+      let isVal = Lazy.is_val(child);
       switch (Lazy.force(child)) {
-      | Node(child) => OutputTree.moveNode(~parent, ~child, ~from, ~to_)
-      | UpdatedNode(prevChild, child) =>
+      | Node(child) =>
+        from === to_ ?
+          parent : OutputTree.moveNode(~parent, ~child, ~from, ~to_)
+      | UpdatedNode(prevChild, child) when !isVal =>
         OutputTree.insertNode(
           ~parent=OutputTree.deleteNode(~parent, ~child=prevChild),
           ~child,
           ~position=to_,
         )
+      | UpdatedNode(_prevChild, child) =>
+        from === to_ ?
+          parent : OutputTree.moveNode(~parent, ~child, ~from, ~to_)
       };
+    };
 
     let reorder =
         (
@@ -508,13 +515,19 @@ module Make = (OutputTree: OutputTree) => {
         }
       };
 
-    let updateNodes = (~parent, ~instanceForest: instanceForest) =>
+    let updateNodes =
+        (
+          ~parent,
+          ~instanceForest: instanceForest,
+          ~position as initialPosition,
+        ) =>
       lazy {
         let parentWrapper = Lazy.force(parent);
         let Node(oldParent) | UpdatedNode(_, oldParent) = parentWrapper;
         let newParent =
           List.fold_left(
-            (instance, x) =>
+            ((position, instance), x) => (
+              position + 1,
               switch (Lazy.force(x)) {
               | Node(_child) => instance
               | UpdatedNode(oldNode, newNode) =>
@@ -522,12 +535,14 @@ module Make = (OutputTree: OutputTree) => {
                   ~parent=
                     OutputTree.deleteNode(~parent=instance, ~child=oldNode),
                   ~child=newNode,
-                  ~position=0,
-                )
+                  ~position,
+                );
               },
-            oldParent,
+            ),
+            (initialPosition, oldParent),
             InstanceForest.outputTreeNodes(instanceForest),
-          );
+          )
+          |> snd;
         newParent === oldParent ?
           parentWrapper : UpdatedNode(oldParent, newParent);
       };
@@ -571,6 +586,7 @@ module Make = (OutputTree: OutputTree) => {
   };
 
   module OpaqueInstanceHash = {
+    type t = lazy_t(Hashtbl.t(int, (opaqueInstance, int)));
     let addOpaqueInstance = (idTable, index, opaqueInstance) => {
       let Instance({component: {key}}) = opaqueInstance;
       key == Key.none ?
@@ -674,6 +690,31 @@ module Make = (OutputTree: OutputTree) => {
       indexShift: int,
     };
 
+    module UpdateContext = {
+      type t = {
+        shouldExecutePendingUpdates: bool,
+        useKeyTable: option(OpaqueInstanceHash.t),
+        /* This is a unique index of an element within a subtree,
+          * thanks to tracking it we can efficiently manage moves of within a subtree
+         */
+        nearestHostOutputNode: outputNodeContainer,
+        absoluteSubtreeIndex: int,
+      };
+
+      let make =
+          (
+            ~useKeyTable=?,
+            ~shouldExecutePendingUpdates=false,
+            nearestHostOutputNode,
+            absoluteSubtreeIndex,
+          ) => {
+        useKeyTable,
+        shouldExecutePendingUpdates,
+        nearestHostOutputNode,
+        absoluteSubtreeIndex,
+      };
+    };
+
     /**
      * Initial render of an Element. Recurses to produce the entire tree of
      * instances.
@@ -683,7 +724,11 @@ module Make = (OutputTree: OutputTree) => {
             : (outputNodeContainer, opaqueInstance) =>
       switch (getOpaqueInstance(~useKeyTable, element)) {
       | Some((opaqueInstance, _)) =>
-        updateOpaqueInstance(~nearestHostOutputNode, opaqueInstance, element)
+        updateOpaqueInstance(
+          ~updateContext=UpdateContext.make(nearestHostOutputNode, 0),
+          opaqueInstance,
+          element,
+        )
       | None => (nearestHostOutputNode, Instance.ofElement(element))
       }
     and renderReactElement =
@@ -727,12 +772,16 @@ module Make = (OutputTree: OutputTree) => {
      */
     and updateOpaqueInstance =
         (
-          ~shouldExecutePendingUpdates=false,
-          ~nearestHostOutputNode: outputNodeContainer,
+          ~updateContext: UpdateContext.t,
           Instance(originalInstance) as originalOpaqueInstance,
           Element(nextComponent) as nextElement,
         )
         : (outputNodeContainer, opaqueInstance) => {
+      let {
+        UpdateContext.shouldExecutePendingUpdates,
+        nearestHostOutputNode,
+        absoluteSubtreeIndex,
+      } = updateContext;
       let updatedInstance =
         shouldExecutePendingUpdates ?
           executePendingStateUpdates(originalInstance) : originalInstance;
@@ -773,6 +822,7 @@ module Make = (OutputTree: OutputTree) => {
               SubtreeChange.updateNodes(
                 ~parent=nearestHostOutputNode,
                 ~instanceForest=IFlat(newOpaqueInstance),
+                ~position=absoluteSubtreeIndex,
               ),
               newOpaqueInstance,
             );
@@ -859,8 +909,12 @@ module Make = (OutputTree: OutputTree) => {
             | React =>
               let {nearestHostOutputNode, instanceForest: nextInstanceSubtree} =
                 updateInstanceSubtree(
-                  ~shouldExecutePendingUpdates,
-                  ~nearestHostOutputNode,
+                  ~updateContext={
+                    UpdateContext.absoluteSubtreeIndex: 0,
+                    useKeyTable: None,
+                    shouldExecutePendingUpdates,
+                    nearestHostOutputNode,
+                  },
                   ~oldInstanceForest=instanceSubTree,
                   ~oldReactElement=subElements: syntheticElement,
                   ~nextReactElement=nextSubElements: syntheticElement,
@@ -910,8 +964,14 @@ module Make = (OutputTree: OutputTree) => {
                 instanceForest: nextInstanceSubtree,
               } =
                 updateInstanceSubtree(
-                  ~shouldExecutePendingUpdates,
-                  ~nearestHostOutputNode=instanceWithNewHostView.hostInstance: outputNodeContainer,
+                  ~updateContext={
+                    UpdateContext.absoluteSubtreeIndex: 0,
+                    shouldExecutePendingUpdates,
+                    nearestHostOutputNode: (
+                      instanceWithNewHostView.hostInstance: outputNodeContainer
+                    ),
+                    useKeyTable: None,
+                  },
                   ~oldInstanceForest=instanceSubTree,
                   ~oldReactElement=subElements.children,
                   ~nextReactElement=nextSubElements.children,
@@ -959,10 +1019,12 @@ module Make = (OutputTree: OutputTree) => {
      */
     and updateInstanceSubtree =
         (
-          ~shouldExecutePendingUpdates=?,
-          ~useKeyTable=?,
-          ~absoluteSubtreeIndex=?,
-          ~nearestHostOutputNode: outputNodeContainer,
+          ~updateContext as {
+            UpdateContext.shouldExecutePendingUpdates,
+            useKeyTable,
+            absoluteSubtreeIndex,
+            nearestHostOutputNode,
+          },
           ~oldInstanceForest,
           ~oldReactElement,
           ~nextReactElement,
@@ -1022,10 +1084,12 @@ module Make = (OutputTree: OutputTree) => {
                 },
               } =
                 updateChildRenderedElement(
-                  ~shouldExecutePendingUpdates?,
-                  ~useKeyTable=keyTable,
-                  ~nearestHostOutputNode,
-                  ~absoluteSubtreeIndex=prevSubtreeSize,
+                  ~updateContext={
+                    UpdateContext.shouldExecutePendingUpdates,
+                    useKeyTable: Some(keyTable),
+                    nearestHostOutputNode,
+                    absoluteSubtreeIndex: prevSubtreeSize,
+                  },
                   ~oldInstanceForest,
                   ~oldReactElement,
                   ~nextReactElement,
@@ -1042,14 +1106,7 @@ module Make = (OutputTree: OutputTree) => {
             oldInstanceForests,
             oldReactElements,
             nextReactElements,
-            (
-              nearestHostOutputNode,
-              [],
-              switch (absoluteSubtreeIndex) {
-              | Some(x) => x
-              | None => 0
-              },
-            ),
+            (nearestHostOutputNode, [], absoluteSubtreeIndex),
           );
         let newInstanceForests = List.rev(newInstanceForests);
         {
@@ -1086,11 +1143,14 @@ module Make = (OutputTree: OutputTree) => {
             instanceForest: newInstanceForest,
           };
         } else {
-          /* TODO: this should cause updateOpaqueInstance */
           let (nearestHostOutputNode, newOpaqueInstance) =
             updateOpaqueInstance(
-              ~shouldExecutePendingUpdates?,
-              ~nearestHostOutputNode,
+              ~updateContext=
+                UpdateContext.make(
+                  ~shouldExecutePendingUpdates,
+                  nearestHostOutputNode,
+                  absoluteSubtreeIndex,
+                ),
               oldOpaqueInstance,
               nextReactElement,
             );
@@ -1130,13 +1190,12 @@ module Make = (OutputTree: OutputTree) => {
       }
     and updateChildRenderedElement =
         (
-          ~shouldExecutePendingUpdates=?,
-          ~useKeyTable=?,
-          /* This is a unique index of an element within a subtree,
-            * thanks to tracking it we can efficiently manage moves of within a subtree
-           */
-          ~nearestHostOutputNode,
-          ~absoluteSubtreeIndex,
+          ~updateContext as {
+            UpdateContext.shouldExecutePendingUpdates,
+            useKeyTable,
+            nearestHostOutputNode,
+            absoluteSubtreeIndex,
+          },
           ~oldInstanceForest,
           ~oldReactElement,
           ~nextReactElement,
@@ -1171,8 +1230,12 @@ module Make = (OutputTree: OutputTree) => {
               /* Instance tree with the same component key */
               let (nearestHostOutputNode, ins) =
                 updateOpaqueInstance(
-                  ~shouldExecutePendingUpdates?,
-                  ~nearestHostOutputNode,
+                  ~updateContext=
+                    UpdateContext.make(
+                      ~shouldExecutePendingUpdates,
+                      nearestHostOutputNode,
+                      absoluteSubtreeIndex,
+                    ),
                   subOpaqueInstance,
                   nextReactElement,
                 );
@@ -1186,11 +1249,20 @@ module Make = (OutputTree: OutputTree) => {
           } else {
             let (nearestHostOutputNode, newOpaqueInstance) =
               updateOpaqueInstance(
-                ~nearestHostOutputNode,
+                ~updateContext=
+                  UpdateContext.make(
+                    ~shouldExecutePendingUpdates,
+                    nearestHostOutputNode,
+                    absoluteSubtreeIndex,
+                  ),
                 oldOpaqueInstance,
                 nextReactElement,
               );
-            (nearestHostOutputNode, `NoChangeOrNested(0), newOpaqueInstance);
+            (
+              nearestHostOutputNode,
+              `NoChangeOrNested(absoluteSubtreeIndex),
+              newOpaqueInstance,
+            );
           };
         };
         switch (update) {
@@ -1218,14 +1290,12 @@ module Make = (OutputTree: OutputTree) => {
             {
               updatedRenderedElement: {
                 nearestHostOutputNode:
-                  previousIndex != absoluteSubtreeIndex ?
-                    SubtreeChange.reorder(
-                      ~parent=nearestHostOutputNode,
-                      ~instance=newOpaqueInstance,
-                      ~from=previousIndex,
-                      ~to_=absoluteSubtreeIndex,
-                    ) :
-                    nearestHostOutputNode,
+                  SubtreeChange.reorder(
+                    ~parent=nearestHostOutputNode,
+                    ~instance=newOpaqueInstance,
+                    ~from=previousIndex,
+                    ~to_=absoluteSubtreeIndex,
+                  ),
                 instanceForest: element,
               },
               indexShift: InstanceForest.getSubtreeSize(element),
@@ -1233,15 +1303,8 @@ module Make = (OutputTree: OutputTree) => {
           } else {
             {
               updatedRenderedElement: {
-                nearestHostOutputNode:
-                  if (changed) {
-                    SubtreeChange.updateNodes(
-                      ~parent=nearestHostOutputNode,
-                      ~instanceForest=element,
-                    );
-                  } else {
-                    nearestHostOutputNode;
-                  },
+                nearestHostOutputNode,
+
                 instanceForest: element,
               },
               indexShift: 0,
@@ -1251,11 +1314,13 @@ module Make = (OutputTree: OutputTree) => {
       | (_, _, _) => {
           updatedRenderedElement:
             updateInstanceSubtree(
-              ~absoluteSubtreeIndex,
-              ~shouldExecutePendingUpdates?,
-              ~nearestHostOutputNode,
-              /* Not sure about this */
-              ~useKeyTable?,
+              ~updateContext={
+                UpdateContext.absoluteSubtreeIndex,
+                shouldExecutePendingUpdates,
+                nearestHostOutputNode,
+                /* Not sure about this */
+                useKeyTable,
+              },
               ~oldInstanceForest,
               ~oldReactElement,
               ~nextReactElement,
@@ -1276,8 +1341,12 @@ module Make = (OutputTree: OutputTree) => {
     let flushPendingUpdates = (opaqueInstance, nearestHostOutputNode) => {
       let Instance({element}) = opaqueInstance;
       updateOpaqueInstance(
-        ~shouldExecutePendingUpdates=true,
-        ~nearestHostOutputNode,
+        ~updateContext=
+          UpdateContext.make(
+            ~shouldExecutePendingUpdates=true,
+            nearestHostOutputNode,
+            0,
+          ),
         opaqueInstance,
         element,
       );
@@ -1328,9 +1397,9 @@ module Make = (OutputTree: OutputTree) => {
         )
         : t =>
       Render.updateInstanceSubtree(
+        ~updateContext=Render.UpdateContext.make(nearestHostOutputNode, 0),
         ~oldInstanceForest=instanceForest,
         ~oldReactElement=previousElement,
-        ~nearestHostOutputNode,
         ~nextReactElement,
         (),
       );

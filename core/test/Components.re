@@ -13,7 +13,7 @@ module Box = {
     render: _ => {
       children: listToElement([]),
       make: () => Implementation.{name: "Box", element: Text(title)},
-      updateInstance: (_, b) => b,
+      updateInstance: (_, _) => Implementation.{name: "Box", element: Text(title)},
       shouldReconfigureInstance: (~oldState, ~newState) =>
         oldState != newState,
     },
@@ -38,11 +38,6 @@ module Div = {
 };
 
 module Text = {
-  /**
-   * FIXME: If a different prop is supplied as title, the change is not picked up by React.
-   * It's because make returns a host element and there's no way to know if a Host element
-   * is not changed.
-   * */
   type state = {
     current: string,
     prev: string,
@@ -166,7 +161,8 @@ module ChangeCounter = {
           {mostRecentLabel: label, numChanges: state.numChanges + 1};
         } :
         state,
-    render: ({state: {numChanges: _, mostRecentLabel: _}}) => listToElement([]),
+    render: ({state: {numChanges: _, mostRecentLabel: _}}) =>
+      listToElement([]),
     printState: ({numChanges, mostRecentLabel}) =>
       "[" ++ string_of_int(numChanges) ++ ", " ++ mostRecentLabel ++ "]",
   };

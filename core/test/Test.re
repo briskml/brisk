@@ -423,7 +423,10 @@ let core = [
            ~label="It reverses the boxes list in the BoxList",
            Implementation.[
              BeginChanges,
-             RemountChild(root, text("Hello"), 1, 0),
+             UnmountChild(root, box("World")),
+             MountChild(root, box("Hello"), 0),
+             UnmountChild(root, box("Hello")),
+             MountChild(root, box("World"), 1),
              CommitChanges,
            ],
          )
@@ -511,7 +514,11 @@ let core = [
            ~label="It reorders the list",
            Implementation.[
              BeginChanges,
-             RemountChild(root, box("Box2unchanged"), 1, 0),
+             UnmountChild(root, box("Box2unchanged")),
+             MountChild(root, box("Box2changed"), 1),
+             RemountChild(root, box("Box2changed"), 1, 0),
+             UnmountChild(root, box("Box1unchanged")),
+             MountChild(root, box("Box1changed"), 1),
              CommitChanges,
            ],
          )

@@ -788,7 +788,6 @@ module Make = (OutputTree: OutputTree) => {
            * ** Switching component type **
            * TODO: Invoke willUnmount on previous component.
            */
-          print_endline("here");
           let opaqueInstance = Instance.ofElement(nextElement);
           (
             SubtreeChange.replaceSubtree(

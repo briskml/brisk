@@ -98,8 +98,11 @@ module Make = (OutputTree: OutputTree) => {
     };
   };
 
-  type outputNodeContainer = Lazy.t(OutputTree.node);
-  type outputNodeGroup = list(Lazy.t(OutputTree.node));
+  type internalOutputNode =
+    | Node(OutputTree.node)
+    | UpdatedNode(OutputTree.node, OutputTree.node);
+  type outputNodeContainer = Lazy.t(internalOutputNode);
+  type outputNodeGroup = list(outputNodeContainer);
 
   type reduce('payload, 'action) =
     ('payload => 'action) => Callback.t('payload);
@@ -357,19 +360,20 @@ module Make = (OutputTree: OutputTree) => {
           lazy {
             let instance =
               subElements.make() |> subElements.updateInstance(self);
-            snd(
-              InstanceForest.outputTreeNodes(instanceSubTree)
-              |> List.fold_left(
-                   ((position, parent), child) => (
-                     position + 1,
-                     OutputTree.insertNode(
-                       ~parent,
-                       ~child=Lazy.force(child),
-                       ~position,
-                     ),
-                   ),
-                   (0, instance),
-                 ),
+            Node(
+              List.fold_left(
+                ((position, parent), child) => (
+                  position + 1,
+                  {
+                    let Node(child) | UpdatedNode(_, child) =
+                      Lazy.force(child);
+                    OutputTree.insertNode(~parent, ~child, ~position);
+                  },
+                ),
+                (0, instance),
+                InstanceForest.outputTreeNodes(instanceSubTree),
+              )
+              |> snd,
             );
           }
         | React => InstanceForest.outputTreeNodes(instanceSubTree)
@@ -382,47 +386,84 @@ module Make = (OutputTree: OutputTree) => {
   let defaultWillUnmount = _self => ();
 
   module SubtreeChange = {
-    let prependElement = (~parent, ~children) =>
-      lazy {
-        let parent = Lazy.force(parent);
+    let insertNodes =
+        (
+          ~parent as parentWrapper: internalOutputNode,
+          ~children: outputNodeGroup,
+          ~position as initialPosition: int,
+        ) => {
+      let Node(oldParent) | UpdatedNode(_, oldParent) = parentWrapper;
+      let newParent =
         List.fold_left(
           ((position, parent), child) => (
             position + 1,
-            OutputTree.insertNode(
-              ~parent,
-              ~child=Lazy.force(child),
-              ~position,
-            ),
+            {
+              let Node(child) | UpdatedNode(_, child) = Lazy.force(child);
+              OutputTree.insertNode(~parent, ~child, ~position);
+            },
           ),
-          (0, parent),
+          (initialPosition, oldParent),
           children,
         )
         |> snd;
-      };
+      newParent === oldParent ?
+        parentWrapper : UpdatedNode(oldParent, newParent);
+    };
+    let deleteNodes =
+        (
+          ~parent as parentWrapper: internalOutputNode,
+          ~children: outputNodeGroup,
+        ) => {
+      let Node(oldParent) | UpdatedNode(_, oldParent) = parentWrapper;
+      let newParent =
+        List.fold_left(
+          (parent, child) => {
+            let Node(child) | UpdatedNode(_, child) = Lazy.force(child);
+            OutputTree.deleteNode(~parent, ~child);
+          },
+          oldParent,
+          children,
+        );
+      newParent === oldParent ?
+        parentWrapper : UpdatedNode(oldParent, newParent);
+    };
 
-    let replaceSubtree = (~parent, ~prevChildren, ~nextChildren) =>
+    let prependElement =
+        (~parent: outputNodeContainer, ~children: outputNodeGroup)
+        : outputNodeContainer =>
+      lazy (insertNodes(~parent=Lazy.force(parent), ~children, ~position=0));
+
+    let replaceSubtree =
+        (
+          ~parent: outputNodeContainer,
+          ~prevChildren: outputNodeGroup,
+          ~nextChildren: outputNodeGroup,
+        )
+        : outputNodeContainer =>
       lazy {
         let parent = Lazy.force(parent);
-        let unmountedParent =
-          List.fold_left(
-            (parent, child) =>
-              OutputTree.deleteNode(~parent, ~child=Lazy.force(child)),
-            parent,
-            prevChildren,
-          );
-        List.fold_left(
-          ((position, parent), child) => (
-            position + 1,
-            OutputTree.insertNode(
-              ~parent,
-              ~child=Lazy.force(child),
-              ~position,
-            ),
-          ),
-          (0, unmountedParent),
-          nextChildren,
+        insertNodes(
+          ~parent=deleteNodes(~parent, ~children=prevChildren),
+          ~children=nextChildren,
+          ~position=0,
+        );
+      };
+
+    let reorderNode =
+        (
+          ~child: outputNodeContainer,
+          ~parent: OutputTree.node,
+          ~from: int,
+          ~to_: int,
+        ) =>
+      switch (Lazy.force(child)) {
+      | Node(child) => OutputTree.moveNode(~parent, ~child, ~from, ~to_)
+      | UpdatedNode(prevChild, child) =>
+        OutputTree.insertNode(
+          ~parent=OutputTree.deleteNode(~parent, ~child=prevChild),
+          ~child,
+          ~position=to_,
         )
-        |> snd;
       };
 
     let reorder =
@@ -431,35 +472,64 @@ module Make = (OutputTree: OutputTree) => {
           ~instance as Instance({hostInstance, component: {elementType}}),
           ~from,
           ~to_,
-        ) =>
+        )
+        : outputNodeContainer =>
       switch (elementType) {
       | Host =>
         lazy {
-          let parent = Lazy.force(parent);
-          OutputTree.moveNode(
-            ~parent,
-            ~child=Lazy.force(hostInstance),
-            ~from,
-            ~to_,
-          );
+          let parentWrapper = Lazy.force(parent);
+          let Node(oldParent) | UpdatedNode(_, oldParent) = parentWrapper;
+          let newParent =
+            reorderNode(~parent=oldParent, ~child=hostInstance, ~from, ~to_);
+          newParent === oldParent ?
+            parentWrapper : UpdatedNode(oldParent, newParent);
         }
       | React =>
-        lazy (
-          List.fold_left(
-            ((index, parent), child) => (
-              index + 1,
-              OutputTree.moveNode(
-                ~parent,
-                ~child=Lazy.force(child),
-                ~from=from + index,
-                ~to_=to_ + index,
+        lazy {
+          let parentWrapper = Lazy.force(parent);
+          let Node(oldParent) | UpdatedNode(_, oldParent) = parentWrapper;
+          let newParent =
+            List.fold_left(
+              ((index, parent), child) => (
+                index + 1,
+                reorderNode(
+                  ~parent,
+                  ~child,
+                  ~from=from + index,
+                  ~to_=to_ + index,
+                ),
               ),
-            ),
-            (0, Lazy.force(parent)),
-            hostInstance,
-          )
-          |> snd
-        )
+              (0, oldParent),
+              hostInstance,
+            )
+            |> snd;
+          newParent === oldParent ?
+            parentWrapper : UpdatedNode(oldParent, newParent);
+        }
+      };
+
+    let updateNodes = (~parent, ~instanceForest: instanceForest) =>
+      lazy {
+        let parentWrapper = Lazy.force(parent);
+        let Node(oldParent) | UpdatedNode(_, oldParent) = parentWrapper;
+        let newParent =
+          List.fold_left(
+            (instance, x) =>
+              switch (Lazy.force(x)) {
+              | Node(_child) => instance
+              | UpdatedNode(oldNode, newNode) =>
+                OutputTree.insertNode(
+                  ~parent=
+                    OutputTree.deleteNode(~parent=instance, ~child=oldNode),
+                  ~child=newNode,
+                  ~position=0,
+                )
+              },
+            oldParent,
+            InstanceForest.outputTreeNodes(instanceForest),
+          );
+        newParent === oldParent ?
+          parentWrapper : UpdatedNode(oldParent, newParent);
       };
   };
 
@@ -687,15 +757,25 @@ module Make = (OutputTree: OutputTree) => {
           /* DO NOT FORGET TO RESET HANDEDOFFINSTANCE */
           component.handedOffInstance := None;
 
-          updateInstance(
-            ~originalOpaqueInstance,
-            ~shouldExecutePendingUpdates,
-            ~nearestHostOutputNode,
-            ~nextComponent,
-            ~nextElement,
-            ~stateChanged,
-            updatedInstance,
-          );
+          let (nearestHostOutputNode, newOpaqueInstance) as ret =
+            updateInstance(
+              ~originalOpaqueInstance,
+              ~shouldExecutePendingUpdates,
+              ~nearestHostOutputNode,
+              ~nextComponent,
+              ~nextElement,
+              ~stateChanged,
+              updatedInstance,
+            );
+          newOpaqueInstance === originalOpaqueInstance ?
+            ret :
+            (
+              SubtreeChange.updateNodes(
+                ~parent=nearestHostOutputNode,
+                ~instanceForest=IFlat(newOpaqueInstance),
+              ),
+              newOpaqueInstance,
+            );
         /*
          * Case B: The next element is *not* of the same component class. We know
          * because otherwise we would have observed the mutation on
@@ -708,7 +788,20 @@ module Make = (OutputTree: OutputTree) => {
            * ** Switching component type **
            * TODO: Invoke willUnmount on previous component.
            */
-          (nearestHostOutputNode, Instance.ofElement(nextElement));
+          print_endline("here");
+          let opaqueInstance = Instance.ofElement(nextElement);
+          (
+            SubtreeChange.replaceSubtree(
+              ~parent=nearestHostOutputNode,
+              ~prevChildren=
+                InstanceForest.outputTreeNodes(
+                  IFlat(originalOpaqueInstance),
+                ),
+              ~nextChildren=
+                InstanceForest.outputTreeNodes(IFlat(opaqueInstance)),
+            ),
+            opaqueInstance,
+          );
         };
       };
     }
@@ -795,10 +888,20 @@ module Make = (OutputTree: OutputTree) => {
                   {
                     ...updatedInstanceWithNewState,
                     hostInstance:
-                      lazy (
-                        Lazy.force(updatedInstanceWithNewState.hostInstance)
-                        |> nextSubElements.updateInstance(newSelf)
-                      ),
+                      lazy {
+                        let instance =
+                          Lazy.force(
+                            updatedInstanceWithNewState.hostInstance,
+                          );
+                        let Node(beforeUpdate) | UpdatedNode(_, beforeUpdate) = instance;
+                        let afterUpdate =
+                          nextSubElements.updateInstance(
+                            newSelf,
+                            beforeUpdate,
+                          );
+                        afterUpdate === beforeUpdate ?
+                          instance : UpdatedNode(beforeUpdate, afterUpdate);
+                      },
                   } :
                   updatedInstanceWithNewState;
               };
@@ -992,22 +1095,11 @@ module Make = (OutputTree: OutputTree) => {
               oldOpaqueInstance,
               nextReactElement,
             );
-          if (oldOpaqueInstance !== newOpaqueInstance) {
-            let newElement = IFlat(newOpaqueInstance);
-            {
-              nearestHostOutputNode:
-                lazy {
-                  let instance = Lazy.force(nearestHostOutputNode);
-                  List.iter(
-                    x => ignore(Lazy.force(x)),
-                    InstanceForest.outputTreeNodes(newElement),
-                  );
-                  instance;
-                },
-              instanceForest: newElement,
-            };
-          } else {
-            {nearestHostOutputNode, instanceForest: oldInstanceForest};
+          {
+            nearestHostOutputNode,
+            instanceForest:
+              oldOpaqueInstance !== newOpaqueInstance ?
+                IFlat(newOpaqueInstance) : oldInstanceForest,
           };
         }
       | (_, _, _) =>
@@ -1093,9 +1185,13 @@ module Make = (OutputTree: OutputTree) => {
               (nearestHostOutputNode, `NewElement, n);
             };
           } else {
-            let (nearestHostOutputNode, ins) =
-              renderElement(~nearestHostOutputNode, nextReactElement);
-            (nearestHostOutputNode, `NoChangeOrNested(5), ins);
+            let (nearestHostOutputNode, newOpaqueInstance) =
+              updateOpaqueInstance(
+                ~nearestHostOutputNode,
+                oldOpaqueInstance,
+                nextReactElement,
+              );
+            (nearestHostOutputNode, `NoChangeOrNested(0), newOpaqueInstance);
           };
         };
         switch (update) {
@@ -1140,14 +1236,10 @@ module Make = (OutputTree: OutputTree) => {
               updatedRenderedElement: {
                 nearestHostOutputNode:
                   if (changed) {
-                    lazy {
-                      let instance = Lazy.force(nearestHostOutputNode);
-                      List.iter(
-                        x => ignore(Lazy.force(x)),
-                        InstanceForest.outputTreeNodes(element),
-                      );
-                      instance;
-                    };
+                    SubtreeChange.updateNodes(
+                      ~parent=nearestHostOutputNode,
+                      ~instanceForest=element,
+                    );
                   } else {
                     nearestHostOutputNode;
                   },
@@ -1211,19 +1303,21 @@ module Make = (OutputTree: OutputTree) => {
         instanceForest,
         nearestHostOutputNode:
           lazy (
-            InstanceForest.outputTreeNodes(instanceForest)
-            |> List.fold_left(
-                 ((position, parent), child) => (
-                   position + 1,
-                   OutputTree.insertNode(
-                     ~parent,
-                     ~child=Lazy.force(child),
-                     ~position,
+            Node(
+              InstanceForest.outputTreeNodes(instanceForest)
+              |> List.fold_left(
+                   ((position, parent), child) => (
+                     position + 1,
+                     {
+                       let Node(child) | UpdatedNode(_, child) =
+                         Lazy.force(child);
+                       OutputTree.insertNode(~parent, ~child, ~position);
+                     },
                    ),
-                 ),
-                 (0, nearestHostOutputNode),
-               )
-            |> snd
+                   (0, nearestHostOutputNode),
+                 )
+              |> snd,
+            )
           ),
       };
     };
@@ -1258,7 +1352,8 @@ module Make = (OutputTree: OutputTree) => {
 
     let executeHostViewUpdates = ({nearestHostOutputNode}) => {
       OutputTree.beginChanges();
-      let hostView = Lazy.force(nearestHostOutputNode);
+      let Node(hostView) | UpdatedNode(_, hostView) =
+        Lazy.force(nearestHostOutputNode);
       OutputTree.commitChanges();
       hostView;
     };

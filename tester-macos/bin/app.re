@@ -1,9 +1,9 @@
 open Brisk_renderer_macos;
 open Cocoa;
+open Layout;
 open Lwt.Infix;
 
 module Component = {
-  open Layout;
   [@noalloc] external lwt_start: unit => unit = "ml_lwt_iter";
 
   let otherComponent = React.reducerComponent("Other");
@@ -89,14 +89,12 @@ let () = {
       {
         React.NativeCocoa.view,
         layoutNode:
-          Layout.LayoutSupport.createNode(
-            ~withChildren=[||],
-            ~andStyle={
-              ...Layout.LayoutSupport.defaultStyle,
-              width: 400,
-              height: 460,
-            },
-            view,
+          LayoutSupport.(
+            createNode(
+              ~withChildren=[||],
+              ~andStyle={...defaultStyle, width: 680, height: 468},
+              view,
+            )
           ),
       };
     };

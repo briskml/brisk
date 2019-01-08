@@ -62,68 +62,66 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
   let applyCommonStyle = (style, attr: [> style]) =>
     switch (attr) {
     | `position(({position, left, top, right, bottom}: Position.t)) =>
-      style.positionType = (
+      let positionType =
         switch (position) {
         | `absolute => Absolute
         | `relative => Relative
-        }
-      );
-      if (!isUndefined(left)) {
-        style.left = int_of_scalar(left);
-      };
-      if (!isUndefined(top)) {
-        style.top = int_of_scalar(top);
-      };
-      if (!isUndefined(right)) {
-        style.right = int_of_scalar(right);
-      };
-      if (!isUndefined(bottom)) {
-        style.bottom = int_of_scalar(bottom);
-      };
-    | `flexDirection(d) => style.flexDirection = d
-    | `justifyContent(j) => style.justifyContent = j
-    | `alignContent(a) => style.alignContent = a
-    | `alignItems(a) => style.alignItems = a
-    | `alignSelf(a) => style.alignItems = a
-    | `width(w) => style.width = int_of_scalar(w)
-    | `height(h) => style.height = int_of_scalar(h)
+        };
+
+      let style = {...style, positionType};
+
+      let style =
+        !isUndefined(left) ? {...style, left: int_of_scalar(left)} : style;
+      let style =
+        !isUndefined(top) ? {...style, top: int_of_scalar(top)} : style;
+      let style =
+        !isUndefined(right) ?
+          {...style, right: int_of_scalar(right)} : style;
+      let style =
+        !isUndefined(bottom) ?
+          {...style, bottom: int_of_scalar(bottom)} : style;
+      style;
+    | `flexDirection(flexDirection) => {...style, flexDirection}
+    | `justifyContent(justifyContent) => {...style, justifyContent}
+    | `alignContent(alignContent) => {...style, alignContent}
+    | `alignItems(alignItems) => {...style, alignItems}
+    | `alignSelf(alignSelf) => {...style, alignSelf}
+    | `width(w) => {...style, width: int_of_scalar(w)}
+    | `height(h) => {...style, height: int_of_scalar(h)}
     | `border(({width, _}: Border.t)) =>
-      if (!isUndefined(width)) {
-        style.border = int_of_scalar(width);
-      }
+      !isUndefined(width) ? {...style, border: int_of_scalar(width)} : style
     | `padding(l, t, r, b) =>
-      if (!isUndefined(l)) {
-        style.paddingLeft = int_of_scalar(l);
-      };
-      if (!isUndefined(t)) {
-        style.paddingTop = int_of_scalar(t);
-      };
-      if (!isUndefined(r)) {
-        style.paddingRight = int_of_scalar(r);
-      };
-      if (!isUndefined(b)) {
-        style.paddingBottom = int_of_scalar(b);
-      };
+      let style =
+        !isUndefined(l) ? {...style, paddingLeft: int_of_scalar(l)} : style;
+      let style =
+        !isUndefined(t) ? {...style, paddingTop: int_of_scalar(t)} : style;
+      let style =
+        !isUndefined(r) ?
+          {...style, paddingRight: int_of_scalar(r)} : style;
+      let style =
+        !isUndefined(b) ?
+          {...style, paddingBottom: int_of_scalar(b)} : style;
+      style;
     | `margin(l, t, r, b) =>
-      if (!isUndefined(l)) {
-        style.marginLeft = int_of_scalar(l);
-      };
-      if (!isUndefined(t)) {
-        style.marginTop = int_of_scalar(t);
-      };
-      if (!isUndefined(r)) {
-        style.marginRight = int_of_scalar(r);
-      };
-      if (!isUndefined(b)) {
-        style.marginBottom = int_of_scalar(b);
-      };
-    | _ => ()
+      let style =
+        !isUndefined(l) ? {...style, marginLeft: int_of_scalar(l)} : style;
+      let style =
+        !isUndefined(t) ? {...style, marginTop: int_of_scalar(t)} : style;
+      let style =
+        !isUndefined(r) ? {...style, marginRight: int_of_scalar(r)} : style;
+      let style =
+        !isUndefined(b) ?
+          {...style, marginBottom: int_of_scalar(b)} : style;
+      style;
+    | _ => style
     };
 
   let makeLayoutNode = (~style, hostView: Node.context) => {
-    let andStyle = LayoutSupport.defaultStyle;
-
-    List.iter(applyCommonStyle(andStyle), style);
+    let accum = {
+      ...LayoutSupport.defaultStyle,
+      direction: LayoutSupport.defaultStyle.direction,
+    };
+    let andStyle = List.fold_left(applyCommonStyle, accum, style);
     LayoutSupport.createNode(~withChildren=[||], ~andStyle, hostView);
   };
 
@@ -142,6 +140,7 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
       node.children[i] = node.children[i - 1];
     };
     node.childrenCount = node.childrenCount + 1;
+
     node.children[index] = child;
     child.parent = node;
 

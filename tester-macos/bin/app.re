@@ -114,23 +114,6 @@ let () = {
       React.element(<Component />),
     );
 
-    open Cf.RunLoop;
-    /* MAIN THREAD */
-
-    let observer =
-      Observer.(create(Activity.All, _ => React.RunLoop.flushAndLayout()));
-    let runloop = get_current();
-    add_observer(runloop, observer, Mode.Default);
-    /* START APP LOGIC ON ANOTHER THREAD AND SETUP LWT THERE */
-    /* Lwt_main.run(
-      Cf_lwt.RunLoop.run_thread(_ =>
-        Lwt_preemptive.run_in_main(_ => {
-          lwt_iter();
-          Lwt.return_unit;
-        })
-      )
-      >>= (_ => Lwt.return_unit),
-    ); */
   });
 
   NSApplication.main();

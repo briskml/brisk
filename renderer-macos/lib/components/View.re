@@ -2,19 +2,12 @@ open React;
 open Cocoa;
 open Layout;
 
-type attr = [
-  | `width(float)
-  | `height(float)
-  | `background(Color.t)
-  | `border(Border.t)
-  | `padding(float)
-  | `margin(float)
-];
+type attr = [ Layout.style | `background(Color.t)];
 
 type style = list(attr);
 
 let component = statelessNativeComponent("View");
-let make = (~style=[], children) => {
+let make = (~style: style=[], children) => {
   ...component,
   render: _ => {
     make: () => {
@@ -34,7 +27,7 @@ let make = (~style=[], children) => {
              };
              let {r, g, b, a}: Color.t = color;
              NSView.setBorderColor(view, r, g, b, a);
-           | _ => ()
+           | #Layout.style => ()
            }
          );
       node;

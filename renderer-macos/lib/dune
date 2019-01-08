@@ -10,12 +10,14 @@
  (libraries brisk-core brisk-renderer)
  (install_c_headers Cocoa_stubs
                     NSView_stubs
+                    NSTextView_stubs
                     NSButton_stubs
                     NSMenu_stubs
                     BriskApplicationDelegate
                     BriskWindowDelegate)
  (c_names Cocoa_stubs
           NSView_stubs
+          NSTextView_stubs
           NSButton_stubs
           NSMenu_stubs
           BriskApplicationDelegate

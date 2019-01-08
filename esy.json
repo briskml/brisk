@@ -9,8 +9,8 @@
     "build:core": "esy build -p @brisk/core",
     "build:mac": "esy build -p @brisk/renderer-macos",
     "build:tester_mac": "esy build -p @brisk/tester-macos",
-    "test:core": "esy -p @brisk/core dune runtest --no-buffer",
-    "test:mac": "esy -p @brisk/renderer-macos dune runtest",
+    "test:core": "esy -p @brisk/core dune runtest --no-buffer --root ./core",
+    "test:mac": "esy -p @brisk/renderer-macos dune runtest --no-buffer --root ./renderer-macos",
     "bootstrap:mac": "make -C tester-macos/app bootstrap",
     "run:mac": "esy x make -C tester-macos/app run"
   },

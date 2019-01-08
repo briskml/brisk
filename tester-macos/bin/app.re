@@ -35,12 +35,14 @@ module Component = {
       | None =>
         <View
           style=[
+            position(~top=0., ~left=0., ~right=0., ~bottom=0., `absolute),
+            width(600.),
             height(400.),
-            background(Color.rgb(255, 0, 0)),
-            border(~width=1., ~color=Color.rgb(0, 255, 0), ()),
+            background(Color.hex("#f7f8f9")),
           ]>
+          <Text style=[width(600.), height(30.)] value="Welcome to Brisk" />
           <Button
-            style=[width(600.), height(40.)]
+            style=[width(400.), height(60.)]
             title="Youre gonna have to wait a bit"
             callback={
                        let callback = reduce(code => code);
@@ -113,7 +115,6 @@ let () = {
       root,
       React.element(<Component />),
     );
-
   });
 
   NSApplication.main();

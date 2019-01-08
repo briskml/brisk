@@ -3,23 +3,21 @@ open Cocoa;
 open Layout;
 
 type attr = [
-  | `width(float)
-  | `height(float)
+  Layout.style
   | `font(Font.t)
+  | `background(Color.t)
   | `color(Color.t)
-  | `padding(float)
-  | `margin(float)
 ];
 
 type style = list(attr);
 
-let component = statelessNativeComponent("TextView");
+let component = statelessNativeComponent("Text");
 
-let make = (~style=[], _children: string) => {
+let make = (~style=[], ~value, children) => {
   ...component,
   render: _ => {
     make: () => {
-      let view = NSView.make();
+      let view = NSTextView.make(value);
       {view, layoutNode: makeLayoutNode(~style, view)};
     },
     shouldReconfigureInstance: (~oldState as _, ~newState as _) => true,
@@ -28,15 +26,17 @@ let make = (~style=[], _children: string) => {
       |> List.iter(attr =>
            switch (attr) {
            | `font(_) => ()
+           | `background(({r, g, b, a}: Color.t)) =>
+             NSTextView.setBackgroundColor(view, r, g, b, a)
            | `color(_) => view |> ignore
-           | _ => ()
+           | #Layout.style => ()
            }
          );
       node;
     },
-    children: listToElement([]),
+    children,
   },
 };
 
-let createElement = (~style=[], ~children, ()) =>
-  element(make(~style, children));
+let createElement = (~style=[], ~value, ~children, ()) =>
+  element(make(~style, ~value, listToElement(children)));

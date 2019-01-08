@@ -163,6 +163,32 @@ module NSView = {
     "ml_NSView_setBackgroundColor_bc" "ml_NSView_setBackgroundColor";
 };
 
+module NSTextView = {
+  type t = NSView.t;
+
+  [@noalloc] external make: unit => t = "ml_NSTextView_make";
+
+  [@noalloc] external setStringValue: (t, string) => unit = "ml_NSTextView_setStringValue";
+
+  [@noalloc]
+  external setBackgroundColor:
+    (
+      CocoaClass.view,
+      [@unboxed] float,
+      [@unboxed] float,
+      [@unboxed] float,
+      [@unboxed] float
+    ) =>
+    unit =
+    "ml_NSTextView_setBackgroundColor_bc" "ml_NSTextView_setBackgroundColor_bc";
+
+  let make = (str) => {
+    let txt = make();
+    setStringValue(txt, str);
+    txt;
+  };
+};
+
 module NSButton = {
   type t = NSView.t;
 

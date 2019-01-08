@@ -1,36 +1,29 @@
 module Create = (Encoding: Flex.Spec.Encoding) => {
   open Encoding;
 
-  let width = (w: scalar) => `width(w);
-  let height = (h: scalar) => `height(h);
+  module Position = {
+    type position = [ | `absolute | `relative];
 
-  let background = (color: Color0.t) => `background(color);
+    type t = {
+      position,
+      left: scalar,
+      top: scalar,
+      right: scalar,
+      bottom: scalar,
+    };
 
-  let padding = (p: scalar) => `padding((p, p, p, p));
-  let padding2 = (~h=cssUndefined, ~v=cssUndefined, ()) =>
-    `padding((h, v, h, v));
-  let padding4 =
-      (
-        ~left=cssUndefined,
-        ~top=cssUndefined,
-        ~right=cssUndefined,
-        ~bottom=cssUndefined,
-        (),
-      ) =>
-    `padding((left, top, right, bottom));
-
-  let margin = (m: scalar) => `margin((m, m, m, m));
-  let margin2 = (~h=cssUndefined, ~v=cssUndefined, ()) =>
-    `margin((h, v, h, v));
-  let margin4 =
-      (
-        ~left=cssUndefined,
-        ~top=cssUndefined,
-        ~right=cssUndefined,
-        ~bottom=cssUndefined,
-        (),
-      ) =>
-    `margin((left, top, right, bottom));
+    let make =
+        (
+          ~left=cssUndefined,
+          ~top=cssUndefined,
+          ~right=cssUndefined,
+          ~bottom=cssUndefined,
+          position,
+        ) => {
+      let pos: t = {position, left, top, right, bottom};
+      `position(pos);
+    };
+  };
 
   module Font = {
     type weight = [
@@ -72,5 +65,38 @@ module Create = (Encoding: Flex.Spec.Encoding) => {
     let color = (color: Color0.t) => make(~color, ());
   };
 
+  let position = Position.make;
   let border = Border.make;
+
+  let width = (w: scalar) => `width(w);
+  let height = (h: scalar) => `height(h);
+
+  let background = (color: Color0.t) => `background(color);
+
+  let padding = (p: scalar) => `padding((p, p, p, p));
+  let padding2 = (~h=cssUndefined, ~v=cssUndefined, ()) =>
+    `padding((h, v, h, v));
+  let padding4 =
+      (
+        ~left=cssUndefined,
+        ~top=cssUndefined,
+        ~right=cssUndefined,
+        ~bottom=cssUndefined,
+        (),
+      ) =>
+    `padding((left, top, right, bottom));
+
+  let margin = (m: scalar) => `margin((m, m, m, m));
+
+  let margin2 = (~h=cssUndefined, ~v=cssUndefined, ()) =>
+    `margin((h, v, h, v));
+  let margin4 =
+      (
+        ~left=cssUndefined,
+        ~top=cssUndefined,
+        ~right=cssUndefined,
+        ~bottom=cssUndefined,
+        (),
+      ) =>
+    `margin((left, top, right, bottom));
 };

@@ -19,6 +19,7 @@ bootstrap:
 build:
 	$(eval BUILD_INSTALL_PATH := $(abspath ../../_esy/default/install))
 	$(eval STORE_INSTALL_PATH := $(shell esy -p @brisk/tester-macos echo '#{self.install}'))
+	@rm -rf $(BUILD_INSTALL_PATH)
 	@ln -sF $(STORE_INSTALL_PATH) $(BUILD_INSTALL_PATH)
 	@echo "> Building the project"
 	@xcodebuild -scheme $(SCHEME) -configuration $(CONFIGURATION) build

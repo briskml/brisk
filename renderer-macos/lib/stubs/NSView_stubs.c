@@ -74,11 +74,10 @@ void ml_NSView_setBackgroundColor(NSView *view, double red_v, double green_v,
   CGFloat green = green_v;
   CGFloat blue = blue_v;
 
+  NSColor *color = [NSColor colorWithRed:red green:green blue:blue alpha:alpha];
+
   [view setWantsLayer:YES];
-  [view.layer setBackgroundColor:[[NSColor colorWithRed:red
-                                                  green:green
-                                                   blue:blue
-                                                  alpha:alpha] CGColor]];
+  [view.layer setBackgroundColor:[color CGColor]];
 }
 
 CAMLprim value ml_NSView_setBackgroundColor_bc(NSView *view, value red_v,

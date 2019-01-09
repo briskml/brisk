@@ -1,0 +1,15 @@
+{
+  "name": "@brisk/renderer",
+  "version": "0.1.0",
+  "license": "MIT",
+  "esy": {
+    "build": ["dune build --only-packages brisk-renderer --root ."]
+  },
+  "dependencies": {
+    "@esy-ocaml/reason": "^3.3.7",
+    "@opam/color": "^0.2.0",
+    "@opam/dune": "^1.6.2",
+    "flex": "^1.2.2",
+    "ocaml": "~4.7.1000"
+  }
+}

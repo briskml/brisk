@@ -1,23 +1,57 @@
-module type HostImplementation = {
-  type hostView;
-
-  let getInstance: int => option(hostView);
-  let memoizeInstance: (int, hostView) => unit;
-
-  let markAsDirty: unit => unit;
-
-  let beginChanges: unit => unit;
-
-  let mountChild:
-    (~parent: hostView, ~child: hostView, ~position: int) => unit;
-  let unmountChild: (~parent: hostView, ~child: hostView) => unit;
-  let remountChild:
-    (~parent: hostView, ~child: hostView, ~position: int) => unit;
-
-  let commitChanges: unit => unit;
+/** Tail-recursive functions on lists */
+module ListTR = {
+  let useTailRecursion = l =>
+    switch (l) {
+    | [_, _, _, _, _, _, _, _, _, _, ..._] => true
+    | _ => false
+    };
+  let concat = list => {
+    let rec aux = (acc, l) =>
+      switch (l) {
+      | [] => List.rev(acc)
+      | [x, ...rest] => aux(List.rev_append(x, acc), rest)
+      };
+    useTailRecursion(list) ? aux([], list) : List.concat(list);
+  };
+  let map = (f, list) =>
+    useTailRecursion(list) ?
+      List.rev_map(f, List.rev(list)) : List.map(f, list);
+  let map3 = (f, list1, list2, list3) => {
+    let rec aux = acc =>
+      fun
+      | ([], [], []) => acc
+      | ([x1, ...nextList1], [x2, ...nextList2], [x3, ...nextList3]) =>
+        aux([f((x1, x2, x3)), ...acc], (nextList1, nextList2, nextList3))
+      | _ => assert(false);
+    aux([], (List.rev(list1), List.rev(list2), List.rev(list3)));
+  };
+  let fold3 = (f, list1, list2, list3, initialValue) => {
+    let rec aux = acc =>
+      fun
+      | ([], [], []) => acc
+      | ([x1, ...nextList1], [x2, ...nextList2], [x3, ...nextList3]) => {
+          let nextRes = f(acc, x1, x2, x3);
+          aux(nextRes, (nextList1, nextList2, nextList3));
+        }
+      | _ => assert(false);
+    aux(initialValue, (list1, list2, list3));
+  };
 };
 
-module Make = (Implementation: HostImplementation) => {
+module type OutputTree = {
+  type node;
+
+  let markAsStale: unit => unit;
+
+  let beginChanges: unit => unit;
+  let commitChanges: unit => unit;
+
+  let insertNode: (~parent: node, ~child: node, ~position: int) => node;
+  let deleteNode: (~parent: node, ~child: node) => node;
+  let moveNode: (~parent: node, ~child: node, ~from: int, ~to_: int) => node;
+};
+
+module Make = (OutputTree: OutputTree) => {
   module GlobalState = {
     let debug = ref(true);
     let componentKeyCounter = ref(0);
@@ -64,6 +98,12 @@ module Make = (Implementation: HostImplementation) => {
     };
   };
 
+  type internalOutputNode =
+    | Node(OutputTree.node)
+    | UpdatedNode(OutputTree.node, OutputTree.node);
+  type outputNodeContainer = Lazy.t(internalOutputNode);
+  type outputNodeGroup = list(outputNodeContainer);
+
   type reduce('payload, 'action) =
     ('payload => 'action) => Callback.t('payload);
 
@@ -72,7 +112,7 @@ module Make = (Implementation: HostImplementation) => {
     | Update('state)
   and self('state, 'action) = {
     state: 'state,
-    reduce: 'payload .reduce('payload, 'action),
+    reduce: 'payload. reduce('payload, 'action),
     act: 'action => unit,
   }
   /**
@@ -81,22 +121,28 @@ module Make = (Implementation: HostImplementation) => {
    * instances.
    */
   and element =
-    | Element(component('state, 'action, 'elementType)): element
-  and reactElement =
+    | Element(component('state, 'action, 'elementType, 'outputNode)): element
+  and syntheticElement =
     | Flat(element)
-    | Nested(string, list(reactElement))
-  and nativeElement('state, 'action) = {
-    make: unit => Implementation.hostView,
-    updateInstance: (self('state, 'action), Implementation.hostView) => unit,
+    | Nested(list(syntheticElement))
+  and outputTreeElement('state, 'action) = {
+    make: unit => OutputTree.node,
+    updateInstance:
+      (self('state, 'action), OutputTree.node) => OutputTree.node,
     shouldReconfigureInstance: (~oldState: 'state, ~newState: 'state) => bool,
-    children: reactElement,
+    children: syntheticElement,
   }
-  and elementType('a, 'state, 'action) =
-    | Host: elementType(nativeElement('state, 'action), 'state, 'action)
-    | React: elementType(reactElement, 'state, 'action)
-  and renderedElement =
+  and elementType('renderedType, 'outputNode, 'state, 'action) =
+    | Host: elementType(
+              outputTreeElement('state, 'action),
+              outputNodeContainer,
+              'state,
+              'action,
+            )
+    | React: elementType(syntheticElement, outputNodeGroup, 'state, 'action)
+  and instanceForest =
     | IFlat(opaqueInstance)
-    | INested(string, list(renderedElement))
+    | INested(list(instanceForest), int /*subtree size*/)
   and oldNewSelf('state, 'action) = {
     oldSelf: self('state, 'action),
     newSelf: self('state, 'action),
@@ -120,41 +166,34 @@ module Make = (Implementation: HostImplementation) => {
    * - The second instance is the same instance but after executing pending
    *   state updates
    */
-  and handedOffInstance('state, 'action, 'element) =
-    ref(
-      option(
-        (
-          instance('state, 'action, 'element),
-          instance('state, 'action, 'element),
-        ),
-      ),
-    )
-  and componentSpec('state, 'initialState, 'action, 'element) = {
+  and handedOffInstance('state, 'action, 'element, 'outputNode) =
+    ref(option(instance('state, 'action, 'element, 'outputNode)))
+  and componentSpec('state, 'initialState, 'action, 'element, 'outputNode) = {
     debugName: string,
-    elementType: elementType('element, 'state, 'action),
+    elementType: elementType('element, 'outputNode, 'state, 'action),
     willReceiveProps: self('state, 'action) => 'state,
     didMount: self('state, 'action) => unit,
     didUpdate: oldNewSelf('state, 'action) => unit,
     willUnmount: self('state, 'action) => unit /* TODO: currently unused */,
-    willUpdate: oldNewSelf('state, 'action) => unit,
     shouldUpdate: oldNewSelf('state, 'action) => bool,
     render: self('state, 'action) => 'element,
     initialState: unit => 'initialState,
     reducer: ('action, 'state) => update('state, 'action),
     printState: 'state => string /* for internal debugging */,
-    handedOffInstance: handedOffInstance('state, 'action, 'element),
+    handedOffInstance:
+      handedOffInstance('state, 'action, 'element, 'outputNode),
     key: int,
   }
-  and component('state, 'action, 'elementType) =
-    componentSpec('state, 'state, 'action, 'elementType)
+  and component('state, 'action, 'elementType, 'outputNode) =
+    componentSpec('state, 'state, 'action, 'elementType, 'outputNode)
   /**
    * Elements turn into instances at the right time. These instances record the
    * most recent state among other things.
    */
-  and instance('state, 'action, 'elementType) = {
-    component: component('state, 'action, 'elementType),
+  and instance('state, 'action, 'elementType, 'outputNode) = {
+    component: component('state, 'action, 'elementType, 'outputNode),
     /**
-     * This may not be a good idea to hold onto for sake of memory, but it makes
+     * FIXME: This may not be a good idea to hold onto for sake of memory, but it makes
      * it convenient to implement shouldComponentUpdate.
      */
     element,
@@ -162,7 +201,7 @@ module Make = (Implementation: HostImplementation) => {
     /**
      * Most recent subtree of instances.
      */
-    instanceSubTree: renderedElement,
+    instanceSubTree: instanceForest,
     subElements: 'elementType,
     /**
      * List of state updates pending for this instance.
@@ -173,6 +212,10 @@ module Make = (Implementation: HostImplementation) => {
      * Unique instance id.
      */
     id: int,
+    /**
+     * A reference to the output node(s) of a given element.
+     */
+    hostInstance: 'outputNode,
   }
   /**
    * Opaque wrapper around `instance`, which allows many instances to be
@@ -182,151 +225,353 @@ module Make = (Implementation: HostImplementation) => {
    * instance tree based on the old - the old one is not mutated.
    */
   and opaqueInstance =
-    | Instance(instance('state, 'action, 'elementType)): opaqueInstance;
+    | Instance(instance('state, 'action, 'elementType, 'outpuNode))
+      : opaqueInstance;
 
-  let logString = txt => GlobalState.debug^ ? print_endline(txt) : ();
+  type renderedElement = {
+    nearestHostOutputNode: outputNodeContainer,
+    instanceForest,
+  };
+
+  module InstanceForest = {
+    let getSubtreeSize =
+      fun
+      | INested(_, x) => x
+      | IFlat(Instance({hostInstance, component: {elementType}})) =>
+        switch (elementType) {
+        | React => List.length(hostInstance)
+        | Host => 1
+        };
+
+    let rec fold =
+            (f, renderedElement, nearestHostOutputNode: outputNodeContainer) =>
+      switch (renderedElement) {
+      | IFlat(e) =>
+        let (nearestHostOutputNode, nextE) = f(e, nearestHostOutputNode);
+        let unchanged = e === nextE;
+
+        (nearestHostOutputNode, unchanged ? renderedElement : IFlat(nextE));
+      | INested(l, _) =>
+        let (nextL, nearestHostOutputNode) =
+          List.fold_left(
+            (
+              (acc, nearestHostOutputNode: outputNodeContainer),
+              renderedElement,
+            ) => {
+              let (nearestHostOutputNode, next) =
+                fold(f, renderedElement, nearestHostOutputNode);
+              ([next, ...acc], nearestHostOutputNode);
+            },
+            ([], nearestHostOutputNode),
+            List.rev(l): list(instanceForest),
+          );
+        let unchanged = List.for_all2((===), l, nextL);
+
+        (
+          nearestHostOutputNode,
+          unchanged ?
+            renderedElement :
+            INested(
+              nextL,
+              List.fold_left(
+                (acc, elem) => getSubtreeSize(elem) + acc,
+                0,
+                nextL,
+              ),
+            ),
+        );
+      };
+    let rec flatten =
+      fun
+      | IFlat(l) => [l]
+      | INested(l, _) => ListTR.concat(ListTR.map(flatten, l));
+    let outputTreeNodes = subtree =>
+      flatten(subtree)
+      |> List.fold_left(
+           (
+             acc: list(outputNodeContainer),
+             Instance({component: {elementType}, hostInstance}),
+           ) =>
+             switch (elementType) {
+             | React => List.append(hostInstance, acc)
+             | Host => [hostInstance, ...acc]
+             },
+           [],
+         )
+      |> List.rev;
+  };
+
+  module SyntheticElement = {
+    let rec map = (f, syntheticElement) =>
+      switch (syntheticElement) {
+      | Flat(l) => IFlat(f(l))
+      | Nested(l) =>
+        let renderedElements = ListTR.map(map(f), l);
+        INested(
+          renderedElements,
+          List.map(InstanceForest.getSubtreeSize, renderedElements)
+          |> List.fold_left((+), 0),
+        );
+      };
+    let rec fold =
+            (f, renderedElement, nearestHostOutputNode: outputNodeContainer) =>
+      switch (renderedElement) {
+      | Flat(e) =>
+        let (nearestHostOutputNode, opaqueInstance) =
+          f(~nearestHostOutputNode, e);
+        {nearestHostOutputNode, instanceForest: IFlat(opaqueInstance)};
+      | Nested(l) =>
+        let (nextL, nearestHostOutputNode) =
+          List.fold_left(
+            ((acc, nearestHostOutputNode), element) => {
+              let {nearestHostOutputNode, instanceForest} =
+                fold(f, element, nearestHostOutputNode);
+              ([instanceForest, ...acc], nearestHostOutputNode);
+            },
+            ([], nearestHostOutputNode),
+            List.rev(l),
+          );
+
+        {
+          nearestHostOutputNode,
+          instanceForest:
+            INested(
+              nextL,
+              List.map(InstanceForest.getSubtreeSize, nextL)
+              |> List.fold_left((+), 0),
+            ),
+        };
+      };
+  };
+
+  module Node = {
+    let make:
+      type a s typ outputNode.
+        (
+          elementType(typ, outputNode, s, a),
+          typ,
+          instanceForest,
+          self(s, a)
+        ) =>
+        outputNode =
+      (elementType, subElements, instanceSubTree, self) =>
+        switch (elementType) {
+        | Host =>
+          lazy {
+            let instance =
+              subElements.make() |> subElements.updateInstance(self);
+            Node(
+              List.fold_left(
+                ((position, parent), child) => (
+                  position + 1,
+                  {
+                    let Node(child) | UpdatedNode(_, child) =
+                      Lazy.force(child);
+                    OutputTree.insertNode(~parent, ~child, ~position);
+                  },
+                ),
+                (0, instance),
+                InstanceForest.outputTreeNodes(instanceSubTree),
+              )
+              |> snd,
+            );
+          }
+        | React => InstanceForest.outputTreeNodes(instanceSubTree)
+        };
+  };
+
   let defaultShouldUpdate = _oldNewSef => true;
-  let defaultWillUpdate = _oldNewSef => ();
   let defaultDidUpdate = _oldNewSef => ();
   let defaultDidMount = _self => ();
+  let defaultWillUnmount = _self => ();
 
-  /**
-   * If `useDynamicKey` is true, every element of a given componentSpec
-   * will have initial value of key equal to `Key.dynamicKeyMagicNumber`.
-   *
-   * For such cases, we generate a new key during calls to the `element` function.
-   */
-  let basicComponent = (~useDynamicKey=false, debugName, elementType) => {
-    let key = useDynamicKey ? Key.dynamicKeyMagicNumber : Key.none;
-    {
-      debugName,
-      elementType,
-      willReceiveProps: ({state}) => state,
-      didMount: defaultDidMount,
-      didUpdate: defaultDidUpdate,
-      willUnmount: _self => (),
-      willUpdate: defaultWillUpdate,
-      shouldUpdate: defaultShouldUpdate,
-      render: _self => assert(false),
-      initialState: () => (),
-      reducer: (_action, _state) => NoUpdate,
-      printState: _state => "",
-      handedOffInstance: ref(None),
-      key,
+  module SubtreeChange = {
+    let insertNodes =
+        (
+          ~parent as parentWrapper: internalOutputNode,
+          ~children: outputNodeGroup,
+          ~position as initialPosition: int,
+        ) => {
+      let Node(oldParent) | UpdatedNode(_, oldParent) = parentWrapper;
+      let newParent =
+        List.fold_left(
+          ((position, parent), child) => (
+            position + 1,
+            {
+              let Node(child) | UpdatedNode(_, child) = Lazy.force(child);
+              OutputTree.insertNode(~parent, ~child, ~position);
+            },
+          ),
+          (initialPosition, oldParent),
+          children,
+        )
+        |> snd;
+      newParent === oldParent ?
+        parentWrapper : UpdatedNode(oldParent, newParent);
     };
-  };
+    let deleteNodes =
+        (
+          ~parent as parentWrapper: internalOutputNode,
+          ~children: outputNodeGroup,
+        ) => {
+      let Node(oldParent) | UpdatedNode(_, oldParent) = parentWrapper;
+      let newParent =
+        List.fold_left(
+          (parent, child) => {
+            let Node(child) | UpdatedNode(_, child) = Lazy.force(child);
+            OutputTree.deleteNode(~parent, ~child);
+          },
+          oldParent,
+          children,
+        );
+      newParent === oldParent ?
+        parentWrapper : UpdatedNode(oldParent, newParent);
+    };
 
-  /** Tail-recursive functions on lists */
-  module ListTR = {
-    let useTailRecursion = l =>
-      switch (l) {
-      | [_, _, _, _, _, _, _, _, _, _, ..._] => true
-      | _ => false
+    let prependElement =
+        (~parent: outputNodeContainer, ~children: outputNodeGroup)
+        : outputNodeContainer =>
+      lazy (insertNodes(~parent=Lazy.force(parent), ~children, ~position=0));
+
+    let replaceSubtree =
+        (
+          ~parent: outputNodeContainer,
+          ~prevChildren: outputNodeGroup,
+          ~nextChildren: outputNodeGroup,
+        )
+        : outputNodeContainer =>
+      lazy {
+        let parent = Lazy.force(parent);
+        insertNodes(
+          ~parent=deleteNodes(~parent, ~children=prevChildren),
+          ~children=nextChildren,
+          ~position=0,
+        );
       };
-    let concat = list => {
-      let rec aux = (acc, l) =>
-        switch (l) {
-        | [] => List.rev(acc)
-        | [x, ...rest] => aux(List.rev_append(x, acc), rest)
-        };
-      useTailRecursion(list) ? aux([], list) : List.concat(list);
+
+    let reorderNode =
+        (
+          ~child: outputNodeContainer,
+          ~parent: OutputTree.node,
+          ~indexShift: int,
+          ~from: int,
+          ~to_: int,
+        ) => {
+      let isVal = Lazy.is_val(child);
+      switch (Lazy.force(child)) {
+      | Node(child) =>
+        from === (to_ - indexShift) ?
+          parent : OutputTree.moveNode(~parent, ~child, ~from, ~to_)
+      | UpdatedNode(prevChild, child) when !isVal =>
+        OutputTree.insertNode(
+          ~parent=OutputTree.deleteNode(~parent, ~child=prevChild),
+          ~child,
+          ~position=to_,
+        )
+      | UpdatedNode(_prevChild, child) =>
+        from === (to_ - indexShift) ?
+          parent : OutputTree.moveNode(~parent, ~child, ~from, ~to_)
+      };
     };
-    let map = (f, list) =>
-      useTailRecursion(list) ?
-        List.rev_map(f, List.rev(list)) : List.map(f, list);
-    let rev_map3 = (f, list1, list2, list3) => {
-      let rec aux = acc =>
-        fun
-        | ([], [], []) => acc
-        | ([x1, ...nextList1], [x2, ...nextList2], [x3, ...nextList3]) =>
-          aux([f((x1, x2, x3)), ...acc], (nextList1, nextList2, nextList3))
-        | _ => assert(false);
-      aux([], (list1, list2, list3));
-    };
-    let map3 = (f, list1, list2, list3) =>
-      rev_map3(f, List.rev(list1), List.rev(list2), List.rev(list3));
+
+    let reorder =
+        (
+          ~parent,
+          ~instance as Instance({hostInstance, component: {elementType}}),
+          ~indexShift,
+          ~from,
+          ~to_,
+        )
+        : outputNodeContainer =>
+      switch (elementType) {
+      | Host =>
+        lazy {
+          let parentWrapper = Lazy.force(parent);
+          let Node(oldParent) | UpdatedNode(_, oldParent) = parentWrapper;
+          let newParent =
+            reorderNode(~parent=oldParent, ~child=hostInstance, ~indexShift, ~from, ~to_);
+          newParent === oldParent ?
+            parentWrapper : UpdatedNode(oldParent, newParent);
+        }
+      | React =>
+        lazy {
+          let parentWrapper = Lazy.force(parent);
+          let Node(oldParent) | UpdatedNode(_, oldParent) = parentWrapper;
+          let newParent =
+            List.fold_left(
+              ((index, parent), child) => (
+                index + 1,
+                reorderNode(
+                  ~parent,
+                  ~child,
+                  ~indexShift,
+                  ~from=from + index,
+                  ~to_=to_ + index,
+                ),
+              ),
+              (0, oldParent),
+              hostInstance,
+            )
+            |> snd;
+          newParent === oldParent ?
+            parentWrapper : UpdatedNode(oldParent, newParent);
+        }
+      };
+
+    let updateNodes =
+        (
+          ~parent,
+          ~instanceForest: instanceForest,
+          ~position as initialPosition,
+        ) =>
+      lazy {
+        let parentWrapper = Lazy.force(parent);
+        let Node(oldParent) | UpdatedNode(_, oldParent) = parentWrapper;
+        let newParent =
+          List.fold_left(
+            ((position, instance), x) => (
+              position + 1,
+              switch (Lazy.force(x)) {
+              | Node(_child) => instance
+              | UpdatedNode(oldNode, newNode) =>
+                OutputTree.insertNode(
+                  ~parent=
+                    OutputTree.deleteNode(~parent=instance, ~child=oldNode),
+                  ~child=newNode,
+                  ~position,
+                )
+              },
+            ),
+            (initialPosition, oldParent),
+            InstanceForest.outputTreeNodes(instanceForest),
+          )
+          |> snd;
+        newParent === oldParent ?
+          parentWrapper : UpdatedNode(oldParent, newParent);
+      };
   };
 
-  /** Log of operations performed to update an instance tree. */
-  module UpdateLog = {
-    type subtreeChangeReact = [
-      | `Nested
-      | `NoChange
-      | `Reordered
-      | `PrependElement(renderedElement)
-      | `ReplaceElements(renderedElement, renderedElement)
-    ];
-    type subtreeChangeHost = [
-      subtreeChangeReact
-      | `ContentChanged(subtreeChangeReact)
-    ];
-    type subtreeChange = subtreeChangeHost;
-    type instanceUpdate('state, 'action, 'elementType) = {
-      oldInstance: instance('state, 'action, 'elementType),
-      newInstance: instance('state, 'action, 'elementType),
-      stateChanged: bool,
-      subTreeChanged: subtreeChange,
-    };
-    type componentChange = {
-      oldId: int,
-      newId: int,
-      oldOpaqueInstance: opaqueInstance,
-      newOpaqueInstance: opaqueInstance,
-    };
-    type entry =
-      | UpdateInstance(instanceUpdate('state, 'action, 'elementType)): entry
-      | ChangeComponent(componentChange): entry;
-    type t = ref(list(entry));
-
-    let create = () => ref([]);
-    let add = (updateLog, x) => updateLog := [x, ...updateLog^];
-    let addUpdateInstance =
-        (~updateLog, ~stateChanged, ~subTreeChanged, oldInstance, newInstance) =>
-      add(
-        updateLog,
-        UpdateInstance({
-          oldInstance,
-          newInstance,
-          stateChanged,
-          subTreeChanged,
-        }),
-      );
-    let addChangeComponent = (~updateLog, opaqueInstance, newOpaqueInstance) => {
-      let Instance({id}) = opaqueInstance;
-      let Instance({id: newId}) = newOpaqueInstance;
-      add(
-        updateLog,
-        ChangeComponent({
-          oldId: id,
-          newId,
-          oldOpaqueInstance: opaqueInstance,
-          newOpaqueInstance,
-        }),
-      );
-    };
-  };
-
-  module Render = {
-    let createSelf = (~state, ~component, ~pendingStateUpdates): self(_) => {
+  module Self = {
+    let make = (~state, ~component, ~pendingStateUpdates): self(_) => {
       state,
       reduce: (payloadToAction, payload) => {
         let action = payloadToAction(payload);
         let stateUpdate = component.reducer(action);
-        Implementation.markAsDirty();
+        OutputTree.markAsStale();
         pendingStateUpdates := [stateUpdate, ...pendingStateUpdates^];
       },
       act: action => {
         let stateUpdate = component.reducer(action);
-        Implementation.markAsDirty();
+        OutputTree.markAsStale();
         pendingStateUpdates := [stateUpdate, ...pendingStateUpdates^];
       },
     };
-    let createInitialSelf = (~component) => {
+    let makeInitial = (~component) => {
       let id = GlobalState.instanceIdCounter^;
       incr(GlobalState.instanceIdCounter);
       let pendingStateUpdates = ref([]);
       (
-        createSelf(
+        make(
           ~component,
           ~state=component.initialState(),
           ~pendingStateUpdates,
@@ -335,88 +580,129 @@ module Make = (Implementation: HostImplementation) => {
         id,
       );
     };
-    let createSelf = (~instance) =>
-      createSelf(
+    let make = (~instance) =>
+      make(
         ~component=instance.component,
         ~state=instance.iState,
         ~pendingStateUpdates=instance.pendingStateUpdates,
       );
-    let rec flattenReactElement =
-      fun
-      | Flat(l) => [l]
-      | Nested(_, l) => ListTR.concat(ListTR.map(flattenReactElement, l));
-    let rec flattenRenderedElement =
-      fun
-      | IFlat(l) => [l]
-      | INested(_, l) =>
-        ListTR.concat(ListTR.map(flattenRenderedElement, l));
-    let rec mapReactElement = (f, reactElement) =>
-      switch (reactElement) {
-      | Flat(l) => IFlat(f(l))
-      | Nested(s, l) => INested(s, ListTR.map(mapReactElement(f), l))
-      };
-    let rec mapRenderedElement = (f, renderedElement) =>
-      switch (renderedElement) {
-      | IFlat(e) =>
-        let nextE = f(e);
-        let unchanged = e === nextE;
-        unchanged ? renderedElement : IFlat(nextE);
-      | INested(s, l) =>
-        let nextL = ListTR.map(mapRenderedElement(f), l);
-        let unchanged = List.for_all2((===), l, nextL);
-        unchanged ? renderedElement : INested(s, nextL);
-      };
+  };
 
-    module OpaqueInstanceHash = {
-      let addOpaqueInstance = (idTable, opaqueInstance) => {
-        let Instance({component: {key}}) = opaqueInstance;
-        key == Key.none ? () : Hashtbl.add(idTable, key, opaqueInstance);
+  module OpaqueInstanceHash = {
+    type t = lazy_t(Hashtbl.t(int, (opaqueInstance, int)));
+    let addOpaqueInstance = (idTable, index, opaqueInstance) => {
+      let Instance({component: {key}}) = opaqueInstance;
+      key == Key.none ?
+        () : Hashtbl.add(idTable, key, (opaqueInstance, index));
+    };
+    let addRenderedElement = (idTable, renderedElement, index) => {
+      let rec aux = index =>
+        fun
+        | IFlat(l) => addOpaqueInstance(idTable, index, l)
+        | INested(l, _) => List.iteri((i, x) => aux(i, x), l);
+      aux(index, renderedElement);
+    };
+    let createKeyTable = renderedElement =>
+      lazy {
+        let keyTable = Hashtbl.create(1);
+        addRenderedElement(keyTable, renderedElement, 0);
+        keyTable;
       };
-      let addOpaqueInstances = (idTable, opaqueInstances) =>
-        List.iter(addOpaqueInstance(idTable), opaqueInstances);
-      let addRenderedElement = (idTable, renderedElement) => {
-        let rec aux =
-          fun
-          | IFlat(l) => addOpaqueInstance(idTable, l)
-          | INested(_, l) => List.iter(aux, l);
-        aux(renderedElement);
-      };
-      let createKeyTable = renderedElement =>
-        lazy {
-          let keyTable = Hashtbl.create(1);
-          addRenderedElement(keyTable, renderedElement);
-          keyTable;
-        };
-      let lookupKey = (table, key) => {
-        let keyTable = Lazy.force(table);
-        try (Some(Hashtbl.find(keyTable, key))) {
-        | Not_found => None
-        };
+    let lookupKey = (table, key) => {
+      let keyTable = Lazy.force(table);
+      try (Some(Hashtbl.find(keyTable, key))) {
+      | Not_found => None
       };
     };
+  };
 
+  module Instance = {
+    let rec ofElement = (Element(component) as element): opaqueInstance => {
+      let (self, pendingStateUpdates, id) = Self.makeInitial(~component);
+      /* Invoke didMount
+         if (component.didMount !== defaultDidMount) {
+           component.didMount(self);
+         };
+         */
+      let subElements = component.render(self);
+      let instanceSubTree =
+        (
+          switch (component.elementType) {
+          | React => (subElements: syntheticElement)
+          | Host => subElements.children
+          }
+        )
+        |> ofList;
+      Instance({
+        id,
+        iState: self.state,
+        component,
+        subElements,
+        instanceSubTree,
+        pendingStateUpdates,
+        element,
+        hostInstance:
+          Node.make(
+            component.elementType,
+            subElements,
+            instanceSubTree,
+            self,
+          ),
+      });
+    }
+    and ofList = (syntheticElement): instanceForest =>
+      SyntheticElement.map(ofElement, syntheticElement);
+  };
+
+  module Render = {
     let getOpaqueInstance = (~useKeyTable, Element({key})) =>
       switch (useKeyTable) {
       | None => None
       | Some(keyTable) => OpaqueInstanceHash.lookupKey(keyTable, key)
       };
 
-    /**
-     * Used because of higher order polymorphism. See here 5.3:
-     * https://caml.inria.fr/pub/docs/manual-ocaml/polymorphism.html
-     *
-     * When we pass the updateInstanceState function it has to be polymorphic
-     * *for all* instance('state, 'action, 'elementType) and passing such
-     * function as an argument introduces higher rank polymorphism.
-     * It's because it's not the function itself has to be polymorphic but its
-     * argument. Therefore we have to wrap it in a record
-     */
-    type updateInstanceState = {
-      f:
-        'state 'action 'elementType .
-        instance('state, 'action, 'elementType) =>
-        instance('state, 'action, 'elementType),
+    let executePendingStateUpdates:
+      'state 'action 'elementType 'outputNode.
+      instance('state, 'action, 'elementType, 'outputNode) =>
+      instance('state, 'action, 'elementType, 'outputNode)
+     =
+      instance => {
+        let executeUpdate = (~state, stateUpdate) =>
+          switch (stateUpdate(state)) {
+          | NoUpdate => state
+          | Update(newState) => newState
+          };
+        let rec executeUpdates = (~state, stateUpdates) =>
+          switch (stateUpdates) {
+          | [] => state
+          | [stateUpdate, ...otherStateUpdates] =>
+            let nextState = executeUpdate(~state, stateUpdate);
+            executeUpdates(~state=nextState, otherStateUpdates);
+          };
+        let pendingUpdates = List.rev(instance.pendingStateUpdates^);
+        instance.pendingStateUpdates := [];
+        let nextState =
+          executeUpdates(~state=instance.iState, pendingUpdates);
+        instance.iState === nextState ?
+          instance : {...instance, iState: nextState};
+      };
 
+    type childElementUpdate = {
+      updatedRenderedElement: renderedElement,
+      /* This represents the way previously rendered elements have been shifted due to moves */
+      indexShift: int,
+    };
+
+    module UpdateContext = {
+      type t = {
+        shouldExecutePendingUpdates: bool,
+        useKeyTable: option(OpaqueInstanceHash.t),
+        /* This is a unique index of an element within a subtree,
+          * thanks to tracking it we can efficiently manage moves of within a subtree
+         */
+        nearestHostOutputNode: outputNodeContainer,
+        absoluteSubtreeIndex: int,
+      };
     };
 
     /**
@@ -424,35 +710,31 @@ module Make = (Implementation: HostImplementation) => {
      * instances.
      */
     let rec renderElement =
-            (~useKeyTable=?, Element(component) as element): opaqueInstance =>
+            (~useKeyTable=?, ~nearestHostOutputNode, element)
+            : (outputNodeContainer, opaqueInstance) =>
       switch (getOpaqueInstance(~useKeyTable, element)) {
-      | Some(opaqueInstance) =>
-        /** Throwaway update log: this is a render so no need to keep an update log. */
-        let updateLog = UpdateLog.create();
-        update(~updateLog, opaqueInstance, element);
-      | None =>
-        let (self, pendingStateUpdates, id) = createInitialSelf(~component);
-        if (component.didMount !== defaultDidMount) {
-          component.didMount(self);
-        };
-        let subElements = component.render(self);
-        let instanceSubTree =
-          switch (component.elementType) {
-          | React => renderReactElement(subElements: reactElement)
-          | Host => renderReactElement(subElements.children)
-          };
-        Instance({
-          id,
-          iState: self.state,
-          component,
-          subElements,
-          instanceSubTree,
-          pendingStateUpdates,
+      | Some((opaqueInstance, _)) =>
+        updateOpaqueInstance(
+          ~updateContext=
+            UpdateContext.{
+              nearestHostOutputNode,
+              absoluteSubtreeIndex: 0,
+              useKeyTable,
+              shouldExecutePendingUpdates: false,
+            },
+          opaqueInstance,
           element,
-        });
+        )
+      | None => (nearestHostOutputNode, Instance.ofElement(element))
       }
-    and renderReactElement = (~useKeyTable=?, reactElement): renderedElement =>
-      mapReactElement(renderElement(~useKeyTable?), reactElement)
+    and renderReactElement =
+        (~useKeyTable=?, nearestHostOutputNode, syntheticElement)
+        : renderedElement =>
+      SyntheticElement.fold(
+        renderElement(~useKeyTable?),
+        syntheticElement,
+        nearestHostOutputNode,
+      )
     /**
      * Update a previously rendered instance tree according to a new Element.
      *
@@ -484,270 +766,441 @@ module Make = (Implementation: HostImplementation) => {
      * A change deep within a tree, means that the subtree of its parent has
      * changed and it propagates to the root of a tree.
      */
-    and update =
+    and updateOpaqueInstance =
         (
-          ~updateInstanceState=?,
-          ~updateLog,
-          originalOpaqueInstance,
+          ~updateContext: UpdateContext.t,
+          Instance(originalInstance) as originalOpaqueInstance,
           Element(nextComponent) as nextElement,
         )
-        : opaqueInstance => {
-      let Instance(originalInstance) = originalOpaqueInstance;
+        : (outputNodeContainer, opaqueInstance) => {
       let updatedInstance =
-        switch (updateInstanceState) {
-        | Some({f}) => f(originalInstance)
-        | None => originalInstance
-        };
-      let stateNotUpdated = originalInstance === updatedInstance;
+        updateContext.shouldExecutePendingUpdates ?
+          executePendingStateUpdates(originalInstance) : originalInstance;
+
+      let stateChanged = originalInstance !== updatedInstance;
 
       let bailOut = {
         let Instance({element}) = originalOpaqueInstance;
-        stateNotUpdated && element === nextElement;
+        !stateChanged && element === nextElement;
       };
 
       if (bailOut) {
-        originalOpaqueInstance;
+        (updateContext.nearestHostOutputNode, originalOpaqueInstance);
       } else {
-        let {component: updatedComponent} = updatedInstance;
-        updatedComponent.handedOffInstance :=
-          Some((originalInstance, updatedInstance));
+        let {component} = updatedInstance;
+        component.handedOffInstance := Some(updatedInstance);
         switch (nextComponent.handedOffInstance^) {
         /*
          * Case A: The next element *is* of the same component class.
          */
-        | Some((originalInstance, updatedInstance)) =>
+        | Some(updatedInstance) =>
           /* DO NOT FORGET TO RESET HANDEDOFFINSTANCE */
-          updatedComponent.handedOffInstance := None;
-          let updatedInstanceWithNewElement = {
-            ...updatedInstance,
-            component: nextComponent,
-            element: nextElement,
-          };
-          let oldSelf = createSelf(~instance=updatedInstance);
-          let newState = nextComponent.willReceiveProps(oldSelf);
+          component.handedOffInstance := None;
 
-          /** We need to split up the check for state changes in two parts.
-           * The first part covers pending updates.
-           * The second part covers willReceiveProps.
-           */
-          let stateChanged =
-            !stateNotUpdated || newState !== updatedInstance.iState;
-          let updatedInstanceWithNewState = {
-            ...updatedInstanceWithNewElement,
-            iState: newState,
-          };
-          /* TODO: Invoke any lifecycles necessary. */
-          let newSelf = createSelf(~instance=updatedInstanceWithNewState);
-          if (nextComponent.shouldUpdate === defaultShouldUpdate
-              || nextComponent.shouldUpdate({oldSelf, newSelf})) {
-            if (nextComponent.willUpdate !== defaultWillUpdate) {
-              nextComponent.willUpdate({oldSelf, newSelf});
-            };
-            let nextSubElements = nextComponent.render(newSelf);
-            let {subElements, instanceSubTree} = updatedInstanceWithNewState;
-            let (subTreeChange, nextInstanceSubTree) =
-              updateRenderedElement(
-                ~updateInstanceState?,
-                ~updateLog,
-                switch (nextComponent.elementType) {
-                | React => (
-                    instanceSubTree,
-                    subElements: reactElement,
-                    nextSubElements: reactElement,
-                  )
-                | Host => (
-                    instanceSubTree,
-                    subElements.children,
-                    nextSubElements.children,
-                  )
-                },
-              );
-            let contentChanged =
-              switch (nextComponent.elementType) {
-              | React => false
-              | Host =>
-                nextSubElements.shouldReconfigureInstance(
-                  ~oldState=oldSelf.state,
-                  ~newState=newSelf.state,
-                )
-              };
-            switch (stateChanged, subTreeChange) {
-            | (false, `NoChange) when !contentChanged => originalOpaqueInstance
-            | (stateChanged, subTreeChanged) =>
-              let subTreeChanged =
-                contentChanged ?
-                  `ContentChanged(subTreeChanged) :
-                  (subTreeChanged :> UpdateLog.subtreeChangeHost);
-              if (nextComponent.didUpdate !== defaultDidUpdate) {
-                let newSelf = createSelf(~instance=updatedInstance);
-                nextComponent.didUpdate({oldSelf, newSelf});
-              };
-              let updatedInstanceWithNewSubtree = {
-                ...updatedInstanceWithNewState,
-                instanceSubTree: nextInstanceSubTree,
-                subElements: nextSubElements,
-              };
-              UpdateLog.addUpdateInstance(
-                ~updateLog,
-                ~stateChanged,
-                ~subTreeChanged,
-                originalInstance,
-                updatedInstanceWithNewSubtree,
-              );
-              Instance(updatedInstanceWithNewSubtree);
-            };
-          } else if (stateChanged) {
-            UpdateLog.addUpdateInstance(
-              ~updateLog,
+          let (nearestHostOutputNode, newOpaqueInstance) as ret =
+            updateInstance(
+              ~originalOpaqueInstance,
+              ~updateContext,
+              ~nextComponent,
+              ~nextElement,
               ~stateChanged,
-              ~subTreeChanged=`NoChange,
-              originalInstance,
-              updatedInstanceWithNewState,
+              updatedInstance,
             );
-            Instance(updatedInstanceWithNewState);
-          } else {
-            originalOpaqueInstance;
-          };
+          newOpaqueInstance === originalOpaqueInstance ?
+            ret :
+            (
+              SubtreeChange.updateNodes(
+                ~parent=nearestHostOutputNode,
+                ~instanceForest=IFlat(newOpaqueInstance),
+                ~position=updateContext.absoluteSubtreeIndex,
+              ),
+              newOpaqueInstance,
+            );
         /*
          * Case B: The next element is *not* of the same component class. We know
          * because otherwise we would have observed the mutation on
          * `nextComponentClass`.
          */
         | None =>
-          updatedComponent.handedOffInstance := None;
           /* DO NOT FORGET TO RESET HANDEDOFFINSTANCE */
-          let (self, pendingStateUpdates, id) =
-            createInitialSelf(~component=nextComponent);
-          let nextSubElements = nextComponent.render(self);
-          let (_nextSubtree, newOpaqueInstance) = {
-            let nextSubtree =
-              switch (nextComponent.elementType) {
-              | React => renderReactElement(nextSubElements)
-              | Host => renderReactElement(nextSubElements.children)
-              };
-            (
-              nextSubtree,
-              Instance({
-                id,
-                iState: self.state,
-                component: nextComponent,
-                subElements: nextSubElements,
-                instanceSubTree: nextSubtree,
-                pendingStateUpdates,
-                element: nextElement,
-              }),
-            );
-          };
+          component.handedOffInstance := None;
           /**
            * ** Switching component type **
-           * TODO: Invoke destruction lifecycle on previous component.
-           * TODO: Invoke creation lifecycle on next component.
+           * TODO: Invoke willUnmount on previous component.
            */
-          UpdateLog.addChangeComponent(
-            ~updateLog,
-            originalOpaqueInstance,
-            newOpaqueInstance,
+          let opaqueInstance = Instance.ofElement(nextElement);
+          (
+            SubtreeChange.replaceSubtree(
+              ~parent=updateContext.nearestHostOutputNode,
+              ~prevChildren=
+                InstanceForest.outputTreeNodes(
+                  IFlat(originalOpaqueInstance),
+                ),
+              ~nextChildren=
+                InstanceForest.outputTreeNodes(IFlat(opaqueInstance)),
+            ),
+            opaqueInstance,
           );
-          newOpaqueInstance;
         };
       };
     }
+    and updateInstance:
+      type state action elementType outputNodeType.
+        (
+          ~originalOpaqueInstance: opaqueInstance,
+          ~updateContext: UpdateContext.t,
+          ~nextComponent: component(
+                            state,
+                            action,
+                            elementType,
+                            outputNodeType,
+                          ),
+          ~nextElement: element,
+          ~stateChanged: bool,
+          instance(state, action, elementType, outputNodeType)
+        ) =>
+        (outputNodeContainer, opaqueInstance) =
+      (
+        ~originalOpaqueInstance,
+        ~updateContext,
+        ~nextComponent,
+        ~nextElement,
+        ~stateChanged,
+        instance,
+      ) => {
+        let updatedInstanceWithNewElement = {
+          ...instance,
+          component: nextComponent,
+          element: nextElement,
+        };
+        let oldSelf = Self.make(~instance);
+        let newState = nextComponent.willReceiveProps(oldSelf);
+
+        /* We need to split up the check for state changes in two parts.
+         * The first part covers pending updates.
+         * The second part covers willReceiveProps.
+         */
+        let stateChanged = stateChanged || newState !== instance.iState;
+        let updatedInstanceWithNewState = {
+          ...updatedInstanceWithNewElement,
+          iState: newState,
+        };
+        let newSelf = Self.make(~instance=updatedInstanceWithNewState);
+
+        if (nextComponent.shouldUpdate === defaultShouldUpdate
+            || nextComponent.shouldUpdate({oldSelf, newSelf})) {
+          let nextSubElements = nextComponent.render(newSelf);
+          let {subElements, instanceSubTree} = updatedInstanceWithNewState;
+          /* TODO: Invoke didUpdate. */
+          let (nearestHostOutputNode, updatedInstanceWithNewSubtree) =
+            switch (nextComponent.elementType) {
+            | React =>
+              let {nearestHostOutputNode, instanceForest: nextInstanceSubtree} =
+                updateInstanceSubtree(
+                  ~updateContext,
+                  ~oldInstanceForest=instanceSubTree,
+                  ~oldReactElement=subElements: syntheticElement,
+                  ~nextReactElement=nextSubElements: syntheticElement,
+                  (),
+                );
+              nextInstanceSubtree !== instanceSubTree ?
+                (
+                  nearestHostOutputNode,
+                  {
+                    ...updatedInstanceWithNewState,
+                    subElements: nextSubElements,
+                    instanceSubTree: nextInstanceSubtree,
+                  },
+                ) :
+                (nearestHostOutputNode, updatedInstanceWithNewState);
+            | Host =>
+              let instanceWithNewHostView = {
+                let shouldReconfigure =
+                  nextSubElements.shouldReconfigureInstance(
+                    ~oldState=oldSelf.state,
+                    ~newState=newSelf.state,
+                  );
+                shouldReconfigure ?
+                  {
+                    ...updatedInstanceWithNewState,
+                    hostInstance:
+                      lazy {
+                        let instance =
+                          Lazy.force(
+                            updatedInstanceWithNewState.hostInstance,
+                          );
+                        let Node(beforeUpdate) | UpdatedNode(_, beforeUpdate) = instance;
+                        let afterUpdate =
+                          nextSubElements.updateInstance(
+                            newSelf,
+                            beforeUpdate,
+                          );
+                        afterUpdate === beforeUpdate ?
+                          instance : UpdatedNode(beforeUpdate, afterUpdate);
+                      },
+                  } :
+                  updatedInstanceWithNewState;
+              };
+
+              let {
+                nearestHostOutputNode: hostInstance,
+                instanceForest: nextInstanceSubtree,
+              } =
+                updateInstanceSubtree(
+                  ~updateContext={
+                    ...updateContext,
+                    absoluteSubtreeIndex: 0,
+                    nearestHostOutputNode: (
+                      instanceWithNewHostView.hostInstance: outputNodeContainer
+                    ),
+                  },
+                  ~oldInstanceForest=instanceSubTree,
+                  ~oldReactElement=subElements.children,
+                  ~nextReactElement=nextSubElements.children,
+                  (),
+                );
+              if (nextInstanceSubtree
+                  !== instanceWithNewHostView.instanceSubTree) {
+                (
+                  /* FIXME AKI */
+                  updateContext.nearestHostOutputNode,
+                  Obj.magic({
+                    ...instanceWithNewHostView,
+                    instanceSubTree: nextInstanceSubtree,
+                    subElements: nextSubElements,
+                    hostInstance,
+                  }),
+                );
+              } else {
+                (
+                  updateContext.nearestHostOutputNode,
+                  instanceWithNewHostView,
+                );
+              };
+            };
+          if (updatedInstanceWithNewSubtree === updatedInstanceWithNewState
+              && !stateChanged) {
+            (nearestHostOutputNode, originalOpaqueInstance);
+          } else {
+            (nearestHostOutputNode, Instance(updatedInstanceWithNewSubtree));
+          };
+        } else if (stateChanged) {
+          (
+            updateContext.nearestHostOutputNode,
+            Instance(updatedInstanceWithNewState),
+          );
+        } else {
+          (updateContext.nearestHostOutputNode, originalOpaqueInstance);
+        };
+      }
     /**
-     * updateRenderedElement recurses through the reactElement tree as long as
+     * updateRenderedElement recurses through the syntheticElement tree as long as
      * the oldReactElement and nextReactElement have the same shape.
      *
      * The base case is either an empty list - Nested([]) or a Flat element.
      *
-     * reactElement is a recursive tree like data structure. The tree doesn't
-     * contain children of the reactElements returned from children, it only
+     * syntheticElement is a recursive tree like data structure. The tree doesn't
+     * contain children of the syntheticElements returned from children, it only
      * contains the "immediate" children so to speak including all nested lists.
      *
-     * `keyTable` is a hash table containing all keys in the reactElement tree.
+     * `keyTable` is a hash table containing all keys in the syntheticElement tree.
      */
-    and updateRenderedElement =
+    and updateInstanceSubtree =
         (
-          ~updateInstanceState=?,
-          ~updateLog,
-          ~useKeyTable=?,
-          (oldRenderedElement, oldReactElement, nextReactElement),
+          ~updateContext,
+          ~oldInstanceForest,
+          ~oldReactElement,
+          ~nextReactElement,
+          (),
         )
-        : (UpdateLog.subtreeChangeReact, renderedElement) =>
-      switch (oldRenderedElement, oldReactElement, nextReactElement) {
+        : renderedElement =>
+      switch (oldInstanceForest, oldReactElement, nextReactElement) {
       | (
-          INested(iName, instanceSubTrees),
-          Nested(_, oldReactElements),
-          Nested(_, [nextReactElement, ...nextReactElements]),
+          INested(instanceSubTrees, subtreeSize),
+          Nested(oldReactElements),
+          Nested([nextReactElement, ...nextReactElements]),
         )
           when
             nextReactElements === oldReactElements && GlobalState.useTailHack^ =>
         /* Detected that nextReactElement was obtained by adding one element */
-        let addedElement = renderReactElement(nextReactElement);
-
-        /** Prepend element */
-        (
-          `PrependElement(addedElement),
-          INested(iName, [addedElement, ...instanceSubTrees]),
-        );
+        let {nearestHostOutputNode, instanceForest: addedElement} =
+          renderReactElement(
+            updateContext.nearestHostOutputNode,
+            nextReactElement,
+          );
+        {
+          nearestHostOutputNode:
+            SubtreeChange.prependElement(
+              ~parent=nearestHostOutputNode,
+              ~children=InstanceForest.outputTreeNodes(addedElement),
+            ),
+          /*** Prepend element */
+          instanceForest:
+            INested(
+              [addedElement, ...instanceSubTrees],
+              subtreeSize + InstanceForest.getSubtreeSize(addedElement),
+            ),
+        };
       | (
-          INested(oldName, oldRenderedElements),
-          Nested(_, oldReactElements),
-          Nested(_, nextReactElements),
+          INested(oldInstanceForests, _),
+          Nested(oldReactElements),
+          Nested(nextReactElements),
         )
           when
             List.length(nextReactElements)
-            === List.length(oldRenderedElements)
-            && List.length(nextReactElements)
-            === List.length(oldReactElements) =>
+            === List.length(oldInstanceForests) =>
         let keyTable =
-          switch (useKeyTable) {
-          | None => OpaqueInstanceHash.createKeyTable(oldRenderedElement)
+          switch (updateContext.useKeyTable) {
+          | None => OpaqueInstanceHash.createKeyTable(oldInstanceForest)
           | Some(keyTable) => keyTable
           };
-        let newRenderedElementsAndUpdates =
-          ListTR.map3(
-            updateRenderedElement(
-              ~updateInstanceState?,
-              ~updateLog,
-              ~useKeyTable=keyTable,
-            ),
-            oldRenderedElements,
+        let (nearestHostOutputNode, newInstanceForests, subtreeSize, _indexShift) =
+          ListTR.fold3(
+            (
+              (nearestHostOutputNode, renderedElements, prevSubtreeSize, indexShift),
+              oldInstanceForest,
+              oldReactElement,
+              nextReactElement,
+            ) => {
+              let {
+                indexShift,
+                updatedRenderedElement: {
+                  nearestHostOutputNode,
+                  instanceForest,
+                },
+              } =
+                updateChildRenderedElement(
+                  ~updateContext={
+                    ...updateContext,
+                    nearestHostOutputNode,
+                    useKeyTable: Some(keyTable),
+                    absoluteSubtreeIndex: prevSubtreeSize,
+                  },
+                  ~indexShift,
+                  ~oldInstanceForest,
+                  ~oldReactElement,
+                  ~nextReactElement,
+                  (),
+                );
+              (
+                nearestHostOutputNode,
+                [instanceForest, ...renderedElements],
+                prevSubtreeSize
+                + InstanceForest.getSubtreeSize(instanceForest),
+                indexShift,
+              );
+            },
+            oldInstanceForests,
             oldReactElements,
             nextReactElements,
+            (
+              updateContext.nearestHostOutputNode,
+              [],
+              updateContext.absoluteSubtreeIndex,
+              0,
+            ),
           );
-        let change =
-          List.fold_left(
-            (acc, (typ, _element)) =>
-              switch (acc, typ) {
-              | (acc, `NoChange) => acc
-              | (`NoChange, x) => x
-              | (acc, `Nested) => acc
-              | (_, x) => x
-              },
-            `NoChange,
-            newRenderedElementsAndUpdates,
-          );
-        let newRenderedElement =
-          INested(
-            oldName,
-            List.map(((_, x)) => x, newRenderedElementsAndUpdates),
-          );
-        switch (change) {
-        | `NoChange => (`NoChange, oldRenderedElement)
-        | `Nested => (`Nested, newRenderedElement)
-        | `Reordered => (`Reordered, newRenderedElement)
-        | `PrependElement(_)
-        | `ReplaceElements(_, _) => (
-            `ReplaceElements((oldRenderedElement, newRenderedElement)),
-            newRenderedElement,
-          )
+        let newInstanceForests = List.rev(newInstanceForests);
+        {
+          nearestHostOutputNode,
+          instanceForest: INested(newInstanceForests, subtreeSize),
         };
       /*
-       * Key Policy for reactElement.
+       * Key Policy for syntheticElement.
        * Nested elements determine shape: if the shape is not identical, re-render.
        * Flat elements use a positional match by default, where components at
        * the same position (from left) are matched for updates.
        * If the component has an explicit key, match the instance with the same key.
-       * Note: components are matched for key across the entire reactElement structure.
+       * Note: components are matched for key across the entire syntheticElement structure.
+       */
+      | (
+          IFlat(oldOpaqueInstance),
+          Flat(Element({key: oldKey})),
+          Flat(Element({key: nextKey}) as nextReactElement),
+        ) =>
+        if (nextKey !== oldKey) {
+          /* Not found: render a new instance */
+          let (nearestHostOutputNode, newInstanceForest) =
+            renderElement(
+              nextReactElement,
+              ~nearestHostOutputNode=updateContext.nearestHostOutputNode,
+            );
+          let newInstanceForest = IFlat(newInstanceForest);
+          {
+            nearestHostOutputNode:
+              SubtreeChange.replaceSubtree(
+                ~parent=nearestHostOutputNode,
+                ~prevChildren=
+                  InstanceForest.outputTreeNodes(oldInstanceForest),
+                ~nextChildren=
+                  InstanceForest.outputTreeNodes(newInstanceForest),
+              ),
+            instanceForest: newInstanceForest,
+          };
+        } else {
+          let (nearestHostOutputNode, newOpaqueInstance) =
+            updateOpaqueInstance(
+              ~updateContext={...updateContext, useKeyTable: None},
+              oldOpaqueInstance,
+              nextReactElement,
+            );
+          {
+            nearestHostOutputNode,
+            instanceForest:
+              oldOpaqueInstance !== newOpaqueInstance ?
+                IFlat(newOpaqueInstance) : oldInstanceForest,
+          };
+        }
+      | (_, _, _) =>
+        /* Notice that all elements which are queried successfully
+         *  from the hash table must have been here in the previous render
+         * No, it's not true. What if the key is the same but element type changes
+         * Wtf, stop thinking
+         */
+        let keyTable =
+          switch (updateContext.useKeyTable) {
+          | None => OpaqueInstanceHash.createKeyTable(oldInstanceForest)
+          | Some(keyTable) => keyTable
+          };
+        let {nearestHostOutputNode, instanceForest: newInstanceForest} =
+          renderReactElement(
+            ~useKeyTable=keyTable,
+            updateContext.nearestHostOutputNode,
+            nextReactElement,
+          );
+        {
+          nearestHostOutputNode:
+            SubtreeChange.replaceSubtree(
+              ~parent=nearestHostOutputNode,
+              ~prevChildren=InstanceForest.outputTreeNodes(oldInstanceForest),
+              ~nextChildren=InstanceForest.outputTreeNodes(newInstanceForest),
+            ),
+          instanceForest: newInstanceForest,
+        };
+      }
+    and updateChildRenderedElement =
+        (
+          ~updateContext as {
+            UpdateContext.shouldExecutePendingUpdates,
+            useKeyTable,
+            nearestHostOutputNode,
+            absoluteSubtreeIndex,
+          },
+          ~indexShift,
+          ~oldInstanceForest,
+          ~oldReactElement,
+          ~nextReactElement,
+          (),
+        )
+        : childElementUpdate =>
+      switch (oldInstanceForest, oldReactElement, nextReactElement) {
+      /*
+       * Key Policy for syntheticElement.
+       * Nested elements determine shape: if the shape is not identical, re-render.
+       * Flat elements use a positional match by default, where components at
+       * the same position (from left) are matched for updates.
+       * If the component has an explicit key, match the instance with the same key.
+       * Note: components are matched for key across the entire syntheticElement structure.
        */
       | (
           IFlat(oldOpaqueInstance),
@@ -760,109 +1213,136 @@ module Make = (Implementation: HostImplementation) => {
             OpaqueInstanceHash.createKeyTable(IFlat(oldOpaqueInstance))
           | Some(keyTable) => keyTable
           };
-        /* Why shouldn't this be reached if there are different lengths?*/
-        let (update, newOpaqueInstance) = {
+        let (nearestHostOutputNode, update, newOpaqueInstance) = {
           let Element(component) = nextReactElement;
           if (component.key !== Key.none) {
             switch (OpaqueInstanceHash.lookupKey(keyTable, component.key)) {
-            | Some(subOpaqueInstance) =>
+            | Some((subOpaqueInstance, previousIndex)) =>
               /* Instance tree with the same component key */
-              (
-                `NoChangeOrNested,
-                update(
-                  ~updateInstanceState?,
-                  ~updateLog,
+              let (nearestHostOutputNode, ins) =
+                updateOpaqueInstance(
+                  ~updateContext=
+                    UpdateContext.{
+                      useKeyTable: None,
+                      shouldExecutePendingUpdates,
+                      nearestHostOutputNode,
+                      absoluteSubtreeIndex: previousIndex + indexShift,
+                    },
                   subOpaqueInstance,
                   nextReactElement,
-                ),
-              )
+                );
+              (nearestHostOutputNode, `NoChangeOrNested(previousIndex), ins);
             | None =>
               /* Not found: render a new instance */
-              (`NewElement, renderElement(nextReactElement))
+              let (nearestHostOutputNode, n) =
+                renderElement(~nearestHostOutputNode, nextReactElement);
+              (nearestHostOutputNode, `NewElement, n);
             };
           } else {
-            (
-              `NoChangeOrNested,
-              update(
-                ~updateInstanceState?,
-                ~updateLog,
+            let (nearestHostOutputNode, newOpaqueInstance) =
+              updateOpaqueInstance(
+                ~updateContext=
+                  UpdateContext.{
+                    shouldExecutePendingUpdates,
+                    nearestHostOutputNode,
+                    absoluteSubtreeIndex,
+                    useKeyTable: None,
+                  },
                 oldOpaqueInstance,
                 nextReactElement,
-              ),
+              );
+            (
+              nearestHostOutputNode,
+              `NoChangeOrNested(absoluteSubtreeIndex),
+              newOpaqueInstance,
             );
           };
         };
         switch (update) {
         | `NewElement =>
-          let newRenderedElement = IFlat(newOpaqueInstance);
-          (
-            `ReplaceElements((oldRenderedElement, newRenderedElement)),
-            newRenderedElement,
-          );
-        | `NoChangeOrNested =>
+          let newInstanceForest = IFlat(newOpaqueInstance);
+          {
+            updatedRenderedElement: {
+              nearestHostOutputNode:
+                SubtreeChange.replaceSubtree(
+                  ~parent=nearestHostOutputNode,
+                  ~prevChildren=
+                    InstanceForest.outputTreeNodes(oldInstanceForest),
+                  ~nextChildren=
+                    InstanceForest.outputTreeNodes(newInstanceForest),
+                ),
+              instanceForest: newInstanceForest,
+            },
+            indexShift: 0,
+          };
+        | `NoChangeOrNested(previousIndex) =>
           let changed = oldOpaqueInstance !== newOpaqueInstance;
           let element =
-            changed ? IFlat(newOpaqueInstance) : oldRenderedElement;
+            changed ? IFlat(newOpaqueInstance) : oldInstanceForest;
           if (oldKey != nextKey) {
-            (`Reordered, element);
+            print_endline(string_of_int(absoluteSubtreeIndex));
+            {
+              updatedRenderedElement: {
+                nearestHostOutputNode:
+                  SubtreeChange.reorder(
+                    ~parent=nearestHostOutputNode,
+                    ~instance=newOpaqueInstance,
+                    ~indexShift,
+                    ~from=previousIndex,
+                    ~to_=absoluteSubtreeIndex,
+                  ),
+                instanceForest: element,
+              },
+              indexShift: InstanceForest.getSubtreeSize(element),
+            };
           } else {
-            changed ? (`Nested, element) : (`NoChange, element);
+            {
+              updatedRenderedElement: {
+                nearestHostOutputNode,
+
+                instanceForest: element,
+              },
+              indexShift: 0,
+            };
           };
         };
-      | (_, _, _) =>
-        let keyTable =
-          switch (useKeyTable) {
-          | None => OpaqueInstanceHash.createKeyTable(oldRenderedElement)
-          | Some(keyTable) => keyTable
-          };
-        let newRenderedElement =
-          renderReactElement(~useKeyTable=keyTable, nextReactElement);
-        /* It's completely new, replaceElement */
-        (
-          `ReplaceElements((oldRenderedElement, newRenderedElement)),
-          newRenderedElement,
-        );
+      | (_, _, _) => {
+          updatedRenderedElement:
+            updateInstanceSubtree(
+              ~updateContext={
+                UpdateContext.absoluteSubtreeIndex,
+                shouldExecutePendingUpdates,
+                nearestHostOutputNode,
+                /* Not sure about this */
+                useKeyTable,
+              },
+              ~oldInstanceForest,
+              ~oldReactElement,
+              ~nextReactElement,
+              (),
+            ),
+          indexShift: 0,
+        }
       };
 
     /**
      * Execute the pending updates at the top level of an instance tree.
      * If no state change is performed, the argument is returned unchanged.
      */
-    let executePendingStateUpdates:
-      'state 'action 'elementType .
-      instance('state, 'action, 'elementType) =>
-      instance('state, 'action, 'elementType)
-     =
-      instance => {
-        let executeUpdate = (~state, stateUpdate) =>
-          switch (stateUpdate(state)) {
-          | NoUpdate => state
-          | Update(newState) => newState
-          };
-        let rec executeUpdates = (~state, stateUpdates) =>
-          switch (stateUpdates) {
-          | [] => state
-          | [stateUpdate, ...otherStateUpdates] =>
-            let nextState = executeUpdate(~state, stateUpdate);
-            executeUpdates(~state=nextState, otherStateUpdates);
-          };
-        let pendingUpdates = List.rev(instance.pendingStateUpdates^);
-        instance.pendingStateUpdates := [];
-        let nextState =
-          executeUpdates(~state=instance.iState, pendingUpdates);
-        instance.iState === nextState ?
-          instance : {...instance, iState: nextState};
-      };
-
     /**
      * Flush the pending updates in an instance tree.
      * TODO: invoke lifecycles
      */
-    let flushPendingUpdates = (~updateLog, opaqueInstance) => {
+    let flushPendingUpdates = (opaqueInstance, nearestHostOutputNode) => {
       let Instance({element}) = opaqueInstance;
-      update(
-        ~updateLog,
-        ~updateInstanceState={f: executePendingStateUpdates},
+      updateOpaqueInstance(
+        ~updateContext=
+          UpdateContext.{
+            useKeyTable: None,
+            shouldExecutePendingUpdates: true,
+            nearestHostOutputNode,
+            absoluteSubtreeIndex: 0,
+          },
         opaqueInstance,
         element,
       );
@@ -874,371 +1354,161 @@ module Make = (Implementation: HostImplementation) => {
      * Rendering produces a list of instance trees.
      */
     type t = renderedElement;
-    type topLevelChange = [
-      | `Reordered
-      | `Nested
-      | `PrependElement(renderedElement)
-      | `ReplaceElements(renderedElement, renderedElement)
-    ];
-    type topLevelUpdate = {
-      subtreeChange: topLevelChange,
-      updateLog: UpdateLog.t,
-    };
 
     let listToRenderedElement = renderedElements =>
-      INested("List", renderedElements);
-    let render = reactElement: t => Render.renderReactElement(reactElement);
-    let update =
-        (~previousReactElement, ~renderedElement: t, reactElement)
-        : (t, option(topLevelUpdate)) => {
-      let updateLog = UpdateLog.create();
-      let (topLevelChange, newRenderedElement) =
-        Render.updateRenderedElement(
-          ~updateLog,
-          (renderedElement, previousReactElement, reactElement),
-        );
-      switch (topLevelChange) {
-      | `NoChange => (renderedElement, None)
-      | `Nested as subtreeChange
-      | `PrependElement(_) as subtreeChange
-      | `ReplaceElements(_, _) as subtreeChange => (
-          newRenderedElement,
-          Some({subtreeChange, updateLog}),
-        )
-      | `Reordered as subtreeChange =>
-        switch (renderedElement, newRenderedElement) {
-        | (IFlat(_), IFlat(_)) => (
-            newRenderedElement,
-            Some({
-              subtreeChange:
-                `ReplaceElements((renderedElement, newRenderedElement)),
-              updateLog,
-            }),
-          )
-        | (_, _) => (newRenderedElement, Some({subtreeChange, updateLog}))
-        }
+      INested(
+        renderedElements,
+        List.map(InstanceForest.getSubtreeSize, renderedElements)
+        |> List.fold_left((+), 0),
+      );
+    let render = (nearestHostOutputNode: OutputTree.node, syntheticElement): t => {
+      let instanceForest = Instance.ofList(syntheticElement);
+      {
+        instanceForest,
+        nearestHostOutputNode:
+          lazy (
+            Node(
+              InstanceForest.outputTreeNodes(instanceForest)
+              |> List.fold_left(
+                   ((position, parent), child) => (
+                     position + 1,
+                     {
+                       let Node(child) | UpdatedNode(_, child) =
+                         Lazy.force(child);
+                       OutputTree.insertNode(~parent, ~child, ~position);
+                     },
+                   ),
+                   (0, nearestHostOutputNode),
+                 )
+              |> snd,
+            )
+          ),
       };
     };
+    let update =
+        (
+          ~previousElement,
+          ~renderedElement as {instanceForest, nearestHostOutputNode}: t,
+          nextReactElement,
+        )
+        : t =>
+      Render.updateInstanceSubtree(
+        ~updateContext=
+          Render.UpdateContext.{
+            nearestHostOutputNode,
+            absoluteSubtreeIndex: 0,
+            useKeyTable: None,
+            shouldExecutePendingUpdates: false,
+          },
+        ~oldInstanceForest=instanceForest,
+        ~oldReactElement=previousElement,
+        ~nextReactElement,
+        (),
+      );
 
     /**
      * Flush the pending updates in an instance tree.
      * TODO: invoke lifecycles
      */
-    let flushPendingUpdates = (renderedElement: t): (t, UpdateLog.t) => {
-      let updateLog = UpdateLog.create();
-      let newRenderedElement =
-        Render.mapRenderedElement(
-          Render.flushPendingUpdates(~updateLog),
-          renderedElement,
+    let flushPendingUpdates = ({instanceForest, nearestHostOutputNode}: t): t => {
+      let (nearestHostOutputNode, newInstanceForest) =
+        InstanceForest.fold(
+          Render.flushPendingUpdates,
+          instanceForest,
+          nearestHostOutputNode,
         );
-      (newRenderedElement, updateLog);
+      {instanceForest: newInstanceForest, nearestHostOutputNode};
+    };
+
+    let executeHostViewUpdates = ({nearestHostOutputNode}) => {
+      OutputTree.beginChanges();
+      let Node(hostView) | UpdatedNode(_, hostView) =
+        Lazy.force(nearestHostOutputNode);
+      OutputTree.commitChanges();
+      hostView;
     };
   };
 
+  type syntheticComponentSpec('state, 'action) =
+    componentSpec(
+      'state,
+      stateless,
+      'action,
+      syntheticElement,
+      outputNodeGroup,
+    );
+
+  type outputTreeComponentSpec('state, 'action) =
+    componentSpec(
+      'state,
+      stateless,
+      'action,
+      outputTreeElement('state, 'action),
+      outputNodeContainer,
+    );
+
   /**
-   * Functions for mounting/unmounting an instance tree from
-   * rendered element, update log, and top level update.
+   * If `useDynamicKey` is true, every element of a given componentSpec
+   * will have initial value of key equal to `Key.dynamicKeyMagicNumber`.
+   *
+   * For such cases, we generate a new key during calls to the `element` function.
    */
-  module HostView = {
-    open Implementation;
-
-    let getHostViewInstance = ({id}) =>
-      switch (getInstance(id)) {
-      | Some(hostView) => hostView
-      | None =>
-        /* TODO Check if this is possible */
-        print_endline(
-          "Root host view instance " ++ string_of_int(id) ++ " wasn't found",
-        );
-        assert(false);
-      };
-
-    let rec traverseRenderedElement =
-            (parentHostView, renderedElement, f, position) =>
-      switch (renderedElement) {
-      | IFlat(Instance(instance)) =>
-        processInstance(~parentHostView, ~instance, ~position, ~f)
-      | INested(_, elements) =>
-        List.iteri(
-          (position, element) =>
-            traverseRenderedElement(parentHostView, element, f, position),
-          elements,
-        )
-      }
-    and processInstance:
-      type state action elementType.
-        (
-          ~parentHostView: hostView,
-          ~instance: instance(state, action, elementType),
-          ~position: int,
-          ~f: (hostView, int, unit => hostView, int) => hostView
-        ) =>
-        unit =
-      (
-        ~parentHostView,
-        ~instance: instance(state, action, elementType),
-        ~position,
-        ~f,
-      ) => {
-        let {id, component, subElements, instanceSubTree} = instance;
-        let newParentHostView =
-          switch (component.elementType) {
-          | React => parentHostView
-          | Host => f(parentHostView, id, subElements.make, position)
-          };
-        traverseRenderedElement(newParentHostView, instanceSubTree, f, 0);
-      };
-
-    let mountInstanceUtil =
-        (implementationFunc, parentHostView, id, make, position) =>
-      switch (getInstance(id)) {
-      | Some(_) => parentHostView
-      | None =>
-        let hostView = make();
-        memoizeInstance(id, hostView);
-        implementationFunc(
-          ~parent=parentHostView,
-          ~child=hostView,
-          ~position,
-        );
-        hostView;
-      };
-
-    let mountInstance = (~parentHostView, ~instance, ~position as _) =>
-      processInstance(
-        ~parentHostView,
-        ~instance,
-        ~position=0,
-        ~f=mountInstanceUtil(Implementation.mountChild),
-      );
-
-    let remountInstanceUtil =
-        (implementationFunc, parentHostView, id, _make, position) =>
-      switch (getInstance(id)) {
-      | Some(hostView) =>
-        implementationFunc(
-          ~parent=parentHostView,
-          ~child=hostView,
-          ~position,
-        );
-        hostView;
-      | None => parentHostView
-      };
-
-    let remountInstance = (~parentHostView, ~instance, ~position as _) =>
-      processInstance(
-        ~parentHostView,
-        ~instance,
-        ~position=0,
-        ~f=remountInstanceUtil(Implementation.remountChild),
-      );
-
-    let unmountInstanceUtil = (parentHostView, id, _, _) =>
-      switch (getInstance(id)) {
-      | Some(hostView) =>
-        Implementation.unmountChild(~parent=parentHostView, ~child=hostView);
-        hostView;
-      | None =>
-        /* TODO Determine if/when this case is even possible? */
-        print_endline(
-          "Host view instance "
-          ++ string_of_int(id)
-          ++ " wasn't found during rendered element unmount",
-        );
-        parentHostView;
-      };
-
-    let unmountInstance = (~parentHostView, ~instance) =>
-      processInstance(
-        ~parentHostView,
-        ~instance,
-        ~position=0,
-        ~f=unmountInstanceUtil,
-      );
-
-    let rec applyUpdateLogEntry:
-      type state action elementType.
-        (
-          ~parentHostView: hostView,
-          ~oldInstance: instance(state, action, elementType),
-          ~newInstance: instance(state, action, elementType),
-          UpdateLog.subtreeChange
-        ) =>
-        unit =
-      (~parentHostView, ~oldInstance, ~newInstance, entry) =>
-        switch (entry) {
-        /* The first `Nested update means our top level host view hasn't changed, moving on to the subtree */
-        | `Nested
-        | `NoChange => ()
-        | `Reordered =>
-          remountInstance(~parentHostView, ~instance=newInstance, ~position=0)
-        | `PrependElement(renderedElement) =>
-          traverseRenderedElement(
-            parentHostView,
-            renderedElement,
-            mountInstanceUtil(Implementation.mountChild),
-            0,
-          )
-        | `ReplaceElements(oldRendered, newRendered) =>
-          traverseRenderedElement(
-            parentHostView,
-            oldRendered,
-            unmountInstanceUtil,
-            0,
-          );
-          traverseRenderedElement(
-            parentHostView,
-            newRendered,
-            mountInstanceUtil(Implementation.mountChild),
-            0,
-          );
-        | `ContentChanged(subtreeReactChange) =>
-          let parentHostView = getHostViewInstance(oldInstance);
-          switch (newInstance.component.elementType) {
-          | React => assert(false)
-          | Host =>
-            newInstance.subElements.updateInstance(
-              Render.createSelf(~instance=newInstance),
-              parentHostView,
-            )
-          };
-          applyUpdateLogEntry(
-            ~parentHostView,
-            ~oldInstance,
-            ~newInstance,
-            (subtreeReactChange :> UpdateLog.subtreeChange),
-          );
-        };
-
-    let mountRenderedElement = (parentHostView, renderedElement): unit => {
-      Implementation.beginChanges();
-      traverseRenderedElement(
-        parentHostView,
-        renderedElement,
-        mountInstanceUtil(Implementation.mountChild),
-        0,
-      );
-      Implementation.commitChanges();
+  let basicComponent = (~useDynamicKey=false, debugName, elementType) => {
+    let key = useDynamicKey ? Key.dynamicKeyMagicNumber : Key.none;
+    {
+      debugName,
+      elementType,
+      willReceiveProps: ({state}) => state,
+      didMount: defaultDidMount,
+      didUpdate: defaultDidUpdate,
+      willUnmount: defaultWillUnmount,
+      shouldUpdate: defaultShouldUpdate,
+      render: _self => assert(false),
+      initialState: () => (),
+      reducer: (_action, _state) => NoUpdate,
+      printState: _state => "",
+      handedOffInstance: ref(None),
+      key,
     };
-
-    let rec applyUpdateLogUtil =
-            (parentHostView, updateLog: list(UpdateLog.entry)): unit =>
-      UpdateLog.(
-        switch (updateLog) {
-        | [UpdateInstance({subTreeChanged, oldInstance, newInstance}), ...tl] =>
-          applyUpdateLogEntry(
-            ~parentHostView,
-            ~oldInstance,
-            ~newInstance,
-            subTreeChanged,
-          );
-          let parentHostView =
-            switch (subTreeChanged) {
-            | `Nested when List.length(tl) > 0 =>
-              getHostViewInstance(oldInstance)
-            | _ => parentHostView
-            };
-          applyUpdateLogUtil(parentHostView, tl);
-        | [
-            ChangeComponent({
-              oldOpaqueInstance: Instance(oldInstance),
-              newOpaqueInstance: Instance(newInstance),
-              _,
-            }),
-            ...tl,
-          ] =>
-          unmountInstance(~parentHostView, ~instance=oldInstance);
-          mountInstance(~parentHostView, ~instance=newInstance, ~position=0);
-          applyUpdateLogUtil(parentHostView, tl);
-        | [] => ()
-        }
-      );
-
-    let applyUpdateLog = (parentHostView, updateLog: UpdateLog.t): unit => {
-      Implementation.beginChanges();
-      let updateLog = List.rev(updateLog^);
-      applyUpdateLogUtil(parentHostView, updateLog);
-      Implementation.commitChanges();
-    };
-
-    let applyTopLevelUpdate =
-        (
-          parentHostView: hostView,
-          renderedElement: renderedElement,
-          topLevelUpdate: option(RenderedElement.topLevelUpdate),
-        )
-        : unit =>
-      switch (topLevelUpdate) {
-      | Some({subtreeChange, updateLog}) when List.length(updateLog^) > 0 =>
-        let updateLog = List.rev(updateLog^);
-        Implementation.beginChanges();
-        applyUpdateLogUtil(parentHostView, updateLog);
-        switch (subtreeChange) {
-        | `Nested => ()
-        | `Reordered =>
-          traverseRenderedElement(
-            parentHostView,
-            renderedElement,
-            remountInstanceUtil(Implementation.remountChild),
-            0,
-          )
-        | _ => assert(false)
-        };
-        Implementation.commitChanges();
-      | Some({
-          subtreeChange: `ReplaceElements(oldRendered, newRendered),
-          updateLog,
-        })
-          when List.length(updateLog^) == 0 =>
-        Implementation.beginChanges();
-        traverseRenderedElement(
-          parentHostView,
-          oldRendered,
-          unmountInstanceUtil,
-          0,
-        );
-        traverseRenderedElement(
-          parentHostView,
-          newRendered,
-          mountInstanceUtil(Implementation.mountChild),
-          0,
-        );
-        Implementation.commitChanges();
-      | Some({subtreeChange: `PrependElement(element), updateLog})
-          when List.length(updateLog^) == 0 =>
-        Implementation.beginChanges();
-        traverseRenderedElement(
-          parentHostView,
-          element,
-          mountInstanceUtil(Implementation.mountChild),
-          0,
-        );
-        Implementation.commitChanges();
-      | Some(_) => assert(false)
-      | None => ()
-      };
   };
 
   let statelessComponent:
     (~useDynamicKey: bool=?, string) =>
-    component(stateless, actionless, reactElement) =
+    component(stateless, actionless, syntheticElement, outputNodeGroup) =
     (~useDynamicKey=?, debugName) => {
       ...basicComponent(~useDynamicKey?, debugName, React),
       initialState: () => (),
     };
   let statefulComponent:
     (~useDynamicKey: bool=?, string) =>
-    componentSpec('state, stateless, actionless, reactElement) =
+    componentSpec(
+      'state,
+      stateless,
+      actionless,
+      syntheticElement,
+      outputNodeGroup,
+    ) =
     (~useDynamicKey=?, debugName) =>
       basicComponent(~useDynamicKey?, debugName, React);
   let reducerComponent:
     (~useDynamicKey: bool=?, string) =>
-    componentSpec('state, stateless, 'action, reactElement) =
+    componentSpec(
+      'state,
+      stateless,
+      'action,
+      syntheticElement,
+      outputNodeGroup,
+    ) =
     (~useDynamicKey=?, debugName) =>
       basicComponent(~useDynamicKey?, debugName, React);
   let statelessNativeComponent:
     (~useDynamicKey: bool=?, string) =>
-    component(stateless, actionless, nativeElement(stateless, actionless)) =
+    component(
+      stateless,
+      actionless,
+      outputTreeElement(stateless, actionless),
+      outputNodeContainer,
+    ) =
     (~useDynamicKey=?, debugName) => {
       ...basicComponent(~useDynamicKey?, debugName, Host),
       initialState: () => (),
@@ -1250,7 +1520,8 @@ module Make = (Implementation: HostImplementation) => {
       'state,
       stateless,
       actionless,
-      nativeElement('state, actionless),
+      outputTreeElement('state, actionless),
+      outputNodeContainer,
     ) =
     (~useDynamicKey=?, debugName) =>
       basicComponent(~useDynamicKey?, debugName, Host);
@@ -1267,9 +1538,7 @@ module Make = (Implementation: HostImplementation) => {
       key != component.key ? {...component, key} : component;
     Flat(Element(componentWithKey));
   };
-  let arrayToElement = (a: array(reactElement)): reactElement =>
-    Nested("Array", Array.to_list(a));
-  let listToElement = l => Nested("List", l);
+  let listToElement = l => Nested(l);
 
   module RemoteAction = {
     type t('action) = {mutable act: 'action => unit};

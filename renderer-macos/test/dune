@@ -1,0 +1,8 @@
+(executables
+ (names test)
+ (libraries alcotest brisk-renderer-macos))
+
+(alias
+ (name runtest)
+ (deps test.exe)
+ (action (run %{deps})))

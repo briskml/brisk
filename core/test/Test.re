@@ -1,333 +1,384 @@
 open TestReactCore;
-open TestComponents;
-open TestRenderer;
-
 open Assert;
+
+let root = Implementation.{name: "root", element: View};
+let div = Implementation.{name: "Div", element: View};
+let text = t => Implementation.{name: "Text", element: Text(t)};
+let box = t => Implementation.{name: "Box", element: Text(t)};
+
+let render = render(root);
 
 let core = [
   (
-    "Test simple subtree change",
+    "Test initial render",
     `Quick,
-    () => {
-      let twoBoxes =
-        <Div id=2>
-          <Box id=4 state="ImABox" />
-          <Box id=5 state="ImABox" />
-        </Div>;
-      let oneBox = <Div id=2> <Box id=3 /> </Div>;
-      start(<Components.BoxWrapper />)
+    () =>
+      render(<Components.BoxWrapper />)
+      |> executeSideEffects
       |> expect(
-           ~label="It renders one Box inside a Div",
+           ~label="It correctly inserts nodes",
            [
-             <BoxWrapper id=1>
-               <Div id=2> <Box id=3 state="ImABox" /> </Div>
-             </BoxWrapper>,
+             Implementation.BeginChanges,
+             MountChild(div, box("ImABox"), 0),
+             MountChild(root, div, 0),
+             CommitChanges,
            ],
          )
-      |> update(<Components.BoxWrapper twoBoxes=true />)
+      |> ignore,
+  ),
+  (
+    "Test rendering list children",
+    `Quick,
+    () =>
+      render(
+        Components.(
+          <Div> <Box title="ImABox1" /> <Box title="ImABox2" /> </Div>
+        ),
+      )
+      |> executeSideEffects
       |> expect(
-           ~label="It replaces one box with two boxes",
-           (
-             [<BoxWrapper id=1> twoBoxes </BoxWrapper>],
-             Some({
-               subtreeChange: `Nested,
-               updateLog: [
-                 UpdateInstance({
-                   stateChanged: false,
-                   subTreeChanged:
-                     `ReplaceElements((
-                       [<Box id=3 state="ImABox" />],
-                       [
-                         <Box id=4 state="ImABox" />,
-                         <Box id=5 state="ImABox" />,
-                       ],
-                     )),
-                   newInstance: twoBoxes,
-                   oldInstance: oneBox,
-                 }),
-                 UpdateInstance({
-                   stateChanged: false,
-                   subTreeChanged: `Nested,
-                   newInstance: <BoxWrapper id=1> twoBoxes </BoxWrapper>,
-                   oldInstance: <BoxWrapper id=1> oneBox </BoxWrapper>,
-                 }),
-               ],
-             }),
+           ~label="It inserts two boxes in a div",
+           [
+             Implementation.BeginChanges,
+             MountChild(div, box("ImABox1"), 0),
+             MountChild(div, box("ImABox2"), 1),
+             MountChild(root, div, 0),
+             CommitChanges,
+           ],
+         )
+      |> ignore,
+  ),
+  (
+    "Test replacing subtree",
+    `Quick,
+    () =>
+      render(
+        Components.(
+          <Div> <Box title="ImABox1" /> <Box title="ImABox2" /> </Div>
+        ),
+      )
+      |> executeSideEffects
+      |> reset
+      |> update(Components.(<Div> <Box title="ImABox3" /> </Div>))
+      |> executeSideEffects
+      |> expect(
+           ~label="It replaces the subtree",
+           [
+             Implementation.BeginChanges,
+             UnmountChild(div, box("ImABox1")),
+             UnmountChild(div, box("ImABox2")),
+             MountChild(div, box("ImABox3"), 0),
+             CommitChanges,
+           ],
+         )
+      |> ignore,
+  ),
+  (
+    "Test top level reorder",
+    `Quick,
+    () => {
+      GlobalState.useTailHack := true;
+
+      let key1 = Key.create();
+      let key2 = Key.create();
+
+      render(
+        listToElement(
+          Components.[
+            <Text key=key1 title="x" />,
+            <Text key=key2 title="y" />,
+          ],
+        ),
+      )
+      |> executeSideEffects
+      |> expect(
+           ~label="It correctly constructs initial tree",
+           [
+             Implementation.BeginChanges,
+             ChangeText("x", "x"),
+             MountChild(root, text("x"), 0),
+             ChangeText("y", "y"),
+             MountChild(root, text("y"), 1),
+             CommitChanges,
+           ],
+         )
+      |> update(
+           listToElement(
+             Components.[
+               <Text key=key2 title="y" />,
+               <Text key=key1 title="x" />,
+             ],
            ),
+         )
+      |> executeSideEffects
+      |> expect(
+           ~label="It reorders only one element",
+           [
+             Implementation.BeginChanges,
+             RemountChild(root, text("y"), 1, 0),
+             CommitChanges,
+           ],
          )
       |> ignore;
     },
   ),
   (
-    "Test willReceiveProps on ChangeCounter text update",
+    "Test top level replace elements",
     `Quick,
     () =>
-      start(<Components.ChangeCounter label="default text" />)
+      render(<Components.Text key=1 title="x" />)
+      |> executeSideEffects
       |> expect(
-           ~label="It renders ChangeCounter component",
-           [<ChangeCounter id=1 label="default text" counter=0 />],
+           ~label="It constructs initial tree",
+           [
+             Implementation.BeginChanges,
+             ChangeText("x", "x"),
+             MountChild(root, text("x"), 0),
+             CommitChanges,
+           ],
          )
-      |> update(<Components.ChangeCounter label="default text" />)
+      |> update(<Components.Text key=2 title="y" />)
+      |> executeSideEffects
       |> expect(
-           ~label="It doesn't create any UpdateLog records",
-           ([<ChangeCounter id=1 label="default text" counter=0 />], None),
-         )
-      |> update(<Components.ChangeCounter label="updated text" />)
-      |> expect(
-           ~label="It increments its local state on text change",
-           (
-             [<ChangeCounter id=1 label="updated text" counter=1 />],
-             Some({
-               subtreeChange: `Nested,
-               updateLog: [
-                 UpdateInstance({
-                   stateChanged: true,
-                   subTreeChanged: `NoChange,
-                   oldInstance:
-                     <ChangeCounter id=1 label="default text" counter=0 />,
-                   newInstance:
-                     <ChangeCounter id=1 label="updated text" counter=1 />,
-                 }),
-               ],
-             }),
-           ),
-         )
-      |> flushPendingUpdates
-      |> expect(
-           ~label=
-             "It flushes uncommited updates incrementing the counter by 10 on each update",
-           Some((
-             [<ChangeCounter id=1 label="updated text" counter=21 />],
-             [
-               UpdateInstance({
-                 stateChanged: true,
-                 subTreeChanged: `NoChange,
-                 oldInstance:
-                   <ChangeCounter id=1 label="updated text" counter=1 />,
-                 newInstance:
-                   <ChangeCounter id=1 label="updated text" counter=21 />,
-               }),
-             ],
-           )),
-         )
-      |> flushPendingUpdates
-      |> expect(
-           ~label="It flushes updates, but there are no pending actions",
-           None,
-         )
-      |> flushPendingUpdates
-      |> expect(
-           ~label="It flushes updates, but there are no pending actions",
-           None,
+           ~label="It replaces text(x) with text(y)",
+           [
+             Implementation.BeginChanges,
+             UnmountChild(root, text("x")),
+             ChangeText("y", "y"),
+             MountChild(root, text("y"), 0),
+             CommitChanges,
+           ],
          )
       |> ignore,
   ),
   (
-    "Test changing components",
+    "Test subtree replace elements",
     `Quick,
     () => {
-      let (beforeUpdate, _) as testContinuation =
-        start(<Components.ChangeCounter label="default text" />)
+      let rAction = RemoteAction.create();
+
+      let well = text("well");
+
+      let testState =
+        render(Components.(<ToggleClicks rAction />))
+        |> executeSideEffects
         |> expect(
-             ~label="It renders ChangeCounter component",
-             [<ChangeCounter id=1 label="default text" counter=0 />],
-           )
-        |> update(
-             <Components.ButtonWrapperWrapper wrappedText="initial text" />,
-           )
-        |> expect(
-             ~label=
-               "It changes components from ChangeCounter to ButtonWrapperWrapper",
-             (
-               [<ButtonWrapperWrapper id=2 nestedText="initial text" />],
-               Some({
-                 subtreeChange: `Nested,
-                 updateLog: [
-                   ChangeComponent({
-                     oldSubtree: [],
-                     newSubtree: [
-                       <Div id=3>
-                         <Text id=4 title="initial text" />
-                         <ButtonWrapper id=5 />
-                       </Div>,
-                     ],
-                     oldInstance:
-                       <ChangeCounter id=1 label="default text" counter=0 />,
-                     newInstance:
-                       <ButtonWrapperWrapper id=2 nestedText="initial text" />,
-                   }),
-                 ],
-               }),
-             ),
+             ~label="It constructs the initial tree",
+             [
+               Implementation.BeginChanges,
+               ChangeText("well", "well"),
+               MountChild(div, well, 0),
+               MountChild(root, div, 0),
+               CommitChanges,
+             ],
            );
-      let (afterUpdate, _) =
-        testContinuation
-        |> update(
-             <Components.ButtonWrapperWrapper wrappedText="updated text" />,
-           )
-        |> expect(
-             ~label="It updates text in the ButtonWrapper",
-             (
-               [<ButtonWrapperWrapper id=2 nestedText="updated text" />],
-               Some({
-                 subtreeChange: `Nested,
-                 updateLog: [
-                   UpdateInstance({
-                     stateChanged: true,
-                     subTreeChanged: `ContentChanged(`NoChange),
-                     oldInstance: <Text id=4 title="initial text" />,
-                     newInstance: <Text id=4 title="updated text" />,
-                   }),
-                   UpdateInstance({
-                     stateChanged: false,
-                     subTreeChanged: `Nested,
-                     oldInstance:
-                       <Div id=3>
-                         <Text id=4 title="initial text" />
-                         <ButtonWrapper id=5 />
-                       </Div>,
-                     newInstance:
-                       <Div id=3>
-                         <Text id=4 title="updated text" />
-                         <ButtonWrapper id=5 />
-                       </Div>,
-                   }),
-                   UpdateInstance({
-                     stateChanged: false,
-                     subTreeChanged: `Nested,
-                     oldInstance:
-                       <ButtonWrapperWrapper id=2 nestedText="initial text" />,
-                     newInstance:
-                       <ButtonWrapperWrapper id=2 nestedText="updated text" />,
-                   }),
-                 ],
-               }),
-             ),
-           );
-      check(
-        Alcotest.bool,
-        "It memoizes nested ButtonWrapper instance",
-        true,
-        switch (beforeUpdate, afterUpdate) {
-        | (
-            IFlat(
-              Instance({
-                instanceSubTree:
-                  IFlat(
-                    Instance({instanceSubTree: INested(_, [_, IFlat(x)])}),
-                  ),
-              }),
-            ),
-            IFlat(
-              Instance({
-                instanceSubTree:
-                  IFlat(
-                    Instance({instanceSubTree: INested(_, [_, IFlat(y)])}),
-                  ),
-              }),
-            ),
-          ) =>
-          x === y
-        | _ => false
-        },
-      );
+
+      RemoteAction.act(~action=Components.ToggleClicks.Click, rAction);
+      let cell1 = text("cell1");
+      let cell2 = text("cell2");
+
+      testState
+      |> flushPendingUpdates
+      |> executeSideEffects
+      |> expect(
+           ~label="It replaces text(well) with text(cell1) and text(cell2)",
+           [
+             Implementation.BeginChanges,
+             UnmountChild(div, well),
+             ChangeText("cell1", "cell1"),
+             MountChild(div, cell1, 0),
+             ChangeText("cell2", "cell2"),
+             MountChild(div, cell2, 1),
+             CommitChanges,
+           ],
+         )
+      |> ignore;
     },
+  ),
+  (
+    "Test top level prepend",
+    `Quick,
+    () => {
+      GlobalState.useTailHack := true;
+      let key1 = Key.create();
+      let key2 = Key.create();
+      let commonElement = [<Components.Text key=key1 title="x" />];
+
+      render(listToElement(commonElement))
+      |> executeSideEffects
+      |> expect(
+           ~label="It constructs the initial tree",
+           [
+             Implementation.BeginChanges,
+             ChangeText("x", "x"),
+             MountChild(root, text("x"), 0),
+             CommitChanges,
+           ],
+         )
+      |> update(
+           listToElement([
+             <Components.Text key=key2 title="y" />,
+             ...commonElement,
+           ]),
+         )
+      |> executeSideEffects
+      |> expect(
+           ~label="It correctly mounts prepend topLevelUpdate",
+           [
+             Implementation.BeginChanges,
+             ChangeText("y", "y"),
+             MountChild(root, text("y"), 0),
+             CommitChanges,
+           ],
+         )
+      |> ignore;
+    },
+  ),
+  (
+    "Test simple subtree change",
+    `Quick,
+    () =>
+      render(<Components.BoxWrapper />)
+      |> executeSideEffects
+      |> expect(
+           ~label="It renders one Box inside a Div",
+           [
+             Implementation.BeginChanges,
+             MountChild(div, box("ImABox"), 0),
+             MountChild(root, div, 0),
+             CommitChanges,
+           ],
+         )
+      |> update(<Components.BoxWrapper twoBoxes=true />)
+      |> executeSideEffects
+      |> expect(
+           ~label="It replaces one box with two boxes",
+           [
+             Implementation.BeginChanges,
+             UnmountChild(div, box("ImABox")),
+             MountChild(div, box("ImABox"), 0),
+             MountChild(div, box("ImABox"), 1),
+             CommitChanges,
+           ],
+         )
+      |> ignore,
+  ),
+  /*
+   (
+     "Test willReceiveProps on ChangeCounter text update",
+     `Quick,
+     () =>
+       /* TODO: This needs some love, we are testing state updates */
+       render(<Components.ChangeCounter label="default text" />)
+       |> expect(~label="It renders ChangeCounter component", [])
+       |> update(<Components.ChangeCounter label="default text" />)
+       |> expect(~label="It doesn't create any UpdateLog records", [])
+       |> update(<Components.ChangeCounter label="updated text" />)
+       |> expect(~label="It increments its local state on text change", [])
+       |> flushPendingUpdates
+       |> expect(
+            ~label=
+              "It flushes uncommited updates incrementing the counter by 10 on each update",
+            [],
+          )
+       |> flushPendingUpdates
+       |> expect(
+            ~label="It flushes updates, but there are no pending actions",
+            [],
+          )
+       |> flushPendingUpdates
+       |> expect(
+            ~label="It flushes updates, but there are no pending actions",
+            [],
+          )
+       |> ignore,
+   ),
+   */
+  (
+    "Test changing components",
+    `Quick,
+    () =>
+      render(<Components.ChangeCounter label="default text" />)
+      |> executeSideEffects
+      |> expect(
+           ~label="It renders ChangeCounter component",
+           Implementation.[BeginChanges, CommitChanges],
+         )
+      |> update(
+           <Components.ButtonWrapperWrapper wrappedText="initial text" />,
+         )
+      |> executeSideEffects
+      |> expect(
+           ~label=
+             "It changes components from ChangeCounter to ButtonWrapperWrapper",
+           Implementation.[
+             BeginChanges,
+             ChangeText("initial text", "initial text"),
+             MountChild(div, text("initial text"), 0),
+             MountChild(div, div, 1),
+             MountChild(root, div, 0),
+             CommitChanges,
+           ],
+         )
+      |> update(
+           <Components.ButtonWrapperWrapper wrappedText="updated text" />,
+         )
+      |> executeSideEffects
+      |> expect(
+           ~label="It updates text in the ButtonWrapper",
+           Implementation.[
+             BeginChanges,
+             ChangeText("initial text", "updated text"),
+             CommitChanges,
+           ],
+         )
+      |> ignore,
   ),
   (
     "Test BoxList with dynamic keys",
     `Quick,
     () => {
       let rAction = RemoteAction.create();
-      start(<Components.BoxList useDynamicKeys=true rAction />)
-      |> expect(~label="It renders initial BoxList", [<BoxList id=1 />])
+      render(<Components.BoxList useDynamicKeys=true rAction />)
+      |> executeSideEffects
+      |> expect(
+           ~label="It renders initial BoxList",
+           Implementation.[BeginChanges, CommitChanges],
+         )
       |> act(~action=Components.BoxList.Create("Hello"), rAction)
       |> flushPendingUpdates
+      |> executeSideEffects
       |> expect(
            ~label="It adds a new BoxItem and then flushes",
-           Some((
-             [
-               <BoxList id=1> <BoxItemDynamic id=2 state="Hello" /> </BoxList>,
-             ],
-             [
-               UpdateInstance({
-                 stateChanged: true,
-                 subTreeChanged:
-                   `ReplaceElements((
-                     [],
-                     [<BoxItemDynamic id=2 state="Hello" />],
-                   )),
-                 oldInstance: <BoxList id=1 />,
-                 newInstance:
-                   <BoxList id=1>
-                     <BoxItemDynamic id=2 state="Hello" />
-                   </BoxList>,
-               }),
-             ],
-           )),
+           Implementation.[
+             BeginChanges,
+             ChangeText("Hello", "Hello"),
+             MountChild(root, text("Hello"), 0),
+             CommitChanges,
+           ],
          )
       |> act(~action=Components.BoxList.Create("World"), rAction)
       |> flushPendingUpdates
+      |> executeSideEffects
       |> expect(
-           ~label="It adds one more BoxItem and then flushes",
-           Some((
-             [
-               <BoxList id=1>
-                 <BoxItemDynamic id=3 state="World" />
-                 <BoxItemDynamic id=2 state="Hello" />
-               </BoxList>,
-             ],
-             [
-               UpdateInstance({
-                 stateChanged: true,
-                 subTreeChanged:
-                   `ReplaceElements((
-                     [<BoxItemDynamic id=2 state="Hello" />],
-                     [
-                       <BoxItemDynamic id=3 state="World" />,
-                       <BoxItemDynamic id=2 state="Hello" />,
-                     ],
-                   )),
-                 oldInstance:
-                   <BoxList id=1>
-                     <BoxItemDynamic id=2 state="Hello" />
-                   </BoxList>,
-                 newInstance:
-                   <BoxList id=1>
-                     <BoxItemDynamic id=3 state="World" />
-                     <BoxItemDynamic id=2 state="Hello" />
-                   </BoxList>,
-               }),
-             ],
-           )),
+           ~label="It prepends one more BoxItem and then flushes",
+           Implementation.[
+             BeginChanges,
+             ChangeText("World", "World"),
+             MountChild(root, text("World"), 0),
+             CommitChanges,
+           ],
          )
       |> act(~action=Components.BoxList.Reverse, rAction)
       |> flushPendingUpdates
+      |> executeSideEffects
       |> expect(
            ~label="It reverses the items list in the BoxList",
-           Some((
-             [
-               <BoxList id=1>
-                 <BoxItemDynamic id=2 state="Hello" />
-                 <BoxItemDynamic id=3 state="World" />
-               </BoxList>,
-             ],
-             [
-               UpdateInstance({
-                 stateChanged: true,
-                 subTreeChanged: `Reordered,
-                 oldInstance:
-                   <BoxList id=1>
-                     <BoxItemDynamic id=3 state="World" />
-                     <BoxItemDynamic id=2 state="Hello" />
-                   </BoxList>,
-                 newInstance:
-                   <BoxList id=1>
-                     <BoxItemDynamic id=2 state="Hello" />
-                     <BoxItemDynamic id=3 state="World" />
-                   </BoxList>,
-               }),
-             ],
-           )),
+           Implementation.[
+             BeginChanges,
+             RemountChild(root, text("Hello"), 1, 0),
+             CommitChanges,
+           ],
          )
       |> ignore;
     },
@@ -337,96 +388,47 @@ let core = [
     `Quick,
     () => {
       let rAction = RemoteAction.create();
-      start(<Components.BoxList rAction />)
-      |> expect(~label="It renders BoxList", [<BoxList id=1 />])
+      render(<Components.BoxList rAction />)
+      |> executeSideEffects
+      |> expect(
+           ~label="It renders BoxList",
+           Implementation.[BeginChanges, CommitChanges],
+         )
       |> act(~action=Components.BoxList.Create("Hello"), rAction)
       |> flushPendingUpdates
+      |> executeSideEffects
       |> expect(
-           ~label="It adds a new Box and then flushes",
-           Some((
-             [<BoxList id=1> <Box id=2 state="Hello" /> </BoxList>],
-             [
-               UpdateInstance({
-                 stateChanged: true,
-                 subTreeChanged:
-                   `ReplaceElements(([], [<Box id=2 state="Hello" />])),
-                 oldInstance: <BoxList id=1 />,
-                 newInstance:
-                   <BoxList id=1> <Box id=2 state="Hello" /> </BoxList>,
-               }),
-             ],
-           )),
+           ~label="It adds a new Box",
+           Implementation.[
+             BeginChanges,
+             MountChild(root, box("Hello"), 0),
+             CommitChanges,
+           ],
          )
       |> act(~action=Components.BoxList.Create("World"), rAction)
       |> flushPendingUpdates
+      |> executeSideEffects
       |> expect(
-           ~label="It adds one more Box and then flushes",
-           Some((
-             [
-               <BoxList id=1>
-                 <Box id=3 state="World" />
-                 <Box id=4 state="Hello" />
-               </BoxList>,
-             ],
-             [
-               UpdateInstance({
-                 stateChanged: true,
-                 subTreeChanged:
-                   `ReplaceElements((
-                     [<Box id=2 state="Hello" />],
-                     [<Box id=3 state="World" />, <Box id=4 state="Hello" />],
-                   )),
-                 oldInstance:
-                   <BoxList id=1> <Box id=2 state="Hello" /> </BoxList>,
-                 newInstance:
-                   <BoxList id=1>
-                     <Box id=3 state="World" />
-                     <Box id=4 state="Hello" />
-                   </BoxList>,
-               }),
-             ],
-           )),
+           ~label="It prepends one more Box",
+           Implementation.[
+             BeginChanges,
+             MountChild(root, box("World"), 0),
+             CommitChanges,
+           ],
          )
       |> act(~action=Components.BoxList.Reverse, rAction)
       |> flushPendingUpdates
+      |> executeSideEffects
       |> expect(
            ~label="It reverses the boxes list in the BoxList",
-           Some((
-             [
-               <BoxList id=1>
-                 <Box id=3 state="Hello" />
-                 <Box id=4 state="World" />
-               </BoxList>,
-             ],
-             [
-               UpdateInstance({
-                 stateChanged: true,
-                 subTreeChanged: `ContentChanged(`NoChange),
-                 oldInstance: <Box id=4 state="Hello" />,
-                 newInstance: <Box id=4 state="World" />,
-               }),
-               UpdateInstance({
-                 stateChanged: true,
-                 subTreeChanged: `ContentChanged(`NoChange),
-                 oldInstance: <Box id=3 state="World" />,
-                 newInstance: <Box id=3 state="Hello" />,
-               }),
-               UpdateInstance({
-                 stateChanged: true,
-                 subTreeChanged: `Nested,
-                 oldInstance:
-                   <BoxList id=1>
-                     <Box id=3 state="World" />
-                     <Box id=4 state="Hello" />
-                   </BoxList>,
-                 newInstance:
-                   <BoxList id=1>
-                     <Box id=3 state="Hello" />
-                     <Box id=4 state="World" />
-                   </BoxList>,
-               }),
-             ],
-           )),
+           Implementation.[
+             BeginChanges,
+             UnmountChild(root, box("World")),
+             MountChild(root, box("Hello"), 0),
+             UnmountChild(root, box("Hello")),
+             MountChild(root, box("World"), 1),
+             CommitChanges,
+           ],
          )
       |> ignore;
     },
@@ -435,50 +437,45 @@ let core = [
     "Test BoxItemDynamic memoizing during deep move",
     `Quick,
     () => {
-      let box_ = <Components.BoxItemDynamic title="box to move" />;
-      let (beforeUpdate, _) as testContinuation =
-        start(box_)
+      let box = <Components.BoxItemDynamic title="box to move" />;
+      let {renderedElement: {instanceForest: beforeUpdate}} as testState =
+        render(box)
+        |> executeSideEffects
         |> expect(
              ~label="It renders the initial BoxItemDynamic",
-             [<BoxItemDynamic id=1 state="box to move" />],
+             Implementation.[
+               BeginChanges,
+               ChangeText("box to move", "box to move"),
+               MountChild(root, text("box to move"), 0),
+               CommitChanges,
+             ],
            );
-      let (afterUpdate, _) =
-        testContinuation
+      let {renderedElement: {instanceForest: afterUpdate}} =
+        testState
         |> update(
-             Nested(
-               "div",
-               [
-                 Components.stringToElement("before"),
-                 Nested("div", [box_]),
-               ],
-             ),
+             listToElement([
+               Components.stringToElement("before"),
+               listToElement([box]),
+             ]),
            )
+        |> executeSideEffects
         |> expect(
-             ~label="It adds new element before BoxItemDynamic",
-             (
-               [
-                 <Text id=2 title="before" />,
-                 <BoxItemDynamic id=1 state="box to move" />,
-               ],
-               Some({
-                 subtreeChange:
-                   `ReplaceElements((
-                     [<BoxItemDynamic id=1 state="box to move" />],
-                     [
-                       <Text id=2 title="before" />,
-                       <BoxItemDynamic id=1 state="box to move" />,
-                     ],
-                   )),
-                 updateLog: [],
-               }),
-             ),
+             ~label="It adds new element before BoxItemDynamic (it replaces the whole tree)",
+             Implementation.[
+               BeginChanges,
+               UnmountChild(root, text("box to move")),
+               ChangeText("before", "before"),
+               MountChild(root, text("before"), 0),
+               MountChild(root, text("box to move"), 1),
+               CommitChanges,
+             ],
            );
       check(
         Alcotest.bool,
         "It memoized the nested BoxItemDynamic",
         true,
         switch (beforeUpdate, afterUpdate) {
-        | (IFlat(x), INested(_, [_, INested(_, [IFlat(y)])])) => x === y
+        | (IFlat(x), INested([_, INested([IFlat(y)], _)], _)) => x === y
         | _ => false
         },
       );
@@ -490,17 +487,20 @@ let core = [
     () => {
       let key1 = Key.create();
       let key2 = Key.create();
-      start(
+      render(
         listToElement([
           <Components.Box key=key1 title="Box1unchanged" />,
           <Components.Box key=key2 title="Box2unchanged" />,
         ]),
       )
+      |> executeSideEffects
       |> expect(
            ~label="It renders the initial Boxes list",
-           [
-             <Box id=key1 state="Box1unchanged" />,
-             <Box id=key2 state="Box2unchanged" />,
+           Implementation.[
+             BeginChanges,
+             MountChild(root, box("Box1unchanged"), 0),
+             MountChild(root, box("Box2unchanged"), 1),
+             CommitChanges,
            ],
          )
       |> update(
@@ -509,31 +509,18 @@ let core = [
              <Components.Box key=key1 title="Box1changed" />,
            ]),
          )
+      |> executeSideEffects
       |> expect(
-           ~label="It reorders the list and updates each box",
-           (
-             [
-               <Box id=key2 state="Box2changed" />,
-               <Box id=key1 state="Box1changed" />,
-             ],
-             Some({
-               subtreeChange: `Reordered,
-               updateLog: [
-                 UpdateInstance({
-                   stateChanged: true,
-                   subTreeChanged: `ContentChanged(`NoChange),
-                   oldInstance: <Box id=1 state="Box1unchanged" />,
-                   newInstance: <Box id=1 state="Box1changed" />,
-                 }),
-                 UpdateInstance({
-                   stateChanged: true,
-                   subTreeChanged: `ContentChanged(`NoChange),
-                   oldInstance: <Box id=2 state="Box2unchanged" />,
-                   newInstance: <Box id=2 state="Box2changed" />,
-                 }),
-               ],
-             }),
-           ),
+           ~label="It reorders the list",
+           Implementation.[
+             BeginChanges,
+             UnmountChild(root, box("Box2unchanged")),
+             MountChild(root, box("Box2changed"), 1),
+             RemountChild(root, box("Box2changed"), 1, 0),
+             UnmountChild(root, box("Box1unchanged")),
+             MountChild(root, box("Box1changed"), 1),
+             CommitChanges,
+           ],
          )
       |> ignore;
     },
@@ -543,128 +530,79 @@ let core = [
     `Quick,
     () => {
       let rAction = RemoteAction.create();
-      start(<Components.UpdateAlternateClicks rAction />)
+      render(<Components.UpdateAlternateClicks rAction />)
+      |> executeSideEffects
       |> expect(
            ~label="It renders UpdateAlternateClicks element",
-           [<UpdateAlternateClicks state="0" text="0" />],
+           Implementation.[
+             BeginChanges,
+             ChangeText("0", "0"),
+             MountChild(root, text("0"), 0),
+             CommitChanges,
+           ],
          )
       |> act(~action=Components.UpdateAlternateClicks.Click, rAction)
       |> flushPendingUpdates
+      |> executeSideEffects
       |> expect(
            ~label="It only changes state on first click",
-           Some((
-             [<UpdateAlternateClicks state="1" text="0" />],
-             [
-               UpdateInstance({
-                 stateChanged: true,
-                 subTreeChanged: `NoChange,
-                 oldInstance: <UpdateAlternateClicks state="0" text="0" />,
-                 newInstance: <UpdateAlternateClicks state="1" text="0" />,
-               }),
-             ],
-           )),
+           Implementation.[BeginChanges, CommitChanges],
          )
       |> act(~action=Components.UpdateAlternateClicks.Click, rAction)
       |> flushPendingUpdates
+      |> executeSideEffects
       |> expect(
            ~label="It changes both state and contents on second click",
-           Some((
-             [<UpdateAlternateClicks state="2" text="2" />],
-             [
-               UpdateInstance({
-                 stateChanged: true,
-                 subTreeChanged: `ContentChanged(`NoChange),
-                 oldInstance: <Text id=2 title="0" />,
-                 newInstance: <Text id=2 title="2" />,
-               }),
-               UpdateInstance({
-                 stateChanged: true,
-                 subTreeChanged: `Nested,
-                 oldInstance: <UpdateAlternateClicks state="1" text="0" />,
-                 newInstance: <UpdateAlternateClicks state="2" text="2" />,
-               }),
-             ],
-           )),
+           Implementation.[
+             BeginChanges,
+             ChangeText("0", "2"),
+             CommitChanges,
+           ],
          )
       |> act(~action=Components.UpdateAlternateClicks.Click, rAction)
       |> flushPendingUpdates
+      |> executeSideEffects
       |> expect(
            ~label="It only changes state on third click",
-           Some((
-             [<UpdateAlternateClicks state="3" text="2" />],
-             [
-               UpdateInstance({
-                 stateChanged: true,
-                 subTreeChanged: `NoChange,
-                 oldInstance: <UpdateAlternateClicks state="2" text="2" />,
-                 newInstance: <UpdateAlternateClicks state="3" text="2" />,
-               }),
-             ],
-           )),
+           Implementation.[BeginChanges, CommitChanges],
          )
       |> act(~action=Components.UpdateAlternateClicks.Click, rAction)
       |> flushPendingUpdates
+      |> executeSideEffects
       |> expect(
            ~label="It changes both state and contents on fourth click",
-           Some((
-             [<UpdateAlternateClicks state="4" text="4" />],
-             [
-               UpdateInstance({
-                 stateChanged: true,
-                 subTreeChanged: `ContentChanged(`NoChange),
-                 oldInstance: <Text id=2 title="2" />,
-                 newInstance: <Text id=2 title="4" />,
-               }),
-               UpdateInstance({
-                 stateChanged: true,
-                 subTreeChanged: `Nested,
-                 oldInstance: <UpdateAlternateClicks state="3" text="2" />,
-                 newInstance: <UpdateAlternateClicks state="4" text="4" />,
-               }),
-             ],
-           )),
+           Implementation.[
+             BeginChanges,
+             ChangeText("2", "4"),
+             CommitChanges,
+           ],
          )
       |> ignore;
     },
   ),
   (
-    "Test top level flat update",
-    `Quick,
-    () =>
-      start(<Components.Text key=1 title="x" />)
-      |> expect(~label="It renders Text element", [<Text id=1 title="x" />])
-      |> update(<Components.Text key=2 title="y" />)
-      |> expect(
-           ~label="It returns `ReplaceElements (not `Reordered!)",
-           (
-             [<Text id=2 title="y" />],
-             Some({
-               subtreeChange:
-                 `ReplaceElements((
-                   [<Text id=1 title="x" />],
-                   [<Text id=2 title="y" />],
-                 )),
-               updateLog: [],
-             }),
-           ),
-         )
-      |> ignore,
-  ),
-  (
-    "Test no change",
+    "Test updating with identical element",
     `Quick,
     () => {
       let key1 = Key.create();
       let key2 = Key.create();
-      start(
+      render(
         listToElement([
           <Components.Text key=key1 title="x" />,
           <Components.Text key=key2 title="y" />,
         ]),
       )
+      |> executeSideEffects
       |> expect(
            ~label="It renders list with Text elements",
-           [<Text id=1 title="x" />, <Text id=2 title="y" />],
+           Implementation.[
+             BeginChanges,
+             ChangeText("x", "x"),
+             MountChild(root, text("x"), 0),
+             ChangeText("y", "y"),
+             MountChild(root, text("y"), 1),
+             CommitChanges,
+           ],
          )
       |> update(
            listToElement(
@@ -674,28 +612,10 @@ let core = [
              ],
            ),
          )
+      |> executeSideEffects
       |> expect(
            ~label="It updates the state with a new instance of (same) string",
-           (
-             [<Text id=1 title="x" />, <Text id=2 title="y" />],
-             Some({
-               subtreeChange: `Nested,
-               updateLog: [
-                 UpdateInstance({
-                   stateChanged: true,
-                   subTreeChanged: `NoChange,
-                   oldInstance: <Text id=2 title="y" />,
-                   newInstance: <Text id=2 title="y" />,
-                 }),
-                 UpdateInstance({
-                   stateChanged: true,
-                   subTreeChanged: `NoChange,
-                   oldInstance: <Text id=1 title="x" />,
-                   newInstance: <Text id=1 title="x" />,
-                 }),
-               ],
-             }),
-           ),
+           Implementation.[BeginChanges, CommitChanges],
          )
       |> update(
            listToElement(
@@ -705,29 +625,14 @@ let core = [
              ],
            ),
          )
+      |> executeSideEffects
       |> expect(
-           ~label=
-             "It updates the state with a new instance and reorders the list",
-           (
-             [<Text id=2 title="y" />, <Text id=1 title="x" />],
-             Some({
-               subtreeChange: `Reordered,
-               updateLog: [
-                 UpdateInstance({
-                   stateChanged: true,
-                   subTreeChanged: `NoChange,
-                   oldInstance: <Text id=1 title="x" />,
-                   newInstance: <Text id=1 title="x" />,
-                 }),
-                 UpdateInstance({
-                   stateChanged: true,
-                   subTreeChanged: `NoChange,
-                   oldInstance: <Text id=2 title="y" />,
-                   newInstance: <Text id=2 title="y" />,
-                 }),
-               ],
-             }),
-           ),
+           ~label="it reorders the list",
+           Implementation.[
+             BeginChanges,
+             RemountChild(root, text("y"), 1, 0),
+             CommitChanges,
+           ],
          )
       |> ignore;
     },
@@ -740,10 +645,16 @@ let core = [
       let key1 = Key.create();
       let key2 = Key.create();
       let commonElement = [<Components.Text key=key1 title="x" />];
-      start(listToElement(commonElement))
+      render(listToElement(commonElement))
+      |> executeSideEffects
       |> expect(
            ~label="It renders a new Text element",
-           [Text.createElement(~id=1, ~title="x", ~children=(), ())],
+           Implementation.[
+             BeginChanges,
+             ChangeText("x", "x"),
+             MountChild(root, text("x"), 0),
+             CommitChanges,
+           ],
          )
       |> update(
            listToElement([
@@ -751,325 +662,17 @@ let core = [
              ...commonElement,
            ]),
          )
+      |> executeSideEffects
       |> expect(
            ~label="It prepends a new Text element to the list",
-           (
-             [<Text id=2 title="y" />, <Text id=1 title="x" />],
-             Some({
-               subtreeChange: `PrependElement([<Text id=2 title="y" />]),
-               updateLog: [],
-             }),
-           ),
-         )
-      |> ignore;
-    },
-  ),
-];
-
-let mountLog = [
-  (
-    "Test rendered element mount",
-    `Quick,
-    () => {
-      let root = Implementation.{name: "root", element: View};
-
-      TestRenderer.render(<Components.BoxWrapper />)
-      |> mount(root)
-      |> expectHost(
-           ~label=
-             "It correctly prepares a mount log, ignoring non-native BoxWrapper",
-           [
-             Implementation.BeginChanges,
-             MountChild(
-               {name: "root", element: View},
-               {name: "Div", element: View},
-               0,
-             ),
-             MountChild(
-               {name: "Div", element: View},
-               {name: "Box", element: Text("ImABox")},
-               0,
-             ),
+           Implementation.[
+             BeginChanges,
+             ChangeText("y", "y"),
+             MountChild(root, text("y"), 0),
              CommitChanges,
            ],
          )
       |> ignore;
-    },
-  ),
-  (
-    "Test child elements list mount",
-    `Quick,
-    () => {
-      let root = Implementation.{name: "root", element: View};
-
-      TestRenderer.render(
-        Components.(
-          <Div> <Box title="ImABox1" /> <Box title="ImABox2" /> </Div>
-        ),
-      )
-      |> mount(root)
-      |> expectHost(
-           ~label="It mounts two moxes in a div",
-           [
-             Implementation.BeginChanges,
-             MountChild(
-               {name: "root", element: View},
-               {name: "Div", element: View},
-               0,
-             ),
-             MountChild(
-               {name: "Div", element: View},
-               {name: "Box", element: Text("ImABox1")},
-               0,
-             ),
-             MountChild(
-               {name: "Div", element: View},
-               {name: "Box", element: Text("ImABox2")},
-               1,
-             ),
-             CommitChanges,
-           ],
-         )
-      |> ignore;
-    },
-  ),
-  (
-    "Test element update top level mount",
-    `Quick,
-    () => {
-      let root = Implementation.{name: "root", element: View};
-
-      let previousReactElement =
-        Components.(
-          <Div> <Box title="ImABox1" /> <Box title="ImABox2" /> </Div>
-        );
-      let nextReactElement = Components.(<Div> <Box title="ImABox3" /> </Div>);
-
-      let beforeUpdate = TestRenderer.render(previousReactElement);
-      let _ = HostView.mountRenderedElement(root, beforeUpdate);
-      Implementation.mountLog := [];
-
-      let (afterUpdate, topLevelUpdateLog) =
-        RenderedElement.update(
-          ~previousReactElement,
-          ~renderedElement=beforeUpdate,
-          nextReactElement,
-        );
-
-      HostView.applyTopLevelUpdate(root, afterUpdate, topLevelUpdateLog);
-      assertMountLog(
-        ~label="It correctly mounts topLevelUpdate",
-        [
-          Implementation.BeginChanges,
-          UnmountChild(root, {name: "Box", element: Text("ImABox1")}),
-          UnmountChild(root, {name: "Box", element: Text("ImABox2")}),
-          MountChild(root, {name: "Box", element: Text("ImABox3")}, 0),
-          CommitChanges,
-        ],
-        Implementation.mountLog^,
-      );
-    },
-  ),
-  (
-    "Test top level reorder",
-    `Quick,
-    () => {
-      let root = Implementation.{name: "root", element: View};
-
-      GlobalState.useTailHack := true;
-
-      let key1 = Key.create();
-      let key2 = Key.create();
-      let previousReactElement =
-        listToElement(
-          Components.[
-            <Text key=key1 title="x" />,
-            <Text key=key2 title="y" />,
-          ],
-        );
-
-      let nextReactElement =
-        listToElement(
-          Components.[
-            <Text key=key2 title="y" />,
-            <Text key=key1 title="x" />,
-          ],
-        );
-
-      let beforeUpdate = TestRenderer.render(previousReactElement);
-      let _ = HostView.mountRenderedElement(root, beforeUpdate);
-
-      assertMountLog(
-        ~label="It correctly mounts top level list (for reorder)",
-        [
-          Implementation.BeginChanges,
-          MountChild(root, {name: "Text", element: Text("x")}, 0),
-          MountChild(root, {name: "Text", element: Text("y")}, 1),
-          CommitChanges,
-        ],
-        Implementation.mountLog^,
-      );
-
-      let (afterUpdate, topLevelUpdateLog) =
-        RenderedElement.update(
-          ~previousReactElement,
-          ~renderedElement=beforeUpdate,
-          nextReactElement,
-        );
-
-      HostView.applyTopLevelUpdate(root, afterUpdate, topLevelUpdateLog);
-      assertMountLog(
-        ~label="It correctly mounts `Reordered topLevelUpdate",
-        [
-          Implementation.BeginChanges,
-          RemountChild(root, {name: "Text", element: Text("y")}, 0),
-          RemountChild(root, {name: "Text", element: Text("x")}, 1),
-          CommitChanges,
-        ],
-        Implementation.mountLog^,
-      );
-    },
-  ),
-  (
-    "Test top level replace elements",
-    `Quick,
-    () => {
-      let root = Implementation.{name: "root", element: View};
-
-      let previousReactElement = <Components.Text key=1 title="x" />;
-      let nextReactElement = <Components.Text key=2 title="y" />;
-
-      let beforeUpdate = TestRenderer.render(previousReactElement);
-      let _ = HostView.mountRenderedElement(root, beforeUpdate);
-
-      assertMountLog(
-        ~label="It correctly mounts top level element (for replace elemets)",
-        [
-          Implementation.BeginChanges,
-          MountChild(root, {name: "Text", element: Text("x")}, 0),
-          CommitChanges,
-        ],
-        Implementation.mountLog^,
-      );
-
-      let (afterUpdate, topLevelUpdateLog) =
-        RenderedElement.update(
-          ~previousReactElement,
-          ~renderedElement=beforeUpdate,
-          nextReactElement,
-        );
-
-      HostView.applyTopLevelUpdate(root, afterUpdate, topLevelUpdateLog);
-      assertMountLog(
-        ~label="It correctly mounts `ReplaceElements topLevelUpdate",
-        [
-          Implementation.BeginChanges,
-          UnmountChild(root, {name: "Text", element: Text("x")}),
-          MountChild(root, {name: "Text", element: Text("y")}, 0),
-          CommitChanges,
-        ],
-        Implementation.mountLog^,
-      );
-    },
-  ),
-  (
-    "Test subtree replace elements",
-    `Quick,
-    () => {
-      let root = Implementation.{name: "root", element: View};
-      let rAction = RemoteAction.create();
-
-      let previousReactElement = Components.(<ToggleClicks rAction />);
-
-      let beforeUpdate = TestRenderer.render(previousReactElement);
-      let _ = HostView.mountRenderedElement(root, beforeUpdate);
-
-      let div = Implementation.{name: "Div", element: View};
-      let well = Implementation.{name: "Text", element: Text("well")};
-
-      assertMountLog(
-        ~label="It correctly mounts the tree",
-        [
-          Implementation.BeginChanges,
-          MountChild(root, div, 0),
-          MountChild(div, well, 0),
-          CommitChanges,
-        ],
-        Implementation.mountLog^,
-      );
-
-      RemoteAction.act(~action=Components.ToggleClicks.Click, rAction);
-
-      let (_, pendingUpdates) =
-        RenderedElement.flushPendingUpdates(beforeUpdate);
-
-      let _ = HostView.applyUpdateLog(root, pendingUpdates);
-
-      let cell1 = Implementation.{name: "Text", element: Text("cell1")};
-      let cell2 = Implementation.{name: "Text", element: Text("cell2")};
-
-      /* FIXME: UnmountChild is supposed to be called with its direct parent, not the root */
-      assertMountLog(
-        ~label="It correctly remounts subtree",
-        [
-          Implementation.BeginChanges,
-          UnmountChild(root, well),
-          MountChild(root, cell1, 0),
-          MountChild(root, cell2, 1),
-          CommitChanges,
-        ],
-        Implementation.mountLog^,
-      );
-    },
-  ),
-  (
-    "Test top level prepend",
-    `Quick,
-    () => {
-      let root = Implementation.{name: "root", element: View};
-
-      GlobalState.useTailHack := true;
-      let key1 = Key.create();
-      let key2 = Key.create();
-      let commonElement = [<Components.Text key=key1 title="x" />];
-
-      let previousReactElement = listToElement(commonElement);
-      let nextReactElement =
-        listToElement([
-          <Components.Text key=key2 title="y" />,
-          ...commonElement,
-        ]);
-
-      let beforeUpdate = TestRenderer.render(previousReactElement);
-      let _ = HostView.mountRenderedElement(root, beforeUpdate);
-
-      assertMountLog(
-        ~label="It correctly mounts top level list (for prepend)",
-        [
-          Implementation.BeginChanges,
-          MountChild(root, {name: "Text", element: Text("x")}, 0),
-          CommitChanges,
-        ],
-        Implementation.mountLog^,
-      );
-
-      let (afterUpdate, topLevelUpdateLog) =
-        RenderedElement.update(
-          ~previousReactElement,
-          ~renderedElement=beforeUpdate,
-          nextReactElement,
-        );
-
-      HostView.applyTopLevelUpdate(root, afterUpdate, topLevelUpdateLog);
-      assertMountLog(
-        ~label="It correctly mounts `Prepend topLevelUpdate",
-        [
-          Implementation.BeginChanges,
-          MountChild(root, {name: "Text", element: Text("y")}, 0),
-          CommitChanges,
-        ],
-        Implementation.mountLog^,
-      );
     },
   ),
 ];
@@ -1077,8 +680,4 @@ let mountLog = [
 /** Annoying dune progress */
 print_endline("");
 
-Alcotest.run(
-  ~argv=[|"--verbose --color"|],
-  "Brisk",
-  [("Core", core), ("MountLog", mountLog)],
-);
+Alcotest.run(~argv=[|"--verbose --color"|], "Brisk", [("Core", core)]);

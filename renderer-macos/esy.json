@@ -1,0 +1,19 @@
+{
+  "name": "@brisk/renderer-macos",
+  "version": "0.1.0",
+  "license": "MIT",
+  "esy": {
+    "build": ["dune build --only-packages brisk-renderer-macos --root ."]
+  },
+  "dependencies": {
+    "@brisk/core": "*",
+    "@brisk/renderer": "*",
+    "@esy-ocaml/reason": "^3.3.7",
+    "@opam/dune": "^1.6.2",
+    "@opam/osx-cf": "*",
+    "ocaml": "~4.7.1000"
+  },
+  "devDependencies": {
+    "@opam/alcotest": "^0.8.4"
+  }
+}

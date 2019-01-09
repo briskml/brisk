@@ -1,0 +1,28 @@
+{
+  "name": "@brisk/core",
+  "version": "0.1.0",
+  "license": "MIT",
+  "esy": {
+    "build": ["dune build --only-packages brisk-core --root ."]
+  },
+  "scripts": {
+    "clean": "dune clean",
+    "test": "dune runtest --no-buffer"
+  },
+  "dependencies": {
+    "@esy-ocaml/reason": "^3.3.7",
+    "@opam/dune": "^1.6.2"
+  },
+  "peerDependencies": {
+    "ocaml": "~4.7.1000"
+  },
+  "devDependencies": {
+    "@opam/alcotest": "^0.8.4",
+    "@opam/easy-format": "^1.3.1",
+    "@opam/merlin": "^3.2.2",
+    "@opam/patience_diff": "*",
+    "@opam/ppx_deriving": "^4.2.1",
+    "ocaml": "~4.7.1000",
+    "refmterr": "^3.1.10"
+  }
+}

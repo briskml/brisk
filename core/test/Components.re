@@ -13,7 +13,7 @@ module Box = {
     render: _ => {
       children: listToElement([]),
       make: () => Implementation.{name: "Box", element: Text(title)},
-      updateInstance: (_, _) => (),
+      updateInstance: (_, _) => Implementation.{name: "Box", element: Text(title)},
       shouldReconfigureInstance: (~oldState, ~newState) =>
         oldState != newState,
     },
@@ -29,7 +29,7 @@ module Div = {
     render: _ => {
       children: listToElement(children),
       make: () => Implementation.{name: "Div", element: View},
-      updateInstance: (_, _) => (),
+      updateInstance: (_, d) => d,
       shouldReconfigureInstance: (~oldState as _, ~newState as _) => false,
     },
   };
@@ -38,25 +38,34 @@ module Div = {
 };
 
 module Text = {
-  /**
-   * FIXME: If a different prop is supplied as title, the change is not picked up by React.
-   * It's because make returns a host element and there's no way to know if a Host element
-   * is not changed.
-   * */
+  type state = {
+    current: string,
+    prev: string,
+  };
   let component = statefulNativeComponent("Text");
   let shouldUpdate = (!=);
   let make = (~title="ImABox", _children) => {
     ...component,
-    initialState: () => title,
-    willReceiveProps: _ => title,
+    initialState: () => {current: title, prev: title},
+    willReceiveProps: ({state: {current}}) => {
+      current: title,
+      prev: current,
+    },
     shouldUpdate:
       ({oldSelf: {state: oldState}, newSelf: {state: newState}}) =>
       shouldUpdate(oldState, newState),
-    printState: state => state,
+    printState: _ => "",
     render: _ => {
       children: listToElement([]),
       make: () => Implementation.{name: "Text", element: Text(title)},
-      updateInstance: (_, _) => (),
+      updateInstance: ({state: {current, prev}}, t) => {
+        Implementation.mountLog :=
+          [
+            Implementation.ChangeText(prev, current),
+            ...Implementation.mountLog^,
+          ];
+        t;
+      },
       shouldReconfigureInstance: (~oldState, ~newState) =>
         shouldUpdate(oldState, newState),
     },
@@ -71,7 +80,7 @@ module BoxWrapper = {
   let component = statelessComponent("BoxWrapper");
   let make =
       (~title="ImABox", ~twoBoxes=false, ~onClick as _=?, _children)
-      : component(stateless, unit, reactElement) => {
+      : syntheticComponentSpec(stateless, unit) => {
     ...component,
     initialState: () => (),
     render: _self =>
@@ -87,10 +96,10 @@ module BoxWrapper = {
  */
 module BoxItemDynamic = {
   let component = statelessComponent(~useDynamicKey=true, "BoxItemDynamic");
-  let make = (~title="ImABox", _children: list(reactElement)) => {
+  let make = (~title="ImABox", _children: list(syntheticElement)) => {
     ...component,
     printState: _ => title,
-    render: _self => listToElement([]),
+    render: _self => stringToElement(title),
   };
   let createElement = (~title, ~children, ()) =>
     element(make(~title, children));
@@ -147,14 +156,13 @@ module ChangeCounter = {
     willReceiveProps: ({state, reduce}) =>
       label != state.mostRecentLabel ?
         {
-          print_endline("Will receive props");
           reduce(() => (), ());
           reduce(() => (), ());
           {mostRecentLabel: label, numChanges: state.numChanges + 1};
         } :
         state,
     render: ({state: {numChanges: _, mostRecentLabel: _}}) =>
-      Nested("", []),
+      listToElement([]),
     printState: ({numChanges, mostRecentLabel}) =>
       "[" ++ string_of_int(numChanges) ++ ", " ++ mostRecentLabel ++ "]",
   };
@@ -180,7 +188,7 @@ module ButtonWrapper = {
     ...component,
     render: ({state: _}) =>
       <StatelessButton
-        initialClickCount=("wrapped:" ++ wrappedText ++ ":wrapped")
+        initialClickCount={"wrapped:" ++ wrappedText ++ ":wrapped"}
       />,
   };
   let createElement = (~wrappedText=?, ~children as _, ()) =>
@@ -192,7 +200,7 @@ module ButtonWrapperWrapper = {
   let component = statelessComponent("ButtonWrapperWrapper");
   let make = (~wrappedText="default", _children) => {
     ...component,
-    render: _ => <Div> (stringToElement(wrappedText)) buttonWrapperJsx </Div>,
+    render: _ => <Div> {stringToElement(wrappedText)} buttonWrapperJsx </Div>,
   };
   let createElement = (~wrappedText=?, ~children as _, ()) =>
     element(make(~wrappedText?, ()));

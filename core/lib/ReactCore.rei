@@ -1,25 +1,19 @@
-module type HostImplementation = {
-  type hostView;
-  let getInstance: int => option(hostView);
-  let memoizeInstance: (int, hostView) => unit;
+module type OutputTree = {
+  type node;
 
-  let markAsDirty: unit => unit;
+  let markAsStale: unit => unit;
 
   let beginChanges: unit => unit;
-
-  let mountChild:
-    (~parent: hostView, ~child: hostView, ~position: int) => unit;
-  let unmountChild: (~parent: hostView, ~child: hostView) => unit;
-
-  let remountChild:
-    (~parent: hostView, ~child: hostView, ~position: int) => unit;
-
   let commitChanges: unit => unit;
+
+  let insertNode: (~parent: node, ~child: node, ~position: int) => node;
+  let deleteNode: (~parent: node, ~child: node) => node;
+  let moveNode: (~parent: node, ~child: node, ~from: int, ~to_: int) => node;
 };
 
 module Make:
-  (Implementation: HostImplementation) =>
-  {
+  (OutputTree: OutputTree) =>
+   {
     module GlobalState: {
       let debug: ref(bool);
       let reset: unit => unit;
@@ -30,11 +24,12 @@ module Make:
        */
       let useTailHack: ref(bool);
     };
-    module Key: {type t; let create: unit => t;};
-    type sideEffects;
-    type update('state, 'action) =
-      | NoUpdate
-      | Update('state);
+
+    module Key: {
+      type t;
+      let create: unit => t;
+    };
+
     module Callback: {
       /**
        * Type for callbacks
@@ -56,120 +51,130 @@ module Make:
       /** Chain two callbacks by executing the first before the second one */
       let chain: (t('payload), t('payload)) => t('payload);
     };
+
     type reduce('payload, 'action) =
       ('payload => 'action) => Callback.t('payload);
+
     type self('state, 'action) = {
       state: 'state,
-      reduce: 'payload .reduce('payload, 'action),
+      reduce: 'payload. reduce('payload, 'action),
       act: 'action => unit,
     };
 
-    /** Type of a react element before rendering */
-    type reactElement;
-    type nativeElement('state, 'action) = {
-      make: unit => Implementation.hostView,
+    /** Type of element returned from render */
+    type syntheticElement;
+
+    /** Type of element that renders an output node */
+    type outputTreeElement('state, 'action) = {
+      make: unit => OutputTree.node,
       updateInstance:
-        (self('state, 'action), Implementation.hostView) => unit,
+        (self('state, 'action), OutputTree.node) => OutputTree.node,
       shouldReconfigureInstance:
         (~oldState: 'state, ~newState: 'state) => bool,
-      children: reactElement,
+      children: syntheticElement,
     };
-    type elementType('concreteElementType, 'state, 'action);
-    type instance('state, 'action, 'elementType);
+
+    type elementType('concreteElementType, 'outputNodeType, 'state, 'action);
+
     type oldNewSelf('state, 'action) = {
       oldSelf: self('state, 'action),
       newSelf: self('state, 'action),
     };
-    type handedOffInstance('state, 'action, 'elementType);
-    type componentSpec('state, 'initialState, 'action, 'elementType) = {
+
+    type update('state, 'action) =
+      | NoUpdate
+      | Update('state);
+
+    type handedOffInstance('state, 'action, 'elementType, 'outputNodeType);
+
+    type componentSpec(
+      'state,
+      'initialState,
+      'action,
+      'elementType,
+      'outputNode,
+    ) = {
       debugName: string,
-      elementType: elementType('elementType, 'state, 'action),
+      elementType: elementType('elementType, 'outputNode, 'state, 'action),
       willReceiveProps: self('state, 'action) => 'state,
       didMount: self('state, 'action) => unit,
       didUpdate: oldNewSelf('state, 'action) => unit,
       willUnmount: self('state, 'action) => unit /* TODO: currently unused */,
-      willUpdate: oldNewSelf('state, 'action) => unit,
       shouldUpdate: oldNewSelf('state, 'action) => bool,
       render: self('state, 'action) => 'elementType,
       initialState: unit => 'initialState,
       reducer: ('action, 'state) => update('state, 'action),
       printState: 'state => string /* for internal debugging */,
-      handedOffInstance: handedOffInstance('state, 'action, 'elementType),
+      handedOffInstance:
+        handedOffInstance('state, 'action, 'elementType, 'outputNode),
       key: Key.t,
     };
-    type component('state, 'action, 'elementType) =
-      componentSpec('state, 'state, 'action, 'elementType);
+    type component('state, 'action, 'elementType, 'outputNodeType) =
+      componentSpec('state, 'state, 'action, 'elementType, 'outputNodeType);
+
     type stateless = unit;
     type actionless = unit;
+    type outputNodeGroup;
+    type outputNodeContainer;
+
+    type syntheticComponentSpec('state, 'action) =
+      componentSpec(
+        'state,
+        stateless,
+        'action,
+        syntheticElement,
+        outputNodeGroup,
+      );
+
+    type outputTreeComponentSpec('state, 'action) =
+      componentSpec(
+        'state,
+        stateless,
+        'action,
+        outputTreeElement('state, 'action),
+        outputNodeContainer,
+      );
+
     let statelessComponent:
       (~useDynamicKey: bool=?, string) =>
-      component(stateless, actionless, reactElement);
+      syntheticComponentSpec(stateless, actionless);
     let statefulComponent:
       (~useDynamicKey: bool=?, string) =>
-      componentSpec('state, stateless, actionless, reactElement);
+      syntheticComponentSpec('state, actionless);
     let reducerComponent:
       (~useDynamicKey: bool=?, string) =>
-      componentSpec('state, stateless, 'action, reactElement);
+      syntheticComponentSpec('state, 'action);
     let statelessNativeComponent:
       (~useDynamicKey: bool=?, string) =>
-      component(stateless, actionless, nativeElement(stateless, actionless));
+      outputTreeComponentSpec(stateless, actionless);
     let element:
-      (~key: Key.t=?, component('state, 'action, 'elementType)) =>
-      reactElement;
-    let arrayToElement: array(reactElement) => reactElement;
-    let listToElement: list(reactElement) => reactElement;
-    let logString: string => unit;
-
-    /**
-     * Log of operations performed to update an instance tree.
-     */
-    module UpdateLog: {
-      type subtreeChange;
-      type entry;
-      type t;
-      let create: unit => t;
-    };
+      (
+        ~key: Key.t=?,
+        component('state, 'action, 'elementType, 'hostOutputNode)
+      ) =>
+      syntheticElement;
+    let listToElement: list(syntheticElement) => syntheticElement;
 
     module RenderedElement: {
       /** Type of a react element after rendering  */
       type t;
-      type topLevelUpdate;
-      let listToRenderedElement: list(t) => t;
 
       /** Render one element by creating new instances. */
-      let render: reactElement => t;
+      let render: (OutputTree.node, syntheticElement) => t;
 
       /** Update a rendered element when a new react element is received. */
       let update:
         (
-          ~previousReactElement: reactElement,
+          ~previousElement: syntheticElement,
           ~renderedElement: t,
-          reactElement
+          syntheticElement
         ) =>
-        (t, option(topLevelUpdate));
+        t;
 
       /** Flush pending state updates (and possibly add new ones). */
-      let flushPendingUpdates: t => (t, UpdateLog.t);
-    };
+      let flushPendingUpdates: t => t;
 
-    /**
-     * Functions for mounting/unmounting an instance tree from
-     * rendered element, update log, and top level update.
-     */
-    module HostView: {
-      let mountRenderedElement:
-        (Implementation.hostView, RenderedElement.t) => unit;
-
-      let applyUpdateLog:
-        (Implementation.hostView, UpdateLog.t) => unit;
-
-      let applyTopLevelUpdate:
-        (
-          Implementation.hostView,
-          RenderedElement.t,
-          option(RenderedElement.topLevelUpdate)
-        ) =>
-        unit;
+      let executeHostViewUpdates: t => OutputTree.node;
     };
 
     /**

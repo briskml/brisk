@@ -7,7 +7,7 @@ module Implementation = {
     | View;
 
   [@deriving (show({with_path: false}), eq)]
-  type hostView = {
+  type node = {
     name: string,
     element: hostElement,
   };
@@ -16,40 +16,41 @@ module Implementation = {
   type testMountEntry =
     | BeginChanges
     | CommitChanges
-    | MountChild(hostView, hostView, int)
-    | UnmountChild(hostView, hostView)
-    | RemountChild(hostView, hostView, int);
+    | MountChild(node, node, int)
+    | UnmountChild(node, node)
+    | RemountChild(node, node, int, int)
+    | ChangeText(string, string);
 
   [@deriving eq]
   type testMountLog = list(testMountEntry);
 
-  let map: Hashtbl.t(int, hostView) = Hashtbl.create(1000);
-
   let mountLog = ref([]);
 
-  let getInstance = id =>
-    if (Hashtbl.mem(map, id)) {
-      Some(Hashtbl.find(map, id));
-    } else {
-      None;
-    };
-  let memoizeInstance = (id, instance) => Hashtbl.add(map, id, instance);
-
   let isDirty = ref(false);
-  let markAsDirty = () => isDirty := true;
+  let markAsStale = () => isDirty := true;
 
   let beginChanges = () => mountLog := [BeginChanges, ...mountLog^];
 
   let commitChanges = () => mountLog := [CommitChanges, ...mountLog^];
 
-  let mountChild = (~parent: hostView, ~child: hostView, ~position: int) =>
-    mountLog := [MountChild(parent, child, position), ...mountLog^];
+  let insertNode = (~parent: node, ~child: node, ~position: int) => {
+    switch (child.element) {
+    | _ => mountLog := [MountChild(parent, child, position), ...mountLog^]
+    };
+    parent;
+  };
 
-  let unmountChild = (~parent: hostView, ~child: hostView) =>
-    mountLog := [UnmountChild(parent, child), ...mountLog^];
+  let deleteNode = (~parent: node, ~child: node) => {
+    switch (child.element) {
+    | _ => mountLog := [UnmountChild(parent, child), ...mountLog^]
+    };
+    parent;
+  };
 
-  let remountChild = (~parent: hostView, ~child: hostView, ~position: int) =>
-    mountLog := [RemountChild(parent, child, position), ...mountLog^];
+  let moveNode = (~parent: node, ~child: node, ~from: int, ~to_: int) => {
+    mountLog := [RemountChild(parent, child, from, to_), ...mountLog^];
+    parent;
+  };
 };
 
 include ReactCore_Internal.Make(Implementation);

@@ -1,0 +1,44 @@
+name: BriskMac
+options:
+  bundleIdPrefix: io.briskml
+  deploymentTarget:
+    macOS: "10.13"
+  usesTabs: false
+  indentWidth: 2
+  createIntermediateGroups: true
+settings:
+  CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF: true
+  CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS: true
+targets:
+  BriskMac:
+    type: application
+    platform: macOS
+    sources:
+      - Sources
+    settings:
+      # DEBUG_INFORMATION_FORMAT: "dwarf-with-dsym"
+      HEADER_SEARCH_PATHS: "$(STDLIB_PATH)"
+      LIBRARY_SEARCH_PATHS: "$(STDLIB_PATH)"
+      OTHER_LDFLAGS: " -framework Cocoa $(LIBFFI_FLAGS)"
+    configFiles:
+      Debug: Resources/env.xcconfig
+      Release: Resources/env.xcconfig
+    scheme:
+      testTargets:
+        - BriskMacTests_macOS
+      gatherCoverageData: true
+    dependencies:
+      - framework: $(BUILD_INSTALL_PATH)/bin/app.o
+        embed: false
+  BriskMacTests:
+    type: bundle.unit-test
+    platform: [macOS]
+    sources:
+      - Tests
+    settings:
+      LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks"
+    configFiles:
+      Debug: Resources/env.xcconfig
+      Release: Resources/env.xcconfig
+    dependencies:
+      - target: BriskMac

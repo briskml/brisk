@@ -1,5 +1,0 @@
-(library
-  (name brisk_term)
-  (public_name brisk.term)
-  (synopsis "Terminal renderer bindings")
-  (libraries brisk_core))

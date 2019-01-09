@@ -4,48 +4,31 @@
   "description": "Brisk is a set of tools for building fast native UIs",
   "repository": "https://github.com/briskml/brisk.git",
   "license": "MIT",
-  "esy": {
-    "build": [["dune", "build", "--profile=release"]],
-    "buildsInSource": "_build"
-  },
   "scripts": {
-    "build:dev": "refmterr dune build @install --no-buffer",
     "clean": "dune clean",
-    "test": "dune runtest --no-buffer",
-    "build:mac": "esy b dune build @mac --no-buffer --profile=release",
-    "build:linux": "esy b dune build @linux --no-buffer --profile=release",
-    "bootstrap:cocoa": "make -C renderer_cocoa/lib bootstrap",
-    "bootstrap:mac": "make -C BRTesterMac/mac bootstrap",
-    "run:mac": "make -C BRTesterMac/mac run",
-    "test:mac": "make -C BRTesterMac/mac test"
+    "build:core": "esy build -p @brisk/core",
+    "build:mac": "esy build -p @brisk/renderer-macos",
+    "build:tester_mac": "esy build -p @brisk/tester-macos",
+    "test:core": "esy -p @brisk/core dune runtest --no-buffer --root ./core",
+    "test:mac": "esy -p @brisk/renderer-macos dune runtest --no-buffer --root ./renderer-macos",
+    "bootstrap:mac": "make -C tester-macos/app bootstrap",
+    "run:mac": "esy x make -C tester-macos/app run"
   },
   "dependencies": {
-    "@esy-ocaml/esy-installer": "*",
-    "@esy-ocaml/reason": "facebook/reason#52c5b11",
-    "@opam/dune": "^1.1.1",
-    "@opam/lwt": "^4.1.0",
-    "@opam/lwt_ppx": "^1.2.1",
-    "@opam/merlin-extend": "*",
-    "@opam/ppx_deriving": "^4.2.1",
-    "flex": "briskml/flex#21dc063",
-    "refmterr": "^3.1.7"
-  },
-  "peerDependencies": {
-    "ocaml": "~4.7.2"
+    "@esy-ocaml/reason": "^3.3.7",
+    "@brisk/core": "*",
+    "@brisk/renderer-macos": "*",
+    "@brisk/tester-macos": "*"
   },
   "devDependencies": {
-    "@esy-ocaml/merlin": "^3.0.5",
-    "@opam/alcotest": "^0.8.3",
-    "@opam/easy-format": "^1.3.1",
-    "@opam/simple-diff": "0.3",
-    "ocaml": "~4.7.2",
-    "xcodegen": "^1.10.3",
-    "xcpretty": "^0.2.8"
+    "@opam/merlin": "^3.2.2",
+    "ocaml": "~4.7.1000"
   },
   "resolutions": {
-    "**/@esy-ocaml/reason": "github:facebook/reason#52c5b11",
-    "**/@opam/result": "1.3",
-    "**/@opam/merlin-extend": "0.3",
-    "**/@opam/jbuilder": "transition"
+    "@brisk/core": "link-dev:./core",
+    "@brisk/renderer": "link-dev:./renderer",
+    "@brisk/renderer-macos": "link-dev:./renderer-macos",
+    "@brisk/tester-macos": "link-dev:./tester-macos",
+    "@opam/osx-cf": "mirage/ocaml-osx-cf:opam#0c63247"
   }
 }

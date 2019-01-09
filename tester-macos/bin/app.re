@@ -1,0 +1,119 @@
+open Brisk_renderer_macos;
+open Cocoa;
+open Layout;
+open Lwt.Infix;
+
+module Component = {
+  [@noalloc] external lwt_start: unit => unit = "ml_lwt_iter";
+
+  let otherComponent = React.reducerComponent("Other");
+  let createElement = (~children as _, ()) => {
+    ...otherComponent,
+    initialState: _ => None,
+    reducer: (x, _) => React.Update(x),
+    render: ({state, reduce}) =>
+      switch (state) {
+      | Some(code) =>
+        <View
+          style=[
+            width(100.),
+            height(100.),
+            background(Color.rgb(0, 255, 0)),
+            border(~width=1., ~color=Color.rgb(0, 0, 255), ()),
+          ]>
+          <Button
+            style=[width(100.), height(100.)]
+            title={string_of_int(code)}
+            callback={reduce(() => None)}
+          />
+          <Button
+            style=[width(100.), height(100.)]
+            title="Cell two"
+            callback={reduce(() => None)}
+          />
+        </View>
+      | None =>
+        <View
+          style=[
+            position(~top=0., ~left=0., ~right=0., ~bottom=0., `absolute),
+            width(600.),
+            height(400.),
+            background(Color.hex("#f7f8f9")),
+          ]>
+          <Text style=[width(600.), height(30.)] value="Welcome to Brisk" />
+          <Button
+            style=[width(400.), height(60.)]
+            title="Youre gonna have to wait a bit"
+            callback={
+                       let callback = reduce(code => code);
+                       (
+                         () => {
+                           lwt_start();
+                           ignore(
+                             Lwt_unix.sleep(1.)
+                             >>= (_ => Lwt.return(callback(Some(100)))),
+                           );
+                         }
+                       );
+                     }
+          />
+        </View>
+      },
+  };
+};
+
+let lwt_iter = () => {
+  Lwt.wakeup_paused();
+  Lwt_engine.iter(false);
+  Lwt.wakeup_paused();
+};
+
+let () = {
+  let appName = "BriskMac";
+
+  Callback.register("Brisk_flush_layout", React.RunLoop.flushAndLayout);
+  Callback.register("Brisk_lwt_iter", lwt_iter);
+
+  NSApplication.init();
+
+  NSApplication.willFinishLaunching(() => {
+    let menu = Menu.makeMainMenu(appName);
+    CocoaMenu.NSMenu.add(~kind=Main, menu);
+  });
+
+  NSApplication.didFinishLaunching(() => {
+    let window = NSWindow.makeWithContentRect(0., 0., 680., 468.);
+
+    let root = {
+      let view = NSView.make();
+      {
+        React.NativeCocoa.view,
+        layoutNode:
+          LayoutSupport.(
+            createNode(
+              ~withChildren=[||],
+              ~andStyle={...defaultStyle, width: 680, height: 468},
+              view,
+            )
+          ),
+      };
+    };
+
+    window#center;
+    window#makeKeyAndOrderFront;
+    window#setTitle(appName);
+    window#setContentView(root.view);
+
+    window#windowDidResize(_ =>
+      React.RunLoop.setWindowHeight(window#contentHeight)
+    );
+
+    React.RunLoop.renderAndMount(
+      ~height=window#contentHeight,
+      root,
+      React.element(<Component />),
+    );
+  });
+
+  NSApplication.main();
+};

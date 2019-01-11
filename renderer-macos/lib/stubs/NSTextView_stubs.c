@@ -78,9 +78,11 @@ CAMLprim value ml_NSTextView_setFont(TextView *txt, value fontName_v,
   CAMLparam1(fontName_v);
 
   NSString *fontName = [NSString stringWithUTF8String:String_val(fontName_v)];
+  NSFont *font = fontName.length > 0
+                     ? [NSFont fontWithName:fontName size:(CGFloat)fontSize]
+                     : [NSFont systemFontOfSize:(CGFloat)fontSize];
 
-  txt.attributedProps[NSFontAttributeName] =
-      [NSFont fontWithName:fontName size:(CGFloat)fontSize];
+  txt.attributedProps[NSFontAttributeName] = font;
 
   ml_NSTextView_applyAttributes(txt);
 

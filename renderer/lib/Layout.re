@@ -116,13 +116,19 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
     | _ => style
     };
 
-  let makeLayoutNode = (~style, hostView: Node.context) => {
+  let makeLayoutNode = (~measure=?, ~style, hostView: Node.context) => {
     let accum = {
       ...LayoutSupport.defaultStyle,
       direction: LayoutSupport.defaultStyle.direction,
     };
+
     let andStyle = List.fold_left(applyCommonStyle, accum, style);
-    LayoutSupport.createNode(~withChildren=[||], ~andStyle, hostView);
+    LayoutSupport.createNode(
+      ~withChildren=[||],
+      ~andStyle,
+      ~andMeasure=?measure,
+      hostView,
+    );
   };
 
   let cssNodeInsertChild = (node, child, index) => {

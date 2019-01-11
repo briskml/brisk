@@ -67,10 +67,12 @@ module Create = (Encoding: Flex.Spec.Encoding) => {
 
   let position = Position.make;
   let border = Border.make;
+  let font = Font.make;
 
   let width = (w: scalar) => `width(w);
   let height = (h: scalar) => `height(h);
 
+  let color = (color: Color0.t) => `color(color);
   let background = (color: Color0.t) => `background(color);
 
   let padding = (p: scalar) => `padding((p, p, p, p));

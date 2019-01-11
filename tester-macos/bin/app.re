@@ -40,7 +40,14 @@ module Component = {
             height(400.),
             background(Color.hex("#f7f8f9")),
           ]>
-          <Text style=[width(600.), height(30.)] value="Welcome to Brisk" />
+          <Text
+            style=[
+              font(~family="Arial", ~size=25., ()),
+              color(Color.hex("#ffffff")),
+              background(Color.hex("#263ac5")),
+            ]
+            value="Welcome to Brisk"
+          />
           <Button
             style=[width(400.), height(60.)]
             title="Youre gonna have to wait a bit"

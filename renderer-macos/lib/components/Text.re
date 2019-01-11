@@ -13,22 +13,35 @@ type style = list(attr);
 
 let component = statelessNativeComponent("Text");
 
+let measure = (node, _, _, _, _) => {
+  open LayoutSupport.LayoutTypes;
+
+  let {context: txt}: node = node;
+
+  let width = NSTextView.getTextWidth(txt) |> int_of_float;
+  let height = NSTextView.getTextHeight(txt) |> int_of_float;
+
+  {width, height};
+};
+
 let make = (~style=[], ~value, children) => {
   ...component,
   render: _ => {
     make: () => {
       let view = NSTextView.make(value);
-      {view, layoutNode: makeLayoutNode(~style, view)};
+      {view, layoutNode: makeLayoutNode(~measure, ~style, view)};
     },
     shouldReconfigureInstance: (~oldState as _, ~newState as _) => true,
     updateInstance: (_self, {view} as node) => {
       style
       |> List.iter(attr =>
            switch (attr) {
-           | `font(_) => ()
+           | `font(({family, size}: Font.t)) =>
+             NSTextView.setFont(view, family, size)
+           | `color(({r, g, b, a}: Color.t)) =>
+             NSTextView.setColor(view, r, g, b, a)
            | `background(({r, g, b, a}: Color.t)) =>
              NSTextView.setBackgroundColor(view, r, g, b, a)
-           | `color(_) => view |> ignore
            | #Layout.style => ()
            }
          );

@@ -168,22 +168,49 @@ module NSTextView = {
 
   [@noalloc] external make: unit => t = "ml_NSTextView_make";
 
-  [@noalloc] external setStringValue: (t, string) => unit = "ml_NSTextView_setStringValue";
+  [@noalloc]
+  external setStringValue: (t, string) => unit =
+    "ml_NSTextView_setStringValue";
 
   [@noalloc]
-  external setBackgroundColor:
+  external setFont: (t, string, [@unboxed] float) => unit =
+    "ml_NSTextView_setFont" "ml_NSTextView_setFont";
+
+  [@noalloc]
+  external setColor:
     (
-      CocoaClass.view,
+      t,
       [@unboxed] float,
       [@unboxed] float,
       [@unboxed] float,
       [@unboxed] float
     ) =>
     unit =
-    "ml_NSTextView_setBackgroundColor_bc" "ml_NSTextView_setBackgroundColor_bc";
+    "ml_NSTextView_setColor_bc" "ml_NSTextView_setColor";
 
-  let make = (str) => {
+  [@noalloc]
+  external getTextWidth: t => [@unboxed] float =
+    "ml_NSTextView_getTextWidth_bc" "ml_NSTextView_getTextWidth";
+
+  [@noalloc]
+  external getTextHeight: t => [@unboxed] float =
+    "ml_NSTextView_getTextHeight_bc" "ml_NSTextView_getTextHeight";
+
+  [@noalloc]
+  external setBackgroundColor:
+    (
+      t,
+      [@unboxed] float,
+      [@unboxed] float,
+      [@unboxed] float,
+      [@unboxed] float
+    ) =>
+    unit =
+    "ml_NSTextView_setBackgroundColor_bc" "ml_NSTextView_setBackgroundColor";
+
+  let make = str => {
     let txt = make();
+
     setStringValue(txt, str);
     txt;
   };

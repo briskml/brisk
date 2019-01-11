@@ -2,7 +2,7 @@
 #define CAML_NAME_SPACE
 #import <caml/mlvalues.h>
 
-@interface Button : NSButton
+@interface BriskButton : NSButton
 
 @property(nonatomic, assign) value _callback;
 

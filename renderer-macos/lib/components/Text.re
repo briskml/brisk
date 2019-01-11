@@ -22,8 +22,8 @@ let measure = (node, _, _, _, _) => {
 
   let {context: txt}: node = node;
 
-  let width = NSTextView.getTextWidth(txt) |> int_of_float;
-  let height = NSTextView.getTextHeight(txt) |> int_of_float;
+  let width = BriskTextView.getTextWidth(txt) |> int_of_float;
+  let height = BriskTextView.getTextHeight(txt) |> int_of_float;
 
   {width, height};
 };
@@ -32,7 +32,7 @@ let make = (~style=[], ~value, children) => {
   ...component,
   render: _ => {
     make: () => {
-      let view = NSTextView.make(value);
+      let view = BriskTextView.make(value);
       {view, layoutNode: makeLayoutNode(~measure, ~style, view)};
     },
     shouldReconfigureInstance: (~oldState as _, ~newState as _) => true,
@@ -53,10 +53,10 @@ let make = (~style=[], ~value, children) => {
                | `heavy => 0.56
                | `black => 0.62
                };
-             NSTextView.setFont(view, family, size, weight);
-           | `kern(kern) => NSTextView.setKern(view, kern)
+             BriskTextView.setFont(view, family, size, weight);
+           | `kern(kern) => BriskTextView.setKern(view, kern)
            | `align(align) =>
-             NSTextView.setAlignment(
+             BriskTextView.setAlignment(
                view,
                switch (align) {
                | `left => 0
@@ -66,13 +66,13 @@ let make = (~style=[], ~value, children) => {
                | `natural => 4
                },
              )
-           | `lineBreak(mode) => NSTextView.setLineBreak(view, mode)
+           | `lineBreak(mode) => BriskTextView.setLineBreak(view, mode)
            | `lineSpacing(spacing) =>
-             NSTextView.setLineSpacing(view, spacing)
+             BriskTextView.setLineSpacing(view, spacing)
            | `color(({r, g, b, a}: Color.t)) =>
-             NSTextView.setColor(view, r, g, b, a)
+             BriskTextView.setColor(view, r, g, b, a)
            | `background(({r, g, b, a}: Color.t)) =>
-             NSTextView.setBackgroundColor(view, r, g, b, a)
+             BriskTextView.setBackgroundColor(view, r, g, b, a)
            | #Layout.style => ()
            }
          );

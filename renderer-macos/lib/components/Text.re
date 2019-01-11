@@ -15,7 +15,7 @@ type attr = [
 
 type style = list(attr);
 
-let component = statelessNativeComponent("Text");
+let component = nativeComponent("Text");
 
 let measure = (node, _, _, _, _) => {
   open LayoutSupport.LayoutTypes;
@@ -28,15 +28,14 @@ let measure = (node, _, _, _, _) => {
   {width, height};
 };
 
-let make = (~style=[], ~value, children) => {
-  ...component,
-  render: _ => {
-    make: () => {
-      let view = BriskTextView.make(value);
-      {view, layoutNode: makeLayoutNode(~measure, ~style, view)};
-    },
-    shouldReconfigureInstance: (~oldState as _, ~newState as _) => true,
-    updateInstance: (_self, {view} as node) => {
+let make = (~style=[], ~value, children) =>
+  component((_: Slots.empty) =>
+    {
+      make: () => {
+        let view = BriskTextView.make(value);
+        {view, layoutNode: makeLayoutNode(~measure, ~style, view)};
+      },
+      configureInstance: (~isFirstRender as _, {view} as node) => {
       style
       |> List.iter(attr =>
            switch (attr) {
@@ -81,9 +80,9 @@ let make = (~style=[], ~value, children) => {
          );
       node;
     },
-    children,
-  },
-};
+      children,
+    }
+  );
 
 let createElement = (~style=[], ~value, ~children, ()) =>
   element(make(~style, ~value, listToElement(children)));

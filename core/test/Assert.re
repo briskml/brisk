@@ -140,6 +140,6 @@ let expect = (~label=?, expected, testState) => {
 };
 
 let act = (~action, rAction, testState) => {
-  RemoteAction.act(rAction, ~action);
+  RemoteAction.send(rAction, ~action);
   testState;
 };

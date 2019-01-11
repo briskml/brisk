@@ -40,12 +40,12 @@ module Create = (Encoding: Flex.Spec.Encoding) => {
 
     type t = {
       family: string,
-      weight,
       size: scalar,
+      weight,
     };
 
-    let make = (~family="", ~weight=`regular, ~size=cssUndefined, ()) => {
-      let font: t = {family, weight, size};
+    let make = (~family="", ~size=cssUndefined, ~weight=`regular, ()) => {
+      let font: t = {family, size, weight};
       `font(font);
     };
   };

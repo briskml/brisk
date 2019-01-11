@@ -40,8 +40,20 @@ let make = (~style=[], ~value, children) => {
       style
       |> List.iter(attr =>
            switch (attr) {
-           | `font(({family, size}: Font.t)) =>
-             NSTextView.setFont(view, family, size)
+           | `font(({family, size, weight}: Font.t)) =>
+             let weight =
+               switch (weight) {
+               | `ultraLight => (-0.8)
+               | `thin => (-0.6)
+               | `light => (-0.4)
+               | `regular => 0.
+               | `medium => 0.23
+               | `semibold => 0.3
+               | `bold => 0.4
+               | `heavy => 0.56
+               | `black => 0.62
+               };
+             NSTextView.setFont(view, family, size, weight);
            | `kern(kern) => NSTextView.setKern(view, kern)
            | `align(align) =>
              NSTextView.setAlignment(

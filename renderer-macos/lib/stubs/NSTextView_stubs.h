@@ -20,7 +20,7 @@ CAMLprim value ml_NSTextView_getTextHeight_bc(TextView *txt);
 
 CAMLprim value ml_NSTextView_setStringValue(TextView *txt, value str_v);
 CAMLprim value ml_NSTextView_setFont(TextView *txt, value fontName_v,
-                                     double fontSize);
+                                     double fontSize, double fontWeight);
 
 void ml_NSTextView_setColor(TextView *txt, double red, double green,
                             double blue, double alpha);

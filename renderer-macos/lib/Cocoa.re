@@ -181,7 +181,7 @@ module NSTextView = {
     "ml_NSTextView_setStringValue";
 
   [@noalloc]
-  external setFont: (t, string, [@unboxed] float) => unit =
+  external setFont: (t, string, [@unboxed] float, [@unboxed] float) => unit =
     "ml_NSTextView_setFont" "ml_NSTextView_setFont";
 
   [@noalloc]

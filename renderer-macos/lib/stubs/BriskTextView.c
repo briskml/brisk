@@ -203,3 +203,20 @@ CAMLprim value ml_BriskTextView_setKern_bc(BriskTextView *txt, value kern_v) {
 
   CAMLreturn(Val_unit);
 }
+
+void ml_BriskTextView_setPadding(BriskTextView *txt, double left, double top,
+                                 __unused double right,
+                                 __unused double bottom) {
+  txt.textContainerInset = CGSizeMake(left, top);
+}
+
+CAMLprim value ml_BriskTextView_setPadding_bc(BriskTextView *txt, value left_v,
+                                              value top_v, value right_v,
+                                              value bottom_v) {
+  CAMLparam4(left_v, top_v, right_v, bottom_v);
+
+  ml_BriskTextView_setPadding(txt, Double_val(left_v), Double_val(top_v),
+                              Double_val(right_v), Double_val(bottom_v));
+
+  CAMLreturn(Val_unit);
+}

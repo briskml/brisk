@@ -73,6 +73,8 @@ let make = (~style=[], ~value, children) => {
              BriskTextView.setColor(view, r, g, b, a)
            | `background(({r, g, b, a}: Color.t)) =>
              BriskTextView.setBackgroundColor(view, r, g, b, a)
+           | `padding(l, t, r, b) =>
+             BriskTextView.setPadding(view, l, t, r, b)
            | #Layout.style => ()
            }
          );

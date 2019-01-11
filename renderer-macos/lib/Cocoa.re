@@ -225,6 +225,18 @@ module BriskTextView = {
     "ml_BriskTextView_setBackgroundColor_bc"
     "ml_BriskTextView_setBackgroundColor";
 
+  [@noalloc]
+  external setPadding:
+    (
+      t,
+      [@unboxed] float,
+      [@unboxed] float,
+      [@unboxed] float,
+      [@unboxed] float
+    ) =>
+    unit =
+    "ml_BriskTextView_setPadding_bc" "ml_BriskTextView_setPadding";
+
   let make = str => {
     let txt = make();
 

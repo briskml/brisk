@@ -47,8 +47,19 @@ module Component = {
               align(`center),
               color(Color.hex("#ffffff")),
               background(Color.hex("#263ac5")),
+              padding(10.),
             ]
             value="Welcome to Brisk"
+          />
+          <Text
+            style=[
+              font(~size=18., ()),
+              align(`center),
+              color(Color.hexa("#263ac5", 0.9)),
+              background(Color.hex("#eeeeee")),
+              padding2(~h=10., ~v=20., ()),
+            ]
+            value="Try clicking around"
           />
           <Button
             style=[width(400.), height(60.)]

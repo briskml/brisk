@@ -4,7 +4,7 @@
 
 @interface Button : NSButton
 
-@property (nonatomic, assign) value _callback;
+@property(nonatomic, assign) value _callback;
 
 - (void)setCallback:(value)action;
 

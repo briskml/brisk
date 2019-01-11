@@ -163,33 +163,93 @@ module NSView = {
     "ml_NSView_setBackgroundColor_bc" "ml_NSView_setBackgroundColor";
 };
 
-module NSTextView = {
+module BriskTextView = {
   type t = NSView.t;
 
-  [@noalloc] external make: unit => t = "ml_NSTextView_make";
-
-  [@noalloc] external setStringValue: (t, string) => unit = "ml_NSTextView_setStringValue";
+  [@noalloc] external make: unit => t = "ml_BriskTextView_make";
 
   [@noalloc]
-  external setBackgroundColor:
+  external getTextWidth: t => [@unboxed] float =
+    "ml_BriskTextView_getTextWidth_bc" "ml_BriskTextView_getTextWidth";
+
+  [@noalloc]
+  external getTextHeight: t => [@unboxed] float =
+    "ml_BriskTextView_getTextHeight_bc" "ml_BriskTextView_getTextHeight";
+
+  [@noalloc]
+  external setStringValue: (t, string) => unit =
+    "ml_BriskTextView_setStringValue";
+
+  [@noalloc]
+  external setFont: (t, string, [@unboxed] float, [@unboxed] float) => unit =
+    "ml_BriskTextView_setFont" "ml_BriskTextView_setFont";
+
+  [@noalloc]
+  external setKern: (t, [@unboxed] float) => unit =
+    "ml_BriskTextView_setKern_bc" "ml_BriskTextView_setKern";
+
+  [@noalloc]
+  external setColor:
     (
-      CocoaClass.view,
+      t,
       [@unboxed] float,
       [@unboxed] float,
       [@unboxed] float,
       [@unboxed] float
     ) =>
     unit =
-    "ml_NSTextView_setBackgroundColor_bc" "ml_NSTextView_setBackgroundColor_bc";
+    "ml_BriskTextView_setColor_bc" "ml_BriskTextView_setColor";
 
-  let make = (str) => {
+  [@noalloc]
+  external setAlignment: (t, [@untagged] int) => unit =
+    "ml_BriskTextView_setAlignment_bc" "ml_BriskTextView_setAlignment";
+
+  [@noalloc]
+  external setLineBreak: (t, [@untagged] int) => unit =
+    "ml_BriskTextView_setLineBreakMode_bc" "ml_BriskTextView_setLineBreakMode";
+
+  [@noalloc]
+  external setLineSpacing: (t, [@unboxed] float) => unit =
+    "ml_BriskTextView_setLineSpacing_bc" "ml_BriskTextView_setLineSpacing";
+
+  [@noalloc]
+  external setCornerRadius: (t, [@unboxed] float) => unit =
+    "ml_BriskTextView_setCornerRadius_bc" "ml_BriskTextView_setCornerRadius";
+
+  [@noalloc]
+  external setBackgroundColor:
+    (
+      t,
+      [@unboxed] float,
+      [@unboxed] float,
+      [@unboxed] float,
+      [@unboxed] float
+    ) =>
+    unit =
+    "ml_BriskTextView_setBackgroundColor_bc"
+    "ml_BriskTextView_setBackgroundColor";
+
+  [@noalloc]
+  external setPadding:
+    (
+      t,
+      [@unboxed] float,
+      [@unboxed] float,
+      [@unboxed] float,
+      [@unboxed] float
+    ) =>
+    unit =
+    "ml_BriskTextView_setPadding_bc" "ml_BriskTextView_setPadding";
+
+  let make = str => {
     let txt = make();
+
     setStringValue(txt, str);
     txt;
   };
 };
 
-module NSButton = {
+module BriskButton = {
   type t = NSView.t;
 
   type buttonType =
@@ -213,23 +273,25 @@ module NSButton = {
     | TexturedSquare
     | HelpButton;
 
-  [@noalloc] external make: unit => t = "ml_NSButton_make";
+  [@noalloc] external make: unit => t = "ml_BriskButton_make";
 
-  [@noalloc] external setTitle: (t, string) => unit = "ml_NSButton_setTitle";
   [@noalloc]
-  external setCallback: (t, unit => unit) => unit = "ml_NSButton_setCallback";
+  external setTitle: (t, string) => unit = "ml_BriskButton_setTitle";
+  [@noalloc]
+  external setCallback: (t, unit => unit) => unit =
+    "ml_BriskButton_setCallback";
 
   [@noalloc]
   external setButtonType: (t, buttonType) => unit =
-    "ml_NSButton_setButtonType_bc" "ml_NSButton_setButtonType";
+    "ml_BriskButton_setButtonType_bc" "ml_BriskButton_setButtonType";
 
   [@noalloc]
   external setBezelStyle: (t, bezelStyle) => unit =
-    "ml_NSButton_setBezelStyle_bc" "ml_NSButton_setBezelStyle";
+    "ml_BriskButton_setBezelStyle_bc" "ml_BriskButton_setBezelStyle";
 
   [@noalloc]
   external setIsBordered: (t, bool) => unit =
-    "ml_NSButton_setIsBordered_bc" "ml_NSButton_setIsBordered";
+    "ml_BriskButton_setIsBordered_bc" "ml_BriskButton_setIsBordered";
 
   let make = (~type_=?, ~bezel=?, ~title=?, ~onClick=?, ()) => {
     let btn = make();

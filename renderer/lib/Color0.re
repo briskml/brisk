@@ -17,6 +17,8 @@ let hex = c => c |> Color.of_hexstring |> parseExn(c) |> Color.to_rgba';
 
 let alpha: (float, t) => t = (a, c) => {...c, a: a *. c.a};
 
+let hexa = (c, a) => hex(c) |> alpha(a);
+
 let transparent = rgba(0, 0, 0, 0.);
 
 let isTransparent: t => bool =

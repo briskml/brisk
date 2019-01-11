@@ -9,19 +9,23 @@
  (synopsis "Cocoa renderer and bindings")
  (libraries brisk-core brisk-renderer)
  (install_c_headers Cocoa_stubs
-                    NSView_stubs
-                    NSTextView_stubs
-                    NSButton_stubs
-                    NSMenu_stubs
+                    Cocoa_helpers_stubs
                     BriskApplicationDelegate
-                    BriskWindowDelegate)
+                    BriskWindowDelegate
+                    BriskButton
+                    BriskTextView
+                    NSView_stubs
+                    NSMenu_stubs
+                    )
  (c_names Cocoa_stubs
-          NSView_stubs
-          NSTextView_stubs
-          NSButton_stubs
-          NSMenu_stubs
+          Cocoa_helpers_stubs
           BriskApplicationDelegate
-          BriskWindowDelegate)
+          BriskWindowDelegate
+          BriskButton
+          BriskTextView
+          NSView_stubs
+          NSMenu_stubs
+          )
  (c_flags (:standard
   (-Wextra -Wall -Werror -O -g -std=c99 -pedantic-errors -Wsign-compare -Wshadow)
   (-x objective-c))))

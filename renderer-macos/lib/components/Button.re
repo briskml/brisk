@@ -13,7 +13,7 @@ let make =
   render: _ => {
     make: () => {
       let btn =
-        NSButton.(make(~type_?, ~bezel?, ~title?, ~onClick=callback, ()));
+        BriskButton.(make(~type_?, ~bezel?, ~title?, ~onClick=callback, ()));
       {view: btn, layoutNode: makeLayoutNode(~style, btn)};
     },
     shouldReconfigureInstance: (~oldState as _, ~newState as _) => true,

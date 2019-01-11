@@ -40,14 +40,33 @@ module Create = (Encoding: Flex.Spec.Encoding) => {
 
     type t = {
       family: string,
-      weight,
       size: scalar,
+      weight,
     };
 
-    let make = (~family="", ~weight=`regular, ~size=cssUndefined, ()) => {
-      let font: t = {family, weight, size};
+    let make = (~family="", ~size=cssUndefined, ~weight=`regular, ()) => {
+      let font: t = {family, size, weight};
       `font(font);
     };
+  };
+
+  module Alignment = {
+    type t = [ | `left | `right | `center | `justified | `natural];
+
+    let make = (alignment: t) => `align(alignment);
+  };
+
+  module LineBreak = {
+    type t = [
+      | `wordWrap
+      | `charWrap
+      | `clip
+      | `truncateHead
+      | `truncateTale
+      | `truncateMiddle
+    ];
+
+    let make = (mode: t) => `lineBreak(mode);
   };
 
   module Border = {
@@ -67,10 +86,17 @@ module Create = (Encoding: Flex.Spec.Encoding) => {
 
   let position = Position.make;
   let border = Border.make;
+  let font = Font.make;
+  let kern = f => `kern(f);
+  let align = Alignment.make;
+  let lineBreak = LineBreak.make;
+  let lineSpacing = f => `lineSpacing(f);
+  let cornerRadius = f => `cornerRadius(f);
 
   let width = (w: scalar) => `width(w);
   let height = (h: scalar) => `height(h);
 
+  let color = (color: Color0.t) => `color(color);
   let background = (color: Color0.t) => `background(color);
 
   let padding = (p: scalar) => `padding((p, p, p, p));

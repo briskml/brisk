@@ -1,10 +1,10 @@
 #import "NSMenu_stubs.h"
 #import <Cocoa/Cocoa.h>
 #define CAML_NAME_SPACE
-#import <caml/mlvalues.h>
-#import <caml/memory.h>
 #import <caml/alloc.h>
 #import <caml/callback.h>
+#import <caml/memory.h>
+#import <caml/mlvalues.h>
 
 CAMLprim value ml_NSApplication_setMenu(NSMenu *menu, value kind_v) {
   CAMLparam1(kind_v);

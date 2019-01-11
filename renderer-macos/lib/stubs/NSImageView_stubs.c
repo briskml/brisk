@@ -12,7 +12,6 @@ NSImageView *ml_NSImageView_make() {
   return view;
 }
 
-
 NSImageView *ml_NSImageView_make() {
   NSImageView *view = [NSImageView new];
   retainView(view);

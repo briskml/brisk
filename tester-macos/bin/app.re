@@ -40,7 +40,38 @@ module Component = {
             height(400.),
             background(Color.hex("#f7f8f9")),
           ]>
-          <Text style=[width(600.), height(30.)] value="Welcome to Brisk" />
+          <Text
+            style=[
+              font(~size=24., ~weight=`medium, ()),
+              kern(0.5),
+              align(`center),
+              color(Color.hex("#ffffff")),
+              background(Color.hex("#263ac5")),
+              padding(10.),
+            ]
+            value="Welcome to Brisk"
+          />
+          <View
+            style=[
+              justifyContent(`center),
+              alignContent(`center),
+              background(Color.hex("#eeeeee")),
+            ]>
+            <Text
+              style=[
+                font(~size=18., ()),
+                align(`center),
+                alignSelf(`center),
+                width(200.),
+                cornerRadius(10.),
+                color(Color.hex("#ffffff")),
+                background(Color.hexa("#263ac5", 0.9)),
+                margin(20.),
+                padding2(~h=10., ~v=10., ()),
+              ]
+              value="Text bubble"
+            />
+          </View>
           <Button
             style=[width(400.), height(60.)]
             title="Youre gonna have to wait a bit"

@@ -6,7 +6,7 @@ type attr = [ Layout.style];
 
 type style = list(attr);
 
-let component = statelessNativeComponent("Image");
+let component = nativeComponent("Image");
 
 let measure = (node, _, _, _, _) => {
   open LayoutSupport.LayoutTypes;
@@ -19,26 +19,25 @@ let measure = (node, _, _, _, _) => {
   {width, height};
 };
 
-let make = (~style=[], ~source, children) => {
-  ...component,
-  render: _ => {
-    make: () => {
-      let view = BriskImage.make(~source, ());
-      {view, layoutNode: makeLayoutNode(~measure, ~style, view)};
-    },
-    shouldReconfigureInstance: (~oldState as _, ~newState as _) => true,
-    updateInstance: (_self, {view: _} as node) => {
-      style
-      |> List.iter(attr =>
-           switch (attr) {
-           | #Layout.style => ()
-           }
-         );
-      node;
-    },
-    children,
-  },
-};
+let make = (~style=[], ~source, children) =>
+  component((_: Slots.empty) =>
+    {
+      make: () => {
+        let view = BriskImage.make(~source, ());
+        {view, layoutNode: makeLayoutNode(~measure, ~style, view)};
+      },
+      configureInstance: (~isFirstRender as _, {view: _} as node) => {
+        style
+        |> List.iter(attr =>
+             switch (attr) {
+             | #Layout.style => ()
+             }
+           );
+        node;
+      },
+      children,
+    }
+  );
 
 let createElement = (~style=[], ~source, ~children, ()) =>
   element(make(~style, ~source, listToElement(children)));

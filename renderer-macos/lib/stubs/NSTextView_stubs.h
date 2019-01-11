@@ -42,3 +42,6 @@ CAMLprim value ml_NSTextView_setLineBreakMode_bc(TextView *txt, value mode_v);
 
 void ml_NSTextView_setLineSpacing(TextView *txt, double spacing);
 CAMLprim value ml_NSTextView_setLineSpacing_bc(TextView *txt, value spacing_v);
+
+void ml_NSTextView_setKern(TextView *txt, double kern);
+CAMLprim value ml_NSTextView_setKern_bc(TextView *txt, value kern_v);

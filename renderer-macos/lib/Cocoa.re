@@ -185,6 +185,10 @@ module NSTextView = {
     "ml_NSTextView_setFont" "ml_NSTextView_setFont";
 
   [@noalloc]
+  external setKern: (t, [@unboxed] float) => unit =
+    "ml_NSTextView_setKern_bc" "ml_NSTextView_setKern";
+
+  [@noalloc]
   external setColor:
     (
       t,

@@ -5,6 +5,7 @@ open Layout;
 type attr = [
   Layout.style
   | `font(Font.t)
+  | `kern(float)
   | `align(Alignment.t)
   | `lineBreak(LineBreak.t)
   | `lineSpacing(float)
@@ -41,6 +42,7 @@ let make = (~style=[], ~value, children) => {
            switch (attr) {
            | `font(({family, size}: Font.t)) =>
              NSTextView.setFont(view, family, size)
+           | `kern(kern) => NSTextView.setKern(view, kern)
            | `align(align) =>
              NSTextView.setAlignment(
                view,

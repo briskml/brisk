@@ -168,3 +168,17 @@ CAMLprim value ml_NSTextView_setLineSpacing_bc(TextView *txt, value spacing_v) {
 
   CAMLreturn(Val_unit);
 }
+
+void ml_NSTextView_setKern(TextView *txt, double kern) {
+  txt.attributedProps[NSKernAttributeName] = [NSNumber numberWithDouble:kern];
+
+  ml_NSTextView_applyAttributes(txt);
+}
+
+CAMLprim value ml_NSTextView_setKern_bc(TextView *txt, value kern_v) {
+  CAMLparam1(kern_v);
+
+  ml_NSTextView_setKern(txt, Double_val(kern_v));
+
+  CAMLreturn(Val_unit);
+}

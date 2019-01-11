@@ -87,6 +87,7 @@ module Create = (Encoding: Flex.Spec.Encoding) => {
   let position = Position.make;
   let border = Border.make;
   let font = Font.make;
+  let kern = f => `kern(f);
   let align = Alignment.make;
   let lineBreak = LineBreak.make;
   let lineSpacing = f => `lineSpacing(f);

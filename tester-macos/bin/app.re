@@ -43,6 +43,7 @@ module Component = {
           <Text
             style=[
               font(~size=25., ()),
+              kern(0.5),
               align(`center),
               color(Color.hex("#ffffff")),
               background(Color.hex("#263ac5")),

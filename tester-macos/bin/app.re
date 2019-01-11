@@ -6,12 +6,12 @@ open Lwt.Infix;
 module Component = {
   [@noalloc] external lwt_start: unit => unit = "ml_lwt_iter";
 
-  let otherComponent = React.reducerComponent("Other");
-  let createElement = (~children as _, ()) => {
-    ...otherComponent,
-    initialState: _ => None,
-    reducer: (x, _) => React.Update(x),
-    render: ({state, reduce}) =>
+  let component = React.component("Other");
+  let createElement = (~children as _, ()) =>
+    component(slots => {
+      let (state, setState, _slots: React.Slots.empty) =
+        React.Hooks.useState(None, slots);
+
       switch (state) {
       | Some(code) =>
         <View
@@ -24,12 +24,12 @@ module Component = {
           <Button
             style=[width(100.), height(100.)]
             title={string_of_int(code)}
-            callback={reduce(() => None)}
+            callback={() => setState(None)}
           />
           <Button
             style=[width(100.), height(100.)]
             title="Cell two"
-            callback={reduce(() => None)}
+            callback={() => setState(None)}
           />
         </View>
       | None =>
@@ -75,22 +75,17 @@ module Component = {
           <Button
             style=[width(400.), height(60.)]
             title="Youre gonna have to wait a bit"
-            callback={
-                       let callback = reduce(code => code);
-                       (
-                         () => {
-                           lwt_start();
-                           ignore(
-                             Lwt_unix.sleep(1.)
-                             >>= (_ => Lwt.return(callback(Some(100)))),
-                           );
-                         }
-                       );
-                     }
+            callback={() => {
+              lwt_start();
+              ignore(
+                Lwt_unix.sleep(1.)
+                >>= (_ => Lwt.return(setState(Some(100)))),
+              );
+            }}
           />
         </View>
-      },
-  };
+      };
+    });
 };
 
 let lwt_iter = () => {

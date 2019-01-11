@@ -173,7 +173,7 @@ let core = [
              ],
            );
 
-      RemoteAction.act(~action=Components.ToggleClicks.Click, rAction);
+      RemoteAction.send(~action=Components.ToggleClicks.Click, rAction);
       let cell1 = text("cell1");
       let cell2 = text("cell2");
 
@@ -263,42 +263,11 @@ let core = [
          )
       |> ignore,
   ),
-  /*
-   (
-     "Test willReceiveProps on ChangeCounter text update",
-     `Quick,
-     () =>
-       /* TODO: This needs some love, we are testing state updates */
-       render(<Components.ChangeCounter label="default text" />)
-       |> expect(~label="It renders ChangeCounter component", [])
-       |> update(<Components.ChangeCounter label="default text" />)
-       |> expect(~label="It doesn't create any UpdateLog records", [])
-       |> update(<Components.ChangeCounter label="updated text" />)
-       |> expect(~label="It increments its local state on text change", [])
-       |> flushPendingUpdates
-       |> expect(
-            ~label=
-              "It flushes uncommited updates incrementing the counter by 10 on each update",
-            [],
-          )
-       |> flushPendingUpdates
-       |> expect(
-            ~label="It flushes updates, but there are no pending actions",
-            [],
-          )
-       |> flushPendingUpdates
-       |> expect(
-            ~label="It flushes updates, but there are no pending actions",
-            [],
-          )
-       |> ignore,
-   ),
-   */
   (
     "Test changing components",
     `Quick,
     () =>
-      render(<Components.ChangeCounter label="default text" />)
+      render(<Components.EmptyComponent />)
       |> executeSideEffects
       |> expect(
            ~label="It renders ChangeCounter component",
@@ -526,7 +495,7 @@ let core = [
     },
   ),
   (
-    "Test 'shouldUpdate' lifecycle phase",
+    "Test conditional updating by leveraging refs",
     `Quick,
     () => {
       let rAction = RemoteAction.create();

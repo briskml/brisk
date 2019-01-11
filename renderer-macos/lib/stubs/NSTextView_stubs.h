@@ -6,6 +6,7 @@
 
 @property(nonatomic, assign) NSMutableAttributedString *attributedString;
 @property(nonatomic, assign) NSMutableDictionary *attributedProps;
+@property(nonatomic, assign) NSMutableParagraphStyle *paragraphStyle;
 
 @end
 
@@ -32,3 +33,12 @@ void ml_NSTextView_setBackgroundColor(TextView *txt, double red, double green,
 CAMLprim value ml_NSTextView_setBackgroundColor_bc(TextView *txt, value red_v,
                                                    value green_v, value blue_v,
                                                    value alpha_v);
+
+void ml_NSTextView_setAlignment(TextView *txt, int align);
+CAMLprim value ml_NSTextView_setAlignment_bc(TextView *txt, value align_v);
+
+void ml_NSTextView_setLineBreakMode(TextView *txt, int mode);
+CAMLprim value ml_NSTextView_setLineBreakMode_bc(TextView *txt, value mode_v);
+
+void ml_NSTextView_setLineSpacing(TextView *txt, double spacing);
+CAMLprim value ml_NSTextView_setLineSpacing_bc(TextView *txt, value spacing_v);

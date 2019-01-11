@@ -11,6 +11,10 @@
   if (self) {
     self.attributedString = [[NSMutableAttributedString alloc] init];
     self.attributedProps = [NSMutableDictionary dictionary];
+    self.paragraphStyle =
+        [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
+
+    self.attributedProps[NSParagraphStyleAttributeName] = self.paragraphStyle;
   }
   return self;
 }
@@ -114,6 +118,51 @@ CAMLprim value ml_NSTextView_setBackgroundColor_bc(TextView *txt, value red_v,
 
   ml_NSTextView_setBackgroundColor(txt, Double_val(red_v), Double_val(blue_v),
                                    Double_val(green_v), Double_val(alpha_v));
+
+  CAMLreturn(Val_unit);
+}
+
+void ml_NSTextView_setAlignment(TextView *txt, int align) {
+  txt.paragraphStyle.alignment = align;
+  txt.attributedProps[NSParagraphStyleAttributeName] = txt.paragraphStyle;
+
+  ml_NSTextView_applyAttributes(txt);
+}
+
+CAMLprim value ml_NSTextView_setAlignment_bc(TextView *txt, value align_v) {
+  CAMLparam1(align_v);
+
+  ml_NSTextView_setAlignment(txt, Int_val(align_v));
+
+  CAMLreturn(Val_unit);
+}
+
+void ml_NSTextView_setLineBreakMode(TextView *txt, int mode) {
+  txt.paragraphStyle.lineBreakMode = mode;
+  txt.attributedProps[NSParagraphStyleAttributeName] = txt.paragraphStyle;
+
+  ml_NSTextView_applyAttributes(txt);
+}
+
+CAMLprim value ml_NSTextView_setLineBreakMode_bc(TextView *txt, value mode_v) {
+  CAMLparam1(mode_v);
+
+  ml_NSTextView_setLineBreakMode(txt, Int_val(mode_v));
+
+  CAMLreturn(Val_unit);
+}
+
+void ml_NSTextView_setLineSpacing(TextView *txt, double spacing) {
+  txt.paragraphStyle.lineSpacing = spacing;
+  txt.attributedProps[NSParagraphStyleAttributeName] = txt.paragraphStyle;
+
+  ml_NSTextView_applyAttributes(txt);
+}
+
+CAMLprim value ml_NSTextView_setLineSpacing_bc(TextView *txt, value spacing_v) {
+  CAMLparam1(spacing_v);
+
+  ml_NSTextView_setLineSpacing(txt, Double_val(spacing_v));
 
   CAMLreturn(Val_unit);
 }

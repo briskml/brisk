@@ -5,6 +5,9 @@ open Layout;
 type attr = [
   Layout.style
   | `font(Font.t)
+  | `align(Alignment.t)
+  | `lineBreak(LineBreak.t)
+  | `lineSpacing(float)
   | `background(Color.t)
   | `color(Color.t)
 ];
@@ -38,6 +41,20 @@ let make = (~style=[], ~value, children) => {
            switch (attr) {
            | `font(({family, size}: Font.t)) =>
              NSTextView.setFont(view, family, size)
+           | `align(align) =>
+             NSTextView.setAlignment(
+               view,
+               switch (align) {
+               | `left => 0
+               | `right => 1
+               | `center => 2
+               | `justified => 3
+               | `natural => 4
+               },
+             )
+           | `lineBreak(mode) => NSTextView.setLineBreak(view, mode)
+           | `lineSpacing(spacing) =>
+             NSTextView.setLineSpacing(view, spacing)
            | `color(({r, g, b, a}: Color.t)) =>
              NSTextView.setColor(view, r, g, b, a)
            | `background(({r, g, b, a}: Color.t)) =>

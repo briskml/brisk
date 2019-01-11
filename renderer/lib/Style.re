@@ -50,6 +50,25 @@ module Create = (Encoding: Flex.Spec.Encoding) => {
     };
   };
 
+  module Alignment = {
+    type t = [ | `left | `right | `center | `justified | `natural];
+
+    let make = (alignment: t) => `align(alignment);
+  };
+
+  module LineBreak = {
+    type t = [
+      | `wordWrap
+      | `charWrap
+      | `clip
+      | `truncateHead
+      | `truncateTale
+      | `truncateMiddle
+    ];
+
+    let make = (mode: t) => `lineBreak(mode);
+  };
+
   module Border = {
     type t = {
       width: scalar,
@@ -68,6 +87,9 @@ module Create = (Encoding: Flex.Spec.Encoding) => {
   let position = Position.make;
   let border = Border.make;
   let font = Font.make;
+  let align = Alignment.make;
+  let lineBreak = LineBreak.make;
+  let lineSpacing = f => `lineSpacing(f);
 
   let width = (w: scalar) => `width(w);
   let height = (h: scalar) => `height(h);

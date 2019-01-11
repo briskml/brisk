@@ -169,6 +169,14 @@ module NSTextView = {
   [@noalloc] external make: unit => t = "ml_NSTextView_make";
 
   [@noalloc]
+  external getTextWidth: t => [@unboxed] float =
+    "ml_NSTextView_getTextWidth_bc" "ml_NSTextView_getTextWidth";
+
+  [@noalloc]
+  external getTextHeight: t => [@unboxed] float =
+    "ml_NSTextView_getTextHeight_bc" "ml_NSTextView_getTextHeight";
+
+  [@noalloc]
   external setStringValue: (t, string) => unit =
     "ml_NSTextView_setStringValue";
 
@@ -189,12 +197,16 @@ module NSTextView = {
     "ml_NSTextView_setColor_bc" "ml_NSTextView_setColor";
 
   [@noalloc]
-  external getTextWidth: t => [@unboxed] float =
-    "ml_NSTextView_getTextWidth_bc" "ml_NSTextView_getTextWidth";
+  external setAlignment: (t, [@untagged] int) => unit =
+    "ml_NSTextView_setAlignment_bc" "ml_NSTextView_setAlignment";
 
   [@noalloc]
-  external getTextHeight: t => [@unboxed] float =
-    "ml_NSTextView_getTextHeight_bc" "ml_NSTextView_getTextHeight";
+  external setLineBreak: (t, [@untagged] int) => unit =
+    "ml_NSTextView_setLineBreakMode_bc" "ml_NSTextView_setLineBreakMode";
+
+  [@noalloc]
+  external setLineSpacing: (t, [@unboxed] float) => unit =
+    "ml_NSTextView_setLineSpacing_bc" "ml_NSTextView_setLineSpacing";
 
   [@noalloc]
   external setBackgroundColor:

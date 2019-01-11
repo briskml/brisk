@@ -52,6 +52,10 @@ CAMLprim value ml_BriskTextView_setLineSpacing_bc(BriskTextView *txt,
 void ml_BriskTextView_setKern(BriskTextView *txt, double kern);
 CAMLprim value ml_BriskTextView_setKern_bc(BriskTextView *txt, value kern_v);
 
+void ml_BriskTextView_setCornerRadius(BriskTextView *txt, double radius);
+CAMLprim value ml_BriskTextView_setCornerRadius_bc(BriskTextView *txt,
+                                                   value radius_v);
+
 void ml_BriskTextView_setPadding(BriskTextView *txt, double left, double top,
                                  double right, double bottom);
 CAMLprim value ml_BriskTextView_setPadding_bc(BriskTextView *txt, value left_v,

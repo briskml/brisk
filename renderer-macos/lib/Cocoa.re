@@ -213,6 +213,10 @@ module BriskTextView = {
     "ml_BriskTextView_setLineSpacing_bc" "ml_BriskTextView_setLineSpacing";
 
   [@noalloc]
+  external setCornerRadius: (t, [@unboxed] float) => unit =
+    "ml_BriskTextView_setCornerRadius_bc" "ml_BriskTextView_setCornerRadius";
+
+  [@noalloc]
   external setBackgroundColor:
     (
       t,

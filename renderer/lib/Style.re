@@ -91,6 +91,7 @@ module Create = (Encoding: Flex.Spec.Encoding) => {
   let align = Alignment.make;
   let lineBreak = LineBreak.make;
   let lineSpacing = f => `lineSpacing(f);
+  let cornerRadius = f => `cornerRadius(f);
 
   let width = (w: scalar) => `width(w);
   let height = (h: scalar) => `height(h);

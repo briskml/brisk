@@ -51,16 +51,27 @@ module Component = {
             ]
             value="Welcome to Brisk"
           />
-          <Text
+          <View
             style=[
-              font(~size=18., ()),
-              align(`center),
-              color(Color.hexa("#263ac5", 0.9)),
+              justifyContent(`center),
+              alignContent(`center),
               background(Color.hex("#eeeeee")),
-              padding2(~h=10., ~v=20., ()),
-            ]
-            value="Try clicking around"
-          />
+            ]>
+            <Text
+              style=[
+                font(~size=18., ()),
+                align(`center),
+                alignSelf(`center),
+                width(200.),
+                cornerRadius(10.),
+                color(Color.hex("#ffffff")),
+                background(Color.hexa("#263ac5", 0.9)),
+                margin(20.),
+                padding2(~h=10., ~v=10., ()),
+              ]
+              value="Text bubble"
+            />
+          </View>
           <Button
             style=[width(400.), height(60.)]
             title="Youre gonna have to wait a bit"

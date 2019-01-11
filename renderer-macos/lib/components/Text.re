@@ -9,6 +9,7 @@ type attr = [
   | `align(Alignment.t)
   | `lineBreak(LineBreak.t)
   | `lineSpacing(float)
+  | `cornerRadius(float)
   | `background(Color.t)
   | `color(Color.t)
 ];
@@ -69,6 +70,7 @@ let make = (~style=[], ~value, children) => {
            | `lineBreak(mode) => BriskTextView.setLineBreak(view, mode)
            | `lineSpacing(spacing) =>
              BriskTextView.setLineSpacing(view, spacing)
+           | `cornerRadius(r) => BriskTextView.setCornerRadius(view, r)
            | `color(({r, g, b, a}: Color.t)) =>
              BriskTextView.setColor(view, r, g, b, a)
            | `background(({r, g, b, a}: Color.t)) =>

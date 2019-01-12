@@ -101,7 +101,6 @@ module BoxList = {
           (action, state) =>
             switch (action) {
             | Create(title) =>
-              print_endline(string_of_int(List.length(state)));
               [
                 useDynamicKeys ? <BoxItemDynamic title /> : <Box title />,
                 ...state,
@@ -159,11 +158,9 @@ module UpdateAlternateClicks = {
         Hooks.useReducer(
           ~initialState=ref(0),
           (Click, state) => {
-            print_endline(string_of_int(state^));
             /* FIXME: make this pure */
             state^ mod 2 === 0 ?
               {
-                print_endline("AKI");
                 state := state^ + 1;
                 state;
               } :

@@ -19,8 +19,7 @@ module Make = (OutputTree: OutputTree) => {
     let reset = () => {
       debug := true;
       componentKeyCounter := 0;
-      /* FIXME: To be done afterwards because we'll need to  adjust tests*/
-      instanceIdCounter := 1;
+      instanceIdCounter := 0;
     };
 
     /**
@@ -1089,10 +1088,6 @@ module Make = (OutputTree: OutputTree) => {
      * Execute the pending updates at the top level of an instance tree.
      * If no state change is performed, the argument is returned unchanged.
      */
-    /**
-     * Flush the pending updates in an instance tree.
-     * TODO: invoke lifecycles
-     */
     let flushPendingUpdates = (opaqueInstance, nearestHostOutputNode) => {
       let Instance({element}) = opaqueInstance;
       updateOpaqueInstance(
@@ -1171,7 +1166,6 @@ module Make = (OutputTree: OutputTree) => {
 
     /**
      * Flush the pending updates in an instance tree.
-     * TODO: invoke lifecycles
      */
     let flushPendingUpdates = ({instanceForest, nearestHostOutputNode}: t): t => {
       let (nearestHostOutputNode, newInstanceForest) =

@@ -1,0 +1,10 @@
+# Cross-platform set of build steps for building esy projects
+
+steps:
+  - task: NodeTool@0
+    inputs:
+      versionSpec: "8.x"
+  - script: npm install -g esy@next --unsafe-perm
+    displayName: "npm install -g esy@next --unsafe-perm"
+  - script: esy install
+    displayName: "esy install"

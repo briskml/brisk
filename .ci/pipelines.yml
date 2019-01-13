@@ -9,7 +9,7 @@ jobs:
       - script: |
           echo '##vso[task.prependpath]$(NPM_CONFIG_PREFIX)/bin'
         displayName: "Setup env"
-      - script: npm -g install esy@latest
+      - script: npm -g install esy@next
         displayName: "Install esy"
       - script: |
           esy install
@@ -33,7 +33,7 @@ jobs:
       - script: |
           echo '##vso[task.prependpath]$(NPM_CONFIG_PREFIX)/bin'
         displayName: "Setup env"
-      - script: npm -g install esy@latest
+      - script: npm -g install esy@next
         displayName: "Install esy"
       - script: |
           esy install

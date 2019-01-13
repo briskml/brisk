@@ -1,0 +1,51 @@
+name: $(Build.SourceVersion)
+jobs:
+  - job: MacOS
+    timeoutInMinutes: 0
+    pool:
+      vmImage: "macOS 10.13"
+
+    variables:
+      STAGING_DIRECTORY: /Users/vsts/STAGING
+      STAGING_DIRECTORY_UNIX: /Users/vsts/STAGING
+      ESY__CACHE_INSTALL_PATH: /Users/vsts/.esy/3____________________________________________________________________/i
+      ESY__CACHE_SOURCE_TARBALL_PATH: /Users/vsts/.esy/source/i
+
+    steps:
+      - template: .ci/use-node.yml
+      - template: .ci/restore-build-cache.yml
+      - template: .ci/esy-build-steps.yml
+      - script: |
+          esy build:core
+          esy test:core
+        displayName: "Build and test core"
+      - script: |
+          esy build:mac
+          esy test:mac
+        displayName: "Build and test renderer-macos"
+      - script: |
+          esy bootstrap:mac
+          esy build:tester_mac
+        displayName: "Build and test tester-macos"
+      - template: .ci/publish-build-cache.yml
+
+  - job: Linux
+    timeoutInMinutes: 0
+    pool:
+      vmImage: "Ubuntu 16.04"
+
+    variables:
+      STAGING_DIRECTORY: /home/vsts/STAGING
+      STAGING_DIRECTORY_UNIX: /home/vsts/STAGING
+      ESY__CACHE_INSTALL_PATH: /home/vsts/.esy/3_____________________________________________________________________/i
+      ESY__CACHE_SOURCE_TARBALL_PATH: /home/vsts/.esy/source/i
+
+    steps:
+      - template: .ci/use-node.yml
+      - template: .ci/restore-build-cache.yml
+      - template: .ci/esy-build-steps.yml
+      - script: |
+          esy build:core
+          esy test:core
+        displayName: "Build and test core"
+      - template: .ci/publish-build-cache.yml

@@ -16,7 +16,12 @@ module type S = {
     );
 
   let fold:
-    ((opaqueElement, 'a, ~flush: unit => bool) => 'a, 'a, t('b, 'c)) => 'a;
+    (
+      (opaqueElement, 'acc, ~flush: unit => bool) => 'acc,
+      'acc,
+      t('slots, 'nextSlots)
+    ) =>
+    'acc;
 };
 
 module Make: (Elem: Elem) => S with type elem('a) = Elem.t('a);

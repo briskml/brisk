@@ -1,83 +1,95 @@
-type slotInternal('slot, 'nextSlots) = {
-  flush: unit => ('slot, bool),
-  this: 'slot,
-  next: 'nextSlots,
-};
+module type Elem = {type t('a);};
 
-type t('slot, 'nextSlots) = ref(option(slotInternal('slot, 'nextSlots)));
+module type S = {
+  type elem('a);
+  type opaqueElement =
+    | Any(elem('a)): opaqueElement;
+  type t('slot, 'nextSlots);
+  type empty = t(unit, unit);
 
-type empty = t(unit, unit);
-
-let create = () => ref(None);
-
-let flushPendingUpdatesInternal = (default, slots) =>
-  switch (slots) {
-  | Some({flush}) => flush()
-  | None => (default, false)
-  };
-
-let flushPendingUpdates = slots =>
-  switch (slots^) {
-  | Some({flush}) => snd(flush())
-  | None => false
-  };
-
-let shouldUpdate = (slots, newValue) =>
-  switch (slots) {
-  | Some({this}) => this !== newValue
-  | None => true
-  };
-
-let stabilized = (this, nextSlots) => {
-  this,
-  next: nextSlots,
-  flush: () => (this, false),
-};
-
-let makeSetter =
-    (~flushed, ~default, ~latestSlotsRef, ~nextSlots, makeNewValue) => {
-  let prevSlots = latestSlotsRef^;
-  latestSlotsRef :=
-    Some({
-      ...flushed,
-      flush: () => {
-        let prevValue = fst(flushPendingUpdatesInternal(default, prevSlots));
-        let newValue = makeNewValue(prevValue);
-        let shouldUpdate = shouldUpdate(prevSlots, newValue);
-        latestSlotsRef := Some(stabilized(newValue, flushed.next));
-        (newValue, flushPendingUpdates(nextSlots) || shouldUpdate);
-      },
-    });
-};
-
-let use = (~default, slots: t(_)) =>
-  switch (slots^) {
-  | None =>
-    let nextSlots = create();
-    let slot = stabilized(default, nextSlots);
-    slots := Some(slot);
+  let create: unit => t('slot, 'nextSlots);
+  let use:
+    (~default: elem('slot), t('slot, t('slot2, 'nextSlots))) =>
     (
-      (
-        slot.this,
-        makeSetter(
-          ~flushed=slot,
-          ~default,
-          ~latestSlotsRef=slots,
-          ~nextSlots,
-        ),
-      ),
-      nextSlots,
+      (elem('slot), (elem('slot) => elem('slot)) => unit),
+      t('slot2, 'nextSlots),
     );
-  | Some(slot) => (
-      (
-        slot.this,
-        makeSetter(
-          ~flushed=slot,
-          ~default,
-          ~latestSlotsRef=slots,
-          ~nextSlots=slot.next,
-        ),
-      ),
-      slot.next,
-    )
+
+  let fold:
+    ((opaqueElement, 'a, ~flush: unit => bool) => 'a, 'a, t('b, 'c)) => 'a;
+};
+
+module Make = (Elem: Elem) => {
+  type elem('a) = Elem.t('a);
+
+  type opaqueElement =
+    | Any(Elem.t('a)): opaqueElement;
+
+  type updates('a) = list('a => 'a);
+  type value('a) = ref(('a, updates('a)));
+
+  type slotInternal('slot, 'nextSlots) = {
+    fold:
+      'acc.
+      ((opaqueElement, 'acc, ~flush: unit => bool) => 'acc, 'acc) => 'acc,
+
+    currentValue: value(Elem.t('slot)),
+    enqueueUpdate: (Elem.t('slot) => Elem.t('slot)) => unit,
+    next: 'nextSlots,
   };
+
+  type t('slot, 'nextSlots) = ref(option(slotInternal('slot, 'nextSlots)));
+
+  type empty = t(unit, unit);
+
+  let create = () => ref(None);
+
+  let use = (~default, slots) =>
+    switch (slots^) {
+    | None =>
+      let nextSlots = create();
+      let currentValue = ref((default, []));
+      let enqueueUpdate = f => {
+        let (cv, t) = currentValue^;
+        currentValue := (cv, [f, ...t]);
+      };
+      let flush = () => {
+        let (prevValue, updates) = currentValue^;
+        let nextValue =
+          List.fold_right(
+            (update, latestValue) => update(latestValue),
+            updates,
+            prevValue,
+          );
+        currentValue := (nextValue, []);
+        nextValue === prevValue ? false : true;
+      };
+      slots :=
+        Some({
+          currentValue,
+          next: nextSlots,
+          enqueueUpdate,
+          fold: (f, initialValue) => {
+            let acc = f(Any(fst(currentValue^)), initialValue, ~flush);
+            switch (nextSlots^) {
+            | Some({fold}) => fold(f, acc)
+            | None => acc
+            };
+          },
+        });
+      ((default, enqueueUpdate), nextSlots);
+    | Some({currentValue, enqueueUpdate, next}) =>
+      let (currentValue, _) = currentValue^;
+      ((currentValue, enqueueUpdate), next);
+    };
+
+  let fold = (f, initialValue, slots) =>
+    switch (slots^) {
+    | Some({fold}) => fold(f, initialValue)
+    | None => initialValue
+    };
+};
+
+include Make({
+  type t('a) = 'a;
+});

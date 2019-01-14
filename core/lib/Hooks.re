@@ -26,3 +26,10 @@ let useRef = (initialState, slots) => {
 
   (state^, setter, nextSlots);
 };
+
+let flushPendingUpdates = slots =>
+  Slots.fold(
+    (_, shouldUpdate, ~flush) => flush() || shouldUpdate,
+    false,
+    slots,
+  );

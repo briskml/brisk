@@ -480,7 +480,7 @@ module Make = (OutputTree: OutputTree) => {
       'state 'action 'elementType 'outputNode.
       instance('state, 'action, 'elementType, 'outputNode) => bool
      =
-      instance => Slots.flushPendingUpdates(instance.slots);
+      instance => Hooks.flushPendingUpdates(instance.slots);
 
     type childElementUpdate = {
       updatedRenderedElement: renderedElement,

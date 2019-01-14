@@ -1,8 +1,24 @@
-type t('slot, 'nextSlots);
-let create: unit => t('slot, 'nextSlots);
-let use:
-  (~default: 'slot, t('slot, t('slot2, 'nextSlots))) =>
-  (('slot, ('slot => 'slot) => unit), t('slot2, 'nextSlots));
-let flushPendingUpdates: t('slot, 'nextSlots) => bool;
+module type Elem = {type t('a);};
 
-type empty = t(unit, unit);
+module type S = {
+  type elem('a);
+  type opaqueElement =
+    | Any(elem('a)): opaqueElement;
+  type t('slot, 'nextSlots);
+  type empty = t(unit, unit);
+
+  let create: unit => t('slot, 'nextSlots);
+  let use:
+    (~default: elem('slot), t('slot, t('slot2, 'nextSlots))) =>
+    (
+      (elem('slot), (elem('slot) => elem('slot)) => unit),
+      t('slot2, 'nextSlots),
+    );
+
+  let fold:
+    ((opaqueElement, 'a, ~flush: unit => bool) => 'a, 'a, t('b, 'c)) => 'a;
+};
+
+module Make: (Elem: Elem) => S with type elem('a) = Elem.t('a);
+
+include S with type elem('a) = 'a;

@@ -83,7 +83,7 @@ module Make:
       (
         ~useDynamicKey: bool=?,
         string,
-        Slots.t('slots, 'nextSlots) => syntheticElement
+        Hooks.t('slots, 'nextSlots) => syntheticElement
       ) =>
       component('slots, 'nextSlots, syntheticElement, outputNodeGroup);
 
@@ -91,7 +91,7 @@ module Make:
       (
         ~useDynamicKey: bool=?,
         string,
-        Slots.t('slots, 'nextSlots) => outputTreeElement('slots, 'nextSlots)
+        Hooks.t('slots, 'nextSlots) => outputTreeElement('slots, 'nextSlots)
       ) =>
       component(
         'slots,

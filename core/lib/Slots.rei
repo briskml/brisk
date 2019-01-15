@@ -9,19 +9,15 @@ module type S = {
 
   let create: unit => t('slot, 'nextSlots);
   let use:
-    (~default: elem('slot), t('slot, t('slot2, 'nextSlots))) =>
     (
-      (elem('slot), (elem('slot) => elem('slot)) => unit),
-      t('slot2, 'nextSlots),
-    );
+      ~default: unit => 'slot,
+      ~toElem: 'slot => elem('slot),
+      t('slot, t('slot2, 'nextSlots))
+    ) =>
+    ('slot, t('slot2, 'nextSlots));
 
   let fold:
-    (
-      (opaqueElement, 'acc, ~flush: unit => bool) => 'acc,
-      'acc,
-      t('slots, 'nextSlots)
-    ) =>
-    'acc;
+    ((opaqueElement, 'acc) => 'acc, 'acc, t('slots, 'nextSlots)) => 'acc;
 };
 
 module Make: (Elem: Elem) => S with type elem('a) = Elem.t('a);

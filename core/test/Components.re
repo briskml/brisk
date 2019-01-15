@@ -6,7 +6,7 @@ open TestReactCore;
 module Box = {
   let component = nativeComponent("Box");
   let make = (~title="ImABox", ~onClick as _=?, _children) =>
-    component((_: Slots.empty) =>
+    component((_: Hooks.empty) =>
       {
         children: listToElement([]),
         make: () => Implementation.{name: "Box", element: Text(title)},
@@ -22,7 +22,7 @@ module Box = {
 module Div = {
   let component = nativeComponent("Div");
   let make = children =>
-    component((_: Slots.empty) =>
+    component((_: Hooks.empty) =>
       {
         make: () => Implementation.{name: "Div", element: View},
         configureInstance: (~isFirstRender as _, d) => d,
@@ -41,9 +41,16 @@ module Text = {
   let component = nativeComponent("Text");
   let make = (~title="ImABox", _children) =>
     component(slots => {
-      let (prevTitle, setTitle, _slots: Slots.t(unit, unit)) =
-        Hooks.useRef(title, slots);
-      /* let _slots = Hooks.useEffect(() => setTitle(title), slots); */
+      let (prevTitle, setTitle, slots) = Hooks.ref(title, slots);
+      let _slots: Hooks.empty =
+        Hooks.effect(
+          Always,
+          () => {
+            setTitle(title);
+            None;
+          },
+          slots,
+        );
       {
         make: () => Implementation.{name: "Text", element: Text(title)},
         configureInstance: (~isFirstRender, t) => {
@@ -53,7 +60,6 @@ module Text = {
                 Implementation.ChangeText(prevTitle, title),
                 ...Implementation.mountLog^,
               ];
-            setTitle(title);
           };
           t;
         },
@@ -69,7 +75,7 @@ let stringToElement = string => <Text title=string />;
 module BoxWrapper = {
   let component = component("BoxWrapper");
   let make = (~title="ImABox", ~twoBoxes=false, ~onClick as _=?, _children) =>
-    component((_: Slots.t(unit, unit)) =>
+    component((_: Hooks.t(unit, unit)) =>
       twoBoxes ?
         <Div> <Box title /> <Box title /> </Div> : <Div> <Box title /> </Div>
     );
@@ -83,7 +89,7 @@ module BoxWrapper = {
 module BoxItemDynamic = {
   let component = component(~useDynamicKey=true, "BoxItemDynamic");
   let make = (~title="ImABox", _children: list(syntheticElement)) =>
-    component((_: Slots.t(unit, unit)) => stringToElement(title));
+    component((_: Hooks.empty) => stringToElement(title));
   let createElement = (~title, ~children, ()) =>
     element(make(~title, children));
 };
@@ -95,16 +101,15 @@ module BoxList = {
   let component = component("BoxList");
   let make = (~rAction, ~useDynamicKeys=false, _children) =>
     component(slots => {
-      let (state, dispatch, _slots: Slots.empty) =
-        Hooks.useReducer(
+      let (state, dispatch, _slots: Hooks.empty) =
+        Hooks.reducer(
           ~initialState=[],
           (action, state) =>
             switch (action) {
-            | Create(title) =>
-              [
+            | Create(title) => [
                 useDynamicKeys ? <BoxItemDynamic title /> : <Box title />,
                 ...state,
-              ];
+              ]
             | Reverse => List.rev(state)
             },
           slots,
@@ -120,7 +125,7 @@ module StatelessButton = {
   let component = component("StatelessButton");
   let make =
       (~initialClickCount as _="noclicks", ~test as _="default", _children) =>
-    component((_: Slots.empty) => <Div />);
+    component((_: Hooks.empty) => <Div />);
   let createElement = (~initialClickCount=?, ~test=?, ~children as _, ()) =>
     element(make(~initialClickCount?, ~test?, ()));
 };
@@ -128,7 +133,7 @@ module StatelessButton = {
 module ButtonWrapper = {
   let component = component("ButtonWrapper");
   let make = (~wrappedText="default", _children) =>
-    component((_: Slots.empty) =>
+    component((_: Hooks.empty) =>
       <StatelessButton
         initialClickCount={"wrapped:" ++ wrappedText ++ ":wrapped"}
       />
@@ -141,7 +146,7 @@ module ButtonWrapperWrapper = {
   let buttonWrapperJsx = <ButtonWrapper wrappedText="TestButtonUpdated!!!" />;
   let component = component("ButtonWrapperWrapper");
   let make = (~wrappedText="default", _children) =>
-    component((_: Slots.empty) =>
+    component((_: Hooks.empty) =>
       <Div> {stringToElement(wrappedText)} buttonWrapperJsx </Div>
     );
   let createElement = (~wrappedText=?, ~children as _, ()) =>
@@ -154,18 +159,17 @@ module UpdateAlternateClicks = {
   let component = component("UpdateAlternateClicks");
   let make = (~rAction, _children) =>
     component(slots => {
-      let (state, dispatch, _slots: Slots.empty) =
-        Hooks.useReducer(
+      let (state, dispatch, _slots: Hooks.empty) =
+        Hooks.reducer(
           ~initialState=ref(0),
-          (Click, state) => {
+          (Click, state) =>
             /* FIXME: make this pure */
             state^ mod 2 === 0 ?
               {
                 state := state^ + 1;
                 state;
               } :
-              ref(state^ + 1)
-          },
+              ref(state^ + 1),
           slots,
         );
       RemoteAction.subscribe(~send=dispatch, rAction);
@@ -181,12 +185,8 @@ module ToggleClicks = {
   let component = component("ToggleClicks");
   let make = (~rAction, _children) =>
     component(slots => {
-      let (state, dispatch, _slots: Slots.empty) =
-        Hooks.useReducer(
-          ~initialState=false,
-          (Click, state) => !state,
-          slots,
-        );
+      let (state, dispatch, _slots: Hooks.empty) =
+        Hooks.reducer(~initialState=false, (Click, state) => !state, slots);
       RemoteAction.subscribe(~send=dispatch, rAction);
       if (state) {
         <Div> <Text title="cell1" /> <Text title="cell2" /> </Div>;
@@ -200,7 +200,7 @@ module ToggleClicks = {
 
 module EmptyComponent = {
   let component = component("Box");
-  let make = _children => component((_: Slots.empty) => listToElement([]));
+  let make = _children => component((_: Hooks.empty) => listToElement([]));
   let createElement = (~key=?, ~children as _children, ()) =>
     element(~key?, make());
 };

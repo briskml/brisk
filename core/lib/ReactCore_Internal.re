@@ -48,7 +48,7 @@ module Make = (OutputTree: OutputTree) => {
   type outputNodeContainer = Lazy.t(internalOutputNode);
   type outputNodeGroup = list(outputNodeContainer);
   type instance('slots, 'nextSlots, 'elementType, 'outputNode) = {
-    slots: Slots.t('slots, 'nextSlots),
+    slots: Hooks.t('slots, 'nextSlots),
     component: component('slots, 'nextSlots, 'elementType, 'outputNode),
     element,
     instanceSubForest: instanceForest,
@@ -88,7 +88,7 @@ module Make = (OutputTree: OutputTree) => {
     elementType: elementType('slots, 'nextSlots, 'elementType, 'outputNode),
     handedOffInstance:
       ref(option(instance('slots, 'nextSlots, 'elementType, 'outputNode))),
-    render: Slots.t('slots, 'nextSlots) => 'elementType,
+    render: Hooks.t('slots, 'nextSlots) => 'elementType,
   }
   and opaqueInstance =
     | Instance(instance('slots, 'nextSlots, 'elementType, 'outputNode))
@@ -448,7 +448,7 @@ module Make = (OutputTree: OutputTree) => {
 
   module Instance = {
     let rec ofElement = (Element(component) as element): opaqueInstance => {
-      let slots = Slots.create();
+      let slots = Hooks.create();
       let subElements = component.render(slots);
       let instanceSubForest =
         (
@@ -483,7 +483,7 @@ module Make = (OutputTree: OutputTree) => {
       'state 'action 'elementType 'outputNode.
       instance('state, 'action, 'elementType, 'outputNode) => bool
      =
-      instance => Hooks.flushPendingUpdates(instance.slots);
+      instance => Hooks.flushPendingStateUpdates(instance.slots);
 
     type childElementUpdate = {
       updatedRenderedElement: renderedElement,
@@ -1135,7 +1135,8 @@ module Make = (OutputTree: OutputTree) => {
              0,
            ),
       );
-    let render = (nearestHostOutputNode: OutputTree.node, syntheticElement): t => {
+    let render =
+        (nearestHostOutputNode: OutputTree.node, syntheticElement): t => {
       let instanceForest = Instance.ofList(syntheticElement);
       {
         instanceForest,
@@ -1149,7 +1150,9 @@ module Make = (OutputTree: OutputTree) => {
                      {
                        let Node(child) | UpdatedNode(_, child) =
                          Lazy.force(child);
-                       OutputTree.insertNode(~parent, ~child, ~position);
+                       let parent =
+                         OutputTree.insertNode(~parent, ~child, ~position);
+                       parent;
                      },
                    ),
                    (0, nearestHostOutputNode),

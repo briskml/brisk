@@ -252,7 +252,7 @@ module BriskTextView = {
 module BriskImage = {
   type t = NSView.t;
 
-  type named = [
+  type system = [
     | `ImageActionTemplate
     | `ImageAddTemplate
     | `ImageAdvanced
@@ -314,9 +314,9 @@ module BriskImage = {
     | `ImageUserGuest
   ];
 
-  type source = [ | `file(string) | `named(string) | `bundle(string)];
+  type source = [ | `file(string) | `system(string) | `bundle(string)];
 
-  let stringOfNamed =
+  let stringOfSystem =
     fun
     | `ImageActionTemplate => "NSActionTemplate"
     | `ImageAddTemplate => "NSAddTemplate"
@@ -402,7 +402,7 @@ module BriskImage = {
     | Some(src) =>
       switch (src) {
       | `file(source) => setSourceFile(img, source)
-      | `named(named) => setSourceNamed(img, stringOfNamed(named))
+      | `system(system) => setSourceNamed(img, stringOfSystem(system))
       | `bundle(source) => setSourceNamed(img, source)
       }
     | None => ()

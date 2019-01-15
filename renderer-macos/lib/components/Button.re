@@ -2,7 +2,7 @@ open React;
 open Cocoa;
 open Layout;
 
-type attr = [ Layout.style | `color(Color.t) | `background(Color.t)];
+type attr = [ Layout.style | `Color(Color.t) | `Background(Color.t)];
 
 type style = list(attr);
 
@@ -21,10 +21,10 @@ let make =
       style
       |> List.iter(attr =>
            switch (attr) {
-           | `color(_) => ()
-           | `background(({r, g, b, a}: Color.t)) =>
+           | `Color(_) => ()
+           | `Background(({r, g, b, a}: Color.t)) =>
              NSView.setBackgroundColor(view, r, g, b, a)
-           | `border(({width, color}: Border.t)) =>
+           | `Border(({width, color}: Border.t)) =>
              if (!isUndefined(width)) {
                NSView.setBorderWidth(view, width);
              };

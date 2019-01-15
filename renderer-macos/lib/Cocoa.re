@@ -314,7 +314,7 @@ module BriskImage = {
     | `UserGuest
   ];
 
-  type source = [ | `file(string) | `system(system) | `bundle(string)];
+  type source = [ | `File(string) | `System(system) | `Bundle(string)];
 
   let stringOfSystem =
     fun
@@ -401,9 +401,9 @@ module BriskImage = {
     switch (source) {
     | Some(src) =>
       switch (src) {
-      | `file(source) => setSourceFile(img, source)
-      | `system(system) => setSourceNamed(img, stringOfSystem(system))
-      | `bundle(source) => setSourceNamed(img, source)
+      | `File(source) => setSourceFile(img, source)
+      | `System(system) => setSourceNamed(img, stringOfSystem(system))
+      | `Bundle(source) => setSourceNamed(img, source)
       }
     | None => ()
     };

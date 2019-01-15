@@ -35,16 +35,16 @@ module Component = {
       | None =>
         <View
           style=[
-            position(~top=0., ~left=0., ~right=0., ~bottom=0., `absolute),
+            position(~top=0., ~left=0., ~right=0., ~bottom=0., `Absolute),
             width(600.),
             height(400.),
             background(Color.hex("#f7f8f9")),
           ]>
           <Text
             style=[
-              font(~size=24., ~weight=`medium, ()),
+              font(~size=24., ~weight=`Medium, ()),
               kern(0.5),
-              align(`center),
+              align(`Center),
               color(Color.hex("#ffffff")),
               background(Color.hex("#263ac5")),
               padding(10.),
@@ -53,19 +53,19 @@ module Component = {
           />
           <View
             style=[
-              justifyContent(`center),
-              alignContent(`center),
+              justifyContent(`Center),
+              alignContent(`Center),
               background(Color.hex("#eeeeee")),
             ]>
             <Image
-              style=[margin4(~top=10., ()), alignSelf(`center)]
-              source={`bundle("reason")}
+              style=[margin4(~top=10., ()), alignSelf(`Center)]
+              source={`Bundle("reason")}
             />
             <Text
               style=[
                 font(~size=18., ()),
-                align(`center),
-                alignSelf(`center),
+                align(`Center),
+                alignSelf(`Center),
                 width(200.),
                 cornerRadius(10.),
                 color(Color.hex("#ffffff")),

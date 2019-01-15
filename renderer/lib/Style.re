@@ -9,7 +9,7 @@ module Create = (Encoding: Flex.Spec.Encoding) => {
   };
 
   module Position = {
-    type position = [ | `absolute | `relative];
+    type position = [ | `Absolute | `Relative];
 
     type t = {
       position,
@@ -33,21 +33,21 @@ module Create = (Encoding: Flex.Spec.Encoding) => {
           bottom,
         },
       };
-      `position(pos);
+      `Position(pos);
     };
   };
 
   module Font = {
     type weight = [
-      | `ultraLight
-      | `thin
-      | `light
-      | `regular
-      | `medium
-      | `semibold
-      | `bold
-      | `heavy
-      | `black
+      | `UltraLight
+      | `Thin
+      | `Light
+      | `Regular
+      | `Medium
+      | `Semibold
+      | `Bold
+      | `Heavy
+      | `Black
     ];
 
     type t = {
@@ -56,29 +56,29 @@ module Create = (Encoding: Flex.Spec.Encoding) => {
       weight,
     };
 
-    let make = (~family="", ~size=cssUndefined, ~weight=`regular, ()) => {
+    let make = (~family="", ~size=cssUndefined, ~weight=`Regular, ()) => {
       let font: t = {family, size, weight};
-      `font(font);
+      `Font(font);
     };
   };
 
   module Alignment = {
-    type t = [ | `left | `right | `center | `justified | `natural];
+    type t = [ | `Left | `Right | `Center | `Justified | `Natural];
 
-    let make = (alignment: t) => `align(alignment);
+    let make = (alignment: t) => `Align(alignment);
   };
 
   module LineBreak = {
     type t = [
-      | `wordWrap
-      | `charWrap
-      | `clip
-      | `truncateHead
-      | `truncateTale
-      | `truncateMiddle
+      | `WordWrap
+      | `CharWrap
+      | `Clip
+      | `TruncateHead
+      | `TruncateTale
+      | `TruncateMiddle
     ];
 
-    let make = (mode: t) => `lineBreak(mode);
+    let make = (mode: t) => `LineBreak(mode);
   };
 
   module Border = {
@@ -89,7 +89,7 @@ module Create = (Encoding: Flex.Spec.Encoding) => {
 
     let make = (~width=cssUndefined, ~color=Color0.transparent, ()) => {
       let border: t = {width, color};
-      `border(border);
+      `Border(border);
     };
 
     let width = (width: Encoding.scalar) => make(~width, ());
@@ -99,22 +99,22 @@ module Create = (Encoding: Flex.Spec.Encoding) => {
   let position = Position.make;
   let border = Border.make;
   let font = Font.make;
-  let kern = f => `kern(f);
+  let kern = f => `Kern(f);
   let align = Alignment.make;
   let lineBreak = LineBreak.make;
-  let lineSpacing = f => `lineSpacing(f);
-  let cornerRadius = f => `cornerRadius(f);
+  let lineSpacing = f => `LineSpacing(f);
+  let cornerRadius = f => `CornerRadius(f);
 
-  let width = (w: scalar) => `width(w);
-  let height = (h: scalar) => `height(h);
+  let width = (w: scalar) => `Width(w);
+  let height = (h: scalar) => `Height(h);
 
-  let color = (color: Color0.t) => `color(color);
-  let background = (color: Color0.t) => `background(color);
+  let color = (color: Color0.t) => `Color(color);
+  let background = (color: Color0.t) => `Background(color);
 
   let padding = (p: scalar) =>
-    `padding({left: p, top: p, right: p, bottom: p});
+    `Padding({left: p, top: p, right: p, bottom: p});
   let padding2 = (~h=cssUndefined, ~v=cssUndefined, ()) =>
-    `padding({left: h, top: v, right: h, bottom: v});
+    `Padding({left: h, top: v, right: h, bottom: v});
   let padding4 =
       (
         ~left=cssUndefined,
@@ -123,13 +123,13 @@ module Create = (Encoding: Flex.Spec.Encoding) => {
         ~bottom=cssUndefined,
         (),
       ) =>
-    `padding({left, top, right, bottom});
+    `Padding({left, top, right, bottom});
 
   let margin = (m: scalar) =>
-    `margin({left: m, top: m, right: m, bottom: m});
+    `Margin({left: m, top: m, right: m, bottom: m});
 
   let margin2 = (~h=cssUndefined, ~v=cssUndefined, ()) =>
-    `margin({left: h, top: v, right: h, bottom: v});
+    `Margin({left: h, top: v, right: h, bottom: v});
   let margin4 =
       (
         ~left=cssUndefined,
@@ -138,5 +138,5 @@ module Create = (Encoding: Flex.Spec.Encoding) => {
         ~bottom=cssUndefined,
         (),
       ) =>
-    `margin({left, top, right, bottom});
+    `Margin({left, top, right, bottom});
 };

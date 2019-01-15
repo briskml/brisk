@@ -51,8 +51,8 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
     | `width(scalar)
     | `border(Border.t)
     | `height(scalar)
-    | `padding(scalar, scalar, scalar, scalar)
-    | `margin(scalar, scalar, scalar, scalar)
+    | `padding(inset)
+    | `margin(inset)
   ];
 
   let isUndefined = Encoding.isUndefined;
@@ -61,12 +61,13 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
 
   let applyCommonStyle = (style: cssStyle, attr: [> style]) =>
     switch (attr) {
-    | `position(({position, left, top, right, bottom}: Position.t)) =>
+    | `position(({position, inset}: Position.t)) =>
       let positionType =
         switch (position) {
         | `absolute => Absolute
         | `relative => Relative
         };
+      let {left, top, right, bottom}: inset = inset;
 
       {
         ...style,
@@ -87,22 +88,26 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
         ...style,
         border: !isUndefined(width) ? int_of_scalar(width) : style.width,
       }
-    | `padding(l, t, r, b) => {
+    | `padding({left, top, right, bottom}) => {
         ...style,
-        paddingLeft: !isUndefined(l) ? int_of_scalar(l) : style.paddingLeft,
-        paddingTop: !isUndefined(t) ? int_of_scalar(t) : style.paddingTop,
+        paddingLeft:
+          !isUndefined(left) ? int_of_scalar(left) : style.paddingLeft,
+        paddingTop:
+          !isUndefined(top) ? int_of_scalar(top) : style.paddingTop,
         paddingRight:
-          !isUndefined(r) ? int_of_scalar(r) : style.paddingRight,
+          !isUndefined(right) ? int_of_scalar(right) : style.paddingRight,
         paddingBottom:
-          !isUndefined(b) ? int_of_scalar(b) : style.paddingBottom,
+          !isUndefined(bottom) ? int_of_scalar(bottom) : style.paddingBottom,
       }
-    | `margin(l, t, r, b) => {
+    | `margin({left, top, right, bottom}) => {
         ...style,
-        marginLeft: !isUndefined(l) ? int_of_scalar(l) : style.marginLeft,
-        marginTop: !isUndefined(t) ? int_of_scalar(t) : style.marginTop,
-        marginRight: !isUndefined(r) ? int_of_scalar(r) : style.marginRight,
+        marginLeft:
+          !isUndefined(left) ? int_of_scalar(left) : style.marginLeft,
+        marginTop: !isUndefined(top) ? int_of_scalar(top) : style.marginTop,
+        marginRight:
+          !isUndefined(right) ? int_of_scalar(right) : style.marginRight,
         marginBottom:
-          !isUndefined(b) ? int_of_scalar(b) : style.marginBottom,
+          !isUndefined(bottom) ? int_of_scalar(bottom) : style.marginBottom,
       }
     | _ => style
     };

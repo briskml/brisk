@@ -11,10 +11,6 @@
  (install_c_headers Cocoa_stubs
                     BriskApplicationDelegate
                     BriskWindowDelegate
-                    BriskButton
-                    BriskTextView
-                    NSView_stubs
-                    NSMenu_stubs
                     )
  (c_names Cocoa_stubs
           BriskApplicationDelegate

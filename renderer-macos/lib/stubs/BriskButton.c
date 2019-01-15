@@ -1,8 +1,12 @@
-#import "BriskButton.h"
-#define CAML_NAME_SPACE
-#import <caml/alloc.h>
-#import <caml/callback.h>
-#import <caml/memory.h>
+#import "Cocoa_stubs.h"
+
+@interface BriskButton : NSButton
+
+@property(nonatomic, assign) value _callback;
+
+- (void)setCallback:(value)action;
+
+@end
 
 @implementation BriskButton
 

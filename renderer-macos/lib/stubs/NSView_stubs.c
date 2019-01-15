@@ -1,8 +1,7 @@
-#import "NSView_stubs.h"
-#import <caml/alloc.h>
-#import <caml/callback.h>
-#import <caml/memory.h>
-#import <caml/mlvalues.h>
+#import "Cocoa_stubs.h"
+
+#define Val_View(v) ((value)(v))
+#define View_val(v) ((__bridge NSView *)(value)(v))
 
 NSView *ml_NSView_make() {
   NSView *view = [NSView new];

@@ -1,11 +1,6 @@
-#define CAML_NAME_SPACE
 #import "Cocoa_stubs.h"
 #import "BriskApplicationDelegate.h"
 #import "BriskWindowDelegate.h"
-#import <caml/alloc.h>
-#import <caml/callback.h>
-#import <caml/memory.h>
-#import <caml/mlvalues.h>
 #import <caml/threads.h>
 
 dispatch_semaphore_t caml_thread_sema;

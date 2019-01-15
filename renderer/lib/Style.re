@@ -1,15 +1,19 @@
 module Create = (Encoding: Flex.Spec.Encoding) => {
   open Encoding;
 
+  type inset = {
+    left: scalar,
+    top: scalar,
+    right: scalar,
+    bottom: scalar,
+  };
+
   module Position = {
     type position = [ | `absolute | `relative];
 
     type t = {
       position,
-      left: scalar,
-      top: scalar,
-      right: scalar,
-      bottom: scalar,
+      inset,
     };
 
     let make =
@@ -20,7 +24,15 @@ module Create = (Encoding: Flex.Spec.Encoding) => {
           ~bottom=cssUndefined,
           position,
         ) => {
-      let pos: t = {position, left, top, right, bottom};
+      let pos: t = {
+        position,
+        inset: {
+          left,
+          top,
+          right,
+          bottom,
+        },
+      };
       `position(pos);
     };
   };
@@ -99,9 +111,10 @@ module Create = (Encoding: Flex.Spec.Encoding) => {
   let color = (color: Color0.t) => `color(color);
   let background = (color: Color0.t) => `background(color);
 
-  let padding = (p: scalar) => `padding((p, p, p, p));
+  let padding = (p: scalar) =>
+    `padding({left: p, top: p, right: p, bottom: p});
   let padding2 = (~h=cssUndefined, ~v=cssUndefined, ()) =>
-    `padding((h, v, h, v));
+    `padding({left: h, top: v, right: h, bottom: v});
   let padding4 =
       (
         ~left=cssUndefined,
@@ -110,12 +123,13 @@ module Create = (Encoding: Flex.Spec.Encoding) => {
         ~bottom=cssUndefined,
         (),
       ) =>
-    `padding((left, top, right, bottom));
+    `padding({left, top, right, bottom});
 
-  let margin = (m: scalar) => `margin((m, m, m, m));
+  let margin = (m: scalar) =>
+    `margin({left: m, top: m, right: m, bottom: m});
 
   let margin2 = (~h=cssUndefined, ~v=cssUndefined, ()) =>
-    `margin((h, v, h, v));
+    `margin({left: h, top: v, right: h, bottom: v});
   let margin4 =
       (
         ~left=cssUndefined,
@@ -124,5 +138,5 @@ module Create = (Encoding: Flex.Spec.Encoding) => {
         ~bottom=cssUndefined,
         (),
       ) =>
-    `margin((left, top, right, bottom));
+    `margin({left, top, right, bottom});
 };

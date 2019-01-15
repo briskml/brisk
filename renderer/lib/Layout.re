@@ -51,36 +51,32 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
     | `width(scalar)
     | `border(Border.t)
     | `height(scalar)
-    | `padding(scalar, scalar, scalar, scalar)
-    | `margin(scalar, scalar, scalar, scalar)
+    | `padding(inset)
+    | `margin(inset)
   ];
 
   let isUndefined = Encoding.isUndefined;
 
   let int_of_scalar = s => s |> Encoding.scalarToFloat |> int_of_float;
 
-  let applyCommonStyle = (style, attr: [> style]) =>
+  let applyCommonStyle = (style: cssStyle, attr: [> style]) =>
     switch (attr) {
-    | `position(({position, left, top, right, bottom}: Position.t)) =>
+    | `position(({position, inset}: Position.t)) =>
       let positionType =
         switch (position) {
         | `absolute => Absolute
         | `relative => Relative
         };
+      let {left, top, right, bottom}: inset = inset;
 
-      let style = {...style, positionType};
-
-      let style =
-        !isUndefined(left) ? {...style, left: int_of_scalar(left)} : style;
-      let style =
-        !isUndefined(top) ? {...style, top: int_of_scalar(top)} : style;
-      let style =
-        !isUndefined(right) ?
-          {...style, right: int_of_scalar(right)} : style;
-      let style =
-        !isUndefined(bottom) ?
-          {...style, bottom: int_of_scalar(bottom)} : style;
-      style;
+      {
+        ...style,
+        positionType,
+        left: !isUndefined(left) ? int_of_scalar(left) : style.left,
+        top: !isUndefined(top) ? int_of_scalar(top) : style.top,
+        right: !isUndefined(right) ? int_of_scalar(right) : style.right,
+        bottom: !isUndefined(bottom) ? int_of_scalar(bottom) : style.bottom,
+      };
     | `flexDirection(flexDirection) => {...style, flexDirection}
     | `justifyContent(justifyContent) => {...style, justifyContent}
     | `alignContent(alignContent) => {...style, alignContent}
@@ -88,35 +84,35 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
     | `alignSelf(alignSelf) => {...style, alignSelf}
     | `width(w) => {...style, width: int_of_scalar(w)}
     | `height(h) => {...style, height: int_of_scalar(h)}
-    | `border(({width, _}: Border.t)) =>
-      !isUndefined(width) ? {...style, border: int_of_scalar(width)} : style
-    | `padding(l, t, r, b) =>
-      let style =
-        !isUndefined(l) ? {...style, paddingLeft: int_of_scalar(l)} : style;
-      let style =
-        !isUndefined(t) ? {...style, paddingTop: int_of_scalar(t)} : style;
-      let style =
-        !isUndefined(r) ?
-          {...style, paddingRight: int_of_scalar(r)} : style;
-      let style =
-        !isUndefined(b) ?
-          {...style, paddingBottom: int_of_scalar(b)} : style;
-      style;
-    | `margin(l, t, r, b) =>
-      let style =
-        !isUndefined(l) ? {...style, marginLeft: int_of_scalar(l)} : style;
-      let style =
-        !isUndefined(t) ? {...style, marginTop: int_of_scalar(t)} : style;
-      let style =
-        !isUndefined(r) ? {...style, marginRight: int_of_scalar(r)} : style;
-      let style =
-        !isUndefined(b) ?
-          {...style, marginBottom: int_of_scalar(b)} : style;
-      style;
+    | `border(({width, _}: Border.t)) => {
+        ...style,
+        border: !isUndefined(width) ? int_of_scalar(width) : style.width,
+      }
+    | `padding({left, top, right, bottom}) => {
+        ...style,
+        paddingLeft:
+          !isUndefined(left) ? int_of_scalar(left) : style.paddingLeft,
+        paddingTop:
+          !isUndefined(top) ? int_of_scalar(top) : style.paddingTop,
+        paddingRight:
+          !isUndefined(right) ? int_of_scalar(right) : style.paddingRight,
+        paddingBottom:
+          !isUndefined(bottom) ? int_of_scalar(bottom) : style.paddingBottom,
+      }
+    | `margin({left, top, right, bottom}) => {
+        ...style,
+        marginLeft:
+          !isUndefined(left) ? int_of_scalar(left) : style.marginLeft,
+        marginTop: !isUndefined(top) ? int_of_scalar(top) : style.marginTop,
+        marginRight:
+          !isUndefined(right) ? int_of_scalar(right) : style.marginRight,
+        marginBottom:
+          !isUndefined(bottom) ? int_of_scalar(bottom) : style.marginBottom,
+      }
     | _ => style
     };
 
-  let makeLayoutNode = (~measure=?, ~style, hostView: Node.context) => {
+  let makeLayoutNode = (~measure=?, ~style=[], hostView: Node.context) => {
     let accum = {
       ...LayoutSupport.defaultStyle,
       direction: LayoutSupport.defaultStyle.direction,

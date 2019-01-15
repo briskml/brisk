@@ -106,7 +106,7 @@ CAMLprim value ml_BriskTextView_setFont(BriskTextView *txt, value fontName_v,
 void ml_BriskTextView_setColor(BriskTextView *txt, double red, double green,
                                double blue, double alpha) {
   txt.attributedProps[NSForegroundColorAttributeName] =
-      ml_NSColor_make(red, green, blue, alpha);
+      [NSColor colorWithRed:red green:green blue:blue alpha:alpha];
 
   ml_BriskTextView_applyAttributes(txt);
 }
@@ -125,7 +125,8 @@ CAMLprim value ml_BriskTextView_setColor_bc(BriskTextView *txt, value red_v,
 void ml_BriskTextView_setBackgroundColor(BriskTextView *txt, double red,
                                          double green, double blue,
                                          double alpha) {
-  [txt setBackgroundColor:ml_NSColor_make(red, green, blue, alpha)];
+  NSColor *color = [NSColor colorWithRed:red green:green blue:blue alpha:alpha];
+  [txt setBackgroundColor:color];
 }
 
 CAMLprim value ml_BriskTextView_setBackgroundColor_bc(BriskTextView *txt,

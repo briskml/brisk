@@ -8,7 +8,7 @@
   "dependencies": {
     "@brisk/core": "*",
     "@brisk/renderer": "*",
-    "@esy-ocaml/reason": "^3.3.7",
+    "@esy-ocaml/reason": ">=3.4.0",
     "@opam/dune": "^1.6.2",
     "@opam/osx-cf": "*",
     "ocaml": "~4.7.1000"

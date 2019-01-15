@@ -46,7 +46,7 @@ CAMLprim value ml_NSView_setBorderWidth_bc(NSView *view, value width_v) {
 
 void ml_NSView_setBorderColor(NSView *view, double red, double green,
                               double blue, double alpha) {
-  NSColor *color = ml_NSColor_make(red, green, blue, alpha);
+  NSColor *color = [NSColor colorWithRed:red green:green blue:blue alpha:alpha];
 
   [view setWantsLayer:YES];
   [view.layer setBorderColor:[color CGColor]];
@@ -65,7 +65,7 @@ CAMLprim value ml_NSView_setBorderColor_bc(NSView *view, value red_v,
 
 void ml_NSView_setBackgroundColor(NSView *view, double red, double green,
                                   double blue, double alpha) {
-  NSColor *color = ml_NSColor_make(red, green, blue, alpha);
+  NSColor *color = [NSColor colorWithRed:red green:green blue:blue alpha:alpha];
 
   [view setWantsLayer:YES];
   [view.layer setBackgroundColor:[color CGColor]];

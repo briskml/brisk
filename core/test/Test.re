@@ -174,7 +174,7 @@ let core = [
              ],
            );
 
-      RemoteAction.act(~action=Components.ToggleClicks.Click, rAction);
+      RemoteAction.send(~action=Components.ToggleClicks.Click, rAction);
       /* TODO: Bring back! */
       /* let cell1 = text("cell1"); */
       /* let cell2 = text("cell2"); */

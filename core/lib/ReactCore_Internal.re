@@ -63,7 +63,8 @@ module Make = (OutputTree: OutputTree) => {
     | Nested(list(syntheticElement))
   and outputTreeElement('slots, 'nextSlots) = {
     make: unit => OutputTree.node,
-    configureInstance: (~isFirstRender: bool, OutputTree.node) => OutputTree.node,
+    configureInstance:
+      (~isFirstRender: bool, OutputTree.node) => OutputTree.node,
     children: syntheticElement,
   }
   and elementType('slots, 'nextSlots, 'elementType, 'outputNode) =
@@ -222,7 +223,9 @@ module Make = (OutputTree: OutputTree) => {
         switch (elementType) {
         | Host =>
           lazy {
-            let instance = subElements.make() |> subElements.configureInstance(~isFirstRender=true);
+            let instance =
+              subElements.make()
+              |> subElements.configureInstance(~isFirstRender=true);
             Node(
               List.fold_left(
                 ((position, parent), child) => (
@@ -568,11 +571,13 @@ module Make = (OutputTree: OutputTree) => {
           Element(nextComponent) as nextElement,
         )
         : (outputNodeContainer, opaqueInstance) => {
-      let stateChanged = executePendingStateUpdates(instance);
+      let stateChanged =
+        updateContext.shouldExecutePendingUpdates ?
+          executePendingStateUpdates(instance) : false;
 
       let bailOut = !stateChanged && instance.element === nextElement;
 
-      if (bailOut) {
+      if (bailOut && !updateContext.shouldExecutePendingUpdates) {
         (updateContext.nearestHostOutputNode, originalOpaqueInstance);
       } else {
         let {component} = instance;
@@ -662,10 +667,13 @@ module Make = (OutputTree: OutputTree) => {
           element: nextElement,
         };
 
+        let shouldRerender = stateChanged || nextElement !== instance.element;
+
         let nextSubElements =
-          nextComponent.render(updatedInstanceWithNewElement.slots);
+          shouldRerender ?
+            nextComponent.render(updatedInstanceWithNewElement.slots) :
+            instance.subElements;
         let {subElements, instanceSubForest} = updatedInstanceWithNewElement;
-        /* TODO: Invoke didUpdate. */
         let (nearestHostOutputNode, updatedInstanceWithNewSubtree) =
           switch (nextComponent.elementType) {
           | React =>
@@ -688,23 +696,31 @@ module Make = (OutputTree: OutputTree) => {
               ) :
               (nearestHostOutputNode, updatedInstanceWithNewElement);
           | Host =>
-            let instanceWithNewHostView = {
-              ...updatedInstanceWithNewElement,
-              hostInstance:
-                lazy {
-                  let instance =
-                    Lazy.force(updatedInstanceWithNewElement.hostInstance);
-                  let Node(beforeUpdate) | UpdatedNode(_, beforeUpdate) = instance;
-                  let afterUpdate =
-                    nextSubElements.configureInstance(~isFirstRender=false, beforeUpdate);
-                  afterUpdate === beforeUpdate ?
-                    instance : UpdatedNode(beforeUpdate, afterUpdate);
-                },
-            };
+            let instanceWithNewHostView =
+              shouldRerender ?
+                {
+                  ...updatedInstanceWithNewElement,
+                  hostInstance:
+                    lazy {
+                      let instance =
+                        Lazy.force(
+                          updatedInstanceWithNewElement.hostInstance,
+                        );
+                      let Node(beforeUpdate) | UpdatedNode(_, beforeUpdate) = instance;
+                      let afterUpdate =
+                        nextSubElements.configureInstance(
+                          ~isFirstRender=false,
+                          beforeUpdate,
+                        );
+                      afterUpdate === beforeUpdate ?
+                        instance : UpdatedNode(beforeUpdate, afterUpdate);
+                    },
+                } :
+                updatedInstanceWithNewElement;
 
             let {
               nearestHostOutputNode: hostInstance,
-              instanceForest: nextInstanceSubtree,
+              instanceForest: nextInstanceSubForest,
             } =
               updateInstanceSubtree(
                 ~updateContext={
@@ -719,13 +735,13 @@ module Make = (OutputTree: OutputTree) => {
                 ~nextReactElement=nextSubElements.children,
                 (),
               );
-            if (nextInstanceSubtree
+            if (nextInstanceSubForest
                 !== instanceWithNewHostView.instanceSubForest) {
               (
                 updateContext.nearestHostOutputNode,
                 {
                   ...instanceWithNewHostView,
-                  instanceSubForest: nextInstanceSubtree,
+                  instanceSubForest: nextInstanceSubForest,
                   subElements: nextSubElements,
                   hostInstance,
                 }:

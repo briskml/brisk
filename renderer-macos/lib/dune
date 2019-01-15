@@ -9,7 +9,6 @@
  (synopsis "Cocoa renderer and bindings")
  (libraries brisk-core brisk-renderer)
  (install_c_headers Cocoa_stubs
-                    Cocoa_helpers_stubs
                     BriskApplicationDelegate
                     BriskWindowDelegate
                     BriskButton
@@ -18,7 +17,6 @@
                     NSMenu_stubs
                     )
  (c_names Cocoa_stubs
-          Cocoa_helpers_stubs
           BriskApplicationDelegate
           BriskWindowDelegate
           BriskButton

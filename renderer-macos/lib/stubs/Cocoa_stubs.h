@@ -1,4 +1,3 @@
-#import "Cocoa_helpers_stubs.h"
 #import <Cocoa/Cocoa.h>
 
 // Enter OCaml runtime and obtain the semaphore

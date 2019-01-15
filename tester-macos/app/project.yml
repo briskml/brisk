@@ -14,6 +14,7 @@ targets:
     type: application
     platform: macOS
     sources:
+      - Resources
       - Sources
     settings:
       # DEBUG_INFORMATION_FORMAT: "dwarf-with-dsym"

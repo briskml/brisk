@@ -57,6 +57,10 @@ module Component = {
               alignContent(`center),
               background(Color.hex("#eeeeee")),
             ]>
+            <Image
+              style=[margin4(~top=10., ()), alignSelf(`center)]
+              source={`bundle("reason")}
+            />
             <Text
               style=[
                 font(~size=18., ()),
@@ -117,17 +121,12 @@ let () = {
 
     let root = {
       let view = NSView.make();
-      {
-        React.NativeCocoa.view,
-        layoutNode:
-          LayoutSupport.(
-            createNode(
-              ~withChildren=[||],
-              ~andStyle={...defaultStyle, width: 680, height: 468},
-              view,
-            )
-          ),
-      };
+      let layoutNode =
+        makeLayoutNode(
+          ~style=[width(window#contentWidth), height(window#contentHeight)],
+          view,
+        );
+      {React.NativeCocoa.view, layoutNode};
     };
 
     window#center;

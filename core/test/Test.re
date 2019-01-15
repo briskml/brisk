@@ -175,23 +175,24 @@ let core = [
            );
 
       RemoteAction.send(~action=Components.ToggleClicks.Click, rAction);
-      /* TODO: Bring back! */
-      /* let cell1 = text("cell1"); */
-      /* let cell2 = text("cell2"); */
+      let cell1 = text("cell1");
+      let cell2 = text("cell2");
 
       testState
       |> flushPendingUpdates
       |> executeSideEffects
+      /* BUG:
+       * This expectation fails when there is a top-level `<Div>` element
+       */
       |> expect(
            ~label="It replaces text(well) with text(cell1) and text(cell2)",
            [
              Implementation.BeginChanges,
-             /* TODO: Fix - we should see these updates occur! */
-             /* UnmountChild(div, well), */
-             /* ChangeText("cell1", "cell1"), */
-             /* MountChild(div, cell1, 0), */
-             /* ChangeText("cell2", "cell2"), */
-             /* MountChild(div, cell2, 1), */
+             UnmountChild(div, well),
+             ChangeText("cell1", "cell1"),
+             MountChild(div, cell1, 0),
+             ChangeText("cell2", "cell2"),
+             MountChild(div, cell2, 1),
              CommitChanges,
            ],
          )

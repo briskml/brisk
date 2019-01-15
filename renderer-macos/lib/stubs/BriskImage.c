@@ -1,9 +1,17 @@
-#import "BriskImage.h"
+#import "Cocoa_stubs.h"
 #define CAML_NAME_SPACE
 #import <caml/alloc.h>
 #import <caml/callback.h>
 #import <caml/memory.h>
 #import <caml/mlvalues.h>
+
+@interface BriskImage : NSView
+
+@property(nonatomic, assign) NSImage *src;
+
+- (void)setSource:(NSImage *)source;
+
+@end
 
 @implementation BriskImage
 

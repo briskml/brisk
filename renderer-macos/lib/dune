@@ -13,7 +13,6 @@
                     BriskWindowDelegate
                     BriskButton
                     BriskTextView
-                    BriskImage
                     NSView_stubs
                     NSMenu_stubs
                     )

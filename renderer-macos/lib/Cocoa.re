@@ -249,6 +249,169 @@ module BriskTextView = {
   };
 };
 
+module BriskImage = {
+  type t = NSView.t;
+
+  type named = [
+    | `ImageActionTemplate
+    | `ImageAddTemplate
+    | `ImageAdvanced
+    | `ImageApplicationIcon
+    | `ImageBluetoothTemplate
+    | `ImageBonjour
+    | `ImageBookmarksTemplate
+    | `ImageCaution
+    | `ImageColorPanel
+    | `ImageColumnViewTemplate
+    | `ImageComputer
+    | `ImageEnterFullScreenTemplate
+    | `ImageEveryone
+    | `ImageExitFullScreenTemplate
+    | `ImageFlowViewTemplate
+    | `ImageFolder
+    | `ImageFolderBurnable
+    | `ImageFolderSmart
+    | `ImageFollowLinkFreestandingTemplate
+    | `ImageFontPanel
+    | `ImageGoLeftTemplate
+    | `ImageGoRightTemplate
+    | `ImageHomeTemplate
+    | `ImageIChatTheaterTemplate
+    | `ImageIconViewTemplate
+    | `ImageInfo
+    | `ImageInvalidDataFreestandingTemplate
+    | `ImageLeftFacingTriangleTemplate
+    | `ImageListViewTemplate
+    | `ImageLockLockedTemplate
+    | `ImageLockUnlockedTemplate
+    | `ImageMenuMixedStateTemplate
+    | `ImageMenuOnStateTemplate
+    | `ImageMobileMe
+    | `ImageMultipleDocuments
+    | `ImageNetwork
+    | `ImagePathTemplate
+    | `ImagePreferencesGeneral
+    | `ImageQuickLookTemplate
+    | `ImageRefreshFreestandingTemplate
+    | `ImageRefreshTemplate
+    | `ImageRemoveTemplate
+    | `ImageRevealFreestandingTemplate
+    | `ImageRightFacingTriangleTemplate
+    | `ImageShareTemplate
+    | `ImageSlideshowTemplate
+    | `ImageSmartBadgeTemplate
+    | `ImageStatusAvailable
+    | `ImageStatusNone
+    | `ImageStatusPartiallyAvailable
+    | `ImageStatusUnavailable
+    | `ImageStopProgressFreestandingTemplate
+    | `ImageStopProgressTemplate
+    | `ImageTrashEmpty
+    | `ImageTrashFull
+    | `ImageUser
+    | `ImageUserAccounts
+    | `ImageUserGroup
+    | `ImageUserGuest
+  ];
+
+  type source = [ | `file(string) | `named(string) | `bundle(string)];
+
+  let stringOfNamed =
+    fun
+    | `ImageActionTemplate => "NSActionTemplate"
+    | `ImageAddTemplate => "NSAddTemplate"
+    | `ImageAdvanced => "NSAdvanced"
+    | `ImageApplicationIcon => "NSApplicationIcon"
+    | `ImageBluetoothTemplate => "NSBluetoothTemplate"
+    | `ImageBonjour => "NSBonjour"
+    | `ImageBookmarksTemplate => "NSBookmarksTemplate"
+    | `ImageCaution => "NSCaution"
+    | `ImageColorPanel => "NSColorPanel"
+    | `ImageColumnViewTemplate => "NSColumnViewTemplate"
+    | `ImageComputer => "NSComputer"
+    | `ImageEnterFullScreenTemplate => "NSEnterFullScreenTemplate"
+    | `ImageEveryone => "NSEveryone"
+    | `ImageExitFullScreenTemplate => "NSExitFullScreenTemplate"
+    | `ImageFlowViewTemplate => "NSFlowViewTemplate"
+    | `ImageFolder => "NSFolder"
+    | `ImageFolderBurnable => "NSFolderBurnable"
+    | `ImageFolderSmart => "NSFolderSmart"
+    | `ImageFollowLinkFreestandingTemplate => "NSFollowLinkFreestandingTemplate"
+    | `ImageFontPanel => "NSFontPanel"
+    | `ImageGoLeftTemplate => "NSGoLeftTemplate"
+    | `ImageGoRightTemplate => "NSGoRightTemplate"
+    | `ImageHomeTemplate => "NSHomeTemplate"
+    | `ImageIChatTheaterTemplate => "NSIChatTheaterTemplate"
+    | `ImageIconViewTemplate => "NSIconViewTemplate"
+    | `ImageInfo => "NSInfo"
+    | `ImageInvalidDataFreestandingTemplate => "NSInvalidDataFreestandingTemplate"
+    | `ImageLeftFacingTriangleTemplate => "NSLeftFacingTriangleTemplate"
+    | `ImageListViewTemplate => "NSListViewTemplate"
+    | `ImageLockLockedTemplate => "NSLockLockedTemplate"
+    | `ImageLockUnlockedTemplate => "NSLockUnlockedTemplate"
+    | `ImageMenuMixedStateTemplate => "NSMenuMixedStateTemplate"
+    | `ImageMenuOnStateTemplate => "NSMenuOnStateTemplate"
+    | `ImageMobileMe => "NSMobileMe"
+    | `ImageMultipleDocuments => "NSMultipleDocuments"
+    | `ImageNetwork => "NSNetwork"
+    | `ImagePathTemplate => "NSPathTemplate"
+    | `ImagePreferencesGeneral => "NSPreferencesGeneral"
+    | `ImageQuickLookTemplate => "NSQuickLookTemplate"
+    | `ImageRefreshFreestandingTemplate => "NSRefreshFreestandingTemplate"
+    | `ImageRefreshTemplate => "NSRefreshTemplate"
+    | `ImageRemoveTemplate => "NSRemoveTemplate"
+    | `ImageRevealFreestandingTemplate => "NSRevealFreestandingTemplate"
+    | `ImageRightFacingTriangleTemplate => "NSRightFacingTriangleTemplate"
+    | `ImageShareTemplate => "NSShareTemplate"
+    | `ImageSlideshowTemplate => "NSSlideshowTemplate"
+    | `ImageSmartBadgeTemplate => "NSSmartBadgeTemplate"
+    | `ImageStatusAvailable => "NSStatusAvailable"
+    | `ImageStatusNone => "NSStatusNone"
+    | `ImageStatusPartiallyAvailable => "NSStatusPartiallyAvailable"
+    | `ImageStatusUnavailable => "NSStatusUnavailable"
+    | `ImageStopProgressFreestandingTemplate => "NSStopProgressFreestandingTemplate"
+    | `ImageStopProgressTemplate => "NSStopProgressTemplate"
+    | `ImageTrashEmpty => "NSTrashEmpty"
+    | `ImageTrashFull => "NSTrashFull"
+    | `ImageUser => "NSUser"
+    | `ImageUserAccounts => "NSUserAccounts"
+    | `ImageUserGroup => "NSUserGroup"
+    | `ImageUserGuest => "NSUserGuest";
+
+  [@noalloc] external make: unit => t = "ml_BriskImage_make";
+
+  [@noalloc]
+  external getImageWidth: t => [@unboxed] float =
+    "ml_BriskImage_getImageWidth_bc" "ml_BriskImage_getImageWidth";
+
+  [@noalloc]
+  external getImageHeight: t => [@unboxed] float =
+    "ml_BriskImage_getImageHeight_bc" "ml_BriskImage_getImageHeight";
+
+  [@noalloc]
+  external setSourceFile: (t, string) => unit = "ml_BriskImage_setSourceFile";
+
+  [@noalloc]
+  external setSourceNamed: (t, string) => unit =
+    "ml_BriskImage_setSourceNamed";
+
+  let make = (~source=?, ()) => {
+    let img = make();
+
+    switch (source) {
+    | Some(src) =>
+      switch (src) {
+      | `file(source) => setSourceFile(img, source)
+      | `named(named) => setSourceNamed(img, stringOfNamed(named))
+      | `bundle(source) => setSourceNamed(img, source)
+      }
+    | None => ()
+    };
+
+    img;
+  };
+};
+
 module BriskButton = {
   type t = NSView.t;
 

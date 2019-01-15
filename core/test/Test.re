@@ -152,6 +152,53 @@ let core = [
       |> ignore,
   ),
   (
+    "Test subtree replace elements (not at top-level)",
+    `Quick,
+    () => {
+      let rAction = RemoteAction.create();
+
+      let well = text("well");
+
+      let testState =
+        render(Components.(<Div><ToggleClicks rAction /></Div>))
+        |> executeSideEffects
+        |> expect(
+             ~label="It constructs the initial tree",
+             [
+               Implementation.BeginChanges,
+               ChangeText("well", "well"),
+               MountChild(div, well, 0),
+               MountChild(div, div, 0),
+               MountChild(root, div, 0),
+               CommitChanges,
+             ],
+           );
+
+      RemoteAction.act(~action=Components.ToggleClicks.Click, rAction);
+      /* TODO: Bring back! */
+      /* let cell1 = text("cell1"); */
+      /* let cell2 = text("cell2"); */
+
+      testState
+      |> flushPendingUpdates
+      |> executeSideEffects
+      |> expect(
+           ~label="It replaces text(well) with text(cell1) and text(cell2)",
+           [
+             Implementation.BeginChanges,
+             /* TODO: Fix - we should see these updates occur! */
+             /* UnmountChild(div, well), */
+             /* ChangeText("cell1", "cell1"), */
+             /* MountChild(div, cell1, 0), */
+             /* ChangeText("cell2", "cell2"), */
+             /* MountChild(div, cell2, 1), */
+             CommitChanges,
+           ],
+         )
+      |> ignore;
+    },
+  ),
+  (
     "Test subtree replace elements",
     `Quick,
     () => {

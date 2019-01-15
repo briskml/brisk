@@ -15,7 +15,7 @@
     "run:mac": "esy x make -C tester-macos/app run"
   },
   "dependencies": {
-    "@esy-ocaml/reason": "^3.3.7",
+    "@esy-ocaml/reason": ">=3.4.0",
     "@brisk/core": "*",
     "@brisk/renderer-macos": "*",
     "@brisk/tester-macos": "*"

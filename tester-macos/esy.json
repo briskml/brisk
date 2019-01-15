@@ -6,7 +6,7 @@
   },
   "dependencies": {
     "@esy-ocaml/libffi": "*",
-    "@esy-ocaml/reason": "^3.3.7",
+    "@esy-ocaml/reason": ">=3.4.0",
     "@brisk/renderer-macos": "*",
     "@opam/dune": "^1.6.2",
     "@opam/lwt": "^4.1.0",
@@ -20,7 +20,7 @@
     "@opam/merlin": "^3.2.2",
     "ocaml": "~4.7.1000",
     "refmterr": "^3.1.10",
-    "xcodegen": "^1.10.3",
+    "xcodegen": ">=2.1.0",
     "xcpretty": "^0.2.8"
   }
 }

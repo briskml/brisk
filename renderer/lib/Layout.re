@@ -9,50 +9,50 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
   open LayoutTypes;
 
   let flexDirection = d =>
-    `flexDirection(
+    `FlexDirection(
       switch (d) {
-      | `column => Column
-      | `columnReverse => ColumnReverse
-      | `row => Row
-      | `rowReverse => RowReverse
+      | `Column => Column
+      | `ColumnReverse => ColumnReverse
+      | `Row => Row
+      | `RowReverse => RowReverse
       },
     );
 
   let convertAlign =
     fun
-    | `auto => AlignAuto
-    | `flexStart => AlignFlexStart
-    | `center => AlignCenter
-    | `flexEnd => AlignFlexEnd
-    | `stretch => AlignStretch;
+    | `Auto => AlignAuto
+    | `FlexStart => AlignFlexStart
+    | `Center => AlignCenter
+    | `FlexEnd => AlignFlexEnd
+    | `Stretch => AlignStretch;
 
   let justifyContent = j =>
-    `justifyContent(
+    `JustifyContent(
       switch (j) {
-      | `flexStart => JustifyFlexStart
-      | `center => JustifyCenter
-      | `flexEnd => JustifyFlexEnd
-      | `spaceBetween => JustifySpaceBetween
-      | `spaceAround => JustifySpaceAround
+      | `FlexStart => JustifyFlexStart
+      | `Center => JustifyCenter
+      | `FlexEnd => JustifyFlexEnd
+      | `SpaceBetween => JustifySpaceBetween
+      | `SpaceAround => JustifySpaceAround
       },
     );
 
-  let alignContent = a => `alignContent(convertAlign(a));
-  let alignItems = a => `alignItems(convertAlign(a));
-  let alignSelf = a => `alignSelf(convertAlign(a));
+  let alignContent = a => `AlignContent(convertAlign(a));
+  let alignItems = a => `AlignItems(convertAlign(a));
+  let alignSelf = a => `AlignSelf(convertAlign(a));
 
   type style = [
-    | `position(Position.t)
-    | `flexDirection(flexDirection)
-    | `justifyContent(justify)
-    | `alignContent(align)
-    | `alignItems(align)
-    | `alignSelf(align)
-    | `width(scalar)
-    | `border(Border.t)
-    | `height(scalar)
-    | `padding(inset)
-    | `margin(inset)
+    | `Position(Position.t)
+    | `FlexDirection(flexDirection)
+    | `JustifyContent(justify)
+    | `AlignContent(align)
+    | `AlignItems(align)
+    | `AlignSelf(align)
+    | `Width(scalar)
+    | `Height(scalar)
+    | `Border(Border.t)
+    | `Padding(inset)
+    | `Margin(inset)
   ];
 
   let isUndefined = Encoding.isUndefined;
@@ -61,11 +61,11 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
 
   let applyCommonStyle = (style: cssStyle, attr: [> style]) =>
     switch (attr) {
-    | `position(({position, inset}: Position.t)) =>
+    | `Position(({position, inset}: Position.t)) =>
       let positionType =
         switch (position) {
-        | `absolute => Absolute
-        | `relative => Relative
+        | `Absolute => Absolute
+        | `Relative => Relative
         };
       let {left, top, right, bottom}: inset = inset;
 
@@ -77,18 +77,18 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
         right: !isUndefined(right) ? int_of_scalar(right) : style.right,
         bottom: !isUndefined(bottom) ? int_of_scalar(bottom) : style.bottom,
       };
-    | `flexDirection(flexDirection) => {...style, flexDirection}
-    | `justifyContent(justifyContent) => {...style, justifyContent}
-    | `alignContent(alignContent) => {...style, alignContent}
-    | `alignItems(alignItems) => {...style, alignItems}
-    | `alignSelf(alignSelf) => {...style, alignSelf}
-    | `width(w) => {...style, width: int_of_scalar(w)}
-    | `height(h) => {...style, height: int_of_scalar(h)}
-    | `border(({width, _}: Border.t)) => {
+    | `FlexDirection(flexDirection) => {...style, flexDirection}
+    | `JustifyContent(justifyContent) => {...style, justifyContent}
+    | `AlignContent(alignContent) => {...style, alignContent}
+    | `AlignItems(alignItems) => {...style, alignItems}
+    | `AlignSelf(alignSelf) => {...style, alignSelf}
+    | `Width(w) => {...style, width: int_of_scalar(w)}
+    | `Height(h) => {...style, height: int_of_scalar(h)}
+    | `Border(({width, _}: Border.t)) => {
         ...style,
         border: !isUndefined(width) ? int_of_scalar(width) : style.width,
       }
-    | `padding({left, top, right, bottom}) => {
+    | `Padding({left, top, right, bottom}) => {
         ...style,
         paddingLeft:
           !isUndefined(left) ? int_of_scalar(left) : style.paddingLeft,
@@ -99,7 +99,7 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
         paddingBottom:
           !isUndefined(bottom) ? int_of_scalar(bottom) : style.paddingBottom,
       }
-    | `margin({left, top, right, bottom}) => {
+    | `Margin({left, top, right, bottom}) => {
         ...style,
         marginLeft:
           !isUndefined(left) ? int_of_scalar(left) : style.marginLeft,

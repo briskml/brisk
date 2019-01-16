@@ -1,6 +1,6 @@
 (executable
  (name app)
- (libraries brisk-renderer-macos osx-cf.lwt lwt.unix)
+ (libraries brisk-macos osx-cf.lwt lwt.unix)
  (modes object))
 
 (install

@@ -1,6 +1,6 @@
 (executables
  (names test)
- (libraries alcotest brisk-renderer-macos))
+ (libraries alcotest brisk-macos))
 
 (alias
  (name runtest)

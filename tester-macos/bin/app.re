@@ -1,16 +1,17 @@
-open Brisk_renderer_macos;
-open Cocoa;
+open Brisk_macos;
 open Layout;
 open Lwt.Infix;
+
+module BriskMenu = Menu;
 
 module Component = {
   [@noalloc] external lwt_start: unit => unit = "ml_lwt_iter";
 
-  let otherComponent = React.reducerComponent("Other");
+  let otherComponent = Brisk.reducerComponent("Other");
   let createElement = (~children as _, ()) => {
     ...otherComponent,
     initialState: _ => None,
-    reducer: (x, _) => React.Update(x),
+    reducer: (x, _) => Brisk.Update(x),
     render: ({state, reduce}) =>
       switch (state) {
       | Some(code) =>
@@ -35,16 +36,16 @@ module Component = {
       | None =>
         <View
           style=[
-            position(~top=0., ~left=0., ~right=0., ~bottom=0., `absolute),
+            position(~top=0., ~left=0., ~right=0., ~bottom=0., `Absolute),
             width(600.),
             height(400.),
             background(Color.hex("#f7f8f9")),
           ]>
           <Text
             style=[
-              font(~size=24., ~weight=`medium, ()),
+              font(~size=24., ~weight=`Medium, ()),
               kern(0.5),
-              align(`center),
+              align(`Center),
               color(Color.hex("#ffffff")),
               background(Color.hex("#263ac5")),
               padding(10.),
@@ -53,19 +54,19 @@ module Component = {
           />
           <View
             style=[
-              justifyContent(`center),
-              alignContent(`center),
+              justifyContent(`Center),
+              alignContent(`Center),
               background(Color.hex("#eeeeee")),
             ]>
             <Image
-              style=[margin4(~top=10., ()), alignSelf(`center)]
-              source={`bundle("reason")}
+              style=[margin4(~top=10., ()), alignSelf(`Center)]
+              source={`Bundle("reason")}
             />
             <Text
               style=[
                 font(~size=18., ()),
-                align(`center),
-                alignSelf(`center),
+                align(`Center),
+                alignSelf(`Center),
                 width(200.),
                 cornerRadius(10.),
                 color(Color.hex("#ffffff")),
@@ -104,29 +105,31 @@ let lwt_iter = () => {
 };
 
 let () = {
+  open Cocoa;
+
   let appName = "BriskMac";
 
-  Callback.register("Brisk_flush_layout", React.RunLoop.flushAndLayout);
+  Callback.register("Brisk_flush_layout", Brisk.RunLoop.flushAndLayout);
   Callback.register("Brisk_lwt_iter", lwt_iter);
 
-  NSApplication.init();
+  Application.init();
 
-  NSApplication.willFinishLaunching(() => {
-    let menu = Menu.makeMainMenu(appName);
-    CocoaMenu.NSMenu.add(~kind=Main, menu);
+  Application.willFinishLaunching(() => {
+    let menu = BriskMenu.makeMainMenu(appName);
+    Menu.add(~kind=Main, menu);
   });
 
-  NSApplication.didFinishLaunching(() => {
-    let window = NSWindow.makeWithContentRect(0., 0., 680., 468.);
+  Application.didFinishLaunching(() => {
+    let window = Window.makeWithContentRect(0., 0., 680., 468.);
 
     let root = {
-      let view = NSView.make();
+      let view = BriskView.make();
       let layoutNode =
         makeLayoutNode(
           ~style=[width(window#contentWidth), height(window#contentHeight)],
           view,
         );
-      {React.NativeCocoa.view, layoutNode};
+      {Brisk.NativeCocoa.view, layoutNode};
     };
 
     window#center;
@@ -135,15 +138,15 @@ let () = {
     window#setContentView(root.view);
 
     window#windowDidResize(_ =>
-      React.RunLoop.setWindowHeight(window#contentHeight)
+      Brisk.RunLoop.setWindowHeight(window#contentHeight)
     );
 
-    React.RunLoop.renderAndMount(
+    Brisk.RunLoop.renderAndMount(
       ~height=window#contentHeight,
       root,
-      React.element(<Component />),
+      Brisk.element(<Component />),
     );
   });
 
-  NSApplication.main();
+  Application.run();
 };

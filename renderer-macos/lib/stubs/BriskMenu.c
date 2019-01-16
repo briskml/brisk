@@ -1,10 +1,53 @@
-#import "NSMenu_stubs.h"
-#import <Cocoa/Cocoa.h>
-#define CAML_NAME_SPACE
-#import <caml/alloc.h>
-#import <caml/callback.h>
-#import <caml/memory.h>
-#import <caml/mlvalues.h>
+#import "BriskCocoa.h"
+
+enum {
+  // Apple
+  ActionOrderFrontStandardAboutPanel,
+  ActionHide,
+  ActionHideOtherApplications,
+  ActionUnhideAllApplications,
+  ActionTerminate,
+  // File
+  ActionClose,
+  ActionRunPageLayout,
+  ActionPrint,
+  // Edit
+  ActionUndo,
+  ActionRedo,
+  ActionCut,
+  ActionCopy,
+  ActionPaste,
+  ActionPasteAsPlainText,
+  ActionDelete,
+  ActionSelectAll,
+  // Find
+  ActionFind,
+  ActionFindNext,
+  ActionFindPrevious,
+  ActionFindUseSelection,
+  ActionJumpToSelection,
+  // Spelling
+  ActionShowGuessPanel,
+  ActionCheckSpelling,
+  ActionCheckSpellingContinuously,
+  // Window
+  ActionMinimize,
+  ActionZoom,
+  ActionBringAllInFront,
+  // Help
+  ActionHelp
+};
+
+enum {
+  TargetNSApp,
+};
+
+enum {
+  KindApple,
+  KindMain,
+  KindServices,
+  KindWindows,
+};
 
 CAMLprim value ml_NSApplication_setMenu(NSMenu *menu, value kind_v) {
   CAMLparam1(kind_v);

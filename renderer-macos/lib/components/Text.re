@@ -1,17 +1,16 @@
-open React;
-open Cocoa;
+open Brisk;
 open Layout;
 
 type attr = [
   Layout.style
-  | `font(Font.t)
-  | `kern(float)
-  | `align(Alignment.t)
-  | `lineBreak(LineBreak.t)
-  | `lineSpacing(float)
-  | `cornerRadius(float)
-  | `background(Color.t)
-  | `color(Color.t)
+  | `Font(Font.t)
+  | `Kern(float)
+  | `Align(Alignment.t)
+  | `LineBreak(LineBreak.t)
+  | `LineSpacing(float)
+  | `CornerRadius(float)
+  | `Background(Color.t)
+  | `Color(Color.t)
 ];
 
 type style = list(attr);
@@ -41,41 +40,41 @@ let make = (~style=[], ~value, children) => {
       style
       |> List.iter(attr =>
            switch (attr) {
-           | `font(({family, size, weight}: Font.t)) =>
+           | `Font(({family, size, weight}: Font.t)) =>
              let weight =
                switch (weight) {
-               | `ultraLight => (-0.8)
-               | `thin => (-0.6)
-               | `light => (-0.4)
-               | `regular => 0.
-               | `medium => 0.23
-               | `semibold => 0.3
-               | `bold => 0.4
-               | `heavy => 0.56
-               | `black => 0.62
+               | `UltraLight => (-0.8)
+               | `Thin => (-0.6)
+               | `Light => (-0.4)
+               | `Regular => 0.
+               | `Medium => 0.23
+               | `Semibold => 0.3
+               | `Bold => 0.4
+               | `Heavy => 0.56
+               | `Black => 0.62
                };
              BriskTextView.setFont(view, family, size, weight);
-           | `kern(kern) => BriskTextView.setKern(view, kern)
-           | `align(align) =>
+           | `Kern(kern) => BriskTextView.setKern(view, kern)
+           | `Align(align) =>
              BriskTextView.setAlignment(
                view,
                switch (align) {
-               | `left => 0
-               | `right => 1
-               | `center => 2
-               | `justified => 3
-               | `natural => 4
+               | `Left => 0
+               | `Right => 1
+               | `Center => 2
+               | `Justified => 3
+               | `Natural => 4
                },
              )
-           | `lineBreak(mode) => BriskTextView.setLineBreak(view, mode)
-           | `lineSpacing(spacing) =>
+           | `LineBreak(mode) => BriskTextView.setLineBreak(view, mode)
+           | `LineSpacing(spacing) =>
              BriskTextView.setLineSpacing(view, spacing)
-           | `cornerRadius(r) => BriskTextView.setCornerRadius(view, r)
-           | `color(({r, g, b, a}: Color.t)) =>
+           | `CornerRadius(r) => BriskTextView.setCornerRadius(view, r)
+           | `Color(({r, g, b, a}: Color.t)) =>
              BriskTextView.setColor(view, r, g, b, a)
-           | `background(({r, g, b, a}: Color.t)) =>
+           | `Background(({r, g, b, a}: Color.t)) =>
              BriskTextView.setBackgroundColor(view, r, g, b, a)
-           | `padding({left, top, right, bottom}) =>
+           | `Padding({left, top, right, bottom}) =>
              BriskTextView.setPadding(view, left, top, right, bottom)
            | #Layout.style => ()
            }

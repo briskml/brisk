@@ -7,7 +7,7 @@
   "dependencies": {
     "@esy-ocaml/libffi": "*",
     "@esy-ocaml/reason": ">=3.4.0",
-    "@brisk/renderer-macos": "*",
+    "@brisk/macos": "*",
     "@opam/dune": "^1.6.2",
     "@opam/lwt": "^4.1.0",
     "@opam/lwt_ppx": "^1.2.1",

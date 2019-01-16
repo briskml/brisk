@@ -1,8 +1,12 @@
-#import "BriskTextView.h"
-#define CAML_NAME_SPACE
-#import <caml/alloc.h>
-#import <caml/callback.h>
-#import <caml/memory.h>
+#import "BriskCocoa.h"
+
+@interface BriskTextView : NSTextView
+
+@property(nonatomic, assign) NSMutableAttributedString *attributedString;
+@property(nonatomic, assign) NSMutableDictionary *attributedProps;
+@property(nonatomic, assign) NSMutableParagraphStyle *paragraphStyle;
+
+@end
 
 @implementation BriskTextView
 

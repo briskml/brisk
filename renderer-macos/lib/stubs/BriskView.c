@@ -1,8 +1,4 @@
-#import "NSView_stubs.h"
-#import <caml/alloc.h>
-#import <caml/callback.h>
-#import <caml/memory.h>
-#import <caml/mlvalues.h>
+#import "BriskCocoa.h"
 
 NSView *ml_NSView_make() {
   NSView *view = [NSView new];

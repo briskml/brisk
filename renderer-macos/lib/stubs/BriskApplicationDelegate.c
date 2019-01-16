@@ -1,7 +1,5 @@
 #import "BriskApplicationDelegate.h"
-#import "Cocoa_stubs.h"
-#define CAML_NAME_SPACE
-#import <caml/callback.h>
+#import "BriskCocoa.h"
 
 @implementation BriskApplicationDelegate
 

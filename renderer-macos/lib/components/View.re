@@ -1,8 +1,7 @@
-open React;
-open Cocoa;
+open Brisk;
 open Layout;
 
-type attr = [ Layout.style | `background(Color.t)];
+type attr = [ Layout.style | `Background(Color.t)];
 
 type style = list(attr);
 
@@ -11,7 +10,7 @@ let make = (~style: style=[], children) => {
   ...component,
   render: _ => {
     make: () => {
-      let view = NSView.make();
+      let view = BriskView.make();
       {view, layoutNode: makeLayoutNode(~style, view)};
     },
     shouldReconfigureInstance: (~oldState as _, ~newState as _) => true,
@@ -19,14 +18,14 @@ let make = (~style: style=[], children) => {
       style
       |> List.iter(attr =>
            switch (attr) {
-           | `background(({r, g, b, a}: Color.t)) =>
-             NSView.setBackgroundColor(view, r, g, b, a)
-           | `border(({width, color}: Border.t)) =>
+           | `Background(({r, g, b, a}: Color.t)) =>
+             BriskView.setBackgroundColor(view, r, g, b, a)
+           | `Border(({width, color}: Border.t)) =>
              if (!isUndefined(width)) {
-               NSView.setBorderWidth(view, width);
+               BriskView.setBorderWidth(view, width);
              };
              let {r, g, b, a}: Color.t = color;
-             NSView.setBorderColor(view, r, g, b, a);
+             BriskView.setBorderColor(view, r, g, b, a);
            | #Layout.style => ()
            }
          );

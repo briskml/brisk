@@ -1,7 +1,4 @@
-#import <Cocoa/Cocoa.h>
-#define CAML_NAME_SPACE
-#import "Cocoa_stubs.h"
-#import <caml/mlvalues.h>
+#import "BriskCocoa.h"
 
 @interface BriskWindowDelegate : NSObject <NSWindowDelegate>
 

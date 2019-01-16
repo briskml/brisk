@@ -1,9 +1,8 @@
 open Brisk_core;
-open Cocoa;
 
 module NativeCocoa = {
   [@deriving (show({with_path: false}), eq)]
-  type hostElement = CocoaClass.view;
+  type hostElement = CocoaTypes.view;
 
   [@deriving (show({with_path: false}), eq)]
   type node = {
@@ -21,12 +20,12 @@ module NativeCocoa = {
 
   let insertNode = (~parent: node, ~child: node, ~position: int) => {
     Layout.cssNodeInsertChild(parent.layoutNode, child.layoutNode, position);
-    NSView.addSubview(parent.view, child.view);
+    BriskView.addSubview(parent.view, child.view);
     parent;
   };
 
   let deleteNode = (~parent, ~child) => {
-    NSView.removeSubview(child.view);
+    BriskView.removeSubview(child.view);
     parent;
   };
 
@@ -53,7 +52,7 @@ module RunLoop = {
     let nodeHeight = layout.height |> float_of_int;
     let flippedTop = height -. nodeHeight -. nodeTop;
 
-    NSView.setFrame(
+    BriskView.setFrame(
       node.context,
       layout.left |> float_of_int,
       flippedTop,

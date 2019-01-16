@@ -13,6 +13,6 @@ print_endline("");
 
 Alcotest.run(
   ~argv=[|"--verbose --color"|],
-  "Brisk_renderer_macos",
+  "Brisk_macos",
   [("Renderer_macos", suites)],
 );

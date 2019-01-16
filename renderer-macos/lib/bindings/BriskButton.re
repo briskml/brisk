@@ -1,4 +1,4 @@
-type t = NSView.t;
+type t = BriskCocoa.view;
 
 type buttonType =
   | MomentaryLight

@@ -1,6 +1,6 @@
 module Node = {
-  type context = NSView.t;
-  let nullContext = NSView.make();
+  type context = BriskView.t;
+  let nullContext = BriskView.make();
 };
 
 include Brisk_renderer.CreateLayout(Node, Flex.FloatEncoding);

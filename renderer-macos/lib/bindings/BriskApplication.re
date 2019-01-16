@@ -1,8 +1,8 @@
-type t = CocoaClass.application;
+type t = BriskCocoa.application;
 
-external init: unit => unit = "ml_NSApplication_configure";
+external init: unit => unit = "ml_NSApplication_init";
 
-external main: unit => unit = "ml_NSApplication_main";
+external run: unit => unit = "ml_NSApplication_run";
 
 let isInitialized = ref(false);
 let init = () =>

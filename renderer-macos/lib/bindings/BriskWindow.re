@@ -1,34 +1,32 @@
+open BriskCocoa;
+
 [@noalloc]
 external _NSWindow_makeWithContentRect:
   ([@unboxed] float, [@unboxed] float, [@unboxed] float, [@unboxed] float) =>
-  CocoaClass.window =
+  window =
   "ml_NSWindow_makeWithContentRect_bc" "ml_NSWindow_makeWithContentRect";
 
 [@noalloc]
-external _NSWindow_isVisible: CocoaClass.window => bool =
-  "ml_NSWindow_isVisible";
+external _NSWindow_isVisible: window => bool = "ml_NSWindow_isVisible";
+[@noalloc] external _NSWindow_center: window => unit = "ml_NSWindow_center";
 [@noalloc]
-external _NSWindow_center: CocoaClass.window => unit = "ml_NSWindow_center";
-[@noalloc]
-external _NSWindow_makeKeyAndOrderFront: CocoaClass.window => unit =
+external _NSWindow_makeKeyAndOrderFront: window => unit =
   "ml_NSWindow_makeKeyAndOrderFront";
 [@noalloc]
-external _NSWindow_setTitle: (CocoaClass.window, string) => unit =
-  "ml_NSWindow_setTitle";
-external _NSWindow_title: CocoaClass.window => string = "ml_NSWindow_title";
+external _NSWindow_setTitle: (window, string) => unit = "ml_NSWindow_setTitle";
+external _NSWindow_title: window => string = "ml_NSWindow_title";
 [@noalloc]
-external _NSWindow_contentView: CocoaClass.window => CocoaClass.view =
-  "ml_NSWindow_contentView";
+external _NSWindow_contentView: window => view = "ml_NSWindow_contentView";
 [@noalloc]
-external _NSWindow_setContentView: (CocoaClass.window, CocoaClass.view) => unit =
+external _NSWindow_setContentView: (window, view) => unit =
   "ml_NSWindow_setContentView";
 [@noalloc]
-external _NSWindow_contentWidth: CocoaClass.window => [@unboxed] float =
+external _NSWindow_contentWidth: window => [@unboxed] float =
   "ml_NSWindow_contentWidth" "ml_NSWindow_contentWidth";
 [@noalloc]
-external _NSWindow_contentHeight: CocoaClass.window => [@unboxed] float =
+external _NSWindow_contentHeight: window => [@unboxed] float =
   "ml_NSWindow_contentHeight" "ml_NSWindow_contentHeight";
-external setOnWindowDidResize: (CocoaClass.window, unit => unit) => unit =
+external setOnWindowDidResize: (window, unit => unit) => unit =
   "ml_NSWindow_setOnWindowDidResize";
 
 class type t = {
@@ -37,8 +35,8 @@ class type t = {
   pub makeKeyAndOrderFront: unit;
   pub setTitle: string => unit;
   pub title: string;
-  pub contentView: CocoaClass.view;
-  pub setContentView: CocoaClass.view => unit;
+  pub contentView: view;
+  pub setContentView: view => unit;
   pub contentWidth: unit => float;
   pub contentHeight: unit => float;
   pub windowDidResize: (unit => unit) => unit;

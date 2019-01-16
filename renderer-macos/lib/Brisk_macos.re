@@ -1,11 +1,11 @@
 module Brisk = Brisk;
 
 module Cocoa = {
-  module NSApplication = NSApplication;
-  module NSWindow = NSWindow;
-  module NSMenu = NSMenu;
+  module BriskApplication = BriskApplication;
+  module BriskWindow = BriskWindow;
+  module BriskMenu = BriskMenu;
 
-  module NSView = NSView;
+  module BriskView = BriskView;
 
   module BriskButton = BriskButton;
   module BriskImage = BriskImage;

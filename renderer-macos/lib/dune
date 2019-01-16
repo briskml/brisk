@@ -7,18 +7,18 @@
  (public_name brisk-macos)
  (synopsis "Cocoa renderer and bindings")
  (libraries brisk-core brisk-renderer)
- (install_c_headers Cocoa_stubs
+ (install_c_headers BriskCocoa
                     BriskApplicationDelegate
                     BriskWindowDelegate
                     )
- (c_names Cocoa_stubs
-          BriskApplicationDelegate
-          BriskWindowDelegate
-          BriskButton
+ (c_names BriskCocoa
+          BriskApplication BriskApplicationDelegate
+          BriskWindow BriskWindowDelegate
+          BriskMenu
+          BriskView
           BriskTextView
           BriskImage
-          NSView_stubs
-          NSMenu_stubs
+          BriskButton
           )
  (c_flags (:standard
   (-Wextra -Wall -Werror -O -g -std=c99 -pedantic-errors -Wsign-compare -Wshadow)

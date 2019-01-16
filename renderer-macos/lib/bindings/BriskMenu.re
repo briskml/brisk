@@ -1,14 +1,3 @@
-/**
-   Cocoa NSMenu bindings for OCaml.
-*/
-module T =
-  Ephemeron.K1.Make({
-    type t = int;
-
-    let equal = (==);
-    let hash = Hashtbl.hash;
-  });
-
 type nsMenu;
 type nsMenuItem;
 
@@ -91,18 +80,8 @@ class type t = {
   pub setSubmenu: (nsMenuItem, t) => unit;
 };
 
-let menu_id = ref(0);
-let menu_table = T.create(0);
-
 let make = title => {
-  let id = {
-    incr(menu_id);
-    menu_id^;
-  };
-
   let menu = _NSMenu_make(title);
-
-  T.add(menu_table, id, menu);
 
   {
     as _;

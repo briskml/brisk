@@ -1,4 +1,4 @@
-#import "Cocoa_stubs.h"
+#import "BriskCocoa.h"
 
 @interface BriskWindowDelegate : NSObject <NSWindowDelegate>
 

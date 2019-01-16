@@ -2,8 +2,8 @@ open Brisk_macos;
 open Cocoa;
 
 let makeApplicationMenu = appName => {
-  let submenu = NSMenu.make("Apple");
-  NSMenu.add(~kind=Apple, submenu);
+  let submenu = BriskMenu.make("Apple");
+  BriskMenu.add(~kind=Apple, submenu);
 
   let _ =
     submenu#addItem(
@@ -17,9 +17,9 @@ let makeApplicationMenu = appName => {
   let _ = submenu#addSeparatorItem;
 
   let services = submenu#addItem("Services");
-  let servicesMenu = NSMenu.make("Services");
+  let servicesMenu = BriskMenu.make("Services");
   submenu#setSubmenu(services, servicesMenu);
-  NSMenu.add(~kind=Services, servicesMenu);
+  BriskMenu.add(~kind=Services, servicesMenu);
   let _ = submenu#addSeparatorItem;
 
   let _ =
@@ -54,7 +54,7 @@ let makeApplicationMenu = appName => {
 };
 
 let makeFileMenu = () => {
-  let submenu = NSMenu.make("File");
+  let submenu = BriskMenu.make("File");
 
   let _ = submenu#addItem(~key="n", "New");
   let _ = submenu#addItem(~key="o", "Open...");
@@ -76,7 +76,7 @@ let makeFileMenu = () => {
 };
 
 let makeFindMenu = () => {
-  let submenu = NSMenu.make("Find");
+  let submenu = BriskMenu.make("Find");
 
   let _ = submenu#addItem(~action=Find, ~key="f", "Find...");
   let _ = submenu#addItem(~action=FindNext, ~key="g", "Find Next");
@@ -94,7 +94,7 @@ let makeFindMenu = () => {
 };
 
 let makeSpellingMenu = () => {
-  let submenu = NSMenu.make("Spelling");
+  let submenu = BriskMenu.make("Spelling");
 
   let _ = submenu#addItem(~action=ShowGuessPanel, ~key=":", "Spelling...");
   let _ = submenu#addItem(~action=CheckSpelling, ~key=";", "Check Spelling");
@@ -108,7 +108,7 @@ let makeSpellingMenu = () => {
 };
 
 let makeEditMenu = () => {
-  let submenu = NSMenu.make("Edit");
+  let submenu = BriskMenu.make("Edit");
 
   let _ = submenu#addItem(~action=Undo, ~key="z", "Undo");
   let _ = submenu#addItem(~action=Redo, ~key="Z", "Redo");
@@ -142,8 +142,8 @@ let makeEditMenu = () => {
 };
 
 let makeWindowMenu = () => {
-  let submenu = NSMenu.make("Window");
-  NSMenu.add(~kind=Windows, submenu);
+  let submenu = BriskMenu.make("Window");
+  BriskMenu.add(~kind=Windows, submenu);
 
   let _ = submenu#addItem(~action=Minimize, ~key="m", "Minimize");
   let _ = submenu#addItem(~action=Zoom, "Zoom");
@@ -154,7 +154,7 @@ let makeWindowMenu = () => {
 };
 
 let makeHelpMenu = appName => {
-  let submenu = NSMenu.make("Help");
+  let submenu = BriskMenu.make("Help");
 
   let _ =
     submenu#addItem(
@@ -168,7 +168,7 @@ let makeHelpMenu = appName => {
 };
 
 let makeMainMenu = appName => {
-  let mainMenu = NSMenu.make("MainMenu");
+  let mainMenu = BriskMenu.make("MainMenu");
 
   let apple = mainMenu#addItem("Apple");
   let submenu = makeApplicationMenu(appName);

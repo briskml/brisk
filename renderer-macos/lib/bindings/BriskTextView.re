@@ -1,4 +1,4 @@
-type t = NSView.t;
+type t = BriskCocoa.view;
 
 [@noalloc] external make: unit => t = "ml_BriskTextView_make";
 

@@ -22,13 +22,13 @@ let make =
            switch (attr) {
            | `Color(_) => ()
            | `Background(({r, g, b, a}: Color.t)) =>
-             NSView.setBackgroundColor(view, r, g, b, a)
+             BriskView.setBackgroundColor(view, r, g, b, a)
            | `Border(({width, color}: Border.t)) =>
              if (!isUndefined(width)) {
-               NSView.setBorderWidth(view, width);
+               BriskView.setBorderWidth(view, width);
              };
              let {r, g, b, a}: Color.t = color;
-             NSView.setBorderColor(view, r, g, b, a);
+             BriskView.setBorderColor(view, r, g, b, a);
            | #Layout.style => ()
            }
          );

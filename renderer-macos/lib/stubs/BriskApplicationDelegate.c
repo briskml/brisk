@@ -1,5 +1,5 @@
 #import "BriskApplicationDelegate.h"
-#import "Cocoa_stubs.h"
+#import "BriskCocoa.h"
 
 @implementation BriskApplicationDelegate
 

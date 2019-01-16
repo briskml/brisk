@@ -1,4 +1,4 @@
-type t = CocoaClass.view;
+type t = BriskCocoa.view;
 
 [@noalloc] external make: unit => t = "ml_NSView_make";
 [@noalloc] external addSubview: (t, t) => unit = "ml_NSView_addSubview";
@@ -17,13 +17,13 @@ external setFrame:
   "ml_NSView_setFrame_bc" "ml_NSView_setFrame";
 
 [@noalloc]
-external setBorderWidth: (CocoaClass.view, [@unboxed] float) => unit =
+external setBorderWidth: (t, [@unboxed] float) => unit =
   "ml_NSView_setBorderWidth_bc" "ml_NSView_setBorderWidth";
 
 [@noalloc]
 external setBorderColor:
   (
-    CocoaClass.view,
+    t,
     [@unboxed] float,
     [@unboxed] float,
     [@unboxed] float,
@@ -35,7 +35,7 @@ external setBorderColor:
 [@noalloc]
 external setBackgroundColor:
   (
-    CocoaClass.view,
+    t,
     [@unboxed] float,
     [@unboxed] float,
     [@unboxed] float,

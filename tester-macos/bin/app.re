@@ -110,18 +110,18 @@ let () = {
   Callback.register("Brisk_flush_layout", Brisk.RunLoop.flushAndLayout);
   Callback.register("Brisk_lwt_iter", lwt_iter);
 
-  NSApplication.init();
+  BriskApplication.init();
 
-  NSApplication.willFinishLaunching(() => {
+  BriskApplication.willFinishLaunching(() => {
     let menu = Menu.makeMainMenu(appName);
-    NSMenu.add(~kind=Main, menu);
+    BriskMenu.add(~kind=Main, menu);
   });
 
-  NSApplication.didFinishLaunching(() => {
-    let window = NSWindow.makeWithContentRect(0., 0., 680., 468.);
+  BriskApplication.didFinishLaunching(() => {
+    let window = BriskWindow.makeWithContentRect(0., 0., 680., 468.);
 
     let root = {
-      let view = NSView.make();
+      let view = BriskView.make();
       let layoutNode =
         makeLayoutNode(
           ~style=[width(window#contentWidth), height(window#contentHeight)],
@@ -146,5 +146,5 @@ let () = {
     );
   });
 
-  NSApplication.main();
+  BriskApplication.run();
 };

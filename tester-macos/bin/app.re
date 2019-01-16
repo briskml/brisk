@@ -10,7 +10,7 @@ module Component = {
 let component = React.component("Other");
 let createElement = (~children as _, ()) =>
   component(slots => {
-    let (state, setState, _slots: React.Slots.empty) =
+    let (state, setState, _slots: React.Hooks.empty) =
       React.Hooks.useState(None, slots);
 
     switch (state) {

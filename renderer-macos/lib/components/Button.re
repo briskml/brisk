@@ -8,7 +8,7 @@ type style = list(attr);
 let component = nativeComponent("Button");
 let make =
     (~type_=?, ~bezel=?, ~title=?, ~style=[], ~callback=() => (), children) =>
-  component((_: Slots.empty) =>
+  component((_: Hooks.empty) =>
     {
       make: () => {
         let btn =

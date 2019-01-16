@@ -181,14 +181,10 @@ let core = [
       testState
       |> flushPendingUpdates
       |> executeSideEffects
-      /* BUG:
-       * This expectation fails when there is a top-level `<Div>` element
-       */
       |> expect(
            ~label="It replaces text(well) with text(cell1) and text(cell2)",
            [
              Implementation.BeginChanges,
-             UnmountChild(div, well),
              ChangeText("cell1", "cell1"),
              MountChild(div, cell1, 0),
              ChangeText("cell2", "cell2"),

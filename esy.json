@@ -5,6 +5,7 @@
   "repository": "https://github.com/briskml/brisk.git",
   "license": "MIT",
   "scripts": {
+    "fmt": "dune build @fmt --auto-promote",
     "clean": "dune clean",
     "build:core": "esy build -p @brisk/core",
     "build:mac": "esy build -p @brisk/macos",

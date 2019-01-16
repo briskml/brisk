@@ -1,4 +1,4 @@
-open BriskCocoa;
+open CocoaTypes;
 
 [@noalloc]
 external _NSWindow_makeWithContentRect:

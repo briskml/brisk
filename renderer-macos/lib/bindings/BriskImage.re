@@ -1,4 +1,4 @@
-type t = BriskCocoa.view;
+type t = CocoaTypes.view;
 
 type system = [
   | `ActionTemplate

@@ -2,7 +2,7 @@ open Brisk_core;
 
 module NativeCocoa = {
   [@deriving (show({with_path: false}), eq)]
-  type hostElement = BriskCocoa.view;
+  type hostElement = CocoaTypes.view;
 
   [@deriving (show({with_path: false}), eq)]
   type node = {

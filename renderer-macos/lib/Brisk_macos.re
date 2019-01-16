@@ -1,8 +1,11 @@
 module Brisk = Brisk;
 
 module Cocoa = {
-  module BriskApplication = BriskApplication;
-  module BriskWindow = BriskWindow;
+  module Types = CocoaTypes;
+
+  module Application = BriskApplication;
+  module Window = BriskWindow;
+
   module BriskMenu = BriskMenu;
 
   module BriskView = BriskView;

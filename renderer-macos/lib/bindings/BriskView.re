@@ -1,4 +1,4 @@
-type t = BriskCocoa.view;
+type t = CocoaTypes.view;
 
 [@noalloc] external make: unit => t = "ml_NSView_make";
 [@noalloc] external addSubview: (t, t) => unit = "ml_NSView_addSubview";

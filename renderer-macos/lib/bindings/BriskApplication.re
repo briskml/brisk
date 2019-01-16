@@ -1,4 +1,4 @@
-type t = BriskCocoa.application;
+type t = CocoaTypes.application;
 
 external init: unit => unit = "ml_NSApplication_init";
 

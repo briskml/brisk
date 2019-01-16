@@ -110,15 +110,15 @@ let () = {
   Callback.register("Brisk_flush_layout", Brisk.RunLoop.flushAndLayout);
   Callback.register("Brisk_lwt_iter", lwt_iter);
 
-  BriskApplication.init();
+  Application.init();
 
-  BriskApplication.willFinishLaunching(() => {
+  Application.willFinishLaunching(() => {
     let menu = Menu.makeMainMenu(appName);
     BriskMenu.add(~kind=Main, menu);
   });
 
-  BriskApplication.didFinishLaunching(() => {
-    let window = BriskWindow.makeWithContentRect(0., 0., 680., 468.);
+  Application.didFinishLaunching(() => {
+    let window = Window.makeWithContentRect(0., 0., 680., 468.);
 
     let root = {
       let view = BriskView.make();
@@ -146,5 +146,5 @@ let () = {
     );
   });
 
-  BriskApplication.run();
+  Application.run();
 };

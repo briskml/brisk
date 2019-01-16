@@ -20,7 +20,7 @@ let measure = (node, _, _, _, _) => {
 };
 
 let make = (~style=[], ~source, children) =>
-  component((_: Slots.empty) =>
+  component((_: Hooks.empty) =>
     {
       make: () => {
         let view = BriskImage.make(~source, ());

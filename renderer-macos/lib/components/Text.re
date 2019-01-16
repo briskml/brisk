@@ -30,7 +30,7 @@ let measure = (node, _, _, _, _) => {
 };
 
 let make = (~style=[], ~value, children) =>
-  component((_: Slots.empty) =>
+  component((_: Hooks.empty) =>
     {
       make: () => {
         let view = BriskTextView.make(value);

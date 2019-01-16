@@ -8,7 +8,7 @@ type style = list(attr);
 
 let component = nativeComponent("View");
 let make = (~style: style=[], children) =>
-  component((_: Slots.empty) =>
+  component((_: Hooks.empty) =>
     {
       make: () => {
         let view = NSView.make();

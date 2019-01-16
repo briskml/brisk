@@ -2,6 +2,8 @@ open Brisk_macos;
 open Layout;
 open Lwt.Infix;
 
+module BriskMenu = Menu;
+
 module Component = {
   [@noalloc] external lwt_start: unit => unit = "ml_lwt_iter";
 
@@ -113,8 +115,8 @@ let () = {
   Application.init();
 
   Application.willFinishLaunching(() => {
-    let menu = Menu.makeMainMenu(appName);
-    BriskMenu.add(~kind=Main, menu);
+    let menu = BriskMenu.makeMainMenu(appName);
+    Menu.add(~kind=Main, menu);
   });
 
   Application.didFinishLaunching(() => {

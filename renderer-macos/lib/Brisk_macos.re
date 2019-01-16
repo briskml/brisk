@@ -5,8 +5,7 @@ module Cocoa = {
 
   module Application = BriskApplication;
   module Window = BriskWindow;
-
-  module BriskMenu = BriskMenu;
+  module Menu = BriskMenu;
 
   module BriskView = BriskView;
 

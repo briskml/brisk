@@ -488,7 +488,7 @@ module Make = (OutputTree: OutputTree) => {
     let rec ofElement =
             (Element(component) as element)
             : (opaqueInstance, list(unit => unit)) => {
-      let slots = Hooks.create();
+      let slots = Hooks.create(~onSlotsDidChange=OutputTree.markAsStale);
       let subElements = component.render(slots);
       let (instanceSubForest, mountEffects) =
         (

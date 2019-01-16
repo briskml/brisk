@@ -2,10 +2,13 @@ type hook('a) = ..;
 
 module Slots: Slots.S with type elem('a) = hook('a);
 
-type t('a, 'b) = Slots.t('a, 'b);
-type empty = Slots.empty;
+type t('a, 'b) = {
+  slots: Slots.t('a, 'b),
+  onSlotsDidChange: unit => unit,
+};
+type empty = t(unit, unit);
 
-let create: unit => t('a, 'b);
+let create: (~onSlotsDidChange: unit => unit) => t('a, 'b);
 
 module State: {
   type t('a);
@@ -47,26 +50,26 @@ module Effect: {
 };
 
 let state:
-  ('state, t(State.t('state), t('slots, 'nextSlots))) =>
+  ('state, t(State.t('state), Slots.t('slots, 'nextSlots))) =>
   ('state, 'state => unit, t('slots, 'nextSlots));
 
 let reducer:
   (
     ~initialState: 'state,
     ('action, 'state) => 'state,
-    t(Reducer.t('state), t('slots, 'nextSlots))
+    t(Reducer.t('state), Slots.t('slots, 'nextSlots))
   ) =>
   ('state, 'action => unit, t('slots, 'nextSlots));
 
 let ref:
-  ('state, t(Ref.t('state), t('slots, 'nextSlots))) =>
+  ('state, t(Ref.t('state), Slots.t('slots, 'nextSlots))) =>
   ('state, 'state => unit, t('slots, 'nextSlots));
 
 let effect:
   (
     Effect.condition('condition),
     Effect.handler,
-    t(Effect.t('condition), t('slots, 'nextSlots))
+    t(Effect.t('condition), Slots.t('slots, 'nextSlots))
   ) =>
   t('slots, 'nextSlots);
 

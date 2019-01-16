@@ -123,10 +123,16 @@ let update =
     ),
 };
 
-let flushPendingUpdates = ({renderedElement, syntheticElement}) => {
-  syntheticElement,
-  renderedElement: RenderedElement.flushPendingUpdates(renderedElement),
-};
+let flushPendingUpdates = ({renderedElement, syntheticElement} as testState) =>
+  Implementation.isDirty^ ?
+    {
+      Implementation.isDirty := false;
+      {
+        syntheticElement,
+        renderedElement: RenderedElement.flushPendingUpdates(renderedElement),
+      };
+    } :
+    testState;
 
 let executeSideEffects = ({renderedElement} as testState) => {
   RenderedElement.executeHostViewUpdates(renderedElement) |> ignore;

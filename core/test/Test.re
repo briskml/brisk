@@ -160,7 +160,7 @@ let core = [
       let well = text("well");
 
       let testState =
-        render(Components.(<Div><ToggleClicks rAction /></Div>))
+        render(Components.(<Div> <ToggleClicks rAction /> </Div>))
         |> executeSideEffects
         |> expect(
              ~label="It constructs the initial tree",
@@ -185,6 +185,7 @@ let core = [
            ~label="It replaces text(well) with text(cell1) and text(cell2)",
            [
              Implementation.BeginChanges,
+             UnmountChild(div, well),
              ChangeText("cell1", "cell1"),
              MountChild(div, cell1, 0),
              ChangeText("cell2", "cell2"),

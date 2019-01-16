@@ -5,10 +5,19 @@ module Slots =
     type t('a) = hook('a);
   });
 
-type t('a, 'b) = Slots.t('a, 'b);
-type empty = Slots.empty;
+type t('a, 'b) = {
+  slots: Slots.t('a, 'b),
+  onSlotsDidChange: unit => unit,
+};
 
-let create = Slots.create;
+type empty = t(unit, unit);
+
+type hooks('slots, 'nextSlots) = t('slots, 'nextSlots);
+
+let create = (~onSlotsDidChange) => {
+  slots: Slots.create(),
+  onSlotsDidChange,
+};
 
 module State = {
   type stateContainer('a) = {
@@ -41,17 +50,20 @@ module State = {
   let setState = (nextValue, stateContainer) =>
     stateContainer := {currentValue: stateContainer^.currentValue, nextValue};
 
-  let hook = (initialState, slots) => {
+  let hook = (initialState, hooks) => {
     let (stateContainer, nextSlots) =
       Slots.use(
         ~default=() => make(initialState),
         ~toElem=wrapAsHook,
-        slots,
+        hooks.slots,
       );
 
-    let setter = nextState => setState(nextState, stateContainer);
+    let setter = nextState => {
+      setState(nextState, stateContainer);
+      hooks.onSlotsDidChange();
+    };
 
-    (stateContainer^.currentValue, setter, nextSlots);
+    (stateContainer^.currentValue, setter, {...hooks, slots: nextSlots});
   };
 };
 
@@ -91,18 +103,20 @@ module Reducer = {
     stateContainer := {currentValue, updates: [nextUpdate, ...updates]};
   };
 
-  let hook = (~initialState, reducer, slots) => {
+  let hook = (~initialState, reducer, hooks: hooks(_)) => {
     let (stateContainer, nextSlots) =
       Slots.use(
         ~default=() => make(initialState),
         ~toElem=wrapAsHook,
-        slots,
+        hooks.slots,
       );
 
-    let dispatch = action =>
+    let dispatch = action => {
       enqueueUpdate(prevValue => reducer(action, prevValue), stateContainer);
+      hooks.onSlotsDidChange();
+    };
 
-    (stateContainer^.currentValue, dispatch, nextSlots);
+    (stateContainer^.currentValue, dispatch, {...hooks, slots: nextSlots});
   };
 };
 
@@ -112,13 +126,17 @@ module Ref = {
     | Ref(t('a)): hook(t('a));
   let wrapAsHook = s => Ref(s);
 
-  let hook = (initialState, slots) => {
+  let hook = (initialState, hooks) => {
     let (internalRef, nextSlots) =
-      Slots.use(~default=() => ref(initialState), ~toElem=wrapAsHook, slots);
+      Slots.use(
+        ~default=() => ref(initialState),
+        ~toElem=wrapAsHook,
+        hooks.slots,
+      );
 
     let setter = nextValue => internalRef := nextValue;
 
-    (internalRef^, setter, nextSlots);
+    (internalRef^, setter, {...hooks, slots: nextSlots});
   };
 };
 
@@ -198,7 +216,7 @@ module Effect = {
       };
     };
 
-  let hook = (condition, handler, slots) => {
+  let hook = (condition, handler, hooks) => {
     let (state, nextSlots) =
       Slots.use(
         ~default=
@@ -209,12 +227,12 @@ module Effect = {
             previousCondition: condition,
           },
         ~toElem=wrapAsHook,
-        slots,
+        hooks.slots,
       );
 
     state.condition = condition;
     state.handler = handler;
-    nextSlots;
+    {...hooks, slots: nextSlots};
   };
 };
 
@@ -223,7 +241,7 @@ let reducer = Reducer.hook;
 let ref = Ref.hook;
 let effect = Effect.hook;
 
-let executeEffects = (~lifecycle, slots) =>
+let executeEffects = (~lifecycle, {slots}) =>
   Slots.fold(
     (Any(hook), shouldUpdate) =>
       switch (hook) {
@@ -235,7 +253,7 @@ let executeEffects = (~lifecycle, slots) =>
     slots,
   );
 
-let flushPendingStateUpdates = slots =>
+let flushPendingStateUpdates = ({slots}) =>
   Slots.fold(
     (Any(hook), shouldUpdate) =>
       switch (hook) {

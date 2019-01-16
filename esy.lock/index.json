@@ -1,5 +1,5 @@
 {
-  "checksum": "ba99112d63b634db2f611fd5eb990e2e",
+  "checksum": "fa6a0c391aab725f7d40c13dc476e438",
   "root": "brisk@link-dev:./esy.json",
   "node": {
     "yarn-pkg-config@github:esy-ocaml/yarn-pkg-config#d488cd9321cd5036bd36ec96744ce78c5d45fc49@d41d8cd9": {
@@ -103,8 +103,7 @@
       "dependencies": [
         "@esy-ocaml/reason@3.4.0@d41d8cd9",
         "@brisk/tester-macos@link-dev:tester-macos",
-        "@brisk/renderer-macos@link-dev:renderer-macos",
-        "@brisk/core@link-dev:core"
+        "@brisk/macos@link-dev:renderer-macos", "@brisk/core@link-dev:core"
       ],
       "devDependencies": [
         "ocaml@4.7.1003@d41d8cd9", "@opam/merlin@opam:3.2.2@829ee6dd"
@@ -3052,27 +3051,13 @@
         "@opam/cohttp-lwt-unix@opam:1.2.0@c8282b65",
         "@esy-ocaml/reason@3.4.0@d41d8cd9",
         "@esy-ocaml/libffi@3.2.10@d41d8cd9",
-        "@brisk/renderer-macos@link-dev:renderer-macos"
+        "@brisk/macos@link-dev:renderer-macos"
       ],
       "devDependencies": [
         "xcpretty@0.2.8001@d41d8cd9", "xcodegen@2.1.0@d41d8cd9",
         "refmterr@3.1.10@d41d8cd9", "ocaml@4.7.1003@d41d8cd9",
         "@opam/merlin@opam:3.2.2@829ee6dd"
       ]
-    },
-    "@brisk/renderer-macos@link-dev:renderer-macos": {
-      "id": "@brisk/renderer-macos@link-dev:renderer-macos",
-      "name": "@brisk/renderer-macos",
-      "version": "link-dev:renderer-macos",
-      "source": { "type": "link-dev", "path": "renderer-macos" },
-      "overrides": [],
-      "dependencies": [
-        "ocaml@4.7.1003@d41d8cd9",
-        "@opam/osx-cf@github:mirage/ocaml-osx-cf:opam#0c63247@d41d8cd9",
-        "@opam/dune@opam:1.6.3@a7d7baed", "@esy-ocaml/reason@3.4.0@d41d8cd9",
-        "@brisk/renderer@link-dev:renderer", "@brisk/core@link-dev:core"
-      ],
-      "devDependencies": [ "@opam/alcotest@opam:0.8.4@ddaee259" ]
     },
     "@brisk/renderer@link-dev:renderer": {
       "id": "@brisk/renderer@link-dev:renderer",
@@ -3086,6 +3071,20 @@
         "@esy-ocaml/reason@3.4.0@d41d8cd9"
       ],
       "devDependencies": []
+    },
+    "@brisk/macos@link-dev:renderer-macos": {
+      "id": "@brisk/macos@link-dev:renderer-macos",
+      "name": "@brisk/macos",
+      "version": "link-dev:renderer-macos",
+      "source": { "type": "link-dev", "path": "renderer-macos" },
+      "overrides": [],
+      "dependencies": [
+        "ocaml@4.7.1003@d41d8cd9",
+        "@opam/osx-cf@github:mirage/ocaml-osx-cf:opam#0c63247@d41d8cd9",
+        "@opam/dune@opam:1.6.3@a7d7baed", "@esy-ocaml/reason@3.4.0@d41d8cd9",
+        "@brisk/renderer@link-dev:renderer", "@brisk/core@link-dev:core"
+      ],
+      "devDependencies": [ "@opam/alcotest@opam:0.8.4@ddaee259" ]
     },
     "@brisk/core@link-dev:core": {
       "id": "@brisk/core@link-dev:core",

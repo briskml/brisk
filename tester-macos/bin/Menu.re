@@ -1,5 +1,5 @@
-open Brisk_renderer_macos;
-open CocoaMenu;
+open Brisk_macos;
+open Cocoa;
 
 let makeApplicationMenu = appName => {
   let submenu = NSMenu.make("Apple");

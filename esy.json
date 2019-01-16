@@ -7,17 +7,17 @@
   "scripts": {
     "clean": "dune clean",
     "build:core": "esy build -p @brisk/core",
-    "build:mac": "esy build -p @brisk/renderer-macos",
+    "build:mac": "esy build -p @brisk/macos",
     "build:tester_mac": "esy build -p @brisk/tester-macos",
     "test:core": "esy -C -p @brisk/core dune runtest --root . --no-buffer",
-    "test:mac": "esy -C -p @brisk/renderer-macos dune runtest --root . --no-buffer",
+    "test:mac": "esy -C -p @brisk/macos dune runtest --root . --no-buffer",
     "bootstrap:mac": "make -C tester-macos/app bootstrap",
     "run:mac": "esy x make -C tester-macos/app run"
   },
   "dependencies": {
     "@esy-ocaml/reason": ">=3.4.0",
     "@brisk/core": "*",
-    "@brisk/renderer-macos": "*",
+    "@brisk/macos": "*",
     "@brisk/tester-macos": "*"
   },
   "devDependencies": {
@@ -27,7 +27,7 @@
   "resolutions": {
     "@brisk/core": "link-dev:./core",
     "@brisk/renderer": "link-dev:./renderer",
-    "@brisk/renderer-macos": "link-dev:./renderer-macos",
+    "@brisk/macos": "link-dev:./renderer-macos",
     "@brisk/tester-macos": "link-dev:./tester-macos",
     "@opam/osx-cf": "mirage/ocaml-osx-cf:opam#0c63247"
   }

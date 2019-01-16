@@ -1,16 +1,15 @@
-open Brisk_renderer_macos;
-open Cocoa;
+open Brisk_macos;
 open Layout;
 open Lwt.Infix;
 
 module Component = {
   [@noalloc] external lwt_start: unit => unit = "ml_lwt_iter";
 
-  let otherComponent = React.reducerComponent("Other");
+  let otherComponent = Brisk.reducerComponent("Other");
   let createElement = (~children as _, ()) => {
     ...otherComponent,
     initialState: _ => None,
-    reducer: (x, _) => React.Update(x),
+    reducer: (x, _) => Brisk.Update(x),
     render: ({state, reduce}) =>
       switch (state) {
       | Some(code) =>
@@ -104,16 +103,18 @@ let lwt_iter = () => {
 };
 
 let () = {
+  open Cocoa;
+
   let appName = "BriskMac";
 
-  Callback.register("Brisk_flush_layout", React.RunLoop.flushAndLayout);
+  Callback.register("Brisk_flush_layout", Brisk.RunLoop.flushAndLayout);
   Callback.register("Brisk_lwt_iter", lwt_iter);
 
   NSApplication.init();
 
   NSApplication.willFinishLaunching(() => {
     let menu = Menu.makeMainMenu(appName);
-    CocoaMenu.NSMenu.add(~kind=Main, menu);
+    NSMenu.add(~kind=Main, menu);
   });
 
   NSApplication.didFinishLaunching(() => {
@@ -126,7 +127,7 @@ let () = {
           ~style=[width(window#contentWidth), height(window#contentHeight)],
           view,
         );
-      {React.NativeCocoa.view, layoutNode};
+      {Brisk.NativeCocoa.view, layoutNode};
     };
 
     window#center;
@@ -135,13 +136,13 @@ let () = {
     window#setContentView(root.view);
 
     window#windowDidResize(_ =>
-      React.RunLoop.setWindowHeight(window#contentHeight)
+      Brisk.RunLoop.setWindowHeight(window#contentHeight)
     );
 
-    React.RunLoop.renderAndMount(
+    Brisk.RunLoop.renderAndMount(
       ~height=window#contentHeight,
       root,
-      React.element(<Component />),
+      Brisk.element(<Component />),
     );
   });
 

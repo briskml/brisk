@@ -1,5 +1,3 @@
-open Cocoa;
-
 module Node = {
   type context = NSView.t;
   let nullContext = NSView.make();

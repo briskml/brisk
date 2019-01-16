@@ -1,5 +1,4 @@
 open Brisk_core;
-open Cocoa;
 
 module NativeCocoa = {
   [@deriving (show({with_path: false}), eq)]

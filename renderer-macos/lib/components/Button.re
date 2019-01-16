@@ -1,5 +1,4 @@
-open React;
-open Cocoa;
+open Brisk;
 open Layout;
 
 type attr = [ Layout.style | `Color(Color.t) | `Background(Color.t)];

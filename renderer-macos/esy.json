@@ -1,9 +1,9 @@
 {
-  "name": "@brisk/renderer-macos",
+  "name": "@brisk/macos",
   "version": "0.1.0",
   "license": "MIT",
   "esy": {
-    "build": ["dune build --only-packages brisk-renderer-macos --root ."]
+    "build": ["dune build --only-packages brisk-macos --root ."]
   },
   "dependencies": {
     "@brisk/core": "*",

@@ -20,25 +20,23 @@ let create = (~onSlotsDidChange) => {
 };
 
 module State = {
-  type stateContainer('a) = {
-    currentValue: 'a,
-    nextValue: 'a,
+  type t('a) = {
+    mutable currentValue: 'a,
+    mutable nextValue: 'a,
   };
-
-  type t('a) = ref(stateContainer('a));
 
   type hook('a) +=
     | State(t('a)): hook(t('a));
 
   let make: 'a => t('a) =
     initialValue =>
-      ref({currentValue: initialValue, nextValue: initialValue});
+      {currentValue: initialValue, nextValue: initialValue};
 
   let flush: t('a) => bool =
     stateContainer => {
-      let {currentValue, nextValue} = stateContainer^;
+      let {currentValue, nextValue} = stateContainer;
       if (currentValue !== nextValue) {
-        stateContainer := {currentValue: nextValue, nextValue};
+        stateContainer.currentValue = nextValue;
         true;
       } else {
         false;
@@ -47,8 +45,9 @@ module State = {
 
   let wrapAsHook = s => State(s);
 
-  let setState = (nextValue, stateContainer) =>
-    stateContainer := {currentValue: stateContainer^.currentValue, nextValue};
+  let setState = (nextValue, stateContainer) => {
+    stateContainer.nextValue = nextValue;
+  }
 
   let hook = (initialState, hooks) => {
     let (stateContainer, nextSlots) =
@@ -63,27 +62,25 @@ module State = {
       hooks.onSlotsDidChange();
     };
 
-    (stateContainer^.currentValue, setter, {...hooks, slots: nextSlots});
+    (stateContainer.currentValue, setter, {...hooks, slots: nextSlots});
   };
 };
 
 module Reducer = {
-  type reducerState('a) = {
-    currentValue: 'a,
-    updates: list('a => 'a),
+  type t('a) = {
+    mutable currentValue: 'a,
+    mutable updates: list('a => 'a),
   };
-
-  type t('a) = ref(reducerState('a));
 
   type hook('a) +=
     | Reducer(t('a)): hook(t('a));
 
   let make: 'a => t('a) =
-    initialValue => ref({currentValue: initialValue, updates: []});
+    initialValue => {currentValue: initialValue, updates: []};
 
   let flush: t('a) => bool =
     reducerState => {
-      let {currentValue, updates} = reducerState^;
+      let {currentValue, updates} = reducerState;
       let nextValue =
         List.fold_right(
           (update, latestValue) => update(latestValue),
@@ -91,16 +88,15 @@ module Reducer = {
           currentValue,
         );
 
-      reducerState := {currentValue: nextValue, updates: []};
+      reducerState.currentValue = nextValue;
+      reducerState.updates = [];
       currentValue !== nextValue;
     };
 
   let wrapAsHook = s => Reducer(s);
 
-  let enqueueUpdate = (nextUpdate, stateContainer) => {
-    let {currentValue, updates} = stateContainer^;
-
-    stateContainer := {currentValue, updates: [nextUpdate, ...updates]};
+  let enqueueUpdate = (nextUpdate, {updates} as stateContainer) => {
+    stateContainer.updates = [nextUpdate, ...updates];
   };
 
   let hook = (~initialState, reducer, hooks: hooks(_)) => {
@@ -116,7 +112,7 @@ module Reducer = {
       hooks.onSlotsDidChange();
     };
 
-    (stateContainer^.currentValue, dispatch, {...hooks, slots: nextSlots});
+    (stateContainer.currentValue, dispatch, {...hooks, slots: nextSlots});
   };
 };
 

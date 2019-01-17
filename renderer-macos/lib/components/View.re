@@ -11,7 +11,7 @@ let make = (~style: style=[], children) =>
   component((_: Hooks.empty) =>
     {
       make: () => {
-        let view = NSView.make();
+        let view = BriskView.make();
         {view, layoutNode: makeLayoutNode(~style, view)};
       },
       configureInstance: (~isFirstRender as _, {view} as node) => {

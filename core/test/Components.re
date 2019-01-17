@@ -100,8 +100,8 @@ module BoxList = {
     | Reverse;
   let component = component("BoxList");
   let make = (~rAction, ~useDynamicKeys=false, _children) =>
-    component(slots => {
-      let (state, dispatch, _slots: Hooks.empty) =
+    component(hooks => {
+      let (state, dispatch, hooks) =
         Hooks.reducer(
           ~initialState=[],
           (action, state) =>
@@ -112,9 +112,15 @@ module BoxList = {
               ]
             | Reverse => List.rev(state)
             },
-          slots,
+          hooks,
         );
-      RemoteAction.subscribe(~send=dispatch, rAction);
+      let _: Hooks.empty =
+        Hooks.effect(
+          OnMount,
+          () => Some(RemoteAction.subscribe(~handler=dispatch, rAction)),
+          hooks,
+        );
+
       listToElement(state);
     });
   let createElement = (~rAction, ~useDynamicKeys=false, ~children, ()) =>
@@ -158,8 +164,8 @@ module UpdateAlternateClicks = {
     | Click;
   let component = component("UpdateAlternateClicks");
   let make = (~rAction, _children) =>
-    component(slots => {
-      let (state, dispatch, _slots: Hooks.empty) =
+    component(hooks => {
+      let (state, dispatch, hooks) =
         Hooks.reducer(
           ~initialState=ref(0),
           (Click, state) =>
@@ -170,9 +176,14 @@ module UpdateAlternateClicks = {
                 state;
               } :
               ref(state^ + 1),
-          slots,
+          hooks,
         );
-      RemoteAction.subscribe(~send=dispatch, rAction);
+      let _: Hooks.empty =
+        Hooks.effect(
+          OnMount,
+          () => Some(RemoteAction.subscribe(~handler=dispatch, rAction)),
+          hooks,
+        );
       stringToElement(string_of_int(state^));
     });
   let createElement = (~rAction, ~children as _, ()) =>
@@ -184,10 +195,15 @@ module ToggleClicks = {
     | Click;
   let component = component("ToggleClicks");
   let make = (~rAction, _children) =>
-    component(slots => {
-      let (state, dispatch, _slots: Hooks.empty) =
-        Hooks.reducer(~initialState=false, (Click, state) => !state, slots);
-      RemoteAction.subscribe(~send=dispatch, rAction);
+    component(hooks => {
+      let (state, dispatch, hooks) =
+        Hooks.reducer(~initialState=false, (Click, state) => !state, hooks);
+      let _: Hooks.empty =
+        Hooks.effect(
+          OnMount,
+          () => Some(RemoteAction.subscribe(~handler=dispatch, rAction)),
+          hooks,
+        );
       if (state) {
         <Div> <Text title="cell1" /> <Text title="cell2" /> </Div>;
       } else {

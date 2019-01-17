@@ -1,8 +1,19 @@
-type t('action) = {mutable send: 'action => unit};
-let sendDefault = _action => ();
-let create = () => {send: sendDefault};
-let subscribe = (~send, x) =>
-  if (x.send === sendDefault) {
-    x.send = send;
+type t('action) = {mutable subscribers: list('action => unit)};
+
+type unsubscribe = unit => unit;
+
+let create = () => {subscribers: []};
+
+let subscribe = (~handler: 'action => unit, {subscribers} as emitter: t('a)) => {
+  if (!List.exists(f => f === handler, subscribers)) {
+    emitter.subscribers = [handler, ...subscribers];
+  }
+  let unsubscribe = () => {
+    emitter.subscribers = List.filter(f => f !== f, subscribers);
   };
-let send = (x, ~action) => x.send(action);
+  unsubscribe;
+};
+
+let send = (~action: 'a, emitter: t('a)) => {
+  List.iter(c => c(action), emitter.subscribers);
+}

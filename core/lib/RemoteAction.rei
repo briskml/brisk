@@ -11,8 +11,10 @@ type t('action);
 /*** Create a new remote action, to which one component will subscribe. */
 let create: unit => t('action);
 
+type unsubscribe = unit => unit;
+
 /*** Subscribe to the remote action, via the component's `act` function. */
-let subscribe: (~send: 'action => unit, t('action)) => unit;
+let subscribe: (~handler: 'action => unit, t('action)) => unsubscribe;
 
 /*** Perform an action on the subscribed component. */
-let send: (t('action), ~action: 'action) => unit;
+let send: (~action: 'action, t('action)) => unit;

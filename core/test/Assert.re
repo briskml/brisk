@@ -136,8 +136,11 @@ let flushPendingUpdates = ({renderedElement, syntheticElement} as testState) =>
 
 let executeSideEffects = ({renderedElement} as testState) => {
   RenderedElement.executeHostViewUpdates(renderedElement) |> ignore;
-  List.iter(f => f(), renderedElement.enqueuedEffects);
-  testState;
+
+  {
+    ...testState,
+    renderedElement: RenderedElement.executePendingEffects(renderedElement),
+  };
 };
 
 let expect = (~label=?, expected, testState) => {

@@ -77,6 +77,8 @@ module Make:
       let flushPendingUpdates: t => t;
 
       let executeHostViewUpdates: t => OutputTree.node;
+
+      let executePendingEffects: t => t;
     };
 
     let component:

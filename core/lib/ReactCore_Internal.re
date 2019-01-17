@@ -1400,6 +1400,11 @@ module Make = (OutputTree: OutputTree) => {
       OutputTree.commitChanges();
       hostView;
     };
+
+    let executePendingEffects = ({enqueuedEffects} as renderedElement: t) => {
+      List.iter(f => f(), enqueuedEffects);
+      {...renderedElement, enqueuedEffects: []};
+    };
   };
 
   let element = (~key as argumentKey=Key.none, component) => {

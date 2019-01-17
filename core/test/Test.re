@@ -799,11 +799,13 @@ let core = [
            effectCallCount^
          );
 
-      /* TODO: FIX ME */
-      /* expectInt(~label="The effect dispose callback should have been called since the component was un-mounted.", */
-      /*       1, */
-      /*       effectDisposeCallCount^); */
-    }
+      expectInt(
+        ~label=
+          "The effect dispose callback should have been called since the component was un-mounted.",
+        1,
+        effectDisposeCallCount^,
+      );
+    },
   ),
   (
     "Test 'OnMount' effect in nested component",

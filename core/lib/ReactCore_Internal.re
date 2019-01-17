@@ -700,6 +700,19 @@ module Make = (OutputTree: OutputTree) => {
               instance.instanceSubForest,
               updateContext.nearestHostOutputNode,
             );
+          let unmountEffects = [
+            (
+              () => {
+                ignore(
+                  Hooks.executeEffects(
+                    ~lifecycle=Hooks.Effect.Unmount,
+                    instance.slots,
+                  ),
+                );
+              }
+            ),
+            ...unmountEffects,
+          ];
           let (opaqueInstance, mountEffects) =
             Instance.ofElement(nextElement);
           {
@@ -876,6 +889,7 @@ module Make = (OutputTree: OutputTree) => {
           };
         };
       }
+
     /**
      * updateRenderedElement recurses through the syntheticElement tree as long as
      * the oldReactElement and nextReactElement have the same shape.
@@ -1228,7 +1242,6 @@ module Make = (OutputTree: OutputTree) => {
           let element =
             changed ? IFlat(newOpaqueInstance) : oldInstanceForest;
           if (oldKey != nextKey) {
-            print_endline(string_of_int(absoluteSubtreeIndex));
             {
               updatedRenderedElement: {
                 nearestHostOutputNode:
@@ -1361,11 +1374,12 @@ module Make = (OutputTree: OutputTree) => {
     /**
      * Flush the pending updates in an instance tree.
      */
-    let flushPendingUpdates = ({instanceForest, nearestHostOutputNode}: t): t => {
+    let flushPendingUpdates =
+        ({instanceForest, nearestHostOutputNode, enqueuedEffects}: t): t => {
       let {
         nearestHostOutputNode,
         instanceForest: newInstanceForest,
-        enqueuedEffects,
+        enqueuedEffects: nextEnqueuedEffects,
       } =
         InstanceForest.fold(
           Render.flushPendingUpdates,
@@ -1375,7 +1389,7 @@ module Make = (OutputTree: OutputTree) => {
       {
         instanceForest: newInstanceForest,
         nearestHostOutputNode,
-        enqueuedEffects,
+        enqueuedEffects: List.append(nextEnqueuedEffects, enqueuedEffects),
       };
     };
 

@@ -146,6 +146,10 @@ let expect = (~label=?, expected, testState) => {
   reset(testState);
 };
 
+let expectInt = (~label, expected, actual) => {
+    Alcotest.(check(int))(label, expected, actual);
+};
+
 let act = (~action, rAction, testState) => {
   RemoteAction.send(rAction, ~action);
   testState;

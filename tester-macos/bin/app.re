@@ -7,11 +7,11 @@ module BriskMenu = Menu;
 module Component = {
   [@noalloc] external lwt_start: unit => unit = "ml_lwt_iter";
 
-let component = React.component("Other");
+let component = Brisk.component("Other");
 let createElement = (~children as _, ()) =>
   component(slots => {
-    let (state, setState, _slots: React.Hooks.empty) =
-      React.Hooks.useState(None, slots);
+    let (state, setState, _slots: Brisk.Hooks.empty) =
+      Brisk.Hooks.state(None, slots);
 
     switch (state) {
     | Some(code) =>

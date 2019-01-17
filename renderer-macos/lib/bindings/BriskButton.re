@@ -36,8 +36,12 @@ external setBezelStyle: (t, bezelStyle) => unit =
   "ml_BriskButton_setBezelStyle_bc" "ml_BriskButton_setBezelStyle";
 
 [@noalloc]
-external setIsBordered: (t, bool) => unit =
+external setIsBordered: (t, [@untagged] int) => unit =
   "ml_BriskButton_setIsBordered_bc" "ml_BriskButton_setIsBordered";
+
+let setIsBordered = (btn, bordered) => {
+  setIsBordered(btn, bordered ? 1 : 0);
+};
 
 let make = (~type_=?, ~bezel=?, ~title=?, ~onClick=?, ()) => {
   let btn = make();

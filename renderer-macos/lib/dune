@@ -10,12 +10,14 @@
  (install_c_headers BriskCocoa
                     BriskApplicationDelegate
                     BriskWindowDelegate
+                    BriskStylableText
                     )
  (c_names BriskCocoa
           BriskApplication BriskApplicationDelegate
           BriskWindow BriskWindowDelegate
           BriskMenu
           BriskView
+          BriskStylableText
           BriskTextView
           BriskImage
           BriskButton

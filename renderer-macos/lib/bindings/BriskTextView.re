@@ -15,38 +15,6 @@ external setStringValue: (t, string) => unit =
   "ml_BriskTextView_setStringValue";
 
 [@noalloc]
-external setFont: (t, string, [@unboxed] float, [@unboxed] float) => unit =
-  "ml_BriskTextView_setFont" "ml_BriskTextView_setFont";
-
-[@noalloc]
-external setKern: (t, [@unboxed] float) => unit =
-  "ml_BriskTextView_setKern_bc" "ml_BriskTextView_setKern";
-
-[@noalloc]
-external setColor:
-  (
-    t,
-    [@unboxed] float,
-    [@unboxed] float,
-    [@unboxed] float,
-    [@unboxed] float
-  ) =>
-  unit =
-  "ml_BriskTextView_setColor_bc" "ml_BriskTextView_setColor";
-
-[@noalloc]
-external setAlignment: (t, [@untagged] int) => unit =
-  "ml_BriskTextView_setAlignment_bc" "ml_BriskTextView_setAlignment";
-
-[@noalloc]
-external setLineBreak: (t, [@untagged] int) => unit =
-  "ml_BriskTextView_setLineBreakMode_bc" "ml_BriskTextView_setLineBreakMode";
-
-[@noalloc]
-external setLineSpacing: (t, [@unboxed] float) => unit =
-  "ml_BriskTextView_setLineSpacing_bc" "ml_BriskTextView_setLineSpacing";
-
-[@noalloc]
 external setCornerRadius: (t, [@unboxed] float) => unit =
   "ml_BriskTextView_setCornerRadius_bc" "ml_BriskTextView_setCornerRadius";
 

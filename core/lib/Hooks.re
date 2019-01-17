@@ -53,7 +53,7 @@ module State = {
     let (stateContainer, nextSlots) =
       Slots.use(
         ~default=() => make(initialState),
-        ~toElem=wrapAsHook,
+        ~toWitness=wrapAsHook,
         hooks.slots,
       );
 
@@ -103,7 +103,7 @@ module Reducer = {
     let (stateContainer, nextSlots) =
       Slots.use(
         ~default=() => make(initialState),
-        ~toElem=wrapAsHook,
+        ~toWitness=wrapAsHook,
         hooks.slots,
       );
 
@@ -126,7 +126,7 @@ module Ref = {
     let (internalRef, nextSlots) =
       Slots.use(
         ~default=() => ref(initialState),
-        ~toElem=wrapAsHook,
+        ~toWitness=wrapAsHook,
         hooks.slots,
       );
 
@@ -222,7 +222,7 @@ module Effect = {
             cleanupHandler: None,
             previousCondition: condition,
           },
-        ~toElem=wrapAsHook,
+        ~toWitness=wrapAsHook,
         hooks.slots,
       );
 

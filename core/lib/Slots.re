@@ -1,9 +1,9 @@
-module type Elem = {type t('a);};
+module type Witness = {type t('a);};
 
 module type S = {
-  type elem('a);
-  type opaqueElement =
-    | Any(elem('a)): opaqueElement;
+  type witness('a);
+  type opaqueValue =
+    | Any(witness('a)): opaqueValue;
   type t('slot, 'nextSlots);
   type empty = t(unit, unit);
 
@@ -11,24 +11,24 @@ module type S = {
   let use:
     (
       ~default: unit => 'slot,
-      ~toElem: 'slot => elem('slot),
+      ~toWitness: 'slot => witness('slot),
       t('slot, t('slot2, 'nextSlots))
     ) =>
     ('slot, t('slot2, 'nextSlots));
 
   let fold:
-    ((opaqueElement, 'acc) => 'acc, 'acc, t('slots, 'nextSlots)) => 'acc;
+    ((opaqueValue, 'acc) => 'acc, 'acc, t('slots, 'nextSlots)) => 'acc;
 };
 
-module Make = (Elem: Elem) => {
-  type elem('a) = Elem.t('a);
+module Make = (Witness: Witness) => {
+  type witness('a) = Witness.t('a);
 
-  type opaqueElement =
-    | Any(Elem.t('a)): opaqueElement;
+  type opaqueValue =
+    | Any(Witness.t('a)): opaqueValue;
 
   type slotInternal('slot, 'nextSlots) = {
     value: 'slot,
-    fold: 'acc. ((opaqueElement, 'acc) => 'acc, 'acc) => 'acc,
+    fold: 'acc. ((opaqueValue, 'acc) => 'acc, 'acc) => 'acc,
     next: 'nextSlots,
   };
 
@@ -41,11 +41,11 @@ module Make = (Elem: Elem) => {
   let use:
     (
       ~default: unit => 'slot,
-      ~toElem: 'slot => elem('slot),
+      ~toWitness: 'slot => witness('slot),
       t('slot, t('slot2, 'nextSlots))
     ) =>
     ('slot, t('slot2, 'nextSlots)) =
-    (~default, ~toElem, slots) =>
+    (~default, ~toWitness, slots) =>
       switch (slots^) {
       | None =>
         let nextSlots = create();
@@ -55,7 +55,7 @@ module Make = (Elem: Elem) => {
             value,
             next: nextSlots,
             fold: (f, initialValue) => {
-              let acc = f(Any(toElem(value)), initialValue);
+              let acc = f(Any(toWitness(value)), initialValue);
               switch (nextSlots^) {
               | Some({fold}) => fold(f, acc)
               | None => acc

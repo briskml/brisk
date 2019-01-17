@@ -1,6 +1,6 @@
 type hook('a) = ..;
 
-module Slots: Slots.S with type elem('a) = hook('a);
+module Slots: Slots.S with type witness('a) = hook('a);
 
 type t('a, 'b) = {
   slots: Slots.t('a, 'b),

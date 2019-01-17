@@ -123,14 +123,24 @@ let update =
     ),
 };
 
-let flushPendingUpdates = ({renderedElement, syntheticElement}) => {
-  syntheticElement,
-  renderedElement: RenderedElement.flushPendingUpdates(renderedElement),
-};
+let flushPendingUpdates = ({renderedElement, syntheticElement} as testState) =>
+  Implementation.isDirty^ ?
+    {
+      Implementation.isDirty := false;
+      {
+        syntheticElement,
+        renderedElement: RenderedElement.flushPendingUpdates(renderedElement),
+      };
+    } :
+    testState;
 
 let executeSideEffects = ({renderedElement} as testState) => {
   RenderedElement.executeHostViewUpdates(renderedElement) |> ignore;
-  testState;
+
+  {
+    ...testState,
+    renderedElement: RenderedElement.executePendingEffects(renderedElement),
+  };
 };
 
 let expect = (~label=?, expected, testState) => {
@@ -139,7 +149,11 @@ let expect = (~label=?, expected, testState) => {
   reset(testState);
 };
 
+let expectInt = (~label, expected, actual) => {
+    Alcotest.(check(int))(label, expected, actual);
+};
+
 let act = (~action, rAction, testState) => {
-  RemoteAction.act(rAction, ~action);
+  RemoteAction.send(rAction, ~action);
   testState;
 };

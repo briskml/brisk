@@ -30,129 +30,31 @@ module Make:
       let create: unit => t;
     };
 
-    module Callback: {
-      /**
-       * Type for callbacks
-       *
-       * This type can be left abstract to prevent calling the callback directly.
-       * For example, calling `update handler event` would force an immediate
-       * call of `handler` with the current state, and can be prevented by defining:
-       *
-       *   type t 'payload;
-       *
-       * However, we do want to support immediate calling of a handler, as an
-       * escape hatch for the existing async setState reactJS pattern
-       */
-      type t('payload) = 'payload => unit;
-
-      /** Default no-op callback */
-      let default: t('payload);
-
-      /** Chain two callbacks by executing the first before the second one */
-      let chain: (t('payload), t('payload)) => t('payload);
-    };
-
-    type reduce('payload, 'action) =
-      ('payload => 'action) => Callback.t('payload);
-
-    type self('state, 'action) = {
-      state: 'state,
-      reduce: 'payload. reduce('payload, 'action),
-      act: 'action => unit,
-    };
-
     /** Type of element returned from render */
     type syntheticElement;
 
     /** Type of element that renders an output node */
-    type outputTreeElement('state, 'action) = {
+    type outputTreeElement('slots, 'nextSlots) = {
       make: unit => OutputTree.node,
-      updateInstance:
-        (self('state, 'action), OutputTree.node) => OutputTree.node,
-      shouldReconfigureInstance:
-        (~oldState: 'state, ~newState: 'state) => bool,
+      configureInstance:
+        (~isFirstRender: bool, OutputTree.node) => OutputTree.node,
       children: syntheticElement,
     };
 
     type elementType('concreteElementType, 'outputNodeType, 'state, 'action);
 
-    type oldNewSelf('state, 'action) = {
-      oldSelf: self('state, 'action),
-      newSelf: self('state, 'action),
-    };
-
-    type update('state, 'action) =
-      | NoUpdate
-      | Update('state);
-
-    type handedOffInstance('state, 'action, 'elementType, 'outputNodeType);
-
-    type componentSpec(
-      'state,
-      'initialState,
-      'action,
-      'elementType,
-      'outputNode,
-    ) = {
-      debugName: string,
-      elementType: elementType('elementType, 'outputNode, 'state, 'action),
-      willReceiveProps: self('state, 'action) => 'state,
-      didMount: self('state, 'action) => unit,
-      didUpdate: oldNewSelf('state, 'action) => unit,
-      willUnmount: self('state, 'action) => unit /* TODO: currently unused */,
-      shouldUpdate: oldNewSelf('state, 'action) => bool,
-      render: self('state, 'action) => 'elementType,
-      initialState: unit => 'initialState,
-      reducer: ('action, 'state) => update('state, 'action),
-      printState: 'state => string /* for internal debugging */,
-      handedOffInstance:
-        handedOffInstance('state, 'action, 'elementType, 'outputNode),
-      key: Key.t,
-    };
-    type component('state, 'action, 'elementType, 'outputNodeType) =
-      componentSpec('state, 'state, 'action, 'elementType, 'outputNodeType);
-
-    type stateless = unit;
-    type actionless = unit;
     type outputNodeGroup;
     type outputNodeContainer;
 
-    type syntheticComponentSpec('state, 'action) =
-      componentSpec(
-        'state,
-        stateless,
-        'action,
-        syntheticElement,
-        outputNodeGroup,
-      );
+    type component('slots, 'nextSlots, 'elementType, 'outputNodeType);
 
-    type outputTreeComponentSpec('state, 'action) =
-      componentSpec(
-        'state,
-        stateless,
-        'action,
-        outputTreeElement('state, 'action),
-        outputNodeContainer,
-      );
-
-    let statelessComponent:
-      (~useDynamicKey: bool=?, string) =>
-      syntheticComponentSpec(stateless, actionless);
-    let statefulComponent:
-      (~useDynamicKey: bool=?, string) =>
-      syntheticComponentSpec('state, actionless);
-    let reducerComponent:
-      (~useDynamicKey: bool=?, string) =>
-      syntheticComponentSpec('state, 'action);
-    let statelessNativeComponent:
-      (~useDynamicKey: bool=?, string) =>
-      outputTreeComponentSpec(stateless, actionless);
     let element:
       (
         ~key: Key.t=?,
-        component('state, 'action, 'elementType, 'hostOutputNode)
+        component('slots, 'nextSlots, 'elementType, 'hostOutputNode)
       ) =>
       syntheticElement;
+
     let listToElement: list(syntheticElement) => syntheticElement;
 
     module RenderedElement: {
@@ -175,25 +77,32 @@ module Make:
       let flushPendingUpdates: t => t;
 
       let executeHostViewUpdates: t => OutputTree.node;
+
+      let executePendingEffects: t => t;
     };
 
-    /**
-     * RemoteAction provides a way to send actions to a remote component.
-     * The sender creates a fresh RemoteAction and passes it down.
-     * The recepient component calls subscribe in the didMount method.
-     * The caller can then send actions to the recipient components via act.
-     */
-    module RemoteAction: {
-      type t('action);
+    let component:
+      (
+        ~useDynamicKey: bool=?,
+        string,
+        Hooks.t('slots, 'nextSlots) => syntheticElement
+      ) =>
+      component('slots, 'nextSlots, syntheticElement, outputNodeGroup);
 
-      /** Create a new remote action, to which one component will subscribe. */
-      let create: unit => t('action);
+    let nativeComponent:
+      (
+        ~useDynamicKey: bool=?,
+        string,
+        Hooks.t('slots, 'nextSlots) => outputTreeElement('slots, 'nextSlots)
+      ) =>
+      component(
+        'slots,
+        'nextSlots,
+        outputTreeElement('slots, 'nextSlots),
+        outputNodeContainer,
+      );
 
-      /** Subscribe to the remote action, via the component's `act` function. */
-      let subscribe: (~act: 'action => unit, t('action)) => unit;
-
-      /** Perform an action on the subscribed component. */
-
-      let act: (t('action), ~action: 'action) => unit;
-    };
+    module Slots = Slots;
+    module Hooks = Hooks;
+    module RemoteAction = RemoteAction;
   };

@@ -152,6 +152,51 @@ let core = [
       |> ignore,
   ),
   (
+    "Test subtree replace elements (not at top-level)",
+    `Quick,
+    () => {
+      let rAction = RemoteAction.create();
+
+      let well = text("well");
+
+      let testState =
+        render(Components.(<Div> <ToggleClicks rAction /> </Div>))
+        |> executeSideEffects
+        |> expect(
+             ~label="It constructs the initial tree",
+             [
+               Implementation.BeginChanges,
+               ChangeText("well", "well"),
+               MountChild(div, well, 0),
+               MountChild(div, div, 0),
+               MountChild(root, div, 0),
+               CommitChanges,
+             ],
+           );
+
+      RemoteAction.send(~action=Components.ToggleClicks.Click, rAction);
+      let cell1 = text("cell1");
+      let cell2 = text("cell2");
+
+      testState
+      |> flushPendingUpdates
+      |> executeSideEffects
+      |> expect(
+           ~label="It replaces text(well) with text(cell1) and text(cell2)",
+           [
+             Implementation.BeginChanges,
+             UnmountChild(div, well),
+             ChangeText("cell1", "cell1"),
+             MountChild(div, cell1, 0),
+             ChangeText("cell2", "cell2"),
+             MountChild(div, cell2, 1),
+             CommitChanges,
+           ],
+         )
+      |> ignore;
+    },
+  ),
+  (
     "Test subtree replace elements",
     `Quick,
     () => {
@@ -173,7 +218,7 @@ let core = [
              ],
            );
 
-      RemoteAction.act(~action=Components.ToggleClicks.Click, rAction);
+      RemoteAction.send(~action=Components.ToggleClicks.Click, rAction);
       let cell1 = text("cell1");
       let cell2 = text("cell2");
 
@@ -263,42 +308,11 @@ let core = [
          )
       |> ignore,
   ),
-  /*
-   (
-     "Test willReceiveProps on ChangeCounter text update",
-     `Quick,
-     () =>
-       /* TODO: This needs some love, we are testing state updates */
-       render(<Components.ChangeCounter label="default text" />)
-       |> expect(~label="It renders ChangeCounter component", [])
-       |> update(<Components.ChangeCounter label="default text" />)
-       |> expect(~label="It doesn't create any UpdateLog records", [])
-       |> update(<Components.ChangeCounter label="updated text" />)
-       |> expect(~label="It increments its local state on text change", [])
-       |> flushPendingUpdates
-       |> expect(
-            ~label=
-              "It flushes uncommited updates incrementing the counter by 10 on each update",
-            [],
-          )
-       |> flushPendingUpdates
-       |> expect(
-            ~label="It flushes updates, but there are no pending actions",
-            [],
-          )
-       |> flushPendingUpdates
-       |> expect(
-            ~label="It flushes updates, but there are no pending actions",
-            [],
-          )
-       |> ignore,
-   ),
-   */
   (
     "Test changing components",
     `Quick,
     () =>
-      render(<Components.ChangeCounter label="default text" />)
+      render(<Components.EmptyComponent />)
       |> executeSideEffects
       |> expect(
            ~label="It renders ChangeCounter component",
@@ -526,7 +540,7 @@ let core = [
     },
   ),
   (
-    "Test 'shouldUpdate' lifecycle phase",
+    "Test conditional updating by leveraging refs",
     `Quick,
     () => {
       let rAction = RemoteAction.create();
@@ -674,6 +688,151 @@ let core = [
          )
       |> ignore;
     },
+  ),
+  (
+    "Test 'Always' effect",
+    `Quick,
+    () => {
+      let effectCallCount = ref(0);
+      let effectDisposeCallCount = ref(0);
+
+      let onEffect = () => effectCallCount := effectCallCount^ + 1;
+      let onEffectDispose = () => effectDisposeCallCount := effectDisposeCallCount^ + 1;
+
+      let testState = render(<Components.EmptyComponentWithAlwaysEffect onEffect onEffectDispose />)
+      |> executeSideEffects;
+
+      expectInt(
+           ~label="The effect should've been run",
+           1,
+           effectCallCount^);
+
+      expectInt(~label="The dispose should not have been run yet",
+            0,
+            effectDisposeCallCount^);
+
+      testState
+      |> update(<Components.EmptyComponentWithAlwaysEffect onEffect onEffectDispose />)
+      |> executeSideEffects
+      |> ignore;
+
+      expectInt(
+           ~label="The effect should've been run again",
+           2,
+           effectCallCount^);
+
+      expectInt(~label="The effect dispose callback should have been run",
+            1,
+            effectDisposeCallCount^);
+    }
+  ),
+  (
+    "Test 'Always' effect in a nested component",
+    `Quick,
+    () => {
+      let effectCallCount = ref(0);
+      let effectDisposeCallCount = ref(0);
+      let onEffect = () => effectCallCount := effectCallCount^ + 1;
+      let onEffectDispose = () => effectDisposeCallCount := effectDisposeCallCount^ + 1;
+
+      render(
+        Components.(
+          <Div> <EmptyComponentWithAlwaysEffect onEffect onEffectDispose /> </Div>
+        ),
+      )
+      |> executeSideEffects
+      |> ignore;
+
+      expectInt(
+           ~label="The effect should've been run",
+           1,
+           effectCallCount^);
+
+      expectInt(~label="The dispose should not have been run yet",
+            0,
+            effectDisposeCallCount^);
+    }
+  ),
+  (
+    "Test 'OnMount' effect",
+    `Quick,
+    () => {
+      let effectCallCount = ref(0);
+      let effectDisposeCallCount = ref(0);
+      let onEffect = () => effectCallCount := effectCallCount^ + 1;
+      let onEffectDispose = () => effectDisposeCallCount := effectDisposeCallCount^ + 1;
+
+      let testState = render(<Components.EmptyComponentWithOnMountEffect onEffect onEffectDispose />)
+      |> executeSideEffects;
+
+      expectInt(
+           ~label="The effect should've been run",
+           1,
+           effectCallCount^);
+
+      expectInt(~label="The dispose should not have been run yet",
+            0,
+            effectDisposeCallCount^);
+
+      let testState =
+      testState
+      |> update(<Components.EmptyComponentWithOnMountEffect onEffect onEffectDispose />)
+      |> executeSideEffects;
+
+      expectInt(
+           ~label="The effect should not have been run again",
+           1,
+           effectCallCount^);
+
+      expectInt(~label="The effect dispose callback should not have been run yet",
+            0,
+            effectDisposeCallCount^);
+
+      testState
+      |> update(<Components.EmptyComponent />)
+      |> executeSideEffects
+      |> ignore;
+
+      expectInt(
+           ~label="The effect should not have been run again",
+           1,
+           effectCallCount^
+         );
+
+      expectInt(
+        ~label=
+          "The effect dispose callback should have been called since the component was un-mounted.",
+        1,
+        effectDisposeCallCount^,
+      );
+    },
+  ),
+  (
+    "Test 'OnMount' effect in nested component",
+    `Quick,
+    () => {
+      let effectCallCount = ref(0);
+      let effectDisposeCallCount = ref(0);
+      let onEffect = () => effectCallCount := effectCallCount^ + 1;
+      let onEffectDispose = () => effectDisposeCallCount := effectDisposeCallCount^ + 1;
+
+      render(
+        Components.(
+          <Div> <EmptyComponentWithOnMountEffect onEffect onEffectDispose /> </Div>
+        ),
+      )
+      |> executeSideEffects
+      |> ignore;
+
+      expectInt(
+           ~label="The effect should've been run",
+           1,
+           effectCallCount^);
+
+      expectInt(~label="The dispose should not have been run yet",
+            0,
+            effectDisposeCallCount^);
+    }
   ),
 ];
 

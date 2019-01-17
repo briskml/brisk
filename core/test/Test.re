@@ -689,6 +689,44 @@ let core = [
       |> ignore;
     },
   ),
+  (
+    "Test 'always' effect",
+    `Quick,
+    () => {
+      let effectCallCount = ref(0);
+      let effectDisposeCallCount = ref(0);
+      let onEffect = () => effectCallCount := effectCallCount^ + 1;
+      let onEffectDispose = () => effectDisposeCallCount := effectDisposeCallCount^ + 1;
+
+      let testState = render(<Components.EmptyComponentWithAlwaysEffect onEffect onEffectDispose />)
+      |> executeSideEffects;
+
+      expectInt(
+           ~label="The effect should've been run",
+           effectCallCount^,
+           1
+         );
+
+      expectInt(~label="The dispose should not have been run yet",
+            effectDisposeCallCount^,
+            0);
+
+      testState
+      |> update(<Components.EmptyComponentWithAlwaysEffect onEffect onEffectDispose />)
+      |> executeSideEffects
+      |> ignore;
+
+      expectInt(
+           ~label="The effect should've been run again",
+           effectCallCount^,
+           2
+         );
+
+      expectInt(~label="The effect dispose callback should have been run",
+            effectDisposeCallCount^,
+            1);
+    }
+  ),
 ];
 
 /** Annoying dune progress */

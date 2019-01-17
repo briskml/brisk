@@ -204,3 +204,29 @@ module EmptyComponent = {
   let createElement = (~key=?, ~children as _children, ()) =>
     element(~key?, make());
 };
+
+module EmptyComponentWithAlwaysEffect = {
+  let component = component("Box");
+  let make = (~onEffect, ~onEffectDispose, _children) => component((slots) => {
+      let _slots: Hooks.empty = Hooks.effect(Always, () => {
+        onEffect(); 
+        Some(onEffectDispose);
+      }, slots);
+      listToElement([])
+  });
+  let createElement = (~key=?, ~children as _children, ~onEffect, ~onEffectDispose, ()) =>
+    element(~key?, make(~onEffect, ~onEffectDispose, _children));
+};
+
+/* module EmptyComponentWithAlwaysEffect = { */
+/*   let component = component("Box"); */
+/*   let make = (~onEffect, ~onEffectDispose, _children) => component((slots: Hooks.empty) => { */
+/*       let _slots: Hooks.empty = Hooks.effect(Always, () => { */
+/*         onEffect(); */ 
+/*         Some(onEffectDispose); */
+/*       }, slots); */
+/*       listToElement([]) */
+/*   }); */
+/*   let createElement = (~key=?, ~children as _children, ()) => */
+/*     element(~key?, make()); */
+/* }; */

@@ -1,5 +1,8 @@
+open CocoaTypes;
 open Layout;
 open BriskStylableText;
+
+type viewStyle = [ | `Border(Border.t) | `Background(Color.t)];
 
 type textStyle = [
   | `Color(Color.t)
@@ -11,6 +14,25 @@ type textStyle = [
 ];
 
 let flushTextStyle = BriskStylableText.applyChanges;
+
+let setViewStyle = (view: view, attr: [> viewStyle]) =>
+  switch (attr) {
+  | `Background(({r, g, b, a}: Color.t)) =>
+    BriskView.setBackgroundColor(view, r, g, b, a)
+  | `Border(({width, radius, color}: Border.t)) =>
+    if (!isUndefined(width)) {
+      BriskView.setBorderWidth(view, width);
+    };
+    if (!isUndefined(radius)) {
+      BriskView.setBorderRadius(view, radius);
+    };
+
+    if (color !== Color.undefined) {
+      let {r, g, b, a}: Color.t = color;
+      BriskView.setBorderColor(view, r, g, b, a);
+    }
+  | _ => ()
+  };
 
 let setTextStyle = (txt: text, attr: [> textStyle]) =>
   switch (attr) {

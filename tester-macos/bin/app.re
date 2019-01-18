@@ -68,7 +68,7 @@ module Component = {
                 align(`Center),
                 alignSelf(`Center),
                 width(200.),
-                cornerRadius(10.),
+                border(~radius=10., ()),
                 color(Color.hex("#ffffff")),
                 background(Color.hexa("#263ac5", 0.9)),
                 margin(20.),

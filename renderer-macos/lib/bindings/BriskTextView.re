@@ -15,10 +15,6 @@ external setStringValue: (t, string) => unit =
   "ml_BriskTextView_setStringValue";
 
 [@noalloc]
-external setCornerRadius: (t, [@unboxed] float) => unit =
-  "ml_BriskTextView_setCornerRadius_bc" "ml_BriskTextView_setCornerRadius";
-
-[@noalloc]
 external setBackgroundColor:
   (
     t,

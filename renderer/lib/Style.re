@@ -84,11 +84,18 @@ module Create = (Encoding: Flex.Spec.Encoding) => {
   module Border = {
     type t = {
       width: scalar,
+      radius: scalar,
       color: Color0.t,
     };
 
-    let make = (~width=cssUndefined, ~color=Color0.transparent, ()) => {
-      let border: t = {width, color};
+    let make =
+        (
+          ~width=cssUndefined,
+          ~radius=cssUndefined,
+          ~color=Color0.undefined,
+          (),
+        ) => {
+      let border: t = {width, radius, color};
       `Border(border);
     };
 
@@ -103,7 +110,6 @@ module Create = (Encoding: Flex.Spec.Encoding) => {
   let align = Alignment.make;
   let lineBreak = LineBreak.make;
   let lineSpacing = f => `LineSpacing(f);
-  let cornerRadius = f => `CornerRadius(f);
 
   let width = (w: scalar) => `Width(w);
   let height = (h: scalar) => `Height(h);

@@ -1,12 +1,7 @@
 open Brisk;
 open Layout;
 
-type attr = [
-  Layout.style
-  | Styles.textStyle
-  | `Background(Color.t)
-  | `CornerRadius(float)
-];
+type attr = [ Layout.style | Styles.textStyle | Styles.viewStyle];
 
 type style = list(attr);
 
@@ -31,21 +26,21 @@ let make = (~style=[], ~value, children) =>
         {view, layoutNode: makeLayoutNode(~measure, ~style, view)};
       },
       configureInstance: (~isFirstRender as _, {view} as node) => {
-      style
-      |> List.iter(attr =>
-           switch (attr) {
-           | `Background(({r, g, b, a}: Color.t)) =>
-             BriskTextView.setBackgroundColor(view, r, g, b, a)
-           | `CornerRadius(r) => BriskTextView.setCornerRadius(view, r)
-           | `Padding({left, top, right, bottom}) =>
-             BriskTextView.setPadding(view, left, top, right, bottom)
-           | #Styles.textStyle => Styles.setTextStyle(view, attr)
-           | #Layout.style => ()
-           }
-         );
-      Styles.flushTextStyle(view);
-      node;
-    },
+        style
+        |> List.iter(attr =>
+             switch (attr) {
+             | `Padding({left, top, right, bottom}) =>
+               BriskTextView.setPadding(view, left, top, right, bottom)
+             | `Background(({r, g, b, a}: Color.t)) =>
+               BriskTextView.setBackgroundColor(view, r, g, b, a)
+             | #Styles.textStyle => Styles.setTextStyle(view, attr)
+             | #Styles.viewStyle => Styles.setViewStyle(view, attr)
+             | #Layout.style => ()
+             }
+           );
+        Styles.flushTextStyle(view);
+        node;
+      },
       children,
     }
   );

@@ -23,3 +23,5 @@ let transparent = rgba(0, 0, 0, 0.);
 
 let isTransparent: t => bool =
   ({r, g, b, a}) => 0. == r && 0. == g && 0. == b && 0. == a;
+
+let undefined = rgba(0, 0, 0, 0.);

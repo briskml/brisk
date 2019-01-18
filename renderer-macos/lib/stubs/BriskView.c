@@ -77,3 +77,16 @@ CAMLprim value ml_NSView_setBackgroundColor_bc(NSView *view, value red_v,
 
   CAMLreturn(Val_unit);
 }
+
+void ml_NSView_setBorderRadius(NSView *view, double radius) {
+  [view setWantsLayer:YES];
+  [view.layer setCornerRadius:(CGFloat)radius];
+}
+
+CAMLprim value ml_NSView_setBorderRadius_bc(NSView *view, value radius_v) {
+  CAMLparam1(radius_v);
+
+  ml_NSView_setBorderRadius(view, Double_val(radius_v));
+
+  CAMLreturn(Val_unit);
+}

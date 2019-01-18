@@ -99,20 +99,6 @@ CAMLprim value ml_BriskTextView_setBackgroundColor_bc(BriskTextView *txt,
   CAMLreturn(Val_unit);
 }
 
-void ml_BriskTextView_setCornerRadius(BriskTextView *txt, double radius) {
-  [txt setWantsLayer:YES];
-  [txt.layer setCornerRadius:(CGFloat)radius];
-}
-
-CAMLprim value ml_BriskTextView_setCornerRadius_bc(BriskTextView *txt,
-                                                   value radius_v) {
-  CAMLparam1(radius_v);
-
-  ml_BriskTextView_setCornerRadius(txt, Double_val(radius_v));
-
-  CAMLreturn(Val_unit);
-}
-
 void ml_BriskTextView_setPadding(BriskTextView *txt, double left, double top,
                                  __unused double right,
                                  __unused double bottom) {

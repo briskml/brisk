@@ -1,7 +1,7 @@
 open Brisk;
 open Layout;
 
-type attr = [ Layout.style];
+type attr = [ Layout.style | Styles.viewStyle];
 
 type style = list(attr);
 
@@ -25,10 +25,11 @@ let make = (~style=[], ~source, children) =>
         let view = BriskImage.make(~source, ());
         {view, layoutNode: makeLayoutNode(~measure, ~style, view)};
       },
-      configureInstance: (~isFirstRender as _, {view: _} as node) => {
+      configureInstance: (~isFirstRender as _, {view} as node) => {
         style
         |> List.iter(attr =>
              switch (attr) {
+             | #Styles.viewStyle => Styles.setViewStyle(view, attr)
              | #Layout.style => ()
              }
            );

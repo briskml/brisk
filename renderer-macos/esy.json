@@ -6,7 +6,7 @@
     "build": ["dune build --only-packages brisk-macos --root ."]
   },
   "dependencies": {
-    "@brisk/core": "*",
+    "brisk-reconciler": "*",
     "@brisk/renderer": "*",
     "@esy-ocaml/reason": ">=3.4.0",
     "@opam/dune": "^1.6.2",

@@ -1,5 +1,3 @@
-open Brisk_core;
-
 module NativeCocoa = {
   [@deriving (show({with_path: false}), eq)]
   type hostElement = CocoaTypes.view;
@@ -32,7 +30,7 @@ module NativeCocoa = {
   let moveNode = (~parent, ~child as _, ~from as _, ~to_ as _) => parent;
 };
 
-include ReactCore.Make(NativeCocoa);
+include Brisk_reconciler.Make(NativeCocoa);
 
 module RunLoop = {
   let rootRef = ref(None);

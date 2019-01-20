@@ -2,9 +2,9 @@
 
 @protocol BriskStylableText
 
-@property(nonatomic, assign) NSMutableAttributedString *attributedString;
-@property(nonatomic, assign) NSMutableDictionary *attributedProps;
-@property(nonatomic, assign) NSMutableParagraphStyle *paragraphStyle;
+@property(nonatomic, retain) NSMutableAttributedString *attributedString;
+@property(nonatomic, retain) NSMutableDictionary *attributedProps;
+@property(nonatomic, retain) NSMutableParagraphStyle *paragraphStyle;
 
 - (void)applyTextStyle;
 

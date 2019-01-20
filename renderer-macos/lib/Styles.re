@@ -13,7 +13,7 @@ type textStyle = [
   | `LineSpacing(float)
 ];
 
-let flushTextStyle = BriskStylableText.applyChanges;
+let commitTextStyle = BriskStylableText.applyChanges;
 
 let setViewStyle = (view: view, attr: [> viewStyle]) =>
   switch (attr) {
@@ -30,7 +30,7 @@ let setViewStyle = (view: view, attr: [> viewStyle]) =>
     if (color !== Color.undefined) {
       let {r, g, b, a}: Color.t = color;
       BriskView.setBorderColor(view, r, g, b, a);
-    }
+    };
   | _ => ()
   };
 

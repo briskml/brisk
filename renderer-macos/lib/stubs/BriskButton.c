@@ -79,15 +79,6 @@ CAMLprim value ml_BriskButton_setTitle(BriskButton *btn, value str_v) {
   CAMLreturn(Val_unit);
 }
 
-// CAMLprim value ml_BriskButton_setTitle(BriskButton *btn, value str_v) {
-//   CAMLparam1(str_v);
-
-//   NSString *str = [NSString stringWithUTF8String:String_val(str_v)];
-//   [btn setTitle:str];
-
-//   CAMLreturn(Val_unit);
-// }
-
 void ml_BriskButton_setButtonType(BriskButton *btn, intnat type) {
   [btn setButtonType:type];
 }
@@ -112,7 +103,7 @@ CAMLprim value ml_BriskButton_setBezelStyle_bc(BriskButton *btn,
 }
 
 void ml_BriskButton_setIsBordered(BriskButton *btn, intnat bordered) {
-  [btn setBordered:bordered];
+  btn.bordered = bordered;
 }
 
 CAMLprim value ml_BriskButton_setIsBordered_bc(BriskButton *btn,

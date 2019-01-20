@@ -38,7 +38,7 @@ let make = (~style=[], ~value, children) =>
              | #Layout.style => ()
              }
            );
-        Styles.flushTextStyle(view);
+        Styles.commitTextStyle(view);
         node;
       },
       children,

@@ -29,7 +29,7 @@ let make =
              | #Layout.style => ()
              }
            );
-        Styles.flushTextStyle(view);
+        Styles.commitTextStyle(view);
         node;
       },
       children,

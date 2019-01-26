@@ -7,6 +7,8 @@
 // Enter OCaml runtime and obtain the semaphore
 void brisk_caml_call(void (^block)());
 
+void brisk_setNeedsRuntime();
+
 // Enter OCaml runtime and obtain the semaphore, after that run flush
 // This could be potentially implemented on the OCaml side. Not sure.
 void brisk_caml_call_and_flush(void (^block)());

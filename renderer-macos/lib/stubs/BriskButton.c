@@ -9,6 +9,22 @@
 
 @end
 
+// - (void)onTap:(id)sender {
+//   setWantsOCamlRuntime();
+//   /*
+//   Set the flag to release runtime
+//   Send 1 bit to the descriptor (research)
+//   */
+
+//   brisk_caml_callback(whatever);
+//   /*
+//   Call the handler
+//   Run flushPendingUpdates (sync)
+//   v2 - only flush the updates that have been added here
+//   Restart LWT loop on bg
+//   */
+// }
+
 @implementation BriskButton
 
 @synthesize attributedString;
@@ -48,6 +64,7 @@
 }
 
 - (void)performCallback {
+  brisk_setNeedsRuntime();
   brisk_caml_call(^{
     caml_callback(self._callback, Val_unit);
   });

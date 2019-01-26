@@ -6,7 +6,7 @@
  (name brisk_macos)
  (public_name brisk-macos)
  (synopsis "Cocoa renderer and bindings")
- (libraries brisk-reconciler brisk-renderer)
+ (libraries brisk-reconciler brisk-renderer lwt.unix)
  (install_c_headers BriskCocoa
                     BriskApplicationDelegate
                     BriskWindowDelegate

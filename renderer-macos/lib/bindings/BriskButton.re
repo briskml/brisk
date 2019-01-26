@@ -43,6 +43,8 @@ let setIsBordered = (btn, bordered) => {
   setIsBordered(btn, bordered ? 1 : 0);
 };
 
+external isMain: unit => unit = "ml_is_main";
+
 let make = (~type_=?, ~bezel=?, ~title=?, ~onClick=?, ()) => {
   let btn = make();
 
@@ -62,7 +64,21 @@ let make = (~type_=?, ~bezel=?, ~title=?, ~onClick=?, ()) => {
   };
 
   switch (onClick) {
-  | Some(callback) => setCallback(btn, callback)
+  | Some(callback) =>
+    setCallback(
+      btn,
+      () => {
+        /* Main thread */
+        /* Execute the tap handler */
+
+        print_endline("cb");
+        /* Brisk.RunLoop.spawn(); */
+        /* Brisk.RunLoop.flushAndLayout(); */
+        callback();
+        /* Apply all updaets so that we are not one frame behind*/
+        /* "spawn" the worker */
+      },
+    )
   | None => ()
   };
 

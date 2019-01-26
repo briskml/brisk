@@ -1,12 +1,9 @@
 open Brisk_macos;
 open Layout;
-open Lwt.Infix;
 
 module BriskMenu = Menu;
 
 module Component = {
-  [@noalloc] external lwt_start: unit => unit = "ml_lwt_iter";
-
   let component = Brisk.component("Other");
   let createElement = (~children as _, ()) =>
     component(slots => {
@@ -89,32 +86,24 @@ module Component = {
               align(`Center),
             ]
             title="You're gonna have to wait a bit"
-            callback={() => {
-              lwt_start();
-              ignore(
-                Lwt_unix.sleep(1.)
-                >>= (_ => Lwt.return(setState(Some(100)))),
-              );
-            }}
+            callback={() =>
+              Lwt.Infix.(
+                ignore(
+                  Lwt_unix.sleep(1.)
+                  >>= (_ => Lwt.return(setState(Some(100)))),
+                )
+              )
+            }
           />
         </View>
       };
     });
 };
 
-let lwt_iter = () => {
-  Lwt.wakeup_paused();
-  Lwt_engine.iter(false);
-  Lwt.wakeup_paused();
-};
-
 let () = {
   open Cocoa;
 
   let appName = "BriskMac";
-
-  Callback.register("Brisk_flush_layout", Brisk.RunLoop.flushAndLayout);
-  Callback.register("Brisk_lwt_iter", lwt_iter);
 
   Application.init();
 
@@ -150,7 +139,21 @@ let () = {
       root,
       Brisk.element(<Component />),
     );
+
+    Brisk.Task.runInBackground(() => {
+      print_endline("running task in bg");
+      Brisk.RunLoop.run();
+    });
   });
 
   Application.run();
 };
+
+/*
+
+ 1.main
+   - Create a promise
+    Blocks, waits on a byte from main
+ 2.bg
+  - Create another
+  */

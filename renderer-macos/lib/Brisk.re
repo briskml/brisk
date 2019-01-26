@@ -10,7 +10,11 @@ module NativeCocoa = {
 
   let instanceMap: Hashtbl.t(int, node) = Hashtbl.create(1000);
 
-  [@noalloc] external markAsStale: unit => unit = "ml_schedule_layout_flush";
+  let isDirty = ref(false);
+
+  let markAsStale = () => {
+    isDirty := true;
+  };
 
   let beginChanges = () => ();
 
@@ -32,7 +36,22 @@ module NativeCocoa = {
 
 include Brisk_reconciler.Make(NativeCocoa);
 
+module Task = {
+  external runInBackground: (unit => unit) => unit = "ml_runTaskInBackground";
+};
+
 module RunLoop = {
+  let spawn = () => {
+    Printexc.(get_callstack(20) |> raw_backtrace_to_string) |> print_endline;
+  };
+
+  [@noalloc]
+  external getMainFileDescr: unit => [@untagged] int =
+    "ml_getMainFd" "ml_getMainFd";
+
+  let fileDescrOfInt: int => Unix.file_descr = Obj.magic;
+  let intOfFileDescr: Unix.file_descr => int = Obj.magic;
+
   let rootRef = ref(None);
   let renderedRef = ref(None);
   let heightRef = ref(0.);
@@ -75,22 +94,92 @@ module RunLoop = {
     traverseAndApplyLayout(~height, node);
   };
 
+  let flushPendingUpdates = () =>
+    switch (renderedRef^) {
+    | Some(rendered) =>
+      let updated =
+        rendered
+        |> RenderedElement.flushPendingUpdates
+        |> RenderedElement.executePendingEffects;
+      renderedRef := Some(updated);
+    | _ => ()
+    };
+
   let flushAndLayout = () =>
-    switch (rootRef^, renderedRef^) {
-    | (Some(root), Some(rendered)) =>
-      let nextElement = RenderedElement.flushPendingUpdates(rendered);
-      RenderedElement.executeHostViewUpdates(rendered) |> ignore;
-      performLayout(~height=heightRef^, root);
-      renderedRef := Some(nextElement);
-    | _ => ignore()
+    switch (rootRef^) {
+    | Some(root) =>
+      flushPendingUpdates();
+      switch (renderedRef^) {
+      | Some(rendered) =>
+        RenderedElement.executeHostViewUpdates(rendered) |> ignore;
+        performLayout(~height=heightRef^, root);
+      | _ => ()
+      };
+    | _ => ()
     };
 
   let renderAndMount =
       (~height, root: NativeCocoa.node, element: syntheticElement) => {
     let rendered = RenderedElement.render(root, element);
-    RenderedElement.executeHostViewUpdates(rendered) |> ignore;
-    setWindowHeight(height);
     rootRef := Some(root);
     renderedRef := Some(rendered);
+    heightRef := height;
+    RenderedElement.executeHostViewUpdates(rendered) |> ignore;
+    performLayout(~height, root);
   };
+
+  [@noalloc]
+  external shouldReleaseRuntime: unit => [@untagged] int =
+    "ml_shouldReleaseRuntime" "ml_shouldReleaseRuntime";
+
+  [@noalloc]
+  external scheduleHostViewUpdateAndLayout: ([@untagged] int) => unit =
+    "ml_scheduleHostViewUpdateAndLayout" "ml_scheduleHostViewUpdateAndLayout";
+
+  let scheduleHostViewUpdateAndLayout = () => {
+    open Lwt.Infix;
+    let (fd_out, fd_in) = Lwt_unix.pipe();
+
+    let fd = fd_in |> Lwt_unix.unix_file_descr |> intOfFileDescr;
+
+    scheduleHostViewUpdateAndLayout(fd);
+
+    Lwt_unix.read(fd_out, Bytes.create(1), 0, 1) >|= (_ => ());
+  };
+
+  let rec run = () => {
+    let fd =
+      getMainFileDescr() |> fileDescrOfInt |> Lwt_unix.of_unix_file_descr;
+    let _ = Lwt_unix.read(fd, Bytes.create(1), 0, 1);
+    Lwt.wakeup_paused();
+    Lwt_engine.iter(true);
+    Lwt.wakeup_paused();
+
+    if (shouldReleaseRuntime() < 1) {
+      print_endline("ml: shouldReleaseRuntime 0");
+      if (NativeCocoa.isDirty^) {
+        Lwt.Infix.(
+          scheduleHostViewUpdateAndLayout()
+          >|= (() => print_endline("ok"))
+          |> ignore
+        );
+      } else {
+        flushPendingUpdates();
+        run();
+      };
+    } else {
+      print_endline("ml: shouldReleaseRuntime 1");
+      if (NativeCocoa.isDirty^) {
+        Lwt.Infix.(
+          scheduleHostViewUpdateAndLayout()
+          >|= (() => print_endline("ok"))
+          |> ignore
+        );
+      }
+    };
+  };
+
+  /* Callback.register(
+              "Brisk_RunLoop_updateHostViewAndLayout",
+              flushAndLayout); */
 };

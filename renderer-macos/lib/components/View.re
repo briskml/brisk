@@ -1,7 +1,7 @@
 open Brisk;
 open Layout;
 
-type attr = [ Layout.style | `Background(Color.t)];
+type attr = [ Layout.style | Styles.viewStyle];
 
 type style = list(attr);
 
@@ -18,14 +18,7 @@ let make = (~style: style=[], children) =>
         style
         |> List.iter(attr =>
              switch (attr) {
-             | `Background(({r, g, b, a}: Color.t)) =>
-               BriskView.setBackgroundColor(view, r, g, b, a)
-             | `Border(({width, color}: Border.t)) =>
-               if (!isUndefined(width)) {
-                 BriskView.setBorderWidth(view, width);
-               };
-               let {r, g, b, a}: Color.t = color;
-               BriskView.setBorderColor(view, r, g, b, a);
+             | #Styles.viewStyle => Styles.setViewStyle(view, attr)
              | #Layout.style => ()
              }
            );

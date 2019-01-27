@@ -1,6 +1,7 @@
 #import "BriskCocoa.h"
+#import "BriskStylableText.h"
 
-@interface BriskButton : NSButton
+@interface BriskButton : NSButton <BriskStylableText>
 
 @property(nonatomic, assign) value _callback;
 
@@ -9,6 +10,31 @@
 @end
 
 @implementation BriskButton
+
+@synthesize attributedString;
+@synthesize attributedProps;
+@synthesize paragraphStyle;
+
+- (id)init {
+  self = [super init];
+
+  if (self) {
+    self.attributedString = [[NSMutableAttributedString alloc] init];
+    self.attributedProps = [NSMutableDictionary dictionary];
+    self.paragraphStyle =
+        [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
+
+    self.attributedProps[NSParagraphStyleAttributeName] = self.paragraphStyle;
+  }
+
+  return self;
+}
+
+- (void)applyTextStyle {
+  NSRange range = NSMakeRange(0, self.attributedString.length);
+  [self.attributedString setAttributes:self.attributedProps range:range];
+  [self setAttributedTitle:self.attributedString];
+}
 
 - (void)setCallback:(value)callback {
   if (self._callback) {
@@ -48,7 +74,7 @@ CAMLprim value ml_BriskButton_setTitle(BriskButton *btn, value str_v) {
   CAMLparam1(str_v);
 
   NSString *str = [NSString stringWithUTF8String:String_val(str_v)];
-  [btn setTitle:str];
+  [btn.attributedString.mutableString setString:str];
 
   CAMLreturn(Val_unit);
 }
@@ -76,7 +102,7 @@ CAMLprim value ml_BriskButton_setBezelStyle_bc(BriskButton *btn,
   CAMLreturn(Val_unit);
 }
 
-void ml_BriskButton_setIsBordered(BriskButton *btn, BOOL bordered) {
+void ml_BriskButton_setIsBordered(BriskButton *btn, intnat bordered) {
   btn.bordered = bordered;
 }
 
@@ -84,6 +110,6 @@ CAMLprim value ml_BriskButton_setIsBordered_bc(BriskButton *btn,
                                                value bordered_v) {
   CAMLparam1(bordered_v);
 
-  ml_BriskButton_setIsBordered(btn, Bool_val(bordered_v));
+  ml_BriskButton_setIsBordered(btn, Int_val(bordered_v));
   CAMLreturn(Val_unit);
 }

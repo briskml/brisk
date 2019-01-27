@@ -84,9 +84,10 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
     | `AlignSelf(alignSelf) => {...style, alignSelf}
     | `Width(w) => {...style, width: int_of_scalar(w)}
     | `Height(h) => {...style, height: int_of_scalar(h)}
-    | `Border(({width, _}: Border.t)) => {
+    | `Border(({width, _}: Border.t)) =>
+      {
         ...style,
-        border: !isUndefined(width) ? int_of_scalar(width) : style.width,
+        border: !isUndefined(width) ? int_of_scalar(width) : style.border,
       }
     | `Padding({left, top, right, bottom}) => {
         ...style,

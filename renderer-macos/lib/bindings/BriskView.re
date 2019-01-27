@@ -21,6 +21,10 @@ external setBorderWidth: (t, [@unboxed] float) => unit =
   "ml_NSView_setBorderWidth_bc" "ml_NSView_setBorderWidth";
 
 [@noalloc]
+external setBorderRadius: (t, [@unboxed] float) => unit =
+  "ml_NSView_setBorderRadius_bc" "ml_NSView_setBorderRadius";
+
+[@noalloc]
 external setBorderColor:
   (
     t,

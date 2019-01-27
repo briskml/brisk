@@ -4,18 +4,16 @@
 
 - (void)windowDidResize:(NSNotification *)__unused aNotification {
   if (self.didResizeCallback) {
-    brisk_caml_call_and_flush(^{
-      caml_callback(self.didResizeCallback, Val_unit);
-    });
+    brisk_caml_call(self.didResizeCallback);
   }
 }
 
 - (void)setOnWindowDidResize:(value)callback {
   if (self.didResizeCallback) {
     value prevCallback = self.didResizeCallback;
-    caml_remove_global_root(&prevCallback);
+    caml_modify_generational_global_root(&prevCallback, callback);
   }
-  caml_register_global_root(&callback);
+  caml_register_generational_global_root(&callback);
   self.didResizeCallback = callback;
 }
 

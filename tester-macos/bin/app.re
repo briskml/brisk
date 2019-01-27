@@ -85,7 +85,7 @@ module Component = {
               background(Color.hex("#263ac5")),
               align(`Center),
             ]
-            title="You're gonna have to wait a bit"
+            title="You're gonna have to wait 1 second"
             callback={() =>
               Lwt.Infix.(
                 ignore(
@@ -122,7 +122,7 @@ let () = {
           ~style=[width(window#contentWidth), height(window#contentHeight)],
           view,
         );
-      {Brisk.NativeCocoa.view, layoutNode};
+      {Brisk.OutputTree.view, layoutNode};
     };
 
     window#center;
@@ -131,29 +131,17 @@ let () = {
     window#setContentView(root.view);
 
     window#windowDidResize(_ =>
-      Brisk.RunLoop.setWindowHeight(window#contentHeight)
+      Brisk.UI.setWindowHeight(window#contentHeight)
     );
 
-    Brisk.RunLoop.renderAndMount(
+    Brisk.UI.renderAndMount(
       ~height=window#contentHeight,
       root,
       Brisk.element(<Component />),
     );
 
-    Brisk.Task.runInBackground(() => {
-      print_endline("running task in bg");
-      Brisk.RunLoop.run();
-    });
+    Brisk.RunLoop.spawn();
   });
 
   Application.run();
 };
-
-/*
-
- 1.main
-   - Create a promise
-    Blocks, waits on a byte from main
- 2.bg
-  - Create another
-  */

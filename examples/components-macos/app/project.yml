@@ -1,0 +1,41 @@
+name: BriskComponentsMacos
+options:
+  bundleIdPrefix: io.briskml
+  deploymentTarget:
+    macOS: '10.10'
+  usesTabs: false
+  indentWidth: 2
+  createIntermediateGroups: true
+settings:
+  CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF: true
+  CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS: true
+targets:
+  BriskComponentsMacos:
+    type: application
+    platform: macOS
+    sources:
+      - Resources
+      - Sources
+    settings:
+      HEADER_SEARCH_PATHS: '$(STDLIB_PATH)'
+      LIBRARY_SEARCH_PATHS: '$(STDLIB_PATH)'
+      OTHER_LDFLAGS: ' -framework Cocoa'
+    configFiles:
+      Debug: Resources/env.xcconfig
+      Release: Resources/env.xcconfig
+    dependencies:
+      - framework: $(BUILD_INSTALL_PATH)/bin/app.o
+        embed: false
+    info:
+      path: Resources/Info.plist
+      properties:
+        LSMinimumSystemVersion: '$(MACOSX_DEPLOYMENT_TARGET)'
+        LSApplicationCategoryType: public.app-category.developer-tools
+        NSHighResolutionCapable: true
+        NSRequiresAquaSystemAppearance: true
+        NSHumanReadableCopyright: 'Copyright © 2019 Brisk Contributors. All rights reserved.'
+    # entitlements:
+    #   path: Resources/Brisk.entitlements
+    #   properties:
+    #     com.apple.security.app-sandbox: true
+    #     com.apple.security.files.user-selected.read-only: true

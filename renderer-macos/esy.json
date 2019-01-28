@@ -6,11 +6,12 @@
     "build": ["dune build --only-packages brisk-macos --root ."]
   },
   "dependencies": {
-    "brisk-reconciler": "*",
     "@brisk/renderer": "*",
     "@esy-ocaml/reason": ">=3.4.0",
     "@opam/dune": "^1.6.2",
-    "@opam/osx-cf": "*",
+    "@opam/lwt": "^4.1.0",
+    "@opam/lwt_ppx": "^1.2.1",
+    "brisk-reconciler": "*",
     "ocaml": "~4.7.1000"
   },
   "devDependencies": {

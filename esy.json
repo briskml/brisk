@@ -8,15 +8,11 @@
     "fmt": "dune build @fmt --auto-promote",
     "clean": "dune clean",
     "build:mac": "esy build -p @brisk/macos",
-    "build:tester_mac": "esy build -p @brisk/tester-macos",
-    "test:mac": "esy -C -p @brisk/macos dune runtest --root . --no-buffer",
-    "bootstrap:mac": "make -C tester-macos/app bootstrap",
-    "run:mac": "esy x make -C tester-macos/app run"
+    "test:mac": "esy -C -p @brisk/macos dune runtest --root . --no-buffer"
   },
   "dependencies": {
     "@esy-ocaml/reason": ">=3.4.0",
     "@brisk/macos": "*",
-    "@brisk/tester-macos": "*",
     "brisk-reconciler": "*"
   },
   "devDependencies": {
@@ -26,8 +22,6 @@
   "resolutions": {
     "@brisk/renderer": "link-dev:./renderer",
     "@brisk/macos": "link-dev:./renderer-macos",
-    "@brisk/tester-macos": "link-dev:./tester-macos",
-    "@opam/osx-cf": "mirage/ocaml-osx-cf:opam#0c63247",
     "@opam/merlin-lsp": "ocaml/merlin:merlin-lsp.opam#3e34bb5",
     "brisk-reconciler": "briskml/brisk-reconciler#fa605f1"
   }

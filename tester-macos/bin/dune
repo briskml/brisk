@@ -1,9 +1,0 @@
-(executable
- (name app)
- (libraries brisk-macos)
- (modes object))
-
-(install
-  (package brisk-tester-macos)
-  (section bin)
-  (files (app.exe.o as app.o)))

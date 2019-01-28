@@ -3,7 +3,6 @@
 #import <caml/threads.h>
 
 void ml_NSApplication_init() {
-  brisk_init();
   NSApplication *app = [NSApplication sharedApplication];
   [app setActivationPolicy:NSApplicationActivationPolicyRegular];
   [app activateIgnoringOtherApps:YES];

@@ -3,10 +3,6 @@
 #import "BriskWindowDelegate.h"
 #import <caml/threads.h>
 
-NSMutableSet *retainedViews;
-
-void brisk_init() { retainedViews = [NSMutableSet new]; }
-
 void brisk_caml_memoize(const char *name, value **staticPointer) {
   if (*staticPointer == NULL) {
     *staticPointer = caml_named_value(name);
@@ -20,6 +16,6 @@ void brisk_caml_call(value f) {
   caml_release_runtime_system();
 }
 
-void retainView(NSView *view) { [retainedViews addObject:view]; }
+void retainView(NSView *view) { [view retain]; }
 
-void releaseView(NSView *view) { [retainedViews removeObject:view]; }
+void releaseView(NSView *view) { [view release]; }

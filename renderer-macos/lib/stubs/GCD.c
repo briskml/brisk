@@ -1,8 +1,7 @@
 #import "BriskCocoa.h"
 #import <caml/threads.h>
-#import <caml/unixsupport.h>
 
-void ml_printIsMain() { printf("isMainThread: %i\n", [NSThread isMainThread]); }
+intnat ml_isMainThread() { return (intnat)[NSThread isMainThread]; }
 
 void ml_dispatchAsyncBackground(value taskFn_v) {
   CAMLparam1(taskFn_v);

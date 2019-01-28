@@ -43,7 +43,6 @@ module UI = {
 
   let setWindowHeight = height => {
     heightRef := height;
-    OutputTree.markAsStale();
   };
 
   module Layout = {
@@ -106,8 +105,7 @@ module UI = {
     rootRef := Some(root);
     renderedRef := Some(rendered);
     heightRef := height;
-    RenderedElement.executeHostViewUpdates(rendered) |> ignore;
-    Layout.perform(~height, root);
+    executeHostViewUpdatesAndLayout();
   };
 };
 
@@ -116,7 +114,7 @@ module RunLoop = {
     Lwt.wakeup_paused();
     /*
      * iter will return when an fd becomes ready for reading or writing
-     * you can force LWTFakeIOEvenet to start a new iteration
+     * you can force LWTFakeIOEvent to start a new iteration
      */
     Lwt_engine.iter(true);
     Lwt.wakeup_paused();

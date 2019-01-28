@@ -3,44 +3,32 @@
 
 @implementation BriskApplicationDelegate
 
-- (value *)memoizeOCamlFunctionNamed:(const char *)name
-                           toPointer:(value **)staticPointer {
-  if (*staticPointer == NULL) {
-    *staticPointer = caml_named_value(name);
-  }
-  return *staticPointer;
-}
-
 - (void)applicationWillTerminate:(NSNotification *)__unused not{
-  static value *closure_f = NULL;
-  closure_f =
-      [self memoizeOCamlFunctionNamed:"NSAppDelegate.applicationWillTerminate"
-                            toPointer:&closure_f];
+  static value *callbackFn = NULL;
+  brisk_caml_memoize("NSAppDelegate.applicationWillTerminate", &callbackFn);
 
-  if (closure_f != NULL) {
-    brisk_caml_call(*closure_f);
+  if (callbackFn != NULL) {
+    brisk_caml_call(*callbackFn);
   }
 }
 
 - (void)applicationWillFinishLaunching:(NSNotification *)__unused not{
-  static value *closure_f = NULL;
-  closure_f = [self
-      memoizeOCamlFunctionNamed:"NSAppDelegate.applicationWillFinishLaunching"
-                      toPointer:&closure_f];
+  static value *callbackFn = NULL;
+  brisk_caml_memoize("NSAppDelegate.applicationWillFinishLaunching",
+                     &callbackFn);
 
-  if (closure_f != NULL) {
-    brisk_caml_call(*closure_f);
+  if (callbackFn != NULL) {
+    brisk_caml_call(*callbackFn);
   }
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)__unused not{
-  static value *closure_f = NULL;
-  closure_f = [self
-      memoizeOCamlFunctionNamed:"NSAppDelegate.applicationDidFinishLaunching"
-                      toPointer:&closure_f];
+  static value *callbackFn = NULL;
+  brisk_caml_memoize("NSAppDelegate.applicationDidFinishLaunching",
+                     &callbackFn);
 
-  if (closure_f != NULL) {
-    brisk_caml_call(*closure_f);
+  if (callbackFn != NULL) {
+    brisk_caml_call(*callbackFn);
   }
 }
 

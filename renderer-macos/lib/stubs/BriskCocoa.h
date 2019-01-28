@@ -10,6 +10,8 @@ void brisk_caml_call(value callback);
 // Call during app launch before any OCaml code is called
 void brisk_init();
 
+void brisk_caml_memoize(const char *name, value **staticPointer);
+
 // Manual memory management of NSViews. Maybe there's a way to remove it and
 // somehow let ARC do the job even when values cross the boundary. I doubt it
 // though.

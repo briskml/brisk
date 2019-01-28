@@ -2,12 +2,15 @@
 #import "BriskApplicationDelegate.h"
 #import "BriskWindowDelegate.h"
 #import <caml/threads.h>
-#import <caml/unixsupport.h>
 
 NSMutableSet *retainedViews;
 
-void brisk_init() {
-  retainedViews = [NSMutableSet new];
+void brisk_init() { retainedViews = [NSMutableSet new]; }
+
+void brisk_caml_memoize(const char *name, value **staticPointer) {
+  if (*staticPointer == NULL) {
+    *staticPointer = caml_named_value(name);
+  }
 }
 
 void brisk_caml_call(value f) {

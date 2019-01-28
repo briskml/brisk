@@ -56,6 +56,7 @@ let makeWithContentRect = (x, y, w, h) => {
     pub setContentView = v => _NSWindow_setContentView(win, v);
     pub contentWidth = _NSWindow_contentWidth(win);
     pub contentHeight = _NSWindow_contentHeight(win);
-    pub windowDidResize = f => setOnWindowDidResize(win, f)
+    pub windowDidResize = f =>
+      setOnWindowDidResize(win, UIEventCallback.make(f))
   };
 };

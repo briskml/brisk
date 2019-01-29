@@ -87,6 +87,7 @@ module UI = {
         rendered
         |> RenderedElement.flushPendingUpdates
         |> RenderedElement.executePendingEffects;
+      OutputTree.isDirty := false;
       renderedRef := Some(updated);
     | _ => ()
     };
@@ -120,7 +121,6 @@ module RunLoop = {
     Lwt.wakeup_paused();
     if (OutputTree.isDirty^) {
       UI.flushPendingUpdates();
-      OutputTree.isDirty := false;
       GCD.dispatchSyncMain(UI.executeHostViewUpdatesAndLayout);
     };
     run();

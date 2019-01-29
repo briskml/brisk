@@ -1,5 +1,5 @@
 {
-  "checksum": "001600c5a8e451acdbf9a4aea72ce9e7",
+  "checksum": "910375fc1dc76438d1bdc561a600cef7",
   "root": "brisk-components-macos@link-dev:./esy.json",
   "node": {
     "xcpretty@0.2.8001@d41d8cd9": {
@@ -16,14 +16,14 @@
       "dependencies": [],
       "devDependencies": []
     },
-    "xcodegen@2.1.0@d41d8cd9": {
-      "id": "xcodegen@2.1.0@d41d8cd9",
+    "xcodegen@2.2.0@d41d8cd9": {
+      "id": "xcodegen@2.2.0@d41d8cd9",
       "name": "xcodegen",
-      "version": "2.1.0",
+      "version": "2.2.0",
       "source": {
         "type": "install",
         "source": [
-          "archive:https://registry.npmjs.org/xcodegen/-/xcodegen-2.1.0.tgz#sha1:871f55da3daf45f41880b14821e1fe04f0d53485"
+          "archive:https://registry.npmjs.org/xcodegen/-/xcodegen-2.2.0.tgz#sha1:94a03205160864deec799f3e058bd07cb033dbd7"
         ]
       },
       "overrides": [],
@@ -107,7 +107,7 @@
         "@brisk/macos@link:../../renderer-macos"
       ],
       "devDependencies": [
-        "xcpretty@0.2.8001@d41d8cd9", "xcodegen@2.1.0@d41d8cd9",
+        "xcpretty@0.2.8001@d41d8cd9", "xcodegen@2.2.0@d41d8cd9",
         "@opam/merlin-lsp@github:ocaml/merlin:merlin-lsp.opam#3e34bb5@d41d8cd9",
         "@opam/merlin@opam:3.2.2@829ee6dd"
       ]

@@ -6,7 +6,7 @@
  (name brisk_macos)
  (public_name brisk-macos)
  (synopsis "Cocoa renderer and bindings")
- (libraries brisk-reconciler brisk-renderer)
+ (libraries brisk-reconciler brisk-renderer lwt.unix)
  (install_c_headers BriskCocoa
                     BriskApplicationDelegate
                     BriskWindowDelegate
@@ -21,6 +21,7 @@
           BriskTextView
           BriskImage
           BriskButton
+          GCD
           )
  (c_flags (:standard
   (-Wextra -Wall -Werror -O -g -std=c99 -pedantic-errors -Wsign-compare -Wshadow)

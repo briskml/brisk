@@ -12,6 +12,7 @@ module Cocoa = {
   module BriskButton = BriskButton;
   module BriskImage = BriskImage;
   module BriskTextView = BriskTextView;
+  module GCD = GCD;
 };
 
 module Layout = Layout;

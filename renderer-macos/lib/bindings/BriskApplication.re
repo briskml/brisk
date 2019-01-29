@@ -1,19 +1,12 @@
 type t = CocoaTypes.application;
 
+exception NSAppNotInitialized;
+
 external init: unit => unit = "ml_NSApplication_init";
 
 external run: unit => unit = "ml_NSApplication_run";
 
 let isInitialized = ref(false);
-let init = () =>
-  if (isInitialized^ === false) {
-    init();
-    isInitialized := true;
-  };
-
-let identity_f = () => ();
-
-exception NSAppNotInitialized;
 
 let willTerminate = func => {
   if (! isInitialized^) {
@@ -34,4 +27,17 @@ let didFinishLaunching = func => {
     raise(NSAppNotInitialized);
   };
   Callback.register("NSAppDelegate.applicationDidFinishLaunching", func);
+};
+
+let init = () =>
+  if (isInitialized^ === false) {
+    init();
+    isInitialized := true;
+  };
+
+let run = () => {
+  if (! isInitialized^) {
+    raise(NSAppNotInitialized);
+  };
+  run();
 };

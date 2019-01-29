@@ -1,12 +1,9 @@
 open Brisk_macos;
 open Layout;
-open Lwt.Infix;
 
 module BriskMenu = Menu;
 
 module Component = {
-  [@noalloc] external lwt_start: unit => unit = "ml_lwt_iter";
-
   let component = Brisk.component("Other");
   let createElement = (~children as _, ()) =>
     component(slots => {
@@ -88,33 +85,25 @@ module Component = {
               background(Color.hex("#263ac5")),
               align(`Center),
             ]
-            title="You're gonna have to wait a bit"
-            callback={() => {
-              lwt_start();
-              ignore(
-                Lwt_unix.sleep(1.)
-                >>= (_ => Lwt.return(setState(Some(100)))),
-              );
-            }}
+            title="You're gonna have to wait 1 second"
+            callback={() =>
+              Lwt.Infix.(
+                ignore(
+                  Lwt_unix.sleep(1.)
+                  >>= (_ => Lwt.return(setState(Some(100)))),
+                )
+              )
+            }
           />
         </View>
       };
     });
 };
 
-let lwt_iter = () => {
-  Lwt.wakeup_paused();
-  Lwt_engine.iter(false);
-  Lwt.wakeup_paused();
-};
-
 let () = {
   open Cocoa;
 
   let appName = "BriskMac";
-
-  Callback.register("Brisk_flush_layout", Brisk.RunLoop.flushAndLayout);
-  Callback.register("Brisk_lwt_iter", lwt_iter);
 
   Application.init();
 
@@ -130,26 +119,31 @@ let () = {
       let view = BriskView.make();
       let layoutNode =
         makeLayoutNode(
-          ~style=[width(window#contentWidth), height(window#contentHeight)],
+          ~style=[
+            width(Window.contentWidth(window)),
+            height(Window.contentHeight(window)),
+          ],
           view,
         );
-      {Brisk.NativeCocoa.view, layoutNode};
+      {Brisk.OutputTree.view, layoutNode};
     };
 
-    window#center;
-    window#makeKeyAndOrderFront;
-    window#setTitle(appName);
-    window#setContentView(root.view);
+    Window.center(window);
+    Window.makeKeyAndOrderFront(window);
+    Window.setTitle(window, appName);
+    Window.setContentView(window, root.view);
 
-    window#windowDidResize(_ =>
-      Brisk.RunLoop.setWindowHeight(window#contentHeight)
+    Window.windowDidResize(window, _ =>
+      Brisk.UI.setWindowHeight(Window.contentHeight(window))
     );
 
-    Brisk.RunLoop.renderAndMount(
-      ~height=window#contentHeight,
+    Brisk.UI.renderAndMount(
+      ~height=Window.contentHeight(window),
       root,
       Brisk.element(<Component />),
     );
+
+    Brisk.RunLoop.spawn();
   });
 
   Application.run();

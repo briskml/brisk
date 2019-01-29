@@ -62,7 +62,11 @@ let make = (~type_=?, ~bezel=?, ~title=?, ~onClick=?, ()) => {
   };
 
   switch (onClick) {
-  | Some(callback) => setCallback(btn, callback)
+  | Some(callback) =>
+    setCallback(
+      btn,
+      UIEventCallback.make(callback),
+    )
   | None => ()
   };
 

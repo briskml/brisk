@@ -48,10 +48,9 @@
 }
 
 - (void)performCallback {
-  brisk_caml_call(^{
-    caml_callback(self._callback, Val_unit);
-  });
+  brisk_caml_call(self._callback);
 }
+
 @end
 
 BriskButton *ml_BriskButton_make() {

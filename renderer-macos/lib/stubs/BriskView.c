@@ -9,6 +9,7 @@ NSView *ml_NSView_make() {
 
 void ml_NSView_addSubview(NSView *view, NSView *child) {
   [view addSubview:child];
+  releaseView(child);
 }
 
 void ml_NSView_removeSubview(NSView *child) { [child removeFromSuperview]; }

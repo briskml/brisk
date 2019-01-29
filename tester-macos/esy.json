@@ -2,7 +2,7 @@
   "name": "@brisk/tester-macos",
   "version": "0.1.0",
   "esy": {
-    "build": ["dune build @install --only-packages brisk-tester-macos --root ."]
+    "build": ["dune build -p brisk-tester-macos"]
   },
   "dependencies": {
     "@esy-ocaml/libffi": "*",

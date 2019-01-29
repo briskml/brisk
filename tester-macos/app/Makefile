@@ -1,4 +1,4 @@
-.phone: bootstrap
+.PHONY: bootstrap run build exec
 
 CONFIGURATION="Debug"
 SCHEME="BriskMac"

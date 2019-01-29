@@ -23,40 +23,24 @@ external _NSWindow_setContentView: (window, view) => unit =
 [@noalloc]
 external _NSWindow_contentWidth: window => [@unboxed] float =
   "ml_NSWindow_contentWidth" "ml_NSWindow_contentWidth";
-[@noalloc]
-external _NSWindow_contentHeight: window => [@unboxed] float =
-  "ml_NSWindow_contentHeight" "ml_NSWindow_contentHeight";
+external _NSWindow_contentHeight: window =>  float =
+  "ml_NSWindow_contentHeight_bc" "ml_NSWindow_contentHeight_bc";
 external setOnWindowDidResize: (window, unit => unit) => unit =
   "ml_NSWindow_setOnWindowDidResize";
 
-class type t = {
-  pub isVisible: bool;
-  pub center: unit;
-  pub makeKeyAndOrderFront: unit;
-  pub setTitle: string => unit;
-  pub title: string;
-  pub contentView: view;
-  pub setContentView: view => unit;
-  pub contentWidth: unit => float;
-  pub contentHeight: unit => float;
-  pub windowDidResize: (unit => unit) => unit;
+let makeWithContentRect = (x, y, w, h) => {
+  _NSWindow_makeWithContentRect(x, y, w, h);
 };
 
-let makeWithContentRect = (x, y, w, h) => {
-  let win = _NSWindow_makeWithContentRect(x, y, w, h);
-
-  {
-    as _;
-    pub isVisible = _NSWindow_isVisible(win);
-    pub center = _NSWindow_center(win);
-    pub makeKeyAndOrderFront = _NSWindow_makeKeyAndOrderFront(win);
-    pub setTitle = s => _NSWindow_setTitle(win, s);
-    pub title = _NSWindow_title(win);
-    pub contentView = _NSWindow_contentView(win);
-    pub setContentView = v => _NSWindow_setContentView(win, v);
-    pub contentWidth = _NSWindow_contentWidth(win);
-    pub contentHeight = _NSWindow_contentHeight(win);
-    pub windowDidResize = f =>
-      setOnWindowDidResize(win, UIEventCallback.make(f))
-  };
+let isVisible = win => _NSWindow_isVisible(win);
+let center = win => _NSWindow_center(win);
+let makeKeyAndOrderFront = win => _NSWindow_makeKeyAndOrderFront(win);
+let setTitle = (win, s) => _NSWindow_setTitle(win, s);
+let title = win => _NSWindow_title(win);
+let contentView = win => _NSWindow_contentView(win);
+let setContentView = (win, v) => _NSWindow_setContentView(win, v);
+let contentWidth = win => _NSWindow_contentWidth(win);
+let contentHeight = win => _NSWindow_contentHeight(win);
+let windowDidResize = (win, f) => {
+  setOnWindowDidResize(win, UIEventCallback.make(f));
 };

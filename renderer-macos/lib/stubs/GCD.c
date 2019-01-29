@@ -4,7 +4,6 @@
 intnat ml_isMainThread() { return (intnat)[NSThread isMainThread]; }
 
 void ml_dispatchAsyncBackground(value taskFn_v) {
-  CAMLparam1(taskFn_v);
   value taskFn = taskFn_v;
   caml_register_global_root(&taskFn);
 
@@ -17,7 +16,6 @@ void ml_dispatchAsyncBackground(value taskFn_v) {
 }
 
 void ml_dispatchSyncMain(value taskFn_v) {
-  CAMLparam1(taskFn_v);
   value taskFn = taskFn_v;
   caml_register_global_root(&taskFn);
 

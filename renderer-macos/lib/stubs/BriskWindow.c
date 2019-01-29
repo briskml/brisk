@@ -18,11 +18,9 @@ NSWindow *ml_NSWindow_makeWithContentRect(double x, double y, double w,
   return win;
 }
 
-CAMLprim value ml_NSWindow_setOnWindowDidResize(NSWindow *window,
+void ml_NSWindow_setOnWindowDidResize(NSWindow *window,
                                                 value callback) {
-  CAMLparam1(callback);
   [(BriskWindowDelegate *)[window delegate] setOnWindowDidResize:callback];
-  CAMLreturn(Val_unit);
 }
 
 CAMLprim value ml_NSWindow_makeWithContentRect_bc(value x_v, value y_v,
@@ -50,9 +48,15 @@ void ml_NSWindow_setContentView(NSWindow *win, NSView *view) {
   [win setContentView:view];
 }
 
-// A separate bytecode version is probably needed
 double ml_NSWindow_contentHeight(NSWindow *win) {
   return (double)[win contentRectForFrameRect:win.frame].size.height;
+}
+
+value ml_NSWindow_contentHeight_bc(NSWindow *win) {
+  CAMLparam0();
+  CAMLlocal1(height);
+  height = caml_copy_double([win contentRectForFrameRect:win.frame].size.height);
+  CAMLreturn(height);
 }
 
 double ml_NSWindow_contentWidth(NSWindow *win) {

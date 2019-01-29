@@ -119,23 +119,24 @@ let () = {
       let view = BriskView.make();
       let layoutNode =
         makeLayoutNode(
-          ~style=[width(window#contentWidth), height(window#contentHeight)],
+          ~style=[width(Window.contentWidth(window)), height(Window.contentHeight(window))],
           view,
         );
       {Brisk.OutputTree.view, layoutNode};
     };
 
-    window#center;
-    window#makeKeyAndOrderFront;
-    window#setTitle(appName);
-    window#setContentView(root.view);
+    Window.center(window);
+    Window.makeKeyAndOrderFront(window);
+    Window.setTitle((window), appName);
+    Window.setContentView(window, root.view);
 
-    window#windowDidResize(_ =>
-      Brisk.UI.setWindowHeight(window#contentHeight)
+    Window.windowDidResize(window, _ => {
+      Brisk.UI.setWindowHeight(Window.contentHeight(window))
+    }
     );
 
     Brisk.UI.renderAndMount(
-      ~height=window#contentHeight,
+      ~height=Window.contentHeight(window),
       root,
       Brisk.element(<Component />),
     );

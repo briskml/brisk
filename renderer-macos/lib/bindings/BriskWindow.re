@@ -23,8 +23,9 @@ external _NSWindow_setContentView: (window, view) => unit =
 [@noalloc]
 external _NSWindow_contentWidth: window => [@unboxed] float =
   "ml_NSWindow_contentWidth" "ml_NSWindow_contentWidth";
-external _NSWindow_contentHeight: window =>  float =
-  "ml_NSWindow_contentHeight_bc" "ml_NSWindow_contentHeight_bc";
+[@noalloc]
+external _NSWindow_contentHeight: window => [@unboxed] float =
+  "ml_NSWindow_contentHeight_bc" "ml_NSWindow_contentHeight";
 external setOnWindowDidResize: (window, unit => unit) => unit =
   "ml_NSWindow_setOnWindowDidResize";
 

@@ -119,7 +119,10 @@ let () = {
       let view = BriskView.make();
       let layoutNode =
         makeLayoutNode(
-          ~style=[width(Window.contentWidth(window)), height(Window.contentHeight(window))],
+          ~style=[
+            width(Window.contentWidth(window)),
+            height(Window.contentHeight(window)),
+          ],
           view,
         );
       {Brisk.OutputTree.view, layoutNode};
@@ -127,12 +130,11 @@ let () = {
 
     Window.center(window);
     Window.makeKeyAndOrderFront(window);
-    Window.setTitle((window), appName);
+    Window.setTitle(window, appName);
     Window.setContentView(window, root.view);
 
-    Window.windowDidResize(window, _ => {
+    Window.windowDidResize(window, _ =>
       Brisk.UI.setWindowHeight(Window.contentHeight(window))
-    }
     );
 
     Brisk.UI.renderAndMount(

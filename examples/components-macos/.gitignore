@@ -1,0 +1,12 @@
+_esy
+_build
+.DS_Store
+/node_modules
+*.xcconfig
+*.xcodeproj
+Info.plist
+*.entitlements
+.merlin
+*.log
+*.install
+default.profraw

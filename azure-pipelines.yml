@@ -20,7 +20,8 @@ jobs:
           esy test:mac
         displayName: "Build and test renderer-macos"
       - script: |
-          esy bootstrap:mac
-          esy build:tester_mac
-        displayName: "Build and test tester-macos"
+          cd examples/components-macos
+          esy
+          esy x make -C app build
+        displayName: "Build example: components-macos"
       - template: .ci/publish-build-cache.yml

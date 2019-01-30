@@ -1,5 +1,5 @@
 {
-  "checksum": "8e516cbdcd25d7c69c6780f0dfb7399f",
+  "checksum": "d4f1ab729f93870f04b058ec120e2233",
   "root": "brisk@link-dev:./esy.json",
   "node": {
     "refmterr@3.1.10@d41d8cd9": {
@@ -82,6 +82,60 @@
         "@opam/merlin-lsp@github:ocaml/merlin:merlin-lsp.opam#3e34bb5@d41d8cd9"
       ]
     },
+    "@reason-native/rely@1.1.0@d41d8cd9": {
+      "id": "@reason-native/rely@1.1.0@d41d8cd9",
+      "name": "@reason-native/rely",
+      "version": "1.1.0",
+      "source": {
+        "type": "install",
+        "source": [
+          "archive:https://registry.npmjs.org/@reason-native/rely/-/rely-1.1.0.tgz#sha1:f60e228c997d7c24b660624db647a1ffac9a113a"
+        ]
+      },
+      "overrides": [],
+      "dependencies": [
+        "refmterr@3.1.10@d41d8cd9", "ocaml@4.7.1003@d41d8cd9",
+        "@reason-native/pastel@0.1.0@d41d8cd9",
+        "@reason-native/file-context-printer@0.0.2@d41d8cd9",
+        "@opam/dune@opam:1.6.3@a7d7baed", "@esy-ocaml/reason@3.4.0@d41d8cd9"
+      ],
+      "devDependencies": []
+    },
+    "@reason-native/pastel@0.1.0@d41d8cd9": {
+      "id": "@reason-native/pastel@0.1.0@d41d8cd9",
+      "name": "@reason-native/pastel",
+      "version": "0.1.0",
+      "source": {
+        "type": "install",
+        "source": [
+          "archive:https://registry.npmjs.org/@reason-native/pastel/-/pastel-0.1.0.tgz#sha1:2b262a654b8d807215df74768e628e9b05b3f5e3"
+        ]
+      },
+      "overrides": [],
+      "dependencies": [
+        "ocaml@4.7.1003@d41d8cd9", "@opam/dune@opam:1.6.3@a7d7baed",
+        "@esy-ocaml/reason@3.4.0@d41d8cd9"
+      ],
+      "devDependencies": []
+    },
+    "@reason-native/file-context-printer@0.0.2@d41d8cd9": {
+      "id": "@reason-native/file-context-printer@0.0.2@d41d8cd9",
+      "name": "@reason-native/file-context-printer",
+      "version": "0.0.2",
+      "source": {
+        "type": "install",
+        "source": [
+          "archive:https://registry.npmjs.org/@reason-native/file-context-printer/-/file-context-printer-0.0.2.tgz#sha1:effbcb6db360cca9ac293a0075bc0d5912bd0ce0"
+        ]
+      },
+      "overrides": [],
+      "dependencies": [
+        "ocaml@4.7.1003@d41d8cd9", "@reason-native/pastel@0.1.0@d41d8cd9",
+        "@opam/re@opam:1.8.0@7baac1a7", "@opam/dune@opam:1.6.3@a7d7baed",
+        "@esy-ocaml/reason@3.4.0@d41d8cd9"
+      ],
+      "devDependencies": []
+    },
     "@opam/yojson@opam:1.5.0@890db858": {
       "id": "@opam/yojson@opam:1.5.0@890db858",
       "name": "@opam/yojson",
@@ -109,58 +163,6 @@
         "ocaml@4.7.1003@d41d8cd9", "@opam/easy-format@opam:1.3.1@9abfd4ed",
         "@opam/biniou@opam:1.2.0@c8516f18"
       ]
-    },
-    "@opam/uuidm@opam:0.9.6@bcd0dcef": {
-      "id": "@opam/uuidm@opam:0.9.6@bcd0dcef",
-      "name": "@opam/uuidm",
-      "version": "opam:0.9.6",
-      "source": {
-        "type": "install",
-        "source": [
-          "archive:https://opam.ocaml.org/cache/md5/98/98ef30cd99ad4e4f7b4c33affa19465b#md5:98ef30cd99ad4e4f7b4c33affa19465b",
-          "archive:http://erratique.ch/software/uuidm/releases/uuidm-0.9.6.tbz#md5:98ef30cd99ad4e4f7b4c33affa19465b"
-        ],
-        "opam": {
-          "name": "uuidm",
-          "version": "0.9.6",
-          "path": "esy.lock/opam/uuidm.0.9.6"
-        }
-      },
-      "overrides": [],
-      "dependencies": [
-        "ocaml@4.7.1003@d41d8cd9", "@opam/topkg@opam:1.0.0@61f4ccf9",
-        "@opam/ocamlfind@opam:1.8.0@96572762",
-        "@opam/ocamlbuild@opam:0.12.0@6c616094",
-        "@opam/cmdliner@opam:1.0.3@96d31520",
-        "@opam/base-bytes@opam:base@19d0c2ff",
-        "@esy-ocaml/substs@0.0.1@d41d8cd9"
-      ],
-      "devDependencies": [
-        "ocaml@4.7.1003@d41d8cd9", "@opam/base-bytes@opam:base@19d0c2ff"
-      ]
-    },
-    "@opam/uchar@opam:0.0.2@c8218eea": {
-      "id": "@opam/uchar@opam:0.0.2@c8218eea",
-      "name": "@opam/uchar",
-      "version": "opam:0.0.2",
-      "source": {
-        "type": "install",
-        "source": [
-          "archive:https://opam.ocaml.org/cache/md5/c9/c9ba2c738d264c420c642f7bb1cf4a36#md5:c9ba2c738d264c420c642f7bb1cf4a36",
-          "archive:https://github.com/ocaml/uchar/releases/download/v0.0.2/uchar-0.0.2.tbz#md5:c9ba2c738d264c420c642f7bb1cf4a36"
-        ],
-        "opam": {
-          "name": "uchar",
-          "version": "0.0.2",
-          "path": "esy.lock/opam/uchar.0.0.2"
-        }
-      },
-      "overrides": [],
-      "dependencies": [
-        "ocaml@4.7.1003@d41d8cd9", "@opam/ocamlbuild@opam:0.12.0@6c616094",
-        "@esy-ocaml/substs@0.0.1@d41d8cd9"
-      ],
-      "devDependencies": [ "ocaml@4.7.1003@d41d8cd9" ]
     },
     "@opam/topkg@opam:1.0.0@61f4ccf9": {
       "id": "@opam/topkg@opam:1.0.0@61f4ccf9",
@@ -729,37 +731,6 @@
         "ocaml@4.7.1003@d41d8cd9", "@opam/base-bigarray@opam:base@b03491b0"
       ]
     },
-    "@opam/fmt@opam:0.8.5@01e38a4e": {
-      "id": "@opam/fmt@opam:0.8.5@01e38a4e",
-      "name": "@opam/fmt",
-      "version": "opam:0.8.5",
-      "source": {
-        "type": "install",
-        "source": [
-          "archive:https://opam.ocaml.org/cache/md5/77/77b64aa6f20f09de28f2405d6195f12c#md5:77b64aa6f20f09de28f2405d6195f12c",
-          "archive:http://erratique.ch/software/fmt/releases/fmt-0.8.5.tbz#md5:77b64aa6f20f09de28f2405d6195f12c"
-        ],
-        "opam": {
-          "name": "fmt",
-          "version": "0.8.5",
-          "path": "esy.lock/opam/fmt.0.8.5"
-        }
-      },
-      "overrides": [],
-      "dependencies": [
-        "ocaml@4.7.1003@d41d8cd9", "@opam/uchar@opam:0.0.2@c8218eea",
-        "@opam/topkg@opam:1.0.0@61f4ccf9", "@opam/result@opam:1.3@bee8bf2e",
-        "@opam/ocamlfind@opam:1.8.0@96572762",
-        "@opam/ocamlbuild@opam:0.12.0@6c616094",
-        "@opam/cmdliner@opam:1.0.3@96d31520",
-        "@opam/base-unix@opam:base@87d0b2eb",
-        "@esy-ocaml/substs@0.0.1@d41d8cd9"
-      ],
-      "devDependencies": [
-        "ocaml@4.7.1003@d41d8cd9", "@opam/uchar@opam:0.0.2@c8218eea",
-        "@opam/result@opam:1.3@bee8bf2e"
-      ]
-    },
     "@opam/easy-format@opam:1.3.1@9abfd4ed": {
       "id": "@opam/easy-format@opam:1.3.1@9abfd4ed",
       "name": "@opam/easy-format",
@@ -929,28 +900,6 @@
         "ocaml@4.7.1003@d41d8cd9", "@opam/gg@opam:0.9.3@063e5657"
       ]
     },
-    "@opam/cmdliner@opam:1.0.3@96d31520": {
-      "id": "@opam/cmdliner@opam:1.0.3@96d31520",
-      "name": "@opam/cmdliner",
-      "version": "opam:1.0.3",
-      "source": {
-        "type": "install",
-        "source": [
-          "archive:https://opam.ocaml.org/cache/md5/36/3674ad01d4445424105d33818c78fba8#md5:3674ad01d4445424105d33818c78fba8",
-          "archive:http://erratique.ch/software/cmdliner/releases/cmdliner-1.0.3.tbz#md5:3674ad01d4445424105d33818c78fba8"
-        ],
-        "opam": {
-          "name": "cmdliner",
-          "version": "1.0.3",
-          "path": "esy.lock/opam/cmdliner.1.0.3"
-        }
-      },
-      "overrides": [],
-      "dependencies": [
-        "ocaml@4.7.1003@d41d8cd9", "@esy-ocaml/substs@0.0.1@d41d8cd9"
-      ],
-      "devDependencies": [ "ocaml@4.7.1003@d41d8cd9" ]
-    },
     "@opam/biniou@opam:1.2.0@c8516f18": {
       "id": "@opam/biniou@opam:1.2.0@c8516f18",
       "name": "@opam/biniou",
@@ -1051,66 +1000,6 @@
       "dependencies": [ "@esy-ocaml/substs@0.0.1@d41d8cd9" ],
       "devDependencies": []
     },
-    "@opam/astring@opam:0.8.3@4e5e17d5": {
-      "id": "@opam/astring@opam:0.8.3@4e5e17d5",
-      "name": "@opam/astring",
-      "version": "opam:0.8.3",
-      "source": {
-        "type": "install",
-        "source": [
-          "archive:https://opam.ocaml.org/cache/md5/c5/c5bf6352b9ac27fbeab342740f4fa870#md5:c5bf6352b9ac27fbeab342740f4fa870",
-          "archive:http://erratique.ch/software/astring/releases/astring-0.8.3.tbz#md5:c5bf6352b9ac27fbeab342740f4fa870"
-        ],
-        "opam": {
-          "name": "astring",
-          "version": "0.8.3",
-          "path": "esy.lock/opam/astring.0.8.3"
-        }
-      },
-      "overrides": [],
-      "dependencies": [
-        "ocaml@4.7.1003@d41d8cd9", "@opam/topkg@opam:1.0.0@61f4ccf9",
-        "@opam/ocamlfind@opam:1.8.0@96572762",
-        "@opam/ocamlbuild@opam:0.12.0@6c616094",
-        "@opam/base-bytes@opam:base@19d0c2ff",
-        "@esy-ocaml/substs@0.0.1@d41d8cd9"
-      ],
-      "devDependencies": [
-        "ocaml@4.7.1003@d41d8cd9", "@opam/base-bytes@opam:base@19d0c2ff"
-      ]
-    },
-    "@opam/alcotest@opam:0.8.5@0b35b339": {
-      "id": "@opam/alcotest@opam:0.8.5@0b35b339",
-      "name": "@opam/alcotest",
-      "version": "opam:0.8.5",
-      "source": {
-        "type": "install",
-        "source": [
-          "archive:https://opam.ocaml.org/cache/md5/2d/2db36741c413ab93391ecc1f983aa804#md5:2db36741c413ab93391ecc1f983aa804",
-          "archive:https://github.com/mirage/alcotest/releases/download/0.8.5/alcotest-0.8.5.tbz#md5:2db36741c413ab93391ecc1f983aa804"
-        ],
-        "opam": {
-          "name": "alcotest",
-          "version": "0.8.5",
-          "path": "esy.lock/opam/alcotest.0.8.5"
-        }
-      },
-      "overrides": [],
-      "dependencies": [
-        "ocaml@4.7.1003@d41d8cd9", "@opam/uuidm@opam:0.9.6@bcd0dcef",
-        "@opam/result@opam:1.3@bee8bf2e", "@opam/fmt@opam:0.8.5@01e38a4e",
-        "@opam/dune@opam:1.6.3@a7d7baed",
-        "@opam/cmdliner@opam:1.0.3@96d31520",
-        "@opam/astring@opam:0.8.3@4e5e17d5",
-        "@esy-ocaml/substs@0.0.1@d41d8cd9"
-      ],
-      "devDependencies": [
-        "ocaml@4.7.1003@d41d8cd9", "@opam/uuidm@opam:0.9.6@bcd0dcef",
-        "@opam/result@opam:1.3@bee8bf2e", "@opam/fmt@opam:0.8.5@01e38a4e",
-        "@opam/cmdliner@opam:1.0.3@96d31520",
-        "@opam/astring@opam:0.8.3@4e5e17d5"
-      ]
-    },
     "@esy-ocaml/substs@0.0.1@d41d8cd9": {
       "id": "@esy-ocaml/substs@0.0.1@d41d8cd9",
       "name": "@esy-ocaml/substs",
@@ -1159,7 +1048,7 @@
         "@opam/dune@opam:1.6.3@a7d7baed", "@esy-ocaml/reason@3.4.0@d41d8cd9",
         "@brisk/core@link-dev:core"
       ],
-      "devDependencies": [ "@opam/alcotest@opam:0.8.5@0b35b339" ]
+      "devDependencies": [ "@reason-native/rely@1.1.0@d41d8cd9" ]
     },
     "@brisk/core@link-dev:core": {
       "id": "@brisk/core@link-dev:core",

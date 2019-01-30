@@ -8,7 +8,7 @@
     "fmt": "dune build @fmt --auto-promote",
     "clean": "dune clean",
     "build:mac": "esy build -p @brisk/macos",
-    "test:mac": "esy -C -p @brisk/macos dune runtest --root . --no-buffer"
+    "test:mac": "esy -C -p @brisk/macos dune runtest --root ."
   },
   "dependencies": {
     "@esy-ocaml/reason": ">=3.4.0",

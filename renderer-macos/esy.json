@@ -15,6 +15,6 @@
     "ocaml": "~4.7.1000"
   },
   "devDependencies": {
-    "@opam/alcotest": "^0.8.4"
+    "@reason-native/rely": "*"
   }
 }

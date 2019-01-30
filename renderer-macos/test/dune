@@ -1,6 +1,6 @@
-(executables
- (names test)
- (libraries alcotest brisk-macos))
+(executable
+ (name test)
+ (libraries rely.lib brisk-macos))
 
 (alias
  (name runtest)

@@ -23,7 +23,7 @@
     "xcpretty": "^0.2.8"
   },
   "resolutions": {
-    "@brisk/renderer": "link:../../renderer",
+    "@brisk/core": "link:../../core",
     "@brisk/macos": "link:../../renderer-macos",
     "@opam/merlin-lsp": "ocaml/merlin:merlin-lsp.opam#3e34bb5",
     "brisk-reconciler": "briskml/brisk-reconciler#fa605f1"

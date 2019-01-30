@@ -1,5 +1,5 @@
 {
-  "checksum": "910375fc1dc76438d1bdc561a600cef7",
+  "checksum": "b9d36025745880642c425df665694a22",
   "root": "brisk-components-macos@link-dev:./esy.json",
   "node": {
     "xcpretty@0.2.8001@d41d8cd9": {
@@ -1878,19 +1878,6 @@
       ],
       "devDependencies": []
     },
-    "@brisk/renderer@link:../../renderer": {
-      "id": "@brisk/renderer@link:../../renderer",
-      "name": "@brisk/renderer",
-      "version": "link:../../renderer",
-      "source": { "type": "link", "path": "../../renderer" },
-      "overrides": [],
-      "dependencies": [
-        "ocaml@4.7.1003@d41d8cd9", "flex@1.2.2@d41d8cd9",
-        "@opam/dune@opam:1.6.3@a7d7baed", "@opam/color@opam:0.2.0@8ef09171",
-        "@esy-ocaml/reason@3.4.0@d41d8cd9"
-      ],
-      "devDependencies": []
-    },
     "@brisk/macos@link:../../renderer-macos": {
       "id": "@brisk/macos@link:../../renderer-macos",
       "name": "@brisk/macos",
@@ -1902,7 +1889,20 @@
         "brisk-reconciler@github:briskml/brisk-reconciler#fa605f1@d41d8cd9",
         "@opam/lwt_ppx@opam:1.2.1@db1172a7", "@opam/lwt@opam:4.1.0@111fc2bf",
         "@opam/dune@opam:1.6.3@a7d7baed", "@esy-ocaml/reason@3.4.0@d41d8cd9",
-        "@brisk/renderer@link:../../renderer"
+        "@brisk/core@link:../../core"
+      ],
+      "devDependencies": []
+    },
+    "@brisk/core@link:../../core": {
+      "id": "@brisk/core@link:../../core",
+      "name": "@brisk/core",
+      "version": "link:../../core",
+      "source": { "type": "link", "path": "../../core" },
+      "overrides": [],
+      "dependencies": [
+        "ocaml@4.7.1003@d41d8cd9", "flex@1.2.2@d41d8cd9",
+        "@opam/dune@opam:1.6.3@a7d7baed", "@opam/color@opam:0.2.0@8ef09171",
+        "@esy-ocaml/reason@3.4.0@d41d8cd9"
       ],
       "devDependencies": []
     }

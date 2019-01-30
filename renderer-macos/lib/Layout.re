@@ -3,4 +3,4 @@ module Node = {
   let nullContext = BriskView.make();
 };
 
-include Brisk_renderer.CreateLayout(Node, Flex.FloatEncoding);
+include Brisk_core.CreateLayout(Node, Flex.FloatEncoding);

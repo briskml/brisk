@@ -20,7 +20,7 @@
     "ocaml": "~4.7.1000"
   },
   "resolutions": {
-    "@brisk/renderer": "link-dev:./renderer",
+    "@brisk/core": "link-dev:./core",
     "@brisk/macos": "link-dev:./renderer-macos",
     "@opam/merlin-lsp": "ocaml/merlin:merlin-lsp.opam#3e34bb5",
     "brisk-reconciler": "briskml/brisk-reconciler#fa605f1"

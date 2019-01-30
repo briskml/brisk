@@ -1,9 +1,9 @@
 {
-  "name": "@brisk/renderer",
+  "name": "@brisk/core",
   "version": "0.1.0",
   "license": "MIT",
   "esy": {
-    "build": ["dune build --only-packages brisk-renderer --root ."]
+    "build": ["dune build --only-packages brisk-core --root ."]
   },
   "dependencies": {
     "@esy-ocaml/reason": ">=3.4.0",

@@ -25,6 +25,7 @@
   "resolutions": {
     "@brisk/core": "link:../../core",
     "@brisk/macos": "link:../../renderer-macos",
+    "@opam/dune": "ocaml/dune:dune.opam#01b46a3",
     "@opam/merlin-lsp": "ocaml/merlin:merlin-lsp.opam#3e34bb5",
     "brisk-reconciler": "briskml/brisk-reconciler#fa605f1"
   }

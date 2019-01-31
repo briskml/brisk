@@ -37,6 +37,12 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
       },
     );
 
+  let overflow = o => `Overflow(switch (o) {
+    | `Visible => Visible
+    | `Hidden => Hidden
+    | `Scroll => Scroll
+  });
+
   let alignContent = a => `AlignContent(convertAlign(a));
   let alignItems = a => `AlignItems(convertAlign(a));
   let alignSelf = a => `AlignSelf(convertAlign(a));
@@ -48,6 +54,7 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
     | `AlignContent(align)
     | `AlignItems(align)
     | `AlignSelf(align)
+    | `Overflow(overflow)
     | `Width(scalar)
     | `Height(scalar)
     | `Border(Border.t)
@@ -84,6 +91,7 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
     | `AlignSelf(alignSelf) => {...style, alignSelf}
     | `Width(w) => {...style, width: int_of_scalar(w)}
     | `Height(h) => {...style, height: int_of_scalar(h)}
+    | `Overflow(overflow) => {...style, overflow}
     | `Border(({width, _}: Border.t)) =>
       {
         ...style,

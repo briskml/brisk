@@ -1,6 +1,6 @@
-#import "BriskCocoa.h"
+#import "BriskView.h"
 
-@interface BriskImage : NSView
+@interface BriskImage : BriskView
 
 @property(nonatomic, assign) NSImage *src;
 

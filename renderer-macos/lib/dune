@@ -19,6 +19,7 @@
           BriskWindow BriskWindowDelegate
           BriskMenu
           BriskView
+          BriskScrollView
           BriskStylableText
           BriskTextView
           BriskImage

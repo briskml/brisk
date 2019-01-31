@@ -29,11 +29,10 @@ module Component = {
           />
         </View>
       | None =>
-        <View
+        <ScrollView
           style=[
+            flexDirection(`Column),
             position(~top=0., ~left=0., ~right=0., ~bottom=0., `Absolute),
-            width(600.),
-            height(400.),
             background(Color.hex("#f7f8f9")),
           ]>
           <Text
@@ -93,7 +92,29 @@ module Component = {
               )
             }
           />
-        </View>
+          <View
+            style=[
+              alignContent(`Center),
+              height(900.),
+            ]>
+            <Text
+              style=[
+                font(~size=18., ()),
+                align(`Center),
+                alignSelf(`Center),
+                width(200.),
+                height(600.),
+                border(~radius=10., ()),
+                color(Color.hex("#011021")),
+                background(Color.hex("#f0f0f0")),
+                margin(20.),
+                padding2(~h=10., ~v=10., ()),
+              ]
+              value="Very large height for scrolling"
+            />
+          </View>
+
+        </ScrollView>
       };
     });
 };

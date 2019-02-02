@@ -103,5 +103,4 @@ Check out the [Good First Issues](https://github.com/briskml/brisk/issues?q=is%3
 
 ## Community
 
-- Follow us on Twitter: https://twitter.com/briskml
 - Join our common `Reason Native UI` Discord server: https://discord.gg/TAhzPfF

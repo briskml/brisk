@@ -24,7 +24,8 @@
           BriskImage
           BriskButton
           GCD
+          BriskEffectView
           )
  (c_flags (:standard
-  (-Wextra -Wall -Werror -O -g -std=c99 -pedantic-errors -Wsign-compare -Wshadow)
+  (-Wextra -Wall -Werror -O -g -std=c99 -pedantic-errors -Wsign-compare -Wshadow -mmacosx-version-min=10.10)
   (-x objective-c))))

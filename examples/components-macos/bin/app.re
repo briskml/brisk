@@ -9,12 +9,11 @@ module Component = {
         Brisk.Hooks.state(None, slots);
       switch (state) {
       | Some(code) =>
-        <View
+        <EffectView
+          blendingMode=EffectView.BlendingMode.behindWindow
           style=[
             width(100.),
             height(100.),
-            background(Color.rgb(0, 255, 0)),
-            border(~width=1., ~color=Color.rgb(0, 0, 255), ()),
           ]>
           <Button
             style=[width(100.), height(100.), align(`Center)]
@@ -26,7 +25,7 @@ module Component = {
             title="Cell two"
             callback={() => setState(None)}
           />
-        </View>
+        </EffectView>
       | None =>
         <ScrollView
           style=[
@@ -128,8 +127,9 @@ let () = {
     let window = Window.makeWithContentRect(0., 0., 680., 468.);
 
     let root = {
-      let view = BriskView.make();
       open Brisk.Layout;
+      let view = BriskEffectView.make();
+
       let layoutNode =
         Node.make(
           ~style=[

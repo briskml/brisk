@@ -13,11 +13,6 @@ let make = (~style: style=[], children: Brisk.syntheticElement) =>
         open Layout.Node;
         let view = BriskScrollView.make();
         let container = Composite.makeFlexNode(~style, view);
-        let middle =
-          Composite.makeFlexNode(
-            ~style,
-            Layout.FlexLayout.LayoutSupport.theNullNode.context,
-          );
         let content =
           Composite.makeFlexNode(
             ~style=
@@ -26,8 +21,7 @@ let make = (~style: style=[], children: Brisk.syntheticElement) =>
               ],
             BriskScrollView.documentView(view),
           );
-        insertChild(container, middle, 0);
-        insertChild(middle, content, 0);
+        insertChild(container, content, 0);
         {view, layoutNode: Composite.make(~container, ~content)};
       },
       configureInstance: (~isFirstRender as _, {view} as node) => {

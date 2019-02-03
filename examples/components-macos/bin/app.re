@@ -31,7 +31,6 @@ module Component = {
       | None =>
         <ScrollView
           style=[
-            flexDirection(`Column),
             position(~top=0., ~left=0., ~right=0., ~bottom=0., `Absolute),
             background(Color.hex("#f7f8f9")),
           ]>
@@ -92,11 +91,7 @@ module Component = {
               )
             }
           />
-          <View
-            style=[
-              alignContent(`Center),
-              height(900.),
-            ]>
+          <View style=[alignContent(`Center), height(900.)]>
             <Text
               style=[
                 font(~size=18., ()),
@@ -113,7 +108,6 @@ module Component = {
               value="Very large height for scrolling"
             />
           </View>
-
         </ScrollView>
       };
     });

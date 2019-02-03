@@ -1,11 +1,10 @@
 open Brisk_macos;
-open Layout;
 
 module Component = {
   let component = Brisk.component("Other");
   let createElement = (~children as _, ()) =>
     component(slots => {
-      open Attributes;
+      open Brisk.Layout;
       let (state, setState, _slots: Brisk.Hooks.empty) =
         Brisk.Hooks.state(None, slots);
       switch (state) {
@@ -130,13 +129,13 @@ let () = {
 
     let root = {
       let view = BriskView.make();
+      open Brisk.Layout;
       let layoutNode =
-        LayoutNode.make(
-          ~style=
-            Attributes.[
-              width(Window.contentWidth(window)),
-              height(Window.contentHeight(window)),
-            ],
+        Node.make(
+          ~style=[
+            width(Window.contentWidth(window)),
+            height(Window.contentHeight(window)),
+          ],
           view,
         );
       {Brisk.OutputTree.view, layoutNode};

@@ -1,5 +1,4 @@
 open Brisk;
-open Layout;
 
 type attribute = [ Layout.style | Styles.viewStyle];
 
@@ -8,7 +7,7 @@ type style = list(attribute);
 let component = nativeComponent("Image");
 
 let measure = (node, _, _, _, _) => {
-  open FlexLayout.LayoutSupport.LayoutTypes;
+  open Layout.FlexLayout.LayoutSupport.LayoutTypes;
 
   let {context: img}: node = node;
 
@@ -23,7 +22,7 @@ let make = (~style=[], ~source, children) =>
     {
       make: () => {
         let view = BriskImage.make(~source, ());
-        {view, layoutNode: LayoutNode.make(~measure, ~style, view)};
+        {view, layoutNode: Layout.Node.make(~measure, ~style, view)};
       },
       configureInstance: (~isFirstRender as _, {view} as node) => {
         style

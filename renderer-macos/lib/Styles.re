@@ -1,7 +1,6 @@
 open CocoaTypes;
-open Layout;
+open Brisk.Layout;
 open BriskStylableText;
-open Layout.Attributes;
 
 type viewStyle = [ | `Border(Border.t) | `Background(Color.t)];
 

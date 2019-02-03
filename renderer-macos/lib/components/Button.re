@@ -1,5 +1,4 @@
 open Brisk;
-open Layout;
 
 type attribute = [ Layout.style | Styles.textStyle | Styles.viewStyle];
 
@@ -15,7 +14,7 @@ let make =
           BriskButton.(
             make(~type_?, ~bezel?, ~title?, ~onClick=callback, ())
           );
-        {view: btn, layoutNode: LayoutNode.make(~style, btn)};
+        {view: btn, layoutNode: Layout.Node.make(~style, btn)};
       },
       configureInstance: (~isFirstRender as _, {view} as node) => {
         style

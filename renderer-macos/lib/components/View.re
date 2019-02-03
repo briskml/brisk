@@ -1,5 +1,4 @@
 open Brisk;
-open Layout;
 
 type attribute = [ Layout.style | Styles.viewStyle];
 
@@ -12,7 +11,7 @@ let make = (~style: style=[], children) =>
     {
       make: () => {
         let view = BriskView.make();
-        {view, layoutNode: LayoutNode.make(~style, view)};
+        {view, layoutNode: Layout.Node.make(~style, view)};
       },
       configureInstance: (~isFirstRender as _, {view} as node) => {
         style

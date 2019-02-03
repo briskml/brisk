@@ -1,3 +1,12 @@
+module Layout =
+  Brisk_core.CreateLayout(
+    {
+      type context = BriskView.t;
+      let nullContext = BriskView.make();
+    },
+    Flex.FloatEncoding,
+  );
+
 module OutputTree = {
   [@deriving (show({with_path: false}), eq)]
   type hostElement = CocoaTypes.view;
@@ -5,7 +14,7 @@ module OutputTree = {
   [@deriving (show({with_path: false}), eq)]
   type node = {
     view: hostElement,
-    layoutNode: Layout.LayoutNode.t,
+    layoutNode: Layout.Node.t,
   };
 
   let instanceMap: Hashtbl.t(int, node) = Hashtbl.create(1000);
@@ -21,8 +30,12 @@ module OutputTree = {
   let commitChanges = () => ();
 
   let insertNode = (~parent: node, ~child: node, ~position: int) => {
-    open Layout.LayoutNode;
-    insertChild(parent.layoutNode.content, child.layoutNode.container, position);
+    open Layout.Node;
+    insertChild(
+      parent.layoutNode.content,
+      child.layoutNode.container,
+      position,
+    );
     BriskView.insertSubview(parent.view, child.view, position);
     parent;
   };
@@ -47,7 +60,7 @@ module UI = {
   };
 
   module Layout = {
-    let rec traverseAndApply = (~height, node: Layout.LayoutNode.flexNode) => {
+    let rec traverseAndApply = (~height, node: Layout.Node.flexNode) => {
       let layout = node.layout;
 
       let nodeTop = float_of_int(layout.top);

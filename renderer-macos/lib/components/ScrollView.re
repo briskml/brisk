@@ -1,5 +1,4 @@
 open Brisk;
-open Layout;
 
 type attribute = [ View.attribute];
 
@@ -11,24 +10,25 @@ let make = (~style: style=[], children: Brisk.syntheticElement) =>
   component((_: Hooks.empty) =>
     {
       make: () => {
+        open Layout.Node;
         let view = BriskScrollView.make();
-        let container = LayoutNode.Composite.makeFlexNode(~style, view);
+        let container = Composite.makeFlexNode(~style, view);
         let middle =
-          LayoutNode.Composite.makeFlexNode(
+          Composite.makeFlexNode(
             ~style,
             Layout.FlexLayout.LayoutSupport.theNullNode.context,
           );
         let content =
-          LayoutNode.Composite.makeFlexNode(
+          Composite.makeFlexNode(
             ~style=
-              Layout.Attributes.[
-                position(~top=0., ~left=0., ~right=0., `Absolute),
+              [
+                Layout.position(~top=0., ~left=0., ~right=0., `Absolute),
               ],
             BriskScrollView.documentView(view),
           );
-        LayoutNode.insertChild(container, middle, 0);
-        LayoutNode.insertChild(middle, content, 0);
-        {view, layoutNode: LayoutNode.Composite.make(~container, ~content)};
+        insertChild(container, middle, 0);
+        insertChild(middle, content, 0);
+        {view, layoutNode: Composite.make(~container, ~content)};
       },
       configureInstance: (~isFirstRender as _, {view} as node) => {
         style

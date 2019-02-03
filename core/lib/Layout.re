@@ -8,6 +8,8 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
   open LayoutSupport;
   open LayoutTypes;
 
+  let flex = s => `Flex(s);
+
   let flexDirection = d =>
     `FlexDirection(
       switch (d) {
@@ -17,6 +19,10 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
       | `RowReverse => RowReverse
       },
     );
+
+  let flexGrow = s => `FlexGrow(s);
+  let flexShrink = s => `FlexShrink(s);
+  let flexBasis = s => `Flex(s);
 
   let convertAlign =
     fun
@@ -49,7 +55,11 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
 
   type style = [
     | `Position(Position.t)
+    | `Flex(scalar)
     | `FlexDirection(flexDirection)
+    | `FlexGrow(scalar)
+    | `FlexShrink(scalar)
+    | `FlexBasis(scalar)
     | `JustifyContent(justify)
     | `AlignContent(align)
     | `AlignItems(align)
@@ -84,7 +94,11 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
         right: !isUndefined(right) ? int_of_scalar(right) : style.right,
         bottom: !isUndefined(bottom) ? int_of_scalar(bottom) : style.bottom,
       };
+    | `Flex(f) =>  {...style, flex: int_of_scalar(f)}
     | `FlexDirection(flexDirection) => {...style, flexDirection}
+    | `FlexGrow(f) =>  {...style, flexGrow: int_of_scalar(f)}
+    | `FlexShrink(f) =>  {...style, flexShrink: int_of_scalar(f)}
+    | `FlexBasis(f) =>  {...style, flexBasis: int_of_scalar(f)}
     | `JustifyContent(justifyContent) => {...style, justifyContent}
     | `AlignContent(alignContent) => {...style, alignContent}
     | `AlignItems(alignItems) => {...style, alignItems}

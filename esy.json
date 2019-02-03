@@ -16,6 +16,7 @@
     "brisk-reconciler": "*"
   },
   "devDependencies": {
+    "@opam/merlin": "^3.2.2",
     "@opam/merlin-lsp": "*",
     "ocaml": "~4.7.1000"
   },

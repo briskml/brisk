@@ -13,13 +13,14 @@
     [self setBorderType:NSNoBorder];
     [self setHasVerticalScroller:YES];
     [self setHasHorizontalScroller:YES];
+    self.documentView = [NSView new];
   }
 
   return self;
 }
 
 - (void)addChild:(NSView *)child {
-  [self setDocumentView:child];
+  [self.documentView addSubview:child];
 }
 
 - (void)setFrameRect:(NSRect)rect {
@@ -33,4 +34,8 @@ BriskScrollView *ml_BriskScrollView_make() {
   retainView(scroll);
 
   return scroll;
+}
+
+NSView *ml_BriskScrollView_documentView(BriskScrollView *scroll) {
+  return scroll.documentView;
 }

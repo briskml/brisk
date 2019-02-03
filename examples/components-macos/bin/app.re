@@ -5,9 +5,9 @@ module Component = {
   let component = Brisk.component("Other");
   let createElement = (~children as _, ()) =>
     component(slots => {
+      open Attributes;
       let (state, setState, _slots: Brisk.Hooks.empty) =
         Brisk.Hooks.state(None, slots);
-
       switch (state) {
       | Some(code) =>
         <View
@@ -131,11 +131,12 @@ let () = {
     let root = {
       let view = BriskView.make();
       let layoutNode =
-        makeLayoutNode(
-          ~style=[
-            width(Window.contentWidth(window)),
-            height(Window.contentHeight(window)),
-          ],
+        LayoutNode.make(
+          ~style=
+            Attributes.[
+              width(Window.contentWidth(window)),
+              height(Window.contentHeight(window)),
+            ],
           view,
         );
       {Brisk.OutputTree.view, layoutNode};

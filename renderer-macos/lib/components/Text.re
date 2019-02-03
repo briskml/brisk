@@ -8,7 +8,7 @@ type style = list(attribute);
 let component = nativeComponent("Text");
 
 let measure = (node, _, _, _, _) => {
-  open LayoutSupport.LayoutTypes;
+  open FlexLayout.LayoutSupport.LayoutTypes;
 
   let {context: txt}: node = node;
 
@@ -23,9 +23,10 @@ let make = (~style=[], ~value, children) =>
     {
       make: () => {
         let view = BriskTextView.make(value);
-        {view, layoutNode: makeLayoutNode(~measure, ~style, view)};
+        {view, layoutNode: LayoutNode.make(~measure, ~style, view)};
       },
       configureInstance: (~isFirstRender as _, {view} as node) => {
+        open Attributes;
         style
         |> List.iter(attribute =>
              switch (attribute) {

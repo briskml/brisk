@@ -1,12 +1,13 @@
 module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
-  include Flex.Layout.Create(Node, Encoding);
-  include Style.Create(Encoding);
+  module FlexLayout = Flex.Layout.Create(Node, Encoding);
+  module Attributes = StyleAttributes.Create(Encoding);
 
   module Color = Color0;
 
   open Encoding;
-  open LayoutSupport;
+  open FlexLayout.LayoutSupport;
   open LayoutTypes;
+  open Attributes;
 
   let flex = s => `Flex(s);
 
@@ -43,11 +44,14 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
       },
     );
 
-  let overflow = o => `Overflow(switch (o) {
-    | `Visible => Visible
-    | `Hidden => Hidden
-    | `Scroll => Scroll
-  });
+  let overflow = o =>
+    `Overflow(
+      switch (o) {
+      | `Visible => Visible
+      | `Hidden => Hidden
+      | `Scroll => Scroll
+      },
+    );
 
   let alignContent = a => `AlignContent(convertAlign(a));
   let alignItems = a => `AlignItems(convertAlign(a));
@@ -94,11 +98,11 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
         right: !isUndefined(right) ? int_of_scalar(right) : style.right,
         bottom: !isUndefined(bottom) ? int_of_scalar(bottom) : style.bottom,
       };
-    | `Flex(f) =>  {...style, flex: int_of_scalar(f)}
+    | `Flex(f) => {...style, flex: int_of_scalar(f)}
     | `FlexDirection(flexDirection) => {...style, flexDirection}
-    | `FlexGrow(f) =>  {...style, flexGrow: int_of_scalar(f)}
-    | `FlexShrink(f) =>  {...style, flexShrink: int_of_scalar(f)}
-    | `FlexBasis(f) =>  {...style, flexBasis: int_of_scalar(f)}
+    | `FlexGrow(f) => {...style, flexGrow: int_of_scalar(f)}
+    | `FlexShrink(f) => {...style, flexShrink: int_of_scalar(f)}
+    | `FlexBasis(f) => {...style, flexBasis: int_of_scalar(f)}
     | `JustifyContent(justifyContent) => {...style, justifyContent}
     | `AlignContent(alignContent) => {...style, alignContent}
     | `AlignItems(alignItems) => {...style, alignItems}
@@ -106,8 +110,7 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
     | `Width(w) => {...style, width: int_of_scalar(w)}
     | `Height(h) => {...style, height: int_of_scalar(h)}
     | `Overflow(overflow) => {...style, overflow}
-    | `Border(({width, _}: Border.t)) =>
-      {
+    | `Border(({width, _}: Border.t)) => {
         ...style,
         border: !isUndefined(width) ? int_of_scalar(width) : style.border,
       }
@@ -135,40 +138,57 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
     | _ => style
     };
 
-  let makeLayoutNode = (~measure=?, ~style=[], hostView: Node.context) => {
-    let accum = {
-      ...LayoutSupport.defaultStyle,
-      direction: LayoutSupport.defaultStyle.direction,
+  module LayoutNode = {
+    type flexNode = node;
+    type t = {
+      container: node,
+      content: node,
     };
 
-    let andStyle = List.fold_left(applyCommonStyle, accum, style);
-    LayoutSupport.createNode(
-      ~withChildren=[||],
-      ~andStyle,
-      ~andMeasure=?measure,
-      hostView,
-    );
-  };
+    module Composite = {
+      let makeFlexNode = (~measure=?, ~style=[], hostView: Node.context) => {
+        let accum = {
+          ...FlexLayout.LayoutSupport.defaultStyle,
+          direction: FlexLayout.LayoutSupport.defaultStyle.direction,
+        };
 
-  let cssNodeInsertChild = (node, child, index) => {
-    assert(child.parent === theNullNode);
-    assert(node.measure === None);
-    let capacity = Array.length(node.children);
-    if (capacity == node.childrenCount) {
-      /* TODO:Simply use Array.fill (no need to allocate a separate `fill` array
-       * */
-      let fill = Array.make(capacity + 1, theNullNode);
-      Array.blit(node.children, 0, fill, 0, capacity);
-      node.children = fill;
+        let andStyle = List.fold_left(applyCommonStyle, accum, style);
+        FlexLayout.LayoutSupport.createNode(
+          ~withChildren=[||],
+          ~andStyle,
+          ~andMeasure=?measure,
+          hostView,
+        );
+      };
+
+      let make = (~container, ~content) => {container, content};
     };
-    for (i in node.childrenCount downto index + 1) {
-      node.children[i] = node.children[i - 1];
+
+    let make = (~measure=?, ~style=[], hostView: Node.context) => {
+      let node = Composite.makeFlexNode(~measure?, ~style, hostView);
+      {container: node, content: node};
     };
-    node.childrenCount = node.childrenCount + 1;
 
-    node.children[index] = child;
-    child.parent = node;
+    let insertChild = (node, child, index) => {
+      assert(child.parent === theNullNode);
+      assert(node.measure === None);
+      let capacity = Array.length(node.children);
+      if (capacity == node.childrenCount) {
+        /* TODO:Simply use Array.fill (no need to allocate a separate `fill` array
+         * */
+        let fill = Array.make(capacity + 1, theNullNode);
+        Array.blit(node.children, 0, fill, 0, capacity);
+        node.children = fill;
+      };
+      for (i in node.childrenCount downto index + 1) {
+        node.children[i] = node.children[i - 1];
+      };
+      node.childrenCount = node.childrenCount + 1;
 
-    markDirtyInternal(node);
+      node.children[index] = child;
+      child.parent = node;
+
+      markDirtyInternal(node);
+    };
   };
 };

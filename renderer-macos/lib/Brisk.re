@@ -5,7 +5,7 @@ module OutputTree = {
   [@deriving (show({with_path: false}), eq)]
   type node = {
     view: hostElement,
-    layoutNode: Layout.LayoutSupport.LayoutTypes.node,
+    layoutNode: Layout.LayoutNode.t,
   };
 
   let instanceMap: Hashtbl.t(int, node) = Hashtbl.create(1000);
@@ -21,7 +21,8 @@ module OutputTree = {
   let commitChanges = () => ();
 
   let insertNode = (~parent: node, ~child: node, ~position: int) => {
-    Layout.cssNodeInsertChild(parent.layoutNode, child.layoutNode, position);
+    open Layout.LayoutNode;
+    insertChild(parent.layoutNode.content, child.layoutNode.container, position);
     BriskView.addSubview(parent.view, child.view);
     parent;
   };
@@ -46,8 +47,7 @@ module UI = {
   };
 
   module Layout = {
-    let rec traverseAndApply =
-            (~height, node: Layout.LayoutSupport.LayoutTypes.node) => {
+    let rec traverseAndApply = (~height, node: Layout.LayoutNode.flexNode) => {
       let layout = node.layout;
 
       let nodeTop = float_of_int(layout.top);
@@ -67,8 +67,8 @@ module UI = {
     };
 
     let perform = (~height, root: OutputTree.node) => {
-      let node = root.layoutNode;
-      Layout.(
+      let node = root.layoutNode.container;
+      Layout.FlexLayout.(
         layoutNode(
           node,
           Flex.FixedEncoding.cssUndefined,

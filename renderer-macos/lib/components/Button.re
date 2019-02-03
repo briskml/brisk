@@ -15,7 +15,7 @@ let make =
           BriskButton.(
             make(~type_?, ~bezel?, ~title?, ~onClick=callback, ())
           );
-        {view: btn, layoutNode: makeLayoutNode(~style, btn)};
+        {view: btn, layoutNode: LayoutNode.make(~style, btn)};
       },
       configureInstance: (~isFirstRender as _, {view} as node) => {
         style

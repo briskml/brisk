@@ -12,7 +12,7 @@ let make = (~style: style=[], children) =>
     {
       make: () => {
         let view = BriskView.make();
-        {view, layoutNode: makeLayoutNode(~style, view)};
+        {view, layoutNode: LayoutNode.make(~style, view)};
       },
       configureInstance: (~isFirstRender as _, {view} as node) => {
         style

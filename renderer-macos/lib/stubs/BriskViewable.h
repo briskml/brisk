@@ -2,8 +2,8 @@
 
 @protocol BriskViewable
 
-- (void)addChild:(NSView *)child;
+- (void)brisk_insertNode:(NSView *)child position:(intnat)position;
 
-- (void)setFrameRect:(NSRect)rect;
+- (void)brisk_setFrame:(NSRect)rect;
 
 @end

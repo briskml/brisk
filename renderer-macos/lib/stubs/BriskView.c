@@ -1,30 +1,21 @@
-#import "BriskView.h"
+#import "BriskViewable.h"
 
-@implementation BriskView
-
-- (void)addChild:(NSView *)child {
-  [self addSubview:child];
-}
-
-- (void)setFrameRect:(NSRect)rect {
-  [self setFrame:rect];
-}
-
-@end
-
-BriskView *ml_BriskView_make() {
-  BriskView *view = [BriskView new];
+NSView *ml_BriskView_make() {
+  NSView *view = [NSView new];
   retainView(view);
 
   return view;
 }
 
-void ml_BriskView_addSubview(NSView *view, NSView *child) {
+void ml_BriskView_insertSubview(NSView *view, NSView *child, intnat position) {
   if ([view conformsToProtocol:@protocol(BriskViewable)]) {
     NSView<BriskViewable> *viewable = (NSView<BriskViewable> *)view;
-    [viewable addChild:child];
+    [viewable brisk_insertNode:child position:position];
   } else {
-    [view addSubview:child];
+    [view 
+      addSubview:child 
+      positioned:NSWindowAbove 
+      relativeTo:(position == 0 ? nil : view.subviews[position - 1])];
   }
   releaseView(child);
 }
@@ -36,7 +27,7 @@ void ml_BriskView_setFrame(NSView *view, double x, double y, double w,
   NSRect rect = NSMakeRect(x, y, w, h);
   if ([view conformsToProtocol:@protocol(BriskViewable)]) {
     NSView<BriskViewable> *viewable = (NSView<BriskViewable> *)view;
-    [viewable setFrameRect:rect];
+    [viewable brisk_setFrame:rect];
   } else {
     [view setFrame:rect];
   }

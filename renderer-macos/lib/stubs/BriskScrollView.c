@@ -1,41 +1,35 @@
 #import "BriskViewable.h"
 
-@interface BriskScrollView : NSScrollView <BriskViewable>
-
+@interface NSScrollView (BriskViewable) <BriskViewable>
 @end
 
-@implementation BriskScrollView
+@implementation NSScrollView (BriskViewable)
 
-- (id)init {
-  self = [super init];
-
-  if (self) {
-    [self setBorderType:NSNoBorder];
-    [self setHasVerticalScroller:YES];
-    [self setHasHorizontalScroller:YES];
-    self.documentView = [NSView new];
-  }
-
-  return self;
+- (void)brisk_insertNode:(NSView *)child position:(intnat)position {
+  [self.documentView 
+    addSubview:child 
+    positioned:NSWindowAbove 
+    relativeTo:(position == 0 ? nil : self.subviews[position - 1])];
 }
 
-- (void)addChild:(NSView *)child {
-  [self.documentView addSubview:child];
-}
-
-- (void)setFrameRect:(NSRect)rect {
+- (void)brisk_setFrame:(NSRect)rect {
   [self setFrame:rect];
 }
 
 @end
 
-BriskScrollView *ml_BriskScrollView_make() {
-  BriskScrollView *scroll = [BriskScrollView new];
+NSScrollView *ml_BriskScrollView_make() {
+  NSScrollView *scroll = [NSScrollView new];
   retainView(scroll);
+
+  [scroll setBorderType:NSNoBorder];
+  [scroll setHasVerticalScroller:YES];
+  [scroll setHasHorizontalScroller:YES];
+  scroll.documentView = [NSView new];
 
   return scroll;
 }
 
-NSView *ml_BriskScrollView_documentView(BriskScrollView *scroll) {
+NSView *ml_BriskScrollView_documentView(NSScrollView *scroll) {
   return scroll.documentView;
 }

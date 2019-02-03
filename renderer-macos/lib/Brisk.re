@@ -23,7 +23,7 @@ module OutputTree = {
   let insertNode = (~parent: node, ~child: node, ~position: int) => {
     open Layout.LayoutNode;
     insertChild(parent.layoutNode.content, child.layoutNode.container, position);
-    BriskView.addSubview(parent.view, child.view);
+    BriskView.insertSubview(parent.view, child.view, position);
     parent;
   };
 

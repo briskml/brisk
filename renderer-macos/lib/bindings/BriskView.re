@@ -1,7 +1,7 @@
 type t = CocoaTypes.view;
 
 [@noalloc] external make: unit => t = "ml_BriskView_make";
-[@noalloc] external addSubview: (t, t) => unit = "ml_BriskView_addSubview";
+[@noalloc] external insertSubview: (t, t, [@untagged] int) => unit = "ml_BriskView_insertSubview_bc" "ml_BriskView_insertSubview";
 [@noalloc] external removeSubview: t => unit = "ml_BriskView_removeSubview";
 
 [@noalloc]

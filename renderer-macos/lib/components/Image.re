@@ -1,9 +1,9 @@
 open Brisk;
 open Layout;
 
-type attr = [ Layout.style | Styles.viewStyle];
+type attribute = [ Layout.style | Styles.viewStyle];
 
-type style = list(attr);
+type style = list(attribute);
 
 let component = nativeComponent("Image");
 
@@ -27,9 +27,9 @@ let make = (~style=[], ~source, children) =>
       },
       configureInstance: (~isFirstRender as _, {view} as node) => {
         style
-        |> List.iter(attr =>
-             switch (attr) {
-             | #Styles.viewStyle => Styles.setViewStyle(view, attr)
+        |> List.iter(attribute =>
+             switch (attribute) {
+             | #Styles.viewStyle => Styles.setViewStyle(view, attribute)
              | #Layout.style => ()
              }
            );

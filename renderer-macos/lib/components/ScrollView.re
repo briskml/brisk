@@ -1,9 +1,9 @@
 open Brisk;
 open Layout;
 
-type attr = [ View.attr];
+type attribute = [ View.attribute];
 
-type style = list(attr);
+type style = list(attribute);
 
 module ScrollableArea = {
   let component = nativeComponent("ScrollView");
@@ -17,9 +17,9 @@ module ScrollableArea = {
         },
         configureInstance: (~isFirstRender as _, {view} as node) => {
           style
-          |> List.iter(attr =>
-               switch (attr) {
-               | #Styles.viewStyle => Styles.setViewStyle(view, attr)
+          |> List.iter(attribute =>
+               switch (attribute) {
+               | #Styles.viewStyle => Styles.setViewStyle(view, attribute)
                | #Layout.style => ()
                }
              );

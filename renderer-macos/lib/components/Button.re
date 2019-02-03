@@ -1,9 +1,9 @@
 open Brisk;
 open Layout;
 
-type attr = [ Layout.style | Styles.textStyle | Styles.viewStyle];
+type attribute = [ Layout.style | Styles.textStyle | Styles.viewStyle];
 
-type style = list(attr);
+type style = list(attribute);
 
 let component = nativeComponent("Button");
 let make =
@@ -19,13 +19,13 @@ let make =
       },
       configureInstance: (~isFirstRender as _, {view} as node) => {
         style
-        |> List.iter(attr =>
-             switch (attr) {
+        |> List.iter(attribute =>
+             switch (attribute) {
              | `Background(_) =>
                BriskButton.setIsBordered(view, false);
-               Styles.setViewStyle(view, attr);
-             | #Styles.textStyle => Styles.setTextStyle(view, attr)
-             | #Styles.viewStyle => Styles.setViewStyle(view, attr)
+               Styles.setViewStyle(view, attribute);
+             | #Styles.textStyle => Styles.setTextStyle(view, attribute)
+             | #Styles.viewStyle => Styles.setViewStyle(view, attribute)
              | #Layout.style => ()
              }
            );

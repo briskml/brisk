@@ -15,8 +15,8 @@ type textStyle = [
 
 let commitTextStyle = BriskStylableText.applyChanges;
 
-let setViewStyle = (view: view, attr: [> viewStyle]) =>
-  switch (attr) {
+let setViewStyle = (view: view, attribute: [> viewStyle]) =>
+  switch (attribute) {
   | `Background(({r, g, b, a}: Color.t)) =>
     BriskView.setBackgroundColor(view, r, g, b, a)
   | `Border(({width, radius, color}: Border.t)) =>
@@ -34,8 +34,8 @@ let setViewStyle = (view: view, attr: [> viewStyle]) =>
   | _ => ()
   };
 
-let setTextStyle = (txt: text, attr: [> textStyle]) =>
-  switch (attr) {
+let setTextStyle = (txt: text, attribute: [> textStyle]) =>
+  switch (attribute) {
   | `Font(({family, size, weight}: Font.t)) =>
     let weight =
       switch (weight) {

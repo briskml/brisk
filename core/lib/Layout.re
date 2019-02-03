@@ -76,8 +76,8 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
 
   let int_of_scalar = s => s |> Encoding.scalarToFloat |> int_of_float;
 
-  let applyCommonStyle = (style: cssStyle, attr: [> style]) =>
-    switch (attr) {
+  let applyCommonStyle = (style: cssStyle, attribute: [> style]) =>
+    switch (attribute) {
     | `Position(({position, inset}: Position.t)) =>
       let positionType =
         switch (position) {

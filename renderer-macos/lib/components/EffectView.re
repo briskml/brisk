@@ -1,5 +1,4 @@
 open Brisk;
-open Layout;
 
 module Material = BriskEffectView.Material;
 module BlendingMode = BriskEffectView.BlendingMode;
@@ -15,7 +14,7 @@ let make = (~style: style=[], ~blendingMode, ~material, children) =>
     {
       make: () => {
         let view = BriskEffectView.make();
-        {view, layoutNode: makeLayoutNode(~style, view)};
+        {view, layoutNode: Layout.Node.make(~style, view)};
       },
       configureInstance: (~isFirstRender as _, {view} as node) => {
         switch (blendingMode) {

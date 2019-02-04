@@ -72,7 +72,7 @@ module BlendingMode = {
   external withinWindow: unit => t =
     "ml_getNSVisualEffectBlendingModeWithinWindow_bc"
     "ml_getNSVisualEffectBlendingModeWithinWindow";
-  let wihthinWindow = withinWindow();
+  let withinWindow = withinWindow();
 };
 
 type backgroundStyle =

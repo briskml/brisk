@@ -1,15 +1,12 @@
-#import "BriskCocoa.h"
 #import "Availability.h"
+#import "BriskCocoa.h"
 
-#define ACCESSOR(VALUE) \
-intnat ml_get##VALUE() {\
-  return VALUE;\
-} \
-\
-value ml_get##VALUE##_bc() {\
-  CAMLparam0(); \
-  CAMLreturn(VALUE);\
-}
+#define ACCESSOR(VALUE)                                                        \
+  intnat ml_get##VALUE() { return VALUE; }                                     \
+  value ml_get##VALUE##_bc() {                                                 \
+    CAMLparam0();                                                              \
+    CAMLreturn(VALUE);                                                         \
+  }
 
 #define VISUAL_EFFECT(VALUE) ACCESSOR(NSVisualEffectMaterial##VALUE)
 
@@ -17,11 +14,13 @@ value ml_get##VALUE##_bc() {\
 VISUAL_EFFECT(Titlebar)
 VISUAL_EFFECT(Selection)
 #endif
+
 #if MAC_OS_X_VERSION_MIN_REQUIRED <= MAC_OS_X_VERSION_10_11
 VISUAL_EFFECT(Menu)
 VISUAL_EFFECT(Popover)
 VISUAL_EFFECT(Sidebar)
 #endif
+
 #if MAC_OS_X_VERSION_MIN_REQUIRED <= MAC_OS_X_VERSION_10_14
 VISUAL_EFFECT(HeaderView)
 VISUAL_EFFECT(Sheet)
@@ -31,8 +30,8 @@ VISUAL_EFFECT(FullScreenUI)
 VISUAL_EFFECT(ToolTip)
 VISUAL_EFFECT(ContentBackground)
 VISUAL_EFFECT(UnderWindowBackground)
-VISUAL_EFFECT(PageBackground)
-VISUAL_EFFECT(AppeareanceBased)
+VISUAL_EFFECT(UnderPageBackground)
+VISUAL_EFFECT(AppearanceBased)
 #endif
 
 #define BLENDING_MODE(VALUE) ACCESSOR(NSVisualEffectBlendingMode##VALUE)
@@ -54,10 +53,12 @@ NSVisualEffectView *ml_NSVisualEffectView_make() {
   return view;
 }
 
-void ml_NSVisualEffectView_setMaterial(NSVisualEffectView *view, NSVisualEffectMaterial material) {
-    view.material = material;
+void ml_NSVisualEffectView_setMaterial(NSVisualEffectView *view,
+                                       NSVisualEffectMaterial material) {
+  view.material = material;
 }
 
-void ml_NSVisualEffectView_setBlendingMode(NSVisualEffectView *view, NSVisualEffectBlendingMode blendingMode) {
-    view.blendingMode = blendingMode;
+void ml_NSVisualEffectView_setBlendingMode(
+    NSVisualEffectView *view, NSVisualEffectBlendingMode blendingMode) {
+  view.blendingMode = blendingMode;
 }

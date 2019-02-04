@@ -12,8 +12,7 @@ module Component = {
         <EffectView
           blendingMode=EffectView.BlendingMode.behindWindow
           style=[
-            width(100.),
-            height(100.),
+            position(~top=0., ~left=0., ~right=0., ~bottom=0., `Absolute),
           ]>
           <Button
             style=[width(100.), height(100.), align(`Center)]

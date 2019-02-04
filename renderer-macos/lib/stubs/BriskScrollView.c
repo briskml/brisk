@@ -6,10 +6,10 @@
 @implementation NSScrollView (BriskViewable)
 
 - (void)brisk_insertNode:(NSView *)child position:(intnat)position {
-  [self.documentView 
-    addSubview:child 
-    positioned:NSWindowAbove 
-    relativeTo:(position == 0 ? nil : self.subviews[position - 1])];
+  [self.documentView
+      addSubview:child
+      positioned:NSWindowAbove
+      relativeTo:(position == 0 ? nil : self.subviews[position - 1])];
 }
 
 - (void)brisk_setFrame:(NSRect)rect {

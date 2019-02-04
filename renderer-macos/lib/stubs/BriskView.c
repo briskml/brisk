@@ -12,10 +12,9 @@ void ml_BriskView_insertSubview(NSView *view, NSView *child, intnat position) {
     NSView<BriskViewable> *viewable = (NSView<BriskViewable> *)view;
     [viewable brisk_insertNode:child position:position];
   } else {
-    [view 
-      addSubview:child 
-      positioned:NSWindowAbove 
-      relativeTo:(position == 0 ? nil : view.subviews[position - 1])];
+    [view addSubview:child
+          positioned:NSWindowAbove
+          relativeTo:(position == 0 ? nil : view.subviews[position - 1])];
   }
   releaseView(child);
 }

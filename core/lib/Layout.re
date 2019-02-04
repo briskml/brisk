@@ -167,7 +167,7 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
 
   let flexGrow = s => `FlexGrow(s);
   let flexShrink = s => `FlexShrink(s);
-  let flexBasis = s => `Flex(s);
+  let flexBasis = s => `FlexBasis(s);
 
   let convertAlign =
     fun

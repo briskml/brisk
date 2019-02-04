@@ -1,14 +1,13 @@
 open Brisk;
-open Layout;
 
-type attr = [ Layout.style | Styles.textStyle | Styles.viewStyle];
+type attribute = [ Layout.style | Styles.textStyle | Styles.viewStyle];
 
-type style = list(attr);
+type style = list(attribute);
 
 let component = nativeComponent("Text");
 
 let measure = (node, _, _, _, _) => {
-  open LayoutSupport.LayoutTypes;
+  open Layout.FlexLayout.LayoutSupport.LayoutTypes;
 
   let {context: txt}: node = node;
 
@@ -23,18 +22,19 @@ let make = (~style=[], ~value, children) =>
     {
       make: () => {
         let view = BriskTextView.make(value);
-        {view, layoutNode: makeLayoutNode(~measure, ~style, view)};
+        {view, layoutNode: Layout.Node.make(~measure, ~style, view)};
       },
       configureInstance: (~isFirstRender as _, {view} as node) => {
+        open Layout;
         style
-        |> List.iter(attr =>
-             switch (attr) {
+        |> List.iter(attribute =>
+             switch (attribute) {
              | `Padding({left, top, right, bottom}) =>
                BriskTextView.setPadding(view, left, top, right, bottom)
              | `Background(({r, g, b, a}: Color.t)) =>
                BriskTextView.setBackgroundColor(view, r, g, b, a)
-             | #Styles.textStyle => Styles.setTextStyle(view, attr)
-             | #Styles.viewStyle => Styles.setViewStyle(view, attr)
+             | #Styles.textStyle => Styles.setTextStyle(view, attribute)
+             | #Styles.viewStyle => Styles.setViewStyle(view, attribute)
              | #Layout.style => ()
              }
            );

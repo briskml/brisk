@@ -1,4 +1,3 @@
-#import "BriskCocoa.h"
 #import "BriskStylableText.h"
 
 @interface BriskButton : NSButton <BriskStylableText>

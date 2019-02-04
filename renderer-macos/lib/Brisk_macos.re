@@ -15,10 +15,9 @@ module Cocoa = {
   module GCD = GCD;
 };
 
-module Layout = Layout;
-
 /* Components */
 module View = View;
+module ScrollView = ScrollView;
 module Text = Text;
 module Image = Image;
 module Button = Button;

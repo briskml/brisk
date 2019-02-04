@@ -1,8 +1,8 @@
 type t = CocoaTypes.view;
 
-[@noalloc] external make: unit => t = "ml_NSView_make";
-[@noalloc] external addSubview: (t, t) => unit = "ml_NSView_addSubview";
-[@noalloc] external removeSubview: t => unit = "ml_NSView_removeSubview";
+[@noalloc] external make: unit => t = "ml_BriskView_make";
+[@noalloc] external insertSubview: (t, t, [@untagged] int) => unit = "ml_BriskView_insertSubview_bc" "ml_BriskView_insertSubview";
+[@noalloc] external removeSubview: t => unit = "ml_BriskView_removeSubview";
 
 [@noalloc]
 external setFrame:
@@ -14,15 +14,15 @@ external setFrame:
     [@unboxed] float
   ) =>
   unit =
-  "ml_NSView_setFrame_bc" "ml_NSView_setFrame";
+  "ml_BriskView_setFrame_bc" "ml_BriskView_setFrame";
 
 [@noalloc]
 external setBorderWidth: (t, [@unboxed] float) => unit =
-  "ml_NSView_setBorderWidth_bc" "ml_NSView_setBorderWidth";
+  "ml_BriskView_setBorderWidth_bc" "ml_BriskView_setBorderWidth";
 
 [@noalloc]
 external setBorderRadius: (t, [@unboxed] float) => unit =
-  "ml_NSView_setBorderRadius_bc" "ml_NSView_setBorderRadius";
+  "ml_BriskView_setBorderRadius_bc" "ml_BriskView_setBorderRadius";
 
 [@noalloc]
 external setBorderColor:
@@ -34,7 +34,7 @@ external setBorderColor:
     [@unboxed] float
   ) =>
   unit =
-  "ml_NSView_setBorderColor_bc" "ml_NSView_setBorderColor";
+  "ml_BriskView_setBorderColor_bc" "ml_BriskView_setBorderColor";
 
 [@noalloc]
 external setBackgroundColor:
@@ -46,4 +46,4 @@ external setBackgroundColor:
     [@unboxed] float
   ) =>
   unit =
-  "ml_NSView_setBackgroundColor_bc" "ml_NSView_setBackgroundColor";
+  "ml_BriskView_setBackgroundColor_bc" "ml_BriskView_setBackgroundColor";

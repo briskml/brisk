@@ -1,13 +1,12 @@
 open Brisk_macos;
-open Layout;
 
 module Component = {
   let component = Brisk.component("Other");
   let createElement = (~children as _, ()) =>
     component(slots => {
+      open Brisk.Layout;
       let (state, setState, _slots: Brisk.Hooks.empty) =
         Brisk.Hooks.state(None, slots);
-
       switch (state) {
       | Some(code) =>
         <View
@@ -29,11 +28,9 @@ module Component = {
           />
         </View>
       | None =>
-        <View
+        <ScrollView
           style=[
             position(~top=0., ~left=0., ~right=0., ~bottom=0., `Absolute),
-            width(600.),
-            height(400.),
             background(Color.hex("#f7f8f9")),
           ]>
           <Text
@@ -93,7 +90,24 @@ module Component = {
               )
             }
           />
-        </View>
+          <View style=[alignContent(`Center), height(900.)]>
+            <Text
+              style=[
+                font(~size=18., ()),
+                align(`Center),
+                alignSelf(`Center),
+                width(200.),
+                height(600.),
+                border(~radius=10., ()),
+                color(Color.hex("#011021")),
+                background(Color.hex("#f0f0f0")),
+                margin(20.),
+                padding2(~h=10., ~v=10., ()),
+              ]
+              value="Very large height for scrolling"
+            />
+          </View>
+        </ScrollView>
       };
     });
 };
@@ -115,8 +129,9 @@ let () = {
 
     let root = {
       let view = BriskView.make();
+      open Brisk.Layout;
       let layoutNode =
-        makeLayoutNode(
+        Node.make(
           ~style=[
             width(Window.contentWidth(window)),
             height(Window.contentHeight(window)),

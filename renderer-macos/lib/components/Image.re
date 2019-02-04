@@ -1,14 +1,13 @@
 open Brisk;
-open Layout;
 
-type attr = [ Layout.style | Styles.viewStyle];
+type attribute = [ Layout.style | Styles.viewStyle];
 
-type style = list(attr);
+type style = list(attribute);
 
 let component = nativeComponent("Image");
 
 let measure = (node, _, _, _, _) => {
-  open LayoutSupport.LayoutTypes;
+  open Layout.FlexLayout.LayoutSupport.LayoutTypes;
 
   let {context: img}: node = node;
 
@@ -23,13 +22,13 @@ let make = (~style=[], ~source, children) =>
     {
       make: () => {
         let view = BriskImage.make(~source, ());
-        {view, layoutNode: makeLayoutNode(~measure, ~style, view)};
+        {view, layoutNode: Layout.Node.make(~measure, ~style, view)};
       },
       configureInstance: (~isFirstRender as _, {view} as node) => {
         style
-        |> List.iter(attr =>
-             switch (attr) {
-             | #Styles.viewStyle => Styles.setViewStyle(view, attr)
+        |> List.iter(attribute =>
+             switch (attribute) {
+             | #Styles.viewStyle => Styles.setViewStyle(view, attribute)
              | #Layout.style => ()
              }
            );

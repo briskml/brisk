@@ -11,12 +11,14 @@
                     BriskApplicationDelegate
                     BriskWindowDelegate
                     BriskStylableText
+                    BriskViewable
                     )
  (c_names BriskCocoa
           BriskApplication BriskApplicationDelegate
           BriskWindow BriskWindowDelegate
           BriskMenu
           BriskView
+          BriskScrollView
           BriskStylableText
           BriskTextView
           BriskImage

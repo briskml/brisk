@@ -16,12 +16,14 @@
     "brisk-reconciler": "*"
   },
   "devDependencies": {
+    "@opam/merlin": "^3.2.2",
     "@opam/merlin-lsp": "*",
     "ocaml": "~4.7.1000"
   },
   "resolutions": {
     "@brisk/core": "link-dev:./core",
     "@brisk/macos": "link-dev:./renderer-macos",
+    "@opam/dune": "ocaml/dune:dune.opam#01b46a3",
     "@opam/merlin-lsp": "ocaml/merlin:merlin-lsp.opam#3e34bb5",
     "brisk-reconciler": "briskml/brisk-reconciler#fa605f1"
   }

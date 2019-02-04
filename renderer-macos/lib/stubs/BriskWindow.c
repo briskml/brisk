@@ -18,8 +18,7 @@ NSWindow *ml_NSWindow_makeWithContentRect(double x, double y, double w,
   return win;
 }
 
-void ml_NSWindow_setOnWindowDidResize(NSWindow *window,
-                                                value callback) {
+void ml_NSWindow_setOnWindowDidResize(NSWindow *window, value callback) {
   [(BriskWindowDelegate *)[window delegate] setOnWindowDidResize:callback];
 }
 
@@ -55,7 +54,8 @@ double ml_NSWindow_contentHeight(NSWindow *win) {
 value ml_NSWindow_contentHeight_bc(NSWindow *win) {
   CAMLparam0();
   CAMLlocal1(height);
-  height = caml_copy_double([win contentRectForFrameRect:win.frame].size.height);
+  height =
+      caml_copy_double([win contentRectForFrameRect:win.frame].size.height);
   CAMLreturn(height);
 }
 

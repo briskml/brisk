@@ -1,11 +1,13 @@
 open Brisk;
 
-module Material = BriskEffectView.Material;
-module BlendingMode = BriskEffectView.BlendingMode;
-
 type attribute = [ Layout.style | BriskEffectView.style];
 
 type style = list(attribute);
+
+let material = material => `Material(material);
+let blendingMode = blendingMode => `BlendingMode(blendingMode);
+let emphasized = emphasized => `Emphasized(emphasized);
+let effectState = effectState => `EffectState(effectState);
 
 let component = nativeComponent("EffectView");
 

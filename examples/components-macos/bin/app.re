@@ -10,9 +10,9 @@ module Component = {
       switch (state) {
       | Some(code) =>
         <EffectView
-          style=[
+          style=EffectView.[
             position(~top=0., ~left=0., ~right=0., ~bottom=0., `Absolute),
-            `BlendingMode(`BehindWindow),
+            blendingMode(`BehindWindow),
           ]>
           <Button
             style=[width(100.), height(100.), align(`Center)]

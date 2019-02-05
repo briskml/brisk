@@ -13,6 +13,8 @@ module Cocoa = {
   module BriskImage = BriskImage;
   module BriskTextView = BriskTextView;
   module GCD = GCD;
+
+  module BriskEffectView = BriskEffectView;
 };
 
 /* Components */
@@ -21,3 +23,4 @@ module ScrollView = ScrollView;
 module Text = Text;
 module Image = Image;
 module Button = Button;
+module EffectView = EffectView;

@@ -9,6 +9,8 @@
   }
 
 #define VISUAL_EFFECT(VALUE) ACCESSOR(NSVisualEffectMaterial##VALUE)
+#define BLENDING_MODE(VALUE) ACCESSOR(NSVisualEffectBlendingMode##VALUE)
+#define EFFECT_STATE(VALUE) ACCESSOR(NSVisualEffectState##VALUE)
 
 #if MAC_OS_X_VERSION_MIN_REQUIRED <= MAC_OS_X_VERSION_10_10
 VISUAL_EFFECT(Titlebar)
@@ -34,15 +36,9 @@ VISUAL_EFFECT(UnderPageBackground)
 VISUAL_EFFECT(AppearanceBased)
 #endif
 
-#define BLENDING_MODE(VALUE) ACCESSOR(NSVisualEffectBlendingMode##VALUE)
 BLENDING_MODE(BehindWindow)
 BLENDING_MODE(WithinWindow)
 
-#define BACKGROUND_STYLE(VALUE) ACCESSOR(NSBackgroundStyle##VALUE)
-BACKGROUND_STYLE(Raised)
-BACKGROUND_STYLE(Lowered)
-
-#define EFFECT_STATE(VALUE) ACCESSOR(NSVisualEffectState##VALUE)
 EFFECT_STATE(FollowsWindowActiveState)
 EFFECT_STATE(Active)
 EFFECT_STATE(Inactive)
@@ -61,4 +57,22 @@ void ml_NSVisualEffectView_setMaterial(NSVisualEffectView *view,
 void ml_NSVisualEffectView_setBlendingMode(
     NSVisualEffectView *view, NSVisualEffectBlendingMode blendingMode) {
   view.blendingMode = blendingMode;
+}
+
+void ml_NSVisualEffectView_setEmphasized(NSVisualEffectView *view,
+                                         intnat emphasized) {
+  view.emphasized = (BOOL)emphasized;
+}
+
+CAMLprim value ml_NSVisualEffectView_setEmphasized_bc(NSVisualEffectView *view,
+                                                      value emphasized_v) {
+  CAMLparam1(emphasized_v);
+  ml_NSVisualEffectView_setEmphasized(view, Int_val(emphasized_v));
+
+  CAMLreturn(Val_unit);
+}
+
+void ml_NSVisualEffectView_setEffectState(NSVisualEffectView *view,
+                                          NSVisualEffectState state) {
+  view.state = state;
 }

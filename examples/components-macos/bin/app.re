@@ -10,9 +10,9 @@ module Component = {
       switch (state) {
       | Some(code) =>
         <EffectView
-          blendingMode=EffectView.BlendingMode.behindWindow
           style=[
             position(~top=0., ~left=0., ~right=0., ~bottom=0., `Absolute),
+            `BlendingMode(`BehindWindow),
           ]>
           <Button
             style=[width(100.), height(100.), align(`Center)]
@@ -127,7 +127,7 @@ let () = {
 
     let root = {
       open Brisk.Layout;
-      let view = BriskEffectView.make();
+      let view = BriskView.make();
 
       let layoutNode =
         Node.make(

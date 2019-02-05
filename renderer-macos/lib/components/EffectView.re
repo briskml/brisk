@@ -3,13 +3,13 @@ open Brisk;
 module Material = BriskEffectView.Material;
 module BlendingMode = BriskEffectView.BlendingMode;
 
-type attr = [ Layout.style | Styles.viewStyle];
+type attribute = [ Layout.style | BriskEffectView.style];
 
-type style = list(attr);
+type style = list(attribute);
 
-let component = nativeComponent("View");
+let component = nativeComponent("EffectView");
 
-let make = (~style: style=[], ~blendingMode, ~material, children) =>
+let make = (~style: style=[], children) =>
   component((_: Hooks.empty) =>
     {
       make: () => {
@@ -17,19 +17,11 @@ let make = (~style: style=[], ~blendingMode, ~material, children) =>
         {view, layoutNode: Layout.Node.make(~style, view)};
       },
       configureInstance: (~isFirstRender as _, {view} as node) => {
-        switch (blendingMode) {
-        | Some(blendingMode) =>
-          BriskEffectView.setBlendingMode(view, blendingMode)
-        | _ => ()
-        };
-        switch (material) {
-        | Some(material) => BriskEffectView.setMaterial(view, material)
-        | _ => ()
-        };
         style
-        |> List.iter(attr =>
-             switch (attr) {
-             | #Styles.viewStyle => Styles.setViewStyle(view, attr)
+        |> List.iter(attribute =>
+             switch (attribute) {
+             | #BriskEffectView.style =>
+               BriskEffectView.setStyle(view, attribute)
              | #Layout.style => ()
              }
            );
@@ -39,5 +31,5 @@ let make = (~style: style=[], ~blendingMode, ~material, children) =>
     }
   );
 
-let createElement = (~style=[], ~children, ~blendingMode=?, ~material=?, ()) =>
-  element(make(~style, ~blendingMode, ~material, listToElement(children)));
+let createElement = (~style=[], ~children, ()) =>
+  element(make(~style, listToElement(children)));

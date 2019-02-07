@@ -19,6 +19,7 @@
           BriskMenu
           BriskView
           BriskScrollView
+          BriskSplitView
           BriskStylableText
           BriskTextView
           BriskImage

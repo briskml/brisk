@@ -15,6 +15,7 @@ module Cocoa = {
   module GCD = GCD;
 
   module BriskEffectView = BriskEffectView;
+  module BriskSplitView = BriskSplitView;
 };
 
 /* Components */
@@ -24,3 +25,4 @@ module Text = Text;
 module Image = Image;
 module Button = Button;
 module EffectView = EffectView;
+module SplitView = SplitView;

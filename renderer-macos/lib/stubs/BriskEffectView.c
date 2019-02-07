@@ -1,13 +1,6 @@
 #import "Availability.h"
 #import "BriskCocoa.h"
 
-#define ACCESSOR(VALUE)                                                        \
-  intnat ml_get##VALUE() { return VALUE; }                                     \
-  value ml_get##VALUE##_bc() {                                                 \
-    CAMLparam0();                                                              \
-    CAMLreturn(VALUE);                                                         \
-  }
-
 #define VISUAL_EFFECT(VALUE) ACCESSOR(NSVisualEffectMaterial##VALUE)
 #define BLENDING_MODE(VALUE) ACCESSOR(NSVisualEffectBlendingMode##VALUE)
 #define EFFECT_STATE(VALUE) ACCESSOR(NSVisualEffectState##VALUE)

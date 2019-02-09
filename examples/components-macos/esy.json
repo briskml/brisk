@@ -27,6 +27,10 @@
     "@brisk/macos": "link:../../renderer-macos",
     "@opam/dune": "ocaml/dune:dune.opam#01b46a3",
     "@opam/merlin-lsp": "ocaml/merlin:merlin-lsp.opam#3e34bb5",
-    "brisk-reconciler": "briskml/brisk-reconciler#fa605f1"
+    "brisk-reconciler": "briskml/brisk-reconciler#fa605f1",
+    "@opam/httpkit": "ostera/httpkit:httpkit.opam#322ca26",
+    "@opam/httpkit-lwt": "ostera/httpkit:httpkit-lwt.opam#322ca26",
+    "@opam/httpaf": "anmonteiro/httpaf:httpaf.opam#57e9dd2",
+    "@opam/httpaf-lwt": "anmonteiro/httpaf:httpaf-lwt.opam#57e9dd2"
   }
 }

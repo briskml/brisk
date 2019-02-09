@@ -51,6 +51,7 @@ module Component = {
             <Image
               style=[margin4(~top=10., ()), alignSelf(`Center)]
               source={`Bundle("reason")}
+              url="asd"
             />
             <Text
               style=[

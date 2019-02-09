@@ -12,9 +12,25 @@
     "@opam/lwt": "^4.1.0",
     "@opam/lwt_ppx": "^1.2.1",
     "brisk-reconciler": "*",
-    "ocaml": "~4.7.1000"
+    "ocaml": "~4.7.1000",
+    "@opam/httpkit": "*",
+    "@opam/httpkit-lwt": "*",
+    "@opam/logs": "*",
+    "@opam/fmt": "*",
+    "@opam/yojson": "*"
   },
   "devDependencies": {
     "@reason-native/rely": "*"
+  },
+  "resolutions": {
+    "@brisk/core": "link-dev:./core",
+    "@brisk/macos": "link-dev:./renderer-macos",
+    "@opam/dune": "ocaml/dune:dune.opam#01b46a3",
+    "@opam/merlin-lsp": "ocaml/merlin:merlin-lsp.opam#3e34bb5",
+    "brisk-reconciler": "briskml/brisk-reconciler#fa605f1",
+    "@opam/httpkit": "ostera/httpkit:httpkit.opam#322ca26",
+    "@opam/httpkit-lwt": "ostera/httpkit:httpkit-lwt.opam#322ca26",
+    "@opam/httpaf": "anmonteiro/httpaf:httpaf.opam#57e9dd2",
+    "@opam/httpaf-lwt": "anmonteiro/httpaf:httpaf-lwt.opam#57e9dd2"
   }
 }

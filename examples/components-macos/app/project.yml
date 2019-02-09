@@ -18,8 +18,8 @@ targets:
       - Sources
     settings:
       HEADER_SEARCH_PATHS: '$(STDLIB_PATH)'
-      LIBRARY_SEARCH_PATHS: '$(STDLIB_PATH)'
-      OTHER_LDFLAGS: ' -framework Cocoa'
+      LIBRARY_SEARCH_PATHS: '$(STDLIB_PATH) /usr/local/lib/'
+      OTHER_LDFLAGS: ' -framework Cocoa -lgmp'
     configFiles:
       Debug: Resources/env.xcconfig
       Release: Resources/env.xcconfig

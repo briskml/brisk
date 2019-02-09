@@ -1,0 +1,11 @@
+{
+  "build": [
+    [
+      "cc",
+      "-c",
+      "${CFLAGS:--g}",
+      "-I/usr/local/include",
+      "test.c"
+    ]
+  ]
+}

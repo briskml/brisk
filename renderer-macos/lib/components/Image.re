@@ -18,39 +18,24 @@ let measure = (node, _, _, _, _) => {
   {width, height};
 };
 
-let getUserDate = (id: int) => {
-  let https_url = "https://api.github.com/user/" ++ string_of_int(id);
-  /* Logs.app(m => m("Requesting: %s", https_url)); */
-
+let getImage = (~url: string) => {
   switch (
     Httpkit_lwt.Client.(
       Httpkit.Client.Request.create(
         ~headers=[("User-Agent", "Reason HttpKit")],
         `GET,
-        https_url |> Uri.of_string,
+        Uri.of_string(url),
       )
       |> Https.send
       >>= Response.body
       |> Lwt_main.run
     )
   ) {
-  | exception _e =>
-    /* Logs.err(m => m("%s", Printexc.to_string(e))); */
-    "asdasd"
+  | exception _e => "Error"
   | Ok(body) =>
-    let json = Yojson.Basic.from_string(body);
-    open Yojson.Basic.Util;
-    let login = json |> member("login") |> to_string;
-    /* let id = to_int(member("id", json)); */
-
-    /* Logs.app(m => m("login: %s", login)); */
-    /* Logs.app(m => m("id: %d", id)); */
-
-    /* Logs.app(m => m("Response: %s", body)); */
-    login;
-  | Error(_) =>
-    Logs.err(m => m("Something went wrong!!!"));
-    "error";
+    /* get image instead of random string */
+    Yojson.Basic.(from_string(body) |> Util.member("login") |> to_string)
+  | Error(_) => "error"
   };
 };
 
@@ -60,7 +45,8 @@ let make = (~style=[], ~source, ~url, children) =>
       make: () => {
         let view = BriskImage.make(~source, ());
 
-        print_string(url);
+        /* TODO: handle user image */
+        print_string(getImage(~url));
 
         {view, layoutNode: Layout.Node.make(~measure, ~style, view)};
       },

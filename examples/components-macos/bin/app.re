@@ -123,11 +123,21 @@ let () = {
   });
 
   Application.didFinishLaunching(() => {
-    let window = Window.makeWithContentRect(0., 0., 680., 468.);
+    open Brisk;
+
+    let view = BriskView.make();
+    let window =
+      Window.make(
+        ~width=680.,
+        ~height=468.,
+        ~title=appName,
+        ~onResize=win => UI.setWindowHeight(Window.contentHeight(win)),
+        ~contentView=view,
+        (),
+      );
 
     let root = {
       open Brisk.Layout;
-      let view = BriskView.make();
 
       let layoutNode =
         Node.make(
@@ -140,22 +150,13 @@ let () = {
       {Brisk.OutputTree.view, layoutNode};
     };
 
-    Window.center(window);
-    Window.makeKeyAndOrderFront(window);
-    Window.setTitle(window, appName);
-    Window.setContentView(window, root.view);
-
-    Window.windowDidResize(window, _ =>
-      Brisk.UI.setWindowHeight(Window.contentHeight(window))
-    );
-
-    Brisk.UI.renderAndMount(
+    UI.renderAndMount(
       ~height=Window.contentHeight(window),
       root,
       <component />,
     );
 
-    Brisk.RunLoop.spawn();
+    RunLoop.spawn();
   });
 
   Application.run();

@@ -84,3 +84,42 @@ CAMLprim value ml_NSWindow_setTitle(NSWindow *win, value str_v) {
 
   CAMLreturn(Val_unit);
 }
+
+void ml_NSWindow_setContentIsFullSize(NSWindow *win, intnat isFullSize) {
+  if (isFullSize == 1) {
+    win.styleMask |= NSWindowStyleMaskFullSizeContentView;
+  } else {
+    win.styleMask &= ~NSWindowStyleMaskFullSizeContentView;
+  }
+}
+
+CAMLprim value ml_NSWindow_setContentIsFullSize_bc(NSWindow *win,
+                                                   value isFullSize_v) {
+  CAMLparam1(isFullSize_v);
+  ml_NSWindow_setContentIsFullSize(win, Int_val(isFullSize_v));
+
+  CAMLreturn(Val_unit);
+}
+
+void ml_NSWindow_setTitleIsHidden(NSWindow *win, intnat hidden) {
+  win.titleVisibility = hidden;
+}
+
+CAMLprim value ml_NSWindow_setTitleIsHidden_bc(NSWindow *win, value hidden_v) {
+  CAMLparam1(hidden_v);
+  ml_NSWindow_setTitleIsHidden(win, Int_val(hidden_v));
+
+  CAMLreturn(Val_unit);
+}
+
+void ml_NSWindow_setTitlebarIsTransparent(NSWindow *win, intnat transparent) {
+  win.titlebarAppearsTransparent = (BOOL)transparent;
+}
+
+CAMLprim value ml_NSWindow_setTitlebarIsTransparent_bc(NSWindow *win,
+                                                       value transparent_v) {
+  CAMLparam1(transparent_v);
+  ml_NSWindow_setTitlebarIsTransparent(win, Int_val(transparent_v));
+
+  CAMLreturn(Val_unit);
+}

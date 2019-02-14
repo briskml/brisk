@@ -16,6 +16,26 @@ external makeKeyAndOrderFront: window => unit =
 [@noalloc]
 external setTitle: (window, string) => unit = "ml_NSWindow_setTitle";
 external title: window => string = "ml_NSWindow_title";
+
+[@noalloc]
+external setContentIsFullSize: (window, [@untagged] int) => unit =
+  "ml_NSWindow_setContentIsFullSize_bc" "ml_NSWindow_setContentIsFullSize";
+let setContentIsFullSize = (win, isFullSize) =>
+  setContentIsFullSize(win, isFullSize ? 1 : 0);
+
+[@noalloc]
+external setTitleIsHidden: (window, [@untagged] int) => unit =
+  "ml_NSWindow_setTitleIsHidden_bc" "ml_NSWindow_setTitleIsHidden";
+let setTitleIsHidden = (win, isHidden) =>
+  setTitleIsHidden(win, isHidden ? 1 : 0);
+
+[@noalloc]
+external setTitlebarIsTransparent: (window, [@untagged] int) => unit =
+  "ml_NSWindow_setTitlebarIsTransparent_bc"
+  "ml_NSWindow_setTitlebarIsTransparent";
+let setTitlebarIsTransparent = (win, isTransparent) =>
+  setTitlebarIsTransparent(win, isTransparent ? 1 : 0);
+
 [@noalloc] external contentView: window => view = "ml_NSWindow_contentView";
 [@noalloc]
 external setContentView: (window, view) => unit = "ml_NSWindow_setContentView";
@@ -29,7 +49,15 @@ external setOnWindowDidResize: (window, unit => unit) => unit =
   "ml_NSWindow_setOnWindowDidResize";
 
 let make =
-    (~width as w, ~height as h, ~title=?, ~onResize=?, ~contentView=?, ()) => {
+    (
+      ~width as w,
+      ~height as h,
+      ~title=?,
+      ~contentView=?,
+      ~contentIsFullSize=?,
+      ~onResize=?,
+      (),
+    ) => {
   let win = makeWithContentRect(0., 0., w, h);
 
   center(win);
@@ -40,11 +68,6 @@ let make =
   | None => ()
   };
 
-  switch (onResize) {
-  | Some(f) => setOnWindowDidResize(win, UIEventCallback.make(_ => f(win)))
-  | None => ()
-  };
-
   let contentView =
     switch (contentView) {
     | Some(view) => view
@@ -52,6 +75,19 @@ let make =
     };
 
   setContentView(win, contentView);
+
+  let isFullSize =
+    switch (contentIsFullSize) {
+    | Some(isFullSize) => isFullSize
+    | None => false
+    };
+
+  setContentIsFullSize(win, isFullSize);
+
+  switch (onResize) {
+  | Some(f) => setOnWindowDidResize(win, UIEventCallback.make(_ => f(win)))
+  | None => ()
+  };
 
   win;
 };

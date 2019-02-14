@@ -131,10 +131,15 @@ let () = {
         ~width=680.,
         ~height=468.,
         ~title=appName,
-        ~onResize=win => UI.setWindowHeight(Window.contentHeight(win)),
         ~contentView=view,
+        ~contentIsFullSize=true,
+        ~onResize=win => UI.setWindowHeight(Window.contentHeight(win)),
         (),
       );
+
+    /* Make the window 'frameless' */
+    Window.setTitleIsHidden(window, true);
+    Window.setTitlebarIsTransparent(window, true);
 
     let root = {
       open Brisk.Layout;

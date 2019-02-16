@@ -6,3 +6,4 @@ _build
 *.log
 *.install
 default.profraw
+.vscode

@@ -12,6 +12,7 @@ module Cocoa = {
   module BriskButton = BriskButton;
   module BriskImage = BriskImage;
   module BriskTextView = BriskTextView;
+  module BriskTextInput = BriskTextInput;
   module GCD = GCD;
 
   module BriskEffectView = BriskEffectView;
@@ -24,3 +25,4 @@ module Text = Text;
 module Image = Image;
 module Button = Button;
 module EffectView = EffectView;
+module TextInput = TextInput;

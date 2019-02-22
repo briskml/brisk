@@ -4,8 +4,6 @@ type attribute = [ Layout.style | Styles.viewStyle];
 
 type style = list(attribute);
 
-let component = nativeComponent("Image");
-
 let measure = (node, _, _, _, _) => {
   open Layout.FlexLayout.LayoutSupport.LayoutTypes;
 
@@ -17,26 +15,28 @@ let measure = (node, _, _, _, _) => {
   {width, height};
 };
 
-let make = (~style=[], ~source, children) =>
-  component((_: Hooks.empty) =>
-    {
-      make: () => {
-        let view = BriskImage.make(~source, ());
-        {view, layoutNode: Layout.Node.make(~measure, ~style, view)};
-      },
-      configureInstance: (~isFirstRender as _, {view} as node) => {
-        style
-        |> List.iter(attribute =>
-             switch (attribute) {
-             | #Styles.viewStyle => Styles.setViewStyle(view, attribute)
-             | #Layout.style => ()
-             }
-           );
-        node;
-      },
-      children,
-    }
-  );
+let component = nativeComponent("image");
 
-let createElement = (~style=[], ~source, ~children, ()) =>
-  element(make(~style, ~source, listToElement(children)));
+let component = (~style=[], ~source, ~children as _: list(unit), ()) =>
+  component(hooks =>
+    (
+      hooks,
+      {
+        make: () => {
+          let view = BriskImage.make(~source, ());
+          {view, layoutNode: Layout.Node.make(~measure, ~style, view)};
+        },
+        configureInstance: (~isFirstRender as _, {view} as node) => {
+          style
+          |> List.iter(attribute =>
+               switch (attribute) {
+               | #Styles.viewStyle => Styles.setViewStyle(view, attribute)
+               | #Layout.style => ()
+               }
+             );
+          node;
+        },
+        children: Brisk.empty,
+      },
+    )
+  );

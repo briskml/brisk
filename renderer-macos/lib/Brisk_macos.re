@@ -19,8 +19,14 @@ module Cocoa = {
 
 /* Components */
 module View = View;
+let view = View.component;
 module ScrollView = ScrollView;
+let scrollView = ScrollView.component;
 module Text = Text;
+let text = Text.component;
 module Image = Image;
+let image = Image.component;
 module Button = Button;
+let button = Button.component;
 module EffectView = EffectView;
+let effectView = EffectView.component;

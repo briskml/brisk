@@ -1,0 +1,34 @@
+{
+  "name": "hacker-news-app",
+  "version": "0.1.0",
+  "esy": {
+    "build": ["dune build -p hacker-news-app"]
+  },
+  "scripts": {
+    "fmt": "dune build @fmt --auto-promote",
+    "clean": "dune clean",
+    "run": "esy x make -C app run"
+  },
+  "dependencies": {
+    "@esy-ocaml/reason": ">=3.4.0",
+    "@brisk/macos": "*",
+    "@opam/dune": "^1.6.3",
+    "@opam/cohttp-lwt-unix": "^1.2.0",
+    "ocaml": "~4.7.1000",
+    "graphql_ppx": "0.2.9"
+  },
+  "devDependencies": {
+    "@opam/merlin": "^3.2.2",
+    "@opam/merlin-lsp": "*",
+    "xcodegen": ">=2.2.0",
+    "xcpretty": "^0.2.8"
+  },
+  "resolutions": {
+    "@brisk/core": "link:../../core",
+    "@brisk/macos": "link:../../renderer-macos",
+    "@opam/dune": "ocaml/dune:dune.opam#01b46a3",
+    "@opam/merlin-lsp": "ocaml/merlin:merlin-lsp.opam#3e34bb5",
+    "brisk-reconciler": "briskml/brisk-reconciler#be325c5",
+    "graphql_ppx": "link:../../../graphql_ppx.nosync/"
+  }
+}

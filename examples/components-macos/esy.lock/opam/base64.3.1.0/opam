@@ -15,6 +15,7 @@ binary data in an ASCII string format by translating it into a radix-64
 representation.  It is specified in RFC 4648.
 """
 depends: [
+  "ocaml" {>="4.03.0"}
   "base-bytes"
   "dune" {build & >= "1.0.1"}
   "bos" {with-test}
@@ -28,6 +29,6 @@ build: [
 ]
 url {
   src:
-    "https://github.com/mirage/ocaml-base64/releases/download/v2.3.0/base64-v2.3.0.tbz"
-  checksum: "md5=f0b29524dbaff3ac6eb4d6c578b1b80d"
+    "https://github.com/mirage/ocaml-base64/releases/download/v3.1.0/base64-v3.1.0.tbz"
+  checksum: "md5=9847073feb4272e513d8c832904e1af7"
 }

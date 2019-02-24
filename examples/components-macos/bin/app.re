@@ -1,37 +1,37 @@
 open Brisk_macos;
 
-module Component = {
-  let component = Brisk.component("Other");
-  let createElement = (~children as _, ()) =>
-    component(slots => {
-      open Brisk.Layout;
-      let (state, setState, _slots: Brisk.Hooks.empty) =
-        Brisk.Hooks.state(None, slots);
+let component = Brisk.component("Other");
+let component = (~children as _, ()) =>
+  component(hooks => {
+    open Brisk.Layout;
+    let (state, setState, hooks) = Brisk.Hooks.state(None, hooks);
+    (
+      hooks,
       switch (state) {
       | Some(code) =>
-        <EffectView
+        <effectView
           style=EffectView.[
             position(~top=0., ~left=0., ~right=0., ~bottom=0., `Absolute),
             blendingMode(`BehindWindow),
           ]>
-          <Button
+          <button
             style=[width(100.), height(100.), align(`Center)]
             title={string_of_int(code)}
             callback={() => setState(None)}
           />
-          <Button
+          <button
             style=[width(100.), height(100.), align(`Center)]
             title="Cell two"
             callback={() => setState(None)}
           />
-        </EffectView>
+        </effectView>
       | None =>
-        <ScrollView
+        <scrollView
           style=[
             position(~top=0., ~left=0., ~right=0., ~bottom=0., `Absolute),
             background(Color.hex("#f7f8f9")),
           ]>
-          <Text
+          <text
             style=[
               font(~size=24., ~weight=`Medium, ()),
               kern(0.5),
@@ -42,17 +42,17 @@ module Component = {
             ]
             value="Welcome to Brisk"
           />
-          <View
+          <view
             style=[
               justifyContent(`Center),
               alignContent(`Center),
               background(Color.hex("#eeeeee")),
             ]>
-            <Image
+            <image
               style=[margin4(~top=10., ()), alignSelf(`Center)]
               source={`Bundle("reason")}
             />
-            <Text
+            <text
               style=[
                 font(~size=18., ()),
                 align(`Center),
@@ -66,8 +66,8 @@ module Component = {
               ]
               value="Text bubble"
             />
-          </View>
-          <Button
+          </view>
+          <button
             style=[
               width(400.),
               height(60.),
@@ -88,8 +88,8 @@ module Component = {
               )
             }
           />
-          <View style=[alignContent(`Center), height(900.)]>
-            <Text
+          <view style=[alignContent(`Center), height(900.)]>
+            <text
               style=[
                 font(~size=18., ()),
                 align(`Center),
@@ -104,11 +104,11 @@ module Component = {
               ]
               value="Very large height for scrolling"
             />
-          </View>
-        </ScrollView>
-      };
-    });
-};
+          </view>
+        </scrollView>
+      },
+    );
+  });
 
 let () = {
   open Cocoa;
@@ -152,7 +152,7 @@ let () = {
     Brisk.UI.renderAndMount(
       ~height=Window.contentHeight(window),
       root,
-      Brisk.element(<Component />),
+      <component />,
     );
 
     Brisk.RunLoop.spawn();

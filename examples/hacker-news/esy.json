@@ -2,7 +2,8 @@
   "name": "hacker-news-app",
   "version": "0.1.0",
   "esy": {
-    "build": ["dune build -p hacker-news-app"]
+    "build": ["dune build -p hacker-news-app"],
+    "buildsInSource": "unsafe"
   },
   "scripts": {
     "fmt": "dune build @fmt --auto-promote",
@@ -29,6 +30,6 @@
     "@opam/dune": "ocaml/dune:dune.opam#01b46a3",
     "@opam/merlin-lsp": "ocaml/merlin:merlin-lsp.opam#3e34bb5",
     "brisk-reconciler": "briskml/brisk-reconciler#be325c5",
-    "graphql_ppx": "link:../../../graphql_ppx.nosync/"
+    "graphql_ppx": "link:../../../graphql_ppx.nosync"
   }
 }

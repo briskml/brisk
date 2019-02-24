@@ -1,7 +1,7 @@
 .PHONY: build run
 
 CONFIGURATION := "Debug"
-SCHEME := "BriskComponentsMacos"
+SCHEME := "HackerNews"
 
 build:
 	$(eval STDLIB_PATH := $(shell ocamlc -where))

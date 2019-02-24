@@ -1,36 +1,39 @@
 open Brisk_macos;
 
-type tab =
-  | Welcome
-  | Views
-  | Buttons
-  | Text
-  | Image
-  | System;
+module Tab = {
+  type t =
+    | Top
+    | Show
+    | Newest
+    | Jobs;
+
+  let title =
+    fun
+    | Top => "Top"
+    | Show => "Show"
+    | Newest => "Newest"
+    | Jobs => "Jobs";
+};
 
 type tabItem = {
-  kind: tab,
+  kind: Tab.t,
   label: string,
 };
 
-let tabs = [
-  {kind: Welcome, label: "Welcome"},
-  {kind: Views, label: "Views"},
-  {kind: Buttons, label: "Buttons"},
-  {kind: Text, label: "Text"},
-  {kind: Image, label: "Image"},
-];
+let tabs =
+  Tab.[Top, Show, Newest, Jobs]
+  |> List.map(kind => {kind, label: Tab.title(kind)});
 
-type state = {currentTab: tab};
+type state = {currentTab: Tab.t};
 
 let examples = {
   let id = Brisk.component("examples");
 
-  (~children as _, ()) =>
+  (~children as _: list(unit), ()) =>
     id(hooks => {
       open Brisk.Layout;
       let (state, setState, hooks) =
-        Brisk.Hooks.state({currentTab: Welcome}, hooks);
+        Brisk.Hooks.state({currentTab: Top}, hooks);
 
       let {currentTab} = state;
 
@@ -58,7 +61,7 @@ let examples = {
                             align(`Left),
                             color(Color.hex("#282522")),
                             background(
-                              tab.kind == currentTab
+                              tab.kind === currentTab
                                 ? Color.hexa("#000000", 0.4)
                                 : Color.transparent,
                             ),
@@ -75,53 +78,6 @@ let examples = {
               position(~top=0., ~left=185., ~right=0., ~bottom=0., `Absolute),
               padding4(~top=20., ~left=13., ()),
             ]>
-            <text
-              style=[
-                font(~size=24., ~weight=`Semibold, ()),
-                kern(0.58),
-                align(`Left),
-                color(Color.hex("#000000")),
-                background(Color.transparent),
-              ]
-              value="Welcome to Brisk"
-            />
-            <view style=[justifyContent(`Center), alignContent(`Center)]>
-              <text
-                style=[
-                  font(~size=18., ()),
-                  align(`Center),
-                  alignSelf(`Center),
-                  width(200.),
-                  border(~radius=10., ()),
-                  color(Color.hex("#ffffff")),
-                  background(Color.hexa("#263ac5", 0.9)),
-                  margin(20.),
-                  padding2(~h=10., ~v=10., ()),
-                ]
-                value="Text bubble"
-              />
-            </view>
-            <button
-              style=[
-                width(400.),
-                height(60.),
-                margin4(~top=20., ()),
-                alignSelf(`Center),
-                font(~size=16., ()),
-                color(Color.hex("#ffffff")),
-                background(Color.hex("#263ac5")),
-                align(`Center),
-              ]
-              title="You're gonna have to wait 1 second"
-              callback={() =>
-                Lwt.Infix.(
-                  ignore(
-                    Lwt_unix.sleep(1.)
-                    >>= (_ => Lwt.return(setState(state))),
-                  )
-                )
-              }
-            />
             <view style=[alignContent(`Center), height(600.)]>
               <text
                 style=[

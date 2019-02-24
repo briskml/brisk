@@ -1,6 +1,6 @@
 (executable
  (name app)
- (libraries brisk-macos)
+ (libraries brisk-macos yojson)
  (modes object)
  (preprocess (pps graphql_ppx))
 )

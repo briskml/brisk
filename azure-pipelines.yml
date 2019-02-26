@@ -22,6 +22,6 @@ jobs:
       - script: |
           cd examples/components-macos
           esy
-          esy x make -C app build
+          esy bundle
         displayName: "Build example: components-macos"
       - template: .ci/publish-build-cache.yml

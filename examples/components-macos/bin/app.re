@@ -1,4 +1,5 @@
 open Brisk_macos;
+open Components_macos;
 
 type tab =
   | Welcome
@@ -23,17 +24,15 @@ let tabs = [
 
 type state = {currentTab: tab};
 
-let component = Brisk.component("Other");
-let component = (~children as _, ()) =>
-  component(hooks => {
+let app = (~children as _, ()) =>
+  Brisk.component("AppRoot", hooks => {
     open Brisk.Layout;
+
     let (state, setState, hooks) =
       Brisk.Hooks.state({currentTab: Welcome}, hooks);
     (
       hooks,
       {
-        open Brisk.Layout;
-
         let {currentTab} = state;
 
         <view
@@ -189,11 +188,7 @@ let () = {
       {Brisk.OutputTree.view, layoutNode};
     };
 
-    UI.renderAndMount(
-      ~height=Window.contentHeight(window),
-      root,
-      <component />,
-    );
+    UI.renderAndMount(~height=Window.contentHeight(window), root, <app />);
 
     RunLoop.spawn();
   });

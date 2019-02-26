@@ -1,0 +1,37 @@
+(rule
+ (targets env.xcconfig)
+ (action (with-stdout-to %{targets} (progn
+  (echo "STDLIB_PATH=%{ocaml_where}\n")
+  (echo "BUILD_PATH=%{workspace_root}\n")
+ ))))
+
+(rule
+ (targets project.xcodeproj Info.plist)
+ (deps env.xcconfig
+       (source_tree Resources)
+       (source_tree Sources)
+       (:spec project.yml))
+ (action (progn
+  (chdir %{workspace_root}/app
+  (run xcodegen generate -q --spec %{spec})
+ ))))
+
+(alias
+ (name bundle)
+ (deps project.xcodeproj Info.plist
+       ../bin/app.exe.o)
+ (action (progn
+  (chdir %{workspace_root}/app
+  (bash "xcodebuild \
+            -derivedDataPath $cur__root/_esy/default/target \
+            -scheme BriskComponentsMacos \
+            -configuration Debug \
+            build | xcpretty && exit ${PIPESTATUS[0]}")
+ ))))
+
+(alias
+ (name run)
+ (deps (alias bundle))
+ (action (progn
+   (bash "$cur__root/_esy/default/target/Build/Products/Debug/BriskComponentsMacos.app/Contents/MacOS/BriskComponentsMacos")
+ )))

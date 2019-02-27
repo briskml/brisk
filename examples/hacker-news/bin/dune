@@ -1,11 +1,7 @@
-(executable
- (name app)
+(executables
+ (names app)
  (libraries brisk-macos yojson)
  (modes object)
  (preprocess (pps graphql_ppx))
 )
 
-(install
-  (package hacker-news-app)
-  (section bin)
-  (files (app.exe.o as app.o)))

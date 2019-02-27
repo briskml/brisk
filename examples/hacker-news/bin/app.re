@@ -9,7 +9,7 @@ module Tab = {
 
   let title =
     fun
-    | Top => "Top"
+    | Top => "op"
     | Show => "Show"
     | Newest => "Newest"
     | Jobs => "Jobs";
@@ -27,15 +27,13 @@ let tabs =
 type state = {currentTab: Tab.t};
 
 let examples = {
-  let id = Brisk.component("examples");
+  let id = Brisk.component("app");
 
   (~children as _: list(unit), ()) =>
     id(hooks => {
       open Brisk.Layout;
-      let (state, setState, hooks) =
-        Brisk.Hooks.state({currentTab: Top}, hooks);
 
-      let {currentTab} = state;
+      let currentTab = Tab.Top;
 
       (
         hooks,

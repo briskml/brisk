@@ -6,11 +6,10 @@ type story = {
   score: int,
   by,
   time: int,
+  descendants: int,
 };
 
-type poll = {
-  title: string,
-};
+type poll = {title: string};
 
 module Query = [%graphql
   {|{
@@ -23,7 +22,8 @@ module Query = [%graphql
        by @bsRecord {
 	      id
        }
-       time
+       time,
+  descendants
      }
      ... on Poll @bsRecord {
        title
@@ -35,6 +35,29 @@ module Query = [%graphql
 
 let query = Query.make();
 let topStories = GraphQLClient.get(query#query, query#parse);
+
+let story = {
+  open Brisk_macos;
+  let component = Brisk.component("Story");
+  (~story: story, ~index, ~children as _: list(unit), ()) =>
+    component(hooks =>
+      (
+        hooks,
+        <view>
+          <text value={string_of_int(index)} />
+          <text value={story.title} />
+          {switch (story.url) {
+           | Some(url) => <text value=url />
+           | None => Brisk.empty
+           }}
+          <text value={string_of_int(story.score)} />
+          <text value={story.by.id} />
+          <text value={string_of_int(story.time)} />
+          <text value={string_of_int(story.descendants)} />
+        </view>,
+      )
+    );
+};
 
 let component = {
   open Brisk_macos;

@@ -18,7 +18,8 @@
     "@opam/dune": "^1.7.2",
     "@opam/cohttp-lwt-unix": "^1.2.0",
     "ocaml": "~4.7.1000",
-    "graphql_ppx": "0.2.9"
+    "graphql_ppx": "0.2.9",
+    "@opam/httpkit-lwt": "*"
   },
   "devDependencies": {
     "@opam/merlin": "^3.2.2",
@@ -29,6 +30,10 @@
     "@brisk/core": "link:../../core",
     "@brisk/macos": "link:../../renderer-macos",
     "brisk-reconciler": "briskml/brisk-reconciler#be325c5",
-    "graphql_ppx": "link:../../../graphql_ppx.nosync"
+    "graphql_ppx": "link:../../../graphql_ppx.nosync",
+    "@opam/httpkit-lwt": "ostera/httpkit:httpkit-lwt.opam#5fd8ed4",
+    "@opam/httpkit": "ostera/httpkit:httpkit.opam#5fd8ed4",
+    "@opam/httpaf": "anmonteiro/httpaf:httpaf.opam#57e9dd2",
+    "@opam/httpaf-lwt": "anmonteiro/httpaf:httpaf-lwt.opam#57e9dd2"
   }
 }

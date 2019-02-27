@@ -1,9 +1,4 @@
-(executable
- (name app)
- (libraries brisk-macos)
+(executables
+ (names app)
+ (libraries brisk-components-macos.lib)
  (modes object))
-
-(install
-  (package brisk-components-macos)
-  (section bin)
-  (files (app.exe.o as app.o)))

@@ -8,7 +8,7 @@
   "dependencies": {
     "@esy-ocaml/reason": ">=3.4.0",
     "@opam/color": "^0.2.0",
-    "@opam/dune": "^1.6.2",
+    "@opam/dune": "^1.7.2",
     "flex": "^1.2.2",
     "ocaml": "~4.7.1000"
   }

@@ -1,0 +1,4 @@
+(library
+ (name components_macos)
+ (public_name brisk-components-macos.lib)
+ (libraries brisk-macos))

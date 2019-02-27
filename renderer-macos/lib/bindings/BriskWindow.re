@@ -1,47 +1,93 @@
 open CocoaTypes;
 
 [@noalloc]
-external _NSWindow_makeWithContentRect:
+external makeWithContentRect:
   ([@unboxed] float, [@unboxed] float, [@unboxed] float, [@unboxed] float) =>
   window =
   "ml_NSWindow_makeWithContentRect_bc" "ml_NSWindow_makeWithContentRect";
 
+[@noalloc] external isVisible: window => bool = "ml_NSWindow_isVisible";
+
+[@noalloc] external center: window => unit = "ml_NSWindow_center";
+
 [@noalloc]
-external _NSWindow_isVisible: window => bool = "ml_NSWindow_isVisible";
-[@noalloc] external _NSWindow_center: window => unit = "ml_NSWindow_center";
-[@noalloc]
-external _NSWindow_makeKeyAndOrderFront: window => unit =
+external makeKeyAndOrderFront: window => unit =
   "ml_NSWindow_makeKeyAndOrderFront";
 [@noalloc]
-external _NSWindow_setTitle: (window, string) => unit = "ml_NSWindow_setTitle";
-external _NSWindow_title: window => string = "ml_NSWindow_title";
+external setTitle: (window, string) => unit = "ml_NSWindow_setTitle";
+external title: window => string = "ml_NSWindow_title";
+
 [@noalloc]
-external _NSWindow_contentView: window => view = "ml_NSWindow_contentView";
+external setContentIsFullSize: (window, [@untagged] int) => unit =
+  "ml_NSWindow_setContentIsFullSize_bc" "ml_NSWindow_setContentIsFullSize";
+let setContentIsFullSize = (win, isFullSize) =>
+  setContentIsFullSize(win, isFullSize ? 1 : 0);
+
 [@noalloc]
-external _NSWindow_setContentView: (window, view) => unit =
-  "ml_NSWindow_setContentView";
+external setTitleIsHidden: (window, [@untagged] int) => unit =
+  "ml_NSWindow_setTitleIsHidden_bc" "ml_NSWindow_setTitleIsHidden";
+let setTitleIsHidden = (win, isHidden) =>
+  setTitleIsHidden(win, isHidden ? 1 : 0);
+
 [@noalloc]
-external _NSWindow_contentWidth: window => [@unboxed] float =
+external setTitlebarIsTransparent: (window, [@untagged] int) => unit =
+  "ml_NSWindow_setTitlebarIsTransparent_bc"
+  "ml_NSWindow_setTitlebarIsTransparent";
+let setTitlebarIsTransparent = (win, isTransparent) =>
+  setTitlebarIsTransparent(win, isTransparent ? 1 : 0);
+
+[@noalloc] external contentView: window => view = "ml_NSWindow_contentView";
+[@noalloc]
+external setContentView: (window, view) => unit = "ml_NSWindow_setContentView";
+[@noalloc]
+external contentWidth: window => [@unboxed] float =
   "ml_NSWindow_contentWidth" "ml_NSWindow_contentWidth";
 [@noalloc]
-external _NSWindow_contentHeight: window => [@unboxed] float =
+external contentHeight: window => [@unboxed] float =
   "ml_NSWindow_contentHeight_bc" "ml_NSWindow_contentHeight";
 external setOnWindowDidResize: (window, unit => unit) => unit =
   "ml_NSWindow_setOnWindowDidResize";
 
-let makeWithContentRect = (x, y, w, h) => {
-  _NSWindow_makeWithContentRect(x, y, w, h);
-};
+let make =
+    (
+      ~width as w,
+      ~height as h,
+      ~title=?,
+      ~contentView=?,
+      ~contentIsFullSize=?,
+      ~onResize=?,
+      (),
+    ) => {
+  let win = makeWithContentRect(0., 0., w, h);
 
-let isVisible = win => _NSWindow_isVisible(win);
-let center = win => _NSWindow_center(win);
-let makeKeyAndOrderFront = win => _NSWindow_makeKeyAndOrderFront(win);
-let setTitle = (win, s) => _NSWindow_setTitle(win, s);
-let title = win => _NSWindow_title(win);
-let contentView = win => _NSWindow_contentView(win);
-let setContentView = (win, v) => _NSWindow_setContentView(win, v);
-let contentWidth = win => _NSWindow_contentWidth(win);
-let contentHeight = win => _NSWindow_contentHeight(win);
-let windowDidResize = (win, f) => {
-  setOnWindowDidResize(win, UIEventCallback.make(f));
+  center(win);
+  makeKeyAndOrderFront(win);
+
+  switch (title) {
+  | Some(title) => setTitle(win, title)
+  | None => ()
+  };
+
+  let contentView =
+    switch (contentView) {
+    | Some(view) => view
+    | None => BriskView.make()
+    };
+
+  setContentView(win, contentView);
+
+  let isFullSize =
+    switch (contentIsFullSize) {
+    | Some(isFullSize) => isFullSize
+    | None => false
+    };
+
+  setContentIsFullSize(win, isFullSize);
+
+  switch (onResize) {
+  | Some(f) => setOnWindowDidResize(win, UIEventCallback.make(_ => f(win)))
+  | None => ()
+  };
+
+  win;
 };

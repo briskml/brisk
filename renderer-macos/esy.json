@@ -8,11 +8,12 @@
   "dependencies": {
     "@brisk/core": "*",
     "@esy-ocaml/reason": ">=3.4.0",
-    "@opam/dune": "^1.6.2",
+    "@opam/dune": "^1.7.2",
     "@opam/lwt": "^4.1.0",
     "@opam/lwt_ppx": "^1.2.1",
+    "ocaml": "~4.7.1000",
     "brisk-reconciler": "*",
-    "ocaml": "~4.7.1000"
+    "pkg-config": "briskml/pkg-config"
   },
   "devDependencies": {
     "@reason-native/rely": "*"

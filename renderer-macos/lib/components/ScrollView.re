@@ -12,14 +12,13 @@ let component = {
         hooks,
         {
           make: () => {
+            open Layout;
             open Layout.Node;
             let view = BriskScrollView.make();
             let container = Composite.makeFlexNode(~style, view);
             let content =
               Composite.makeFlexNode(
-                ~style=[
-                  Layout.position(~top=0., ~left=0., ~right=0., `Absolute),
-                ],
+                ~style=[position(~top=0., ~left=0., ~right=0., `Absolute)],
                 BriskScrollView.documentView(view),
               );
             insertChild(container, content, 0);

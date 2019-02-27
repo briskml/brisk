@@ -23,6 +23,7 @@ NSScrollView *ml_BriskScrollView_make() {
   retainView(scroll);
 
   [scroll setBorderType:NSNoBorder];
+  [scroll setDrawsBackground:NO];
   [scroll setHasVerticalScroller:YES];
   [scroll setHasHorizontalScroller:YES];
   scroll.documentView = [NSView new];

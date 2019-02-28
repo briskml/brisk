@@ -20,7 +20,8 @@ targets:
       - Sources
     settings:
       HEADER_SEARCH_PATHS: "$(STDLIB_PATH)"
-      OTHER_LDFLAGS: "-framework Cocoa"
+      LIBRARY_SEARCH_PATHS: "$(ESY_LIBRARY_SEARCH_PATHS)"
+      OTHER_LDFLAGS: "-framework Cocoa $(ESY_LINK_FLAGS)"
     configFiles:
       Debug: env.xcconfig
       Release: env.xcconfig

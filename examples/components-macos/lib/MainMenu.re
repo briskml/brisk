@@ -167,7 +167,7 @@ let makeHelpMenu = appName => {
   submenu;
 };
 
-let makeMainMenu = appName => {
+let make = appName => {
   let mainMenu = Menu.make("MainMenu");
 
   let apple = mainMenu#addItem("Apple");

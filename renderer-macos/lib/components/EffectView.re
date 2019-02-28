@@ -1,6 +1,6 @@
 open Brisk;
 
-type attribute = [ Layout.style | BriskEffectView.style];
+type attribute = [ Layout.style | Styles.viewStyle | BriskEffectView.style];
 
 type style = list(attribute);
 
@@ -24,6 +24,7 @@ let component = {
             style
             |> List.iter(attribute =>
                  switch (attribute) {
+                 | #Styles.viewStyle => Styles.setViewStyle(view, attribute)
                  | #BriskEffectView.style =>
                    BriskEffectView.setStyle(view, attribute)
                  | #Layout.style => ()

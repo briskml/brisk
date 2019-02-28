@@ -2,7 +2,7 @@ name: project
 options:
   bundleIdPrefix: io.briskml
   deploymentTarget:
-    macOS: "10.10"
+    macOS: "10.13"
   usesTabs: false
   indentWidth: 2
   createIntermediateGroups: true

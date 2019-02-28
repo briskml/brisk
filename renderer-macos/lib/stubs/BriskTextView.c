@@ -53,13 +53,11 @@ BriskTextView *ml_BriskTextView_make() {
 }
 
 double ml_BriskTextView_getTextWidth(BriskTextView *txt) {
-  return
-      [txt.layoutManager usedRectForTextContainer:txt.textContainer].size.width;
+  return [txt.layoutManager usedRectForTextContainer:txt.textContainer].size.width;
 }
 
 double ml_BriskTextView_getTextHeight(BriskTextView *txt) {
-  return [txt.layoutManager usedRectForTextContainer:txt.textContainer]
-      .size.height;
+  return [txt.layoutManager usedRectForTextContainer:txt.textContainer].size.height;
 }
 
 CAMLprim value ml_BriskTextView_getTextWidth_bc(BriskTextView *txt) {

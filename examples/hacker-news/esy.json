@@ -18,7 +18,7 @@
     "@opam/dune": "^1.7.2",
     "@opam/httpkit-lwt": "*",
     "ocaml": "~4.7.1000",
-    "graphql_ppx": "briskml/graphql_ppx#820f52f"
+    "graphql_ppx": "briskml/graphql_ppx#ee86d23"
   },
   "devDependencies": {
     "@opam/merlin": "^3.2.2",

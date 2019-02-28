@@ -1,1 +1,13 @@
+_esy
+_build
 .graphql_ppx_cache
+.DS_Store
+/node_modules
+*.xcconfig
+*.xcodeproj
+Info.plist
+*.entitlements
+.merlin
+*.log
+*.install
+default.profraw

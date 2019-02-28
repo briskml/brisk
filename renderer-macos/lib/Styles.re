@@ -2,7 +2,11 @@ open CocoaTypes;
 open Brisk.Layout;
 open BriskStylableText;
 
-type viewStyle = [ | `Border(Border.t) | `Background(Color.t)];
+type viewStyle = [
+  | `Border(Border.t)
+  | `Shadow(Shadow.t)
+  | `Background(Color.t)
+];
 
 type textStyle = [
   | `Color(Color.t)
@@ -30,6 +34,23 @@ let setViewStyle = (view: view, attribute: [> viewStyle]) =>
     if (color !== Color.undefined) {
       let {r, g, b, a}: Color.t = color;
       BriskView.setBorderColor(view, r, g, b, a);
+    };
+  | `Shadow(({x, y, opacity, blur, color}: Shadow.t)) =>
+    let x = isUndefined(x) ? 0. : x;
+    let y = isUndefined(y) ? 0. : y;
+
+    BriskView.setShadowOffset(view, x, y);
+
+    if (!isUndefined(opacity)) {
+      BriskView.setShadowOpacity(view, opacity);
+    };
+    if (!isUndefined(blur)) {
+      BriskView.setShadowRadius(view, blur);
+    };
+
+    if (color !== Color.undefined) {
+      let {r, g, b, a}: Color.t = color;
+      BriskView.setShadowColor(view, r, g, b, a);
     };
   | _ => ()
   };

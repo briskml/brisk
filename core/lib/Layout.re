@@ -107,8 +107,32 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
     let color = (color: Color0.t) => make(~color, ());
   };
 
+  module Shadow = {
+    type t = {
+      x: scalar,
+      y: scalar,
+      opacity: scalar,
+      blur: scalar,
+      color: Color0.t,
+    };
+
+    let make =
+        (
+          ~x=cssUndefined,
+          ~y=cssUndefined,
+          ~opacity=cssUndefined,
+          ~blur=cssUndefined,
+          ~color=Color0.undefined,
+          (),
+        ) => {
+      let shadow: t = {x, y, opacity, blur, color};
+      `Shadow(shadow);
+    };
+  };
+
   let position = Position.make;
   let border = Border.make;
+  let shadow = Shadow.make;
   let font = Font.make;
   let kern = f => `Kern(f);
   let align = Alignment.make;

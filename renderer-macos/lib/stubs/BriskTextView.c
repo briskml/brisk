@@ -19,6 +19,10 @@
         [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
 
     self.attributedProps[NSParagraphStyleAttributeName] = self.paragraphStyle;
+    self.backgroundColor = [NSColor clearColor];
+
+    // Remove default left/right 5pt padding
+    self.textContainer.lineFragmentPadding = 0;
   }
   return self;
 }
@@ -36,6 +40,7 @@
 
   [self.attributedString setAttributes:self.attributedProps range:range];
   [[self textStorage] setAttributedString:self.attributedString];
+  [self.layoutManager ensureLayoutForTextContainer:self.textContainer];
 }
 
 @end
@@ -48,11 +53,13 @@ BriskTextView *ml_BriskTextView_make() {
 }
 
 double ml_BriskTextView_getTextWidth(BriskTextView *txt) {
-  return (double)[txt.attributedString size].width;
+  return
+      [txt.layoutManager usedRectForTextContainer:txt.textContainer].size.width;
 }
 
 double ml_BriskTextView_getTextHeight(BriskTextView *txt) {
-  return (double)[txt.attributedString size].height;
+  return [txt.layoutManager usedRectForTextContainer:txt.textContainer]
+      .size.height;
 }
 
 CAMLprim value ml_BriskTextView_getTextWidth_bc(BriskTextView *txt) {

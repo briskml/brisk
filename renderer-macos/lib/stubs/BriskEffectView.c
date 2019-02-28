@@ -45,6 +45,7 @@ EFFECT_STATE(Inactive)
 
 NSVisualEffectView *ml_NSVisualEffectView_make() {
   NSVisualEffectView *view = [NSVisualEffectView new];
+  [view setWantsLayer:YES];
   retainView(view);
   return view;
 }

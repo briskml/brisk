@@ -2,6 +2,7 @@
 
 NSView *ml_BriskView_make() {
   NSView *view = [NSView new];
+  [view setWantsLayer:YES];
   retainView(view);
 
   return view;
@@ -57,8 +58,6 @@ CAMLprim value ml_BriskView_setBorderWidth_bc(NSView *view, value width_v) {
 void ml_BriskView_setBorderColor(NSView *view, double red, double green,
                                  double blue, double alpha) {
   NSColor *color = [NSColor colorWithRed:red green:green blue:blue alpha:alpha];
-
-  [view setWantsLayer:YES];
   [view.layer setBorderColor:[color CGColor]];
 }
 
@@ -76,8 +75,6 @@ CAMLprim value ml_BriskView_setBorderColor_bc(NSView *view, value red_v,
 void ml_BriskView_setBackgroundColor(NSView *view, double red, double green,
                                      double blue, double alpha) {
   NSColor *color = [NSColor colorWithRed:red green:green blue:blue alpha:alpha];
-
-  [view setWantsLayer:YES];
   [view.layer setBackgroundColor:[color CGColor]];
 }
 
@@ -93,7 +90,6 @@ CAMLprim value ml_BriskView_setBackgroundColor_bc(NSView *view, value red_v,
 }
 
 void ml_BriskView_setBorderRadius(NSView *view, double radius) {
-  [view setWantsLayer:YES];
   [view.layer setCornerRadius:(CGFloat)radius];
 }
 

@@ -31,12 +31,12 @@ module OutputTree = {
 
   let insertNode = (~parent: node, ~child: node, ~position: int) => {
     open Layout.Node;
-    insertChild(
-      parent.layoutNode.content,
-      child.layoutNode.container,
-      position,
-    );
-    BriskView.insertSubview(parent.view, child.view, position);
+
+    let parentNode = parent.layoutNode.content;
+    let childNode = child.layoutNode.container;
+
+    insertChild(parentNode, childNode, position);
+    BriskView.insertSubview(parentNode.context, childNode.context, position);
     parent;
   };
 
@@ -63,9 +63,10 @@ module UI = {
     let rec traverseAndApply = (~height, node: Layout.Node.flexNode) => {
       let layout = node.layout;
 
-      let nodeTop = float_of_int(layout.top);
       let nodeHeight = layout.height |> float_of_int;
-      let flippedTop = height -. nodeHeight -. nodeTop;
+      let nodeTop = nodeHeight +. float_of_int(layout.top);
+
+      let flippedTop = height >= nodeTop ? height -. nodeTop : height;
 
       BriskView.setFrame(
         node.context,

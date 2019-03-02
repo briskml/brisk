@@ -8,6 +8,7 @@ module Cocoa = {
   module Menu = BriskMenu;
 
   module BriskView = BriskView;
+  module BriskScrollView = BriskScrollView;
 
   module BriskButton = BriskButton;
   module BriskImage = BriskImage;

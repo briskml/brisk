@@ -40,8 +40,14 @@ module OutputTree = {
     parent;
   };
 
-  let deleteNode = (~parent, ~child) => {
-    BriskView.removeSubview(child.view);
+  let deleteNode = (~parent: node, ~child: node) => {
+    open Layout.Node;
+
+    let parentNode = parent.layoutNode.content;
+    let childNode = child.layoutNode.container;
+
+    removeChild(parentNode, childNode);
+    BriskView.removeSubview(childNode.context);
     parent;
   };
 

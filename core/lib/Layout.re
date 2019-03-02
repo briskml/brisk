@@ -358,5 +358,16 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
 
       markDirtyInternal(node);
     };
+
+    let removeChild = (node, child) => {
+      node.children =
+        Array.to_seq(node.children)
+        |> Seq.filter(p => p === child)
+        |> Array.of_seq;
+
+      node.childrenCount = node.childrenCount - 1;
+
+      markDirtyInternal(node);
+    };
   };
 };

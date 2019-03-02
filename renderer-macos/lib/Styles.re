@@ -4,6 +4,7 @@ open BriskStylableText;
 
 type viewStyle = [
   | `Border(Border.t)
+  | `Overflow(FlexLayout.LayoutSupport.LayoutTypes.overflow)
   | `Shadow(Shadow.t)
   | `Background(Color.t)
 ];
@@ -52,6 +53,11 @@ let setViewStyle = (view: view, attribute: [> viewStyle]) =>
       let {r, g, b, a}: Color.t = color;
       BriskView.setShadowColor(view, r, g, b, a);
     };
+  | `Overflow(overflow) =>
+    switch (overflow) {
+    | Hidden => BriskView.setMasksToBounds(view, true)
+    | _ => BriskView.setMasksToBounds(view, false)
+    }
   | _ => ()
   };
 

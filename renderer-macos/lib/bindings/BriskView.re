@@ -74,3 +74,10 @@ external setShadowColor:
   ) =>
   unit =
   "ml_BriskView_setShadowColor_bc" "ml_BriskView_setShadowColor";
+
+[@noalloc]
+external setMasksToBounds: (t, [@untagged] int) => unit =
+  "ml_BriskView_setMasksToBounds_bc" "ml_BriskView_setMasksToBounds";
+
+let setMasksToBounds = (view, masks) =>
+  setMasksToBounds(view, masks ? 1 : 0);

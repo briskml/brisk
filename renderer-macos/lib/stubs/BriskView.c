@@ -2,10 +2,10 @@
 
 NSView *ml_BriskView_make() {
   NSView *view = [NSView new];
+  retainView(view);
+
   [view setWantsLayer:YES];
   view.layer.masksToBounds = NO;
-
-  retainView(view);
 
   return view;
 }
@@ -147,5 +147,15 @@ CAMLprim value ml_BriskView_setShadowColor_bc(NSView *view, value red_v,
   CAMLparam4(red_v, blue_v, green_v, alpha_v);
   ml_BriskView_setShadowColor(view, Double_val(red_v), Double_val(blue_v),
                               Double_val(green_v), Double_val(alpha_v));
+  CAMLreturn(Val_unit);
+}
+
+void ml_BriskView_setMasksToBounds(NSView *view, intnat masks) {
+  view.layer.masksToBounds = (BOOL)masks;
+}
+
+CAMLprim value ml_BriskView_setMasksToBounds_bc(NSView *view, value masks_v) {
+  CAMLparam1(masks_v);
+  ml_BriskView_setMasksToBounds(view, Int_val(masks_v));
   CAMLreturn(Val_unit);
 }

@@ -1,110 +1,23 @@
 open Brisk_macos;
 
-let hairline = {
-  let component = Brisk.component("HairlineView");
-
-  (~style=[], ~children as _: list(unit), ()) =>
-    component(hooks =>
-      Brisk.Layout.(
-        hooks,
-        {
-          <view
-            style=[background(Color.hex("#e3e3e3")), height(1.), ...style]
-          />;
-        },
-      )
-    );
+let hairline = (~style=[], ~children as _: list(unit), ()) => {
+  Brisk.Layout.(
+    <view style=[background(Color.hex("#e3e3e3")), height(1.), ...style] />
+  );
 };
 
-let section = {
-  let component = Brisk.component("Section");
+let section = (~style=[], ~title, ~children, ()) =>
+  <view style>
+    <text style=Theme.sectionHeaderStyle value=title />
+    {Brisk.listToElement(children)}
+  </view>;
 
-  (~title, ~style=[], ~children: list(Brisk.syntheticElement), ()) =>
-    component(hooks =>
-      (
-        hooks,
-        {
-          <view style>
-            <text style=Theme.sectionHeaderStyle value=title />
-            {Brisk.listToElement(children)}
-          </view>;
-        },
-      )
-    );
-};
-
-let welcomeTab = {
-  let component = Brisk.component("WelcomeTab");
-
-  (~children as _: list(unit), ()) =>
-    component(hooks => {
-      open Brisk.Layout;
-
-      let (_state, setState, hooks) = Brisk.Hooks.state(None, hooks);
-
-      (
-        hooks,
-        {
-          <view style=[height(600.), padding4(~top=20., ~left=17., ())]>
-            <text style=Theme.headerStyle value="Welcome to Brisk" />
-            <view style=[justifyContent(`Center), alignContent(`Center)]>
-              <text
-                style=[
-                  font(~size=18., ()),
-                  align(`Center),
-                  alignSelf(`Center),
-                  width(200.),
-                  border(~radius=10., ()),
-                  color(Color.hex("#ffffff")),
-                  background(Color.hexa("#263ac5", 0.9)),
-                  margin(20.),
-                  padding2(~h=10., ~v=10., ()),
-                ]
-                value="Text bubble"
-              />
-            </view>
-            <button
-              style=[
-                width(400.),
-                height(60.),
-                margin4(~top=20., ()),
-                alignSelf(`Center),
-                font(~size=16., ()),
-                color(Color.hex("#ffffff")),
-                background(Color.hex("#263ac5")),
-                align(`Center),
-              ]
-              title="You're gonna have to wait 1 second"
-              callback={() =>
-                Lwt.Infix.(
-                  ignore(
-                    Lwt_unix.sleep(1.)
-                    >>= (_ => Lwt.return(setState(Some(100)))),
-                  )
-                )
-              }
-            />
-            <view style=[alignContent(`Center), height(600.)]>
-              <text
-                style=[
-                  font(~size=18., ()),
-                  align(`Center),
-                  alignSelf(`Center),
-                  width(200.),
-                  height(300.),
-                  border(~radius=10., ()),
-                  color(Color.hex("#011021")),
-                  margin(20.),
-                  padding2(~h=10., ~v=10., ()),
-                ]
-                value="Very large height for scrolling"
-              />
-            </view>
-          </view>;
-        },
-      );
-    });
-};
+let welcomeTab = (~children as _: list(unit), ()) =>
+  <view style=Brisk.Layout.[padding4(~bottom=40., ())]>
+    <text style=Theme.headerStyle value="Welcome" />
+    <hairline />
+    <section style=Theme.sectionStyle title="TBD" />
+  </view>;
 
 let viewsTab = {
   open Brisk.Layout;
@@ -116,10 +29,11 @@ let viewsTab = {
       (
         hooks,
         {
-          <view style=[padding4(~top=10., ~left=17., ~bottom=40., ())]>
+          <view style=[padding4(~bottom=40., ())]>
             <text style=Theme.headerStyle value="View Styles" />
             <hairline />
-            <section title="Border and rounded corners">
+            <section
+              style=Theme.sectionStyle title="Border and rounded corners">
               <view
                 style=[
                   width(194.),
@@ -147,14 +61,17 @@ let viewsTab = {
             <section title="Blur">
               <view
                 style=[
-                  /* TODO Add clipBackground property */
                   width(194.),
                   height(120.),
-                  border(~radius=14., ()),
+                  overflow(`Hidden),
+                  border(
+                    ~radius=14.,
+                    (),
+                  ),
                   flexDirection(`Row),
                 ]>
-                <view style=[flex(1.), background(Color.hex("#fff"))] />
-                <view style=[flex(1.), background(Color.hex("#000"))] />
+                <view style=[flex(1.), background(Color.hex("#ff9999"))] />
+                <view style=[flex(1.), background(Color.hex("#bd10e0"))] />
                 <effectView
                   style=EffectView.[
                     position(
@@ -164,6 +81,7 @@ let viewsTab = {
                       ~right=0.,
                       `Absolute,
                     ),
+                    border(~radius=14., ()),
                     blendingMode(`WithinWindow),
                   ]
                 />

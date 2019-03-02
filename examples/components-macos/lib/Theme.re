@@ -14,8 +14,11 @@ let headerStyle = [
   kern(0.58),
   align(`Left),
   color(Color.hex("#000000")),
-  margin2(~v=9., ()),
+  padding4(~left=4., ~top=0., ()),
+  margin2(~v=10., ()),
 ];
+
+let sectionStyle = [padding4(~left=4., ())];
 
 let sectionHeaderStyle = [
   font(~size=17., ()),

@@ -26,3 +26,8 @@ let sectionHeaderStyle = [
   color(Color.hex("#000000")),
   margin2(~v=9., ()),
 ];
+
+let sectionContent = [
+  font(~size=15., ()),
+  color(Color.hex("#000000")),
+];

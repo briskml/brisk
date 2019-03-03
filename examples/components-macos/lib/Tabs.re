@@ -113,3 +113,51 @@ let viewsTab = {
       )
     );
 };
+
+let buttonsTab = (~children as _: list(unit), ()) => {
+  Brisk.Layout.(
+    <view style=[padding4(~bottom=40., ())]>
+      <text style=Theme.headerStyle value="Buttons" />
+      <hairline />
+      <section style=Theme.sectionStyle title="Styled">
+        <text style=Theme.sectionContent value="TODO: Background and sizes" />
+      </section>
+      <section style=Theme.sectionStyle title="System">
+        <text
+          style=Theme.sectionContent
+          value="TODO: NSButton styles lineup (bezelStyle, buttonType)"
+        />
+      </section>
+    </view>
+  );
+};
+
+let textTab = (~children as _: list(unit), ()) => {
+  Brisk.Layout.(
+    <view style=[padding4(~bottom=40., ())]>
+      <text style=Theme.headerStyle value="Text" />
+      <hairline />
+      <section style=Theme.sectionStyle title="Styled">
+        <text style=Theme.sectionContent value="TODO: Font, color" />
+      </section>
+    </view>
+  );
+};
+
+let imageTab = (~children as _: list(unit), ()) => {
+  Brisk.Layout.(
+    <view style=[padding4(~bottom=40., ())]>
+      <text style=Theme.headerStyle value="Image" />
+      <hairline />
+      <section style=Theme.sectionStyle title="Bundle">
+        <text style=Theme.sectionContent value="TODO: Bundled asset images" />
+      </section>
+      <section style=Theme.sectionStyle title="Files">
+        <text style=Theme.sectionContent value="TODO: Load from file" />
+      </section>
+      <section style=Theme.sectionStyle title="Remote">
+        <text style=Theme.sectionContent value="TODO: Fetch from URL" />
+      </section>
+    </view>
+  );
+};

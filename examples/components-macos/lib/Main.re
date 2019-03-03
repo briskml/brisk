@@ -58,6 +58,9 @@ let app = {
                 {switch (currentTab) {
                  | Welcome => <welcomeTab />
                  | Views => <viewsTab />
+                 | Buttons => <buttonsTab />
+                 | Text => <textTab />
+                 | Image => <imageTab />
                  | _ => <view />
                  }}
               </scrollView>

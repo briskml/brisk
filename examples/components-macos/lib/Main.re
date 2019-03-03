@@ -1,6 +1,14 @@
 open Brisk_macos;
 
+type action =
+  | SwitchTab(Tab.t);
+
 let tabs = [Tab.Welcome, Views, Buttons, Text, Image];
+
+let reducer = (action, _) =>
+  switch (action) {
+  | SwitchTab(tab) => tab
+  };
 
 let app = {
   open Brisk.Layout;
@@ -9,7 +17,8 @@ let app = {
 
   (~children as _: list(unit), ()) =>
     component(hooks => {
-      let (currentTab, _, hooks) = Brisk.Hooks.state(Tab.Views, hooks);
+      let (currentTab, dispatch, hooks) =
+        Brisk.Hooks.reducer(~initialState=Tab.Views, reducer, hooks);
 
       (
         hooks,
@@ -26,17 +35,20 @@ let app = {
                   ...{
                        tabs
                        |> List.map(tab =>
-                            <text
-                              style=[
-                                background(
-                                  tab == currentTab
-                                    ? Color.hexa("#000000", 0.4)
-                                    : Color.transparent,
-                                ),
-                                ...Theme.sidebarItemStyle,
-                              ]
-                              value={Tab.label(tab)}
-                            />
+                            <clickable
+                              onClick={() => dispatch(SwitchTab(tab))}>
+                              <text
+                                style=[
+                                  background(
+                                    tab == currentTab
+                                      ? Color.hexa("#000000", 0.4)
+                                      : Color.transparent,
+                                  ),
+                                  ...Theme.sidebarItemStyle,
+                                ]
+                                value={Tab.label(tab)}
+                              />
+                            </clickable>
                           )
                      }
                 </view>

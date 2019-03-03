@@ -23,6 +23,7 @@
           BriskTextView
           BriskImage
           BriskButton
+          BriskClickable
           GCD
           BriskEffectView
           )

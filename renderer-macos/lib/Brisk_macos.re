@@ -11,6 +11,7 @@ module Cocoa = {
   module BriskScrollView = BriskScrollView;
 
   module BriskButton = BriskButton;
+  module BriskClickable = BriskClickable;
   module BriskImage = BriskImage;
   module BriskTextView = BriskTextView;
   module GCD = GCD;
@@ -29,5 +30,7 @@ module Image = Image;
 let image = Image.component;
 module Button = Button;
 let button = Button.component;
+module Clickable = Clickable;
+let clickable = Clickable.component;
 module EffectView = EffectView;
 let effectView = EffectView.component;

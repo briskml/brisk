@@ -7,8 +7,9 @@
 // Memoize registered OCaml callbacks
 void brisk_caml_memoize(const char *name, value **staticPointer);
 
-// Enter OCaml runtime and obtain the semaphore
 void brisk_caml_call(value callback);
+
+void brisk_caml_call_n(value f, int argCount, value *args);
 
 // Manual memory management of NSViews
 void retainView(NSView *view);

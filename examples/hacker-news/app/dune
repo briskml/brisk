@@ -1,39 +1,6 @@
-(rule
- (targets env.xcconfig)
- (action (with-stdout-to %{targets} (progn
-  (echo "STDLIB_PATH=%{ocaml_where}\n")
-  (echo "BUILD_PATH=%{workspace_root}\n")
-  (bash "echo ESY_LIBRARY_SEARCH_PATHS=$(pkg-config gmp --variable=libdir)")
-  (bash "echo ESY_LINK_FLAGS=$(pkg-config gmp --libs-only-l)")
- ))))
-
-(rule
- (targets project.xcodeproj Info.plist)
- (deps env.xcconfig
-       (source_tree Resources)
-       (source_tree Sources)
-       (:spec project.yml))
- (action (progn
-  (chdir %{workspace_root}/app
-  (run xcodegen generate -q --spec %{spec})
- ))))
-
-(alias
- (name bundle)
- (deps project.xcodeproj Info.plist
-       ../bin/app.exe.o)
- (action (progn
-  (chdir %{workspace_root}/app
-  (bash "xcodebuild \
-            -derivedDataPath $cur__root/_esy/default/target \
-            -scheme HackerNews \
-            -configuration Debug \
-            build | xcpretty && exit ${PIPESTATUS[0]}")
- ))))
-
-(alias
- (name run)
- (deps (alias bundle))
- (action (progn
-   (bash "$cur__root/_esy/default/target/Build/Products/Debug/HackerNews.app/Contents/MacOS/HackerNews")
- )))
+(executables
+ (names app)
+ (libraries brisk-macos yojson httpkit-lwt core_kernel)
+ (modes object)
+ (preprocess (pps graphql_ppx))
+)

@@ -12,12 +12,20 @@ let section = (~style=[], ~title, ~children, ()) =>
     {Brisk.listToElement(children)}
   </view>;
 
-let welcomeTab = (~children as _: list(unit), ()) =>
-  <view style=Brisk.Layout.[padding4(~bottom=40., ())]>
-    <text style=Theme.headerStyle value="Welcome" />
-    <hairline />
-    <section style=Theme.sectionStyle title="TBD" />
-  </view>;
+let welcomeTab = (~children as _: list(unit), ()) => {
+  Brisk.Layout.(
+    <view style=Brisk.Layout.[padding4(~bottom=40., ())]>
+      <text style=Theme.headerStyle value="Welcome" />
+      <hairline />
+      <view style=[margin2(~v=20., ()), ...Theme.sectionStyle]>
+        <image
+          style=[width(224.), height(53.)]
+          source={`Bundle("brisk")}
+        />
+      </view>
+    </view>
+  );
+};
 
 let viewsTab = {
   open Brisk.Layout;
@@ -64,10 +72,7 @@ let viewsTab = {
                   width(194.),
                   height(120.),
                   overflow(`Hidden),
-                  border(
-                    ~radius=14.,
-                    (),
-                  ),
+                  border(~radius=14., ()),
                   flexDirection(`Row),
                 ]>
                 <view style=[flex(1.), background(Color.hex("#ff9999"))] />

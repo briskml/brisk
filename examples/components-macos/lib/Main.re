@@ -18,7 +18,7 @@ let app = {
   (~children as _: list(unit), ()) =>
     component(hooks => {
       let (currentTab, dispatch, hooks) =
-        Brisk.Hooks.reducer(~initialState=Tab.Views, reducer, hooks);
+        Brisk.Hooks.reducer(~initialState=Tab.Welcome, reducer, hooks);
 
       (
         hooks,

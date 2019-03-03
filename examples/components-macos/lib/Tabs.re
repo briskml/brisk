@@ -14,7 +14,7 @@ let section = (~style=[], ~title, ~children, ()) =>
 
 let welcomeTab = (~children as _: list(unit), ()) => {
   Brisk.Layout.(
-    <view style=Brisk.Layout.[padding4(~bottom=40., ())]>
+    <view style=[padding4(~bottom=40., ())]>
       <text style=Theme.headerStyle value="Welcome" />
       <hairline />
       <view style=[margin2(~v=20., ()), ...Theme.sectionStyle]>

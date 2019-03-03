@@ -28,7 +28,7 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
           ~bottom=cssUndefined,
           position,
         ) => {
-      let pos: t = {
+      `Position({
         position,
         inset: {
           left,
@@ -36,8 +36,7 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
           right,
           bottom,
         },
-      };
-      `Position(pos);
+      });
     };
   };
 
@@ -61,8 +60,7 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
     };
 
     let make = (~family="", ~size=cssUndefined, ~weight=`Regular, ()) => {
-      let font: t = {family, size, weight};
-      `Font(font);
+      `Font({family, size, weight});
     };
   };
 
@@ -99,8 +97,7 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
           ~color=Color0.undefined,
           (),
         ) => {
-      let border: t = {width, radius, color};
-      `Border(border);
+      `Border({width, radius, color});
     };
 
     let width = (width: Encoding.scalar) => make(~width, ());
@@ -125,8 +122,7 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
           ~color=Color0.undefined,
           (),
         ) => {
-      let shadow: t = {x, y, opacity, blur, color};
-      `Shadow(shadow);
+      `Shadow({x, y, opacity, blur, color});
     };
   };
 
@@ -250,7 +246,7 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
 
   let applyCommonStyle = (style: cssStyle, attribute: [> style]) =>
     switch (attribute) {
-    | `Position(({position, inset}: Position.t)) =>
+    | `Position({Position.position, inset}) =>
       let positionType =
         switch (position) {
         | `Absolute => Absolute
@@ -278,7 +274,7 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
     | `Width(w) => {...style, width: int_of_scalar(w)}
     | `Height(h) => {...style, height: int_of_scalar(h)}
     | `Overflow(overflow) => {...style, overflow}
-    | `Border(({width, _}: Border.t)) => {
+    | `Border({Border.width, _}) => {
         ...style,
         border: !isUndefined(width) ? int_of_scalar(width) : style.border,
       }
@@ -361,7 +357,8 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
 
     let removeChild = (node, child) => {
       node.children =
-        Array.to_seq(node.children)
+        node.children
+        |> Array.to_seq
         |> Seq.filter(p => p === child)
         |> Array.of_seq;
 

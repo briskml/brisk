@@ -24,7 +24,7 @@ let setViewStyle = (view: view, attribute: [> viewStyle]) =>
   switch (attribute) {
   | `Background(({r, g, b, a}: Color.t)) =>
     BriskView.setBackgroundColor(view, r, g, b, a)
-  | `Border(({width, radius, color}: Border.t)) =>
+  | `Border({Border.width, radius, color}) =>
     if (!isUndefined(width)) {
       BriskView.setBorderWidth(view, width);
     };
@@ -36,7 +36,7 @@ let setViewStyle = (view: view, attribute: [> viewStyle]) =>
       let {r, g, b, a}: Color.t = color;
       BriskView.setBorderColor(view, r, g, b, a);
     };
-  | `Shadow(({x, y, opacity, blur, color}: Shadow.t)) =>
+  | `Shadow({Shadow.x, y, opacity, blur, color}) =>
     let x = isUndefined(x) ? 0. : x;
     let y = isUndefined(y) ? 0. : y;
 
@@ -54,16 +54,13 @@ let setViewStyle = (view: view, attribute: [> viewStyle]) =>
       BriskView.setShadowColor(view, r, g, b, a);
     };
   | `Overflow(overflow) =>
-    switch (overflow) {
-    | Hidden => BriskView.setMasksToBounds(view, true)
-    | _ => BriskView.setMasksToBounds(view, false)
-    }
+    BriskView.setMasksToBounds(view, overflow == Hidden)
   | _ => ()
   };
 
 let setTextStyle = (txt: text, attribute: [> textStyle]) =>
   switch (attribute) {
-  | `Font(({family, size, weight}: Font.t)) =>
+  | `Font({Font.family, size, weight}) =>
     let weight =
       switch (weight) {
       | `UltraLight => (-0.8)

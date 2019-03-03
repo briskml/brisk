@@ -41,7 +41,7 @@ let () = {
             width(Window.contentWidth(window)),
             height(Window.contentHeight(window)),
           ],
-          view,
+          {view, isYAxisFlipped: false},
         );
       {Brisk.OutputTree.view, layoutNode};
     };

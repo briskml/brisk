@@ -21,13 +21,17 @@ let scrollableArea = {
 
             /* Native NSScrollView element */
             let view = BriskScrollView.make();
-            let container = Composite.makeFlexNode(~style, view);
+            let container =
+              Composite.makeFlexNode(~style, {view, isYAxisFlipped: false});
 
             /* Native NSScrollView.documentView element */
             let content =
               Composite.makeFlexNode(
                 ~style=contentStyle,
-                BriskScrollView.documentView(view),
+                {
+                  view: BriskScrollView.documentView(view),
+                  isYAxisFlipped: true,
+                },
               );
 
             insertChild(container, content, 0);

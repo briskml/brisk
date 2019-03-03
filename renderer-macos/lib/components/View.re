@@ -13,7 +13,9 @@ let component = {
         {
           make: () => {
             let view = BriskView.make();
-            {view, layoutNode: Layout.Node.make(~style, view)};
+            let layoutNode =
+              Layout.Node.make(~style, {view, isYAxisFlipped: false});
+            {view, layoutNode};
           },
           configureInstance: (~isFirstRender as _, {view} as node) => {
             style

@@ -1,8 +1,14 @@
+type hostContext = {
+  view: BriskView.t,
+  /* Y coordinate could start from the bottom in AppKit */
+  isYAxisFlipped: bool,
+};
+
 module Layout =
   Brisk_core.CreateLayout(
     {
-      type context = BriskView.t;
-      let nullContext = BriskView.make();
+      type context = hostContext;
+      let nullContext = {view: BriskView.make(), isYAxisFlipped: false};
     },
     Flex.FloatEncoding,
   );
@@ -36,7 +42,11 @@ module OutputTree = {
     let childNode = child.layoutNode.container;
 
     insertChild(parentNode, childNode, position);
-    BriskView.insertSubview(parentNode.context, childNode.context, position);
+    BriskView.insertSubview(
+      parentNode.context.view,
+      childNode.context.view,
+      position,
+    );
     parent;
   };
 
@@ -47,7 +57,7 @@ module OutputTree = {
     let childNode = child.layoutNode.container;
 
     removeChild(parentNode, childNode);
-    BriskView.removeSubview(childNode.context);
+    BriskView.removeSubview(childNode.context.view);
     parent;
   };
 
@@ -66,28 +76,36 @@ module UI = {
   };
 
   module Layout = {
-    let rec traverseAndApply = (~height, node: Layout.Node.flexNode) => {
+    let rec traverseAndApply = (~flip, ~height, node: Layout.Node.flexNode) => {
       let layout = node.layout;
 
       let nodeHeight = layout.height |> float_of_int;
       let nodeTop = nodeHeight +. float_of_int(layout.top);
 
-      let flippedTop = height >= nodeTop ? height -. nodeTop : height;
+      let top =
+        flip
+          ? height >= nodeTop ? height -. nodeTop : height
+          : float_of_int(layout.top);
 
       BriskView.setFrame(
-        node.context,
+        node.context.view,
         layout.left |> float_of_int,
-        flippedTop,
+        top,
         layout.width |> float_of_int,
         nodeHeight,
       );
 
+      let flip = !node.context.isYAxisFlipped;
+      let height = nodeHeight;
+
       node.children
-      |> Array.iter(child => traverseAndApply(~height=nodeHeight, child));
+      |> Array.iter(child => traverseAndApply(~flip, ~height, child));
     };
 
     let perform = (~height, root: OutputTree.node) => {
       let node = root.layoutNode.container;
+      let flip = node.context.isYAxisFlipped;
+
       Layout.FlexLayout.(
         layoutNode(
           node,
@@ -96,7 +114,7 @@ module UI = {
           Ltr,
         )
       );
-      traverseAndApply(~height, node);
+      traverseAndApply(~flip, ~height, node);
     };
   };
 
@@ -145,6 +163,7 @@ module RunLoop = {
     };
     run();
   };
+
   let spawn = () => {
     GCD.dispatchAsyncBackground(run);
   };

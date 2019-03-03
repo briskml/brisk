@@ -11,7 +11,7 @@ let component = {
     ~bezel=?,
     ~title=?,
     ~style=[],
-    ~callback=() => (),
+    ~onClick=() => (),
     ~children as _: list(unit),
     (),
   ) =>
@@ -20,11 +20,12 @@ let component = {
         hooks,
         {
           make: () => {
-            let btn =
-              BriskButton.(
-                make(~type_?, ~bezel?, ~title?, ~onClick=callback, ())
-              );
-            {view: btn, layoutNode: Layout.Node.make(~style, btn)};
+            let view =
+              BriskButton.make(~type_?, ~bezel?, ~title?, ~onClick, ());
+            let layoutNode =
+              Layout.Node.make(~style, {view, isYAxisFlipped: true});
+
+            {view, layoutNode};
           },
           configureInstance: (~isFirstRender as _, {view} as node) => {
             style

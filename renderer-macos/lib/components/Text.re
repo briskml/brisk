@@ -7,7 +7,7 @@ type style = list(attribute);
 let measure = (node, _, _, _, _) => {
   open Layout.FlexLayout.LayoutSupport.LayoutTypes;
 
-  let {context: txt}: node = node;
+  let {context: {view: txt}}: node = node;
 
   let width = BriskTextView.getTextWidth(txt) |> int_of_float;
   let height = BriskTextView.getTextHeight(txt) |> int_of_float;
@@ -24,7 +24,14 @@ let component = {
         {
           make: () => {
             let view = BriskTextView.make(value);
-            {view, layoutNode: Layout.Node.make(~measure, ~style, view)};
+            let layoutNode =
+              Layout.Node.make(
+                ~measure,
+                ~style,
+                {view, isYAxisFlipped: true},
+              );
+
+            {view, layoutNode};
           },
           configureInstance: (~isFirstRender as _, {view} as node) => {
             open Layout;

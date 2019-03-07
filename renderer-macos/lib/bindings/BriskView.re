@@ -1,7 +1,10 @@
 type t = CocoaTypes.view;
 
 [@noalloc] external make: unit => t = "ml_BriskView_make";
-[@noalloc] external insertSubview: (t, t, [@untagged] int) => unit = "ml_BriskView_insertSubview_bc" "ml_BriskView_insertSubview";
+[@noalloc]
+external insertSubview: (t, t, [@untagged] int) => unit =
+  "ml_BriskView_insertSubview_bc" "ml_BriskView_insertSubview";
+
 [@noalloc] external removeSubview: t => unit = "ml_BriskView_removeSubview";
 
 [@noalloc]
@@ -47,3 +50,34 @@ external setBackgroundColor:
   ) =>
   unit =
   "ml_BriskView_setBackgroundColor_bc" "ml_BriskView_setBackgroundColor";
+
+[@noalloc]
+external setShadowOffset: (t, [@unboxed] float, [@unboxed] float) => unit =
+  "ml_BriskView_setShadowOffset_bc" "ml_BriskView_setShadowOffset";
+
+[@noalloc]
+external setShadowRadius: (t, [@unboxed] float) => unit =
+  "ml_BriskView_setShadowRadius_bc" "ml_BriskView_setShadowRadius";
+
+[@noalloc]
+external setShadowOpacity: (t, [@unboxed] float) => unit =
+  "ml_BriskView_setShadowOpacity_bc" "ml_BriskView_setShadowOpacity";
+
+[@noalloc]
+external setShadowColor:
+  (
+    t,
+    [@unboxed] float,
+    [@unboxed] float,
+    [@unboxed] float,
+    [@unboxed] float
+  ) =>
+  unit =
+  "ml_BriskView_setShadowColor_bc" "ml_BriskView_setShadowColor";
+
+[@noalloc]
+external setMasksToBounds: (t, [@untagged] int) => unit =
+  "ml_BriskView_setMasksToBounds_bc" "ml_BriskView_setMasksToBounds";
+
+let setMasksToBounds = (view, masks) =>
+  setMasksToBounds(view, masks ? 1 : 0);

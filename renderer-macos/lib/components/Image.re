@@ -7,7 +7,7 @@ type style = list(attribute);
 let measure = (node, _, _, _, _) => {
   open Layout.FlexLayout.LayoutSupport.LayoutTypes;
 
-  let {context: img}: node = node;
+  let {context: {view: img}}: node = node;
 
   let width = BriskImage.getImageWidth(img) |> int_of_float;
   let height = BriskImage.getImageHeight(img) |> int_of_float;
@@ -17,20 +17,27 @@ let measure = (node, _, _, _, _) => {
 
 let component = nativeComponent("image");
 
-let component = (~style=[], ~source, ~children as _: list(unit), ()) =>
+let component = (~style: style=[], ~source, ~children as _: list(unit), ()) =>
   component(hooks =>
     (
       hooks,
       {
         make: () => {
           let view = BriskImage.make(~source, ());
-          {view, layoutNode: Layout.Node.make(~measure, ~style, view)};
+          let layoutNode =
+            Layout.Node.make(
+              ~measure,
+              ~style,
+              {view, isYAxisFlipped: false},
+            );
+
+          {view, layoutNode};
         },
         configureInstance: (~isFirstRender as _, {view} as node) => {
           style
           |> List.iter(attribute =>
                switch (attribute) {
-               | #Styles.viewStyle => Styles.setViewStyle(view, attribute)
+               | #Styles.viewStyle as attr => Styles.setViewStyle(view, attr)
                | #Layout.style => ()
                }
              );

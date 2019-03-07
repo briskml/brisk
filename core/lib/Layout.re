@@ -28,7 +28,7 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
           ~bottom=cssUndefined,
           position,
         ) => {
-      let pos: t = {
+      `Position({
         position,
         inset: {
           left,
@@ -36,8 +36,7 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
           right,
           bottom,
         },
-      };
-      `Position(pos);
+      });
     };
   };
 
@@ -61,8 +60,7 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
     };
 
     let make = (~family="", ~size=cssUndefined, ~weight=`Regular, ()) => {
-      let font: t = {family, size, weight};
-      `Font(font);
+      `Font({family, size, weight});
     };
   };
 
@@ -99,16 +97,38 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
           ~color=Color0.undefined,
           (),
         ) => {
-      let border: t = {width, radius, color};
-      `Border(border);
+      `Border({width, radius, color});
     };
 
     let width = (width: Encoding.scalar) => make(~width, ());
     let color = (color: Color0.t) => make(~color, ());
   };
 
+  module Shadow = {
+    type t = {
+      x: scalar,
+      y: scalar,
+      opacity: scalar,
+      blur: scalar,
+      color: Color0.t,
+    };
+
+    let make =
+        (
+          ~x=cssUndefined,
+          ~y=cssUndefined,
+          ~opacity=cssUndefined,
+          ~blur=cssUndefined,
+          ~color=Color0.undefined,
+          (),
+        ) => {
+      `Shadow({x, y, opacity, blur, color});
+    };
+  };
+
   let position = Position.make;
   let border = Border.make;
+  let shadow = Shadow.make;
   let font = Font.make;
   let kern = f => `Kern(f);
   let align = Alignment.make;
@@ -226,7 +246,7 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
 
   let applyCommonStyle = (style: cssStyle, attribute: [> style]) =>
     switch (attribute) {
-    | `Position(({position, inset}: Position.t)) =>
+    | `Position({Position.position, inset}) =>
       let positionType =
         switch (position) {
         | `Absolute => Absolute
@@ -254,7 +274,7 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
     | `Width(w) => {...style, width: int_of_scalar(w)}
     | `Height(h) => {...style, height: int_of_scalar(h)}
     | `Overflow(overflow) => {...style, overflow}
-    | `Border(({width, _}: Border.t)) => {
+    | `Border({Border.width, _}) => {
         ...style,
         border: !isUndefined(width) ? int_of_scalar(width) : style.border,
       }
@@ -331,6 +351,18 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
 
       node.children[index] = child;
       child.parent = node;
+
+      markDirtyInternal(node);
+    };
+
+    let removeChild = (node, child) => {
+      node.children =
+        node.children
+        |> Array.to_seq
+        |> Seq.filter(p => p === child)
+        |> Array.of_seq;
+
+      node.childrenCount = node.childrenCount - 1;
 
       markDirtyInternal(node);
     };

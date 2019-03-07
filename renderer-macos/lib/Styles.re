@@ -2,7 +2,12 @@ open CocoaTypes;
 open Brisk.Layout;
 open BriskStylableText;
 
-type viewStyle = [ | `Border(Border.t) | `Background(Color.t)];
+type viewStyle = [
+  | `Border(Border.t)
+  | `Overflow(FlexLayout.LayoutSupport.LayoutTypes.overflow)
+  | `Shadow(Shadow.t)
+  | `Background(Color.t)
+];
 
 type textStyle = [
   | `Color(Color.t)
@@ -15,11 +20,11 @@ type textStyle = [
 
 let commitTextStyle = BriskStylableText.applyChanges;
 
-let setViewStyle = (view: view, attribute: [> viewStyle]) =>
+let setViewStyle = (view: view, attribute: [< viewStyle]) =>
   switch (attribute) {
   | `Background(({r, g, b, a}: Color.t)) =>
     BriskView.setBackgroundColor(view, r, g, b, a)
-  | `Border(({width, radius, color}: Border.t)) =>
+  | `Border({Border.width, radius, color}) =>
     if (!isUndefined(width)) {
       BriskView.setBorderWidth(view, width);
     };
@@ -31,12 +36,33 @@ let setViewStyle = (view: view, attribute: [> viewStyle]) =>
       let {r, g, b, a}: Color.t = color;
       BriskView.setBorderColor(view, r, g, b, a);
     };
-  | _ => ()
+  | `Shadow({Shadow.x, y, opacity, blur, color}) =>
+    let x = isUndefined(x) ? 0. : x;
+    let y = isUndefined(y) ? 0. : y;
+
+    BriskView.setShadowOffset(view, x, y);
+
+    if (!isUndefined(opacity)) {
+      BriskView.setShadowOpacity(view, opacity);
+    };
+    if (!isUndefined(blur)) {
+      BriskView.setShadowRadius(view, blur);
+    };
+
+    if (color !== Color.undefined) {
+      let {r, g, b, a}: Color.t = color;
+      BriskView.setShadowColor(view, r, g, b, a);
+    };
+  | `Overflow(overflow) =>
+    BriskView.setMasksToBounds(
+      view,
+      overflow == FlexLayout.LayoutSupport.LayoutTypes.Hidden,
+    )
   };
 
-let setTextStyle = (txt: text, attribute: [> textStyle]) =>
+let setTextStyle = (txt: text, attribute: [< textStyle]) =>
   switch (attribute) {
-  | `Font(({family, size, weight}: Font.t)) =>
+  | `Font({Font.family, size, weight}) =>
     let weight =
       switch (weight) {
       | `UltraLight => (-0.8)
@@ -76,5 +102,4 @@ let setTextStyle = (txt: text, attribute: [> textStyle]) =>
     )
   | `LineSpacing(spacing) => setLineSpacing(txt, spacing)
   | `Color(({r, g, b, a}: Color.t)) => setColor(txt, r, g, b, a)
-  | _ => ()
   };

@@ -14,8 +14,7 @@
   "dependencies": {
     "@esy-ocaml/reason": ">=3.4.0",
     "@brisk/macos": "*",
-    "@opam/dune": "^1.7.2",
-    "@opam/cohttp-lwt-unix": "^1.2.0",
+    "@opam/dune": "^1.7.3",
     "ocaml": "~4.7.1000"
   },
   "devDependencies": {

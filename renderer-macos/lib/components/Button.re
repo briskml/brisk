@@ -10,8 +10,8 @@ let component = {
     ~type_=?,
     ~bezel=?,
     ~title=?,
-    ~style=[],
-    ~callback=() => (),
+    ~style: style=[],
+    ~onClick=() => (),
     ~children as _: list(unit),
     (),
   ) =>
@@ -20,21 +20,24 @@ let component = {
         hooks,
         {
           make: () => {
-            let btn =
-              BriskButton.(
-                make(~type_?, ~bezel?, ~title?, ~onClick=callback, ())
-              );
-            {view: btn, layoutNode: Layout.Node.make(~style, btn)};
+            let view =
+              BriskButton.make(~type_?, ~bezel?, ~title?, ~onClick, ());
+            let layoutNode =
+              Layout.Node.make(~style, {view, isYAxisFlipped: true});
+
+            {view, layoutNode};
           },
           configureInstance: (~isFirstRender as _, {view} as node) => {
             style
             |> List.iter(attribute =>
                  switch (attribute) {
-                 | `Background(_) =>
+                 | `Background(_) as attr =>
                    BriskButton.setIsBordered(view, false);
-                   Styles.setViewStyle(view, attribute);
-                 | #Styles.textStyle => Styles.setTextStyle(view, attribute)
-                 | #Styles.viewStyle => Styles.setViewStyle(view, attribute)
+                   Styles.setViewStyle(view, attr);
+                 | #Styles.textStyle as attr =>
+                   Styles.setTextStyle(view, attr)
+                 | #Styles.viewStyle as attr =>
+                   Styles.setViewStyle(view, attr)
                  | #Layout.style => ()
                  }
                );

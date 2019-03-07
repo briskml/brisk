@@ -1,8 +1,21 @@
+type hostContext = {
+  view: BriskView.t,
+  /***
+   * Y coordinate could start from the bottom in AppKit.
+   * By setting `isYAxisFlipped` to `false`, we can manually flip the coordinate base
+   * to treat 0 as the top (we simply add the window content view height to account for flipping).
+   *
+   * This is not renderer-wide because some elements like NSScrollView, NSTextView, or NSButton
+   * use flipped Y axis, i.e their 0 start from the top. ¯\_(ツ)_/¯
+   */
+  isYAxisFlipped: bool,
+};
+
 module Layout =
   Brisk_core.CreateLayout(
     {
-      type context = BriskView.t;
-      let nullContext = BriskView.make();
+      type context = hostContext;
+      let nullContext = {view: BriskView.make(), isYAxisFlipped: false};
     },
     Flex.FloatEncoding,
   );
@@ -31,17 +44,27 @@ module OutputTree = {
 
   let insertNode = (~parent: node, ~child: node, ~position: int) => {
     open Layout.Node;
-    insertChild(
-      parent.layoutNode.content,
-      child.layoutNode.container,
+
+    let parentNode = parent.layoutNode.content;
+    let childNode = child.layoutNode.container;
+
+    insertChild(parentNode, childNode, position);
+    BriskView.insertSubview(
+      parentNode.context.view,
+      childNode.context.view,
       position,
     );
-    BriskView.insertSubview(parent.view, child.view, position);
     parent;
   };
 
-  let deleteNode = (~parent, ~child) => {
-    BriskView.removeSubview(child.view);
+  let deleteNode = (~parent: node, ~child: node) => {
+    open Layout.Node;
+
+    let parentNode = parent.layoutNode.content;
+    let childNode = child.layoutNode.container;
+
+    removeChild(parentNode, childNode);
+    BriskView.removeSubview(childNode.context.view);
     parent;
   };
 
@@ -60,27 +83,36 @@ module UI = {
   };
 
   module Layout = {
-    let rec traverseAndApply = (~height, node: Layout.Node.flexNode) => {
+    let rec traverseAndApply = (~flip, ~height, node: Layout.Node.flexNode) => {
       let layout = node.layout;
 
-      let nodeTop = float_of_int(layout.top);
       let nodeHeight = layout.height |> float_of_int;
-      let flippedTop = height -. nodeHeight -. nodeTop;
+      let nodeTop = nodeHeight +. float_of_int(layout.top);
+
+      let top =
+        flip
+          ? height >= nodeTop ? height -. nodeTop : height
+          : float_of_int(layout.top);
 
       BriskView.setFrame(
-        node.context,
+        node.context.view,
         layout.left |> float_of_int,
-        flippedTop,
+        top,
         layout.width |> float_of_int,
         nodeHeight,
       );
 
+      let flip = !node.context.isYAxisFlipped;
+      let height = nodeHeight;
+
       node.children
-      |> Array.iter(child => traverseAndApply(~height=nodeHeight, child));
+      |> Array.iter(child => traverseAndApply(~flip, ~height, child));
     };
 
     let perform = (~height, root: OutputTree.node) => {
       let node = root.layoutNode.container;
+      let flip = node.context.isYAxisFlipped;
+
       Layout.FlexLayout.(
         layoutNode(
           node,
@@ -89,7 +121,7 @@ module UI = {
           Ltr,
         )
       );
-      traverseAndApply(~height, node);
+      traverseAndApply(~flip, ~height, node);
     };
   };
 
@@ -138,6 +170,7 @@ module RunLoop = {
     };
     run();
   };
+
   let spawn = () => {
     GCD.dispatchAsyncBackground(run);
   };

@@ -1,6 +1,13 @@
 open Brisk;
+open Brisk.Layout;
 
-type attribute = [ Layout.style | BriskEffectView.style];
+type effectViewStyle = [
+  | `Border(Border.t)
+  | `Overflow(FlexLayout.LayoutSupport.LayoutTypes.overflow)
+  | `Shadow(Shadow.t)
+];
+
+type attribute = [ Layout.style | effectViewStyle | BriskEffectView.style];
 
 type style = list(attribute);
 
@@ -18,14 +25,18 @@ let component = {
         {
           make: () => {
             let view = BriskEffectView.make();
-            {view, layoutNode: Layout.Node.make(~style, view)};
+            let layoutNode =
+              Layout.Node.make(~style, {view, isYAxisFlipped: false});
+
+            {view, layoutNode};
           },
           configureInstance: (~isFirstRender as _, {view} as node) => {
             style
             |> List.iter(attribute =>
                  switch (attribute) {
-                 | #BriskEffectView.style =>
-                   BriskEffectView.setStyle(view, attribute)
+                 | #effectViewStyle as attr => Styles.setViewStyle(view, attr)
+                 | #BriskEffectView.style as attr =>
+                   BriskEffectView.setStyle(view, attr)
                  | #Layout.style => ()
                  }
                );

@@ -21,6 +21,11 @@
   return self;
 }
 
+// This forces our clickable view to act like button,
+// accepting the click immediately even if the window is not focused.
+// Otherwise, we'd have to click twice:
+//   1st - to capture window screen
+//   2nd - to click the view.
 - (BOOL)acceptsFirstMouse:(NSEvent *)__unused ev {
   return YES;
 }

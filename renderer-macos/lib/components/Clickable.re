@@ -6,7 +6,12 @@ type style = list(attribute);
 
 let component = {
   let component = nativeComponent("clickable");
-  (~style=[], ~onClick=() => (), ~children: list(Brisk.syntheticElement), ()) =>
+  (
+    ~style: style=[],
+    ~onClick=() => (),
+    ~children: list(Brisk.syntheticElement),
+    (),
+  ) =>
     component(hooks =>
       (
         hooks,
@@ -22,7 +27,8 @@ let component = {
             style
             |> List.iter(attribute =>
                  switch (attribute) {
-                 | #Styles.viewStyle => Styles.setViewStyle(view, attribute)
+                 | #Styles.viewStyle as attr =>
+                   Styles.setViewStyle(view, attr)
                  | #Layout.style => ()
                  }
                );

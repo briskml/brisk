@@ -17,7 +17,7 @@ let measure = (node, _, _, _, _) => {
 
 let component = {
   let component = nativeComponent("text");
-  (~style=[], ~value, ~children as _: list(unit), ()) =>
+  (~style: style=[], ~value, ~children as _: list(unit), ()) =>
     component(hooks =>
       (
         hooks,
@@ -42,8 +42,10 @@ let component = {
                    BriskTextView.setPadding(view, left, top, right, bottom)
                  | `Background(({r, g, b, a}: Color.t)) =>
                    BriskTextView.setBackgroundColor(view, r, g, b, a)
-                 | #Styles.textStyle => Styles.setTextStyle(view, attribute)
-                 | #Styles.viewStyle => Styles.setViewStyle(view, attribute)
+                 | #Styles.viewStyle as attr =>
+                   Styles.setViewStyle(view, attr)
+                 | #Styles.textStyle as attr =>
+                   Styles.setTextStyle(view, attr)
                  | #Layout.style => ()
                  }
                );

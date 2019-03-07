@@ -17,7 +17,7 @@ let measure = (node, _, _, _, _) => {
 
 let component = nativeComponent("image");
 
-let component = (~style=[], ~source, ~children as _: list(unit), ()) =>
+let component = (~style: style=[], ~source, ~children as _: list(unit), ()) =>
   component(hooks =>
     (
       hooks,
@@ -37,7 +37,7 @@ let component = (~style=[], ~source, ~children as _: list(unit), ()) =>
           style
           |> List.iter(attribute =>
                switch (attribute) {
-               | #Styles.viewStyle => Styles.setViewStyle(view, attribute)
+               | #Styles.viewStyle as attr => Styles.setViewStyle(view, attr)
                | #Layout.style => ()
                }
              );

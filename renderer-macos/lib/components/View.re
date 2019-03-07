@@ -21,7 +21,8 @@ let component = {
             style
             |> List.iter(attribute =>
                  switch (attribute) {
-                 | #Styles.viewStyle => Styles.setViewStyle(view, attribute)
+                 | #Styles.viewStyle as attr =>
+                   Styles.setViewStyle(view, attr)
                  | #Layout.style => ()
                  }
                );

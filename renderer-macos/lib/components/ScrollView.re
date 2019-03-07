@@ -42,7 +42,8 @@ let scrollableArea = {
             style
             |> List.iter(attribute =>
                  switch (attribute) {
-                 | #Styles.viewStyle => Styles.setViewStyle(view, attribute)
+                 | #Styles.viewStyle as attr =>
+                   Styles.setViewStyle(view, attr)
                  | #Layout.style => ()
                  }
                );
@@ -54,8 +55,7 @@ let scrollableArea = {
     );
 };
 
-let component =
-    (~style: style=[], ~children: list(Brisk.syntheticElement), ()) => {
+let component = (~style=[], ~children: list(Brisk.syntheticElement), ()) => {
   open Brisk.Layout;
 
   let view = View.component;

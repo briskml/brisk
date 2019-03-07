@@ -10,7 +10,7 @@ let component = {
     ~type_=?,
     ~bezel=?,
     ~title=?,
-    ~style=[],
+    ~style: style=[],
     ~onClick=() => (),
     ~children as _: list(unit),
     (),
@@ -31,11 +31,13 @@ let component = {
             style
             |> List.iter(attribute =>
                  switch (attribute) {
-                 | `Background(_) =>
+                 | `Background(_) as attr =>
                    BriskButton.setIsBordered(view, false);
-                   Styles.setViewStyle(view, attribute);
-                 | #Styles.textStyle => Styles.setTextStyle(view, attribute)
-                 | #Styles.viewStyle => Styles.setViewStyle(view, attribute)
+                   Styles.setViewStyle(view, attr);
+                 | #Styles.textStyle as attr =>
+                   Styles.setTextStyle(view, attr)
+                 | #Styles.viewStyle as attr =>
+                   Styles.setViewStyle(view, attr)
                  | #Layout.style => ()
                  }
                );

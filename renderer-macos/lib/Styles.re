@@ -20,7 +20,7 @@ type textStyle = [
 
 let commitTextStyle = BriskStylableText.applyChanges;
 
-let setViewStyle = (view: view, attribute: [> viewStyle]) =>
+let setViewStyle = (view: view, attribute: [< viewStyle]) =>
   switch (attribute) {
   | `Background(({r, g, b, a}: Color.t)) =>
     BriskView.setBackgroundColor(view, r, g, b, a)
@@ -54,11 +54,13 @@ let setViewStyle = (view: view, attribute: [> viewStyle]) =>
       BriskView.setShadowColor(view, r, g, b, a);
     };
   | `Overflow(overflow) =>
-    BriskView.setMasksToBounds(view, overflow == Hidden)
-  | _ => ()
+    BriskView.setMasksToBounds(
+      view,
+      overflow == FlexLayout.LayoutSupport.LayoutTypes.Hidden,
+    )
   };
 
-let setTextStyle = (txt: text, attribute: [> textStyle]) =>
+let setTextStyle = (txt: text, attribute: [< textStyle]) =>
   switch (attribute) {
   | `Font({Font.family, size, weight}) =>
     let weight =
@@ -100,5 +102,4 @@ let setTextStyle = (txt: text, attribute: [> textStyle]) =>
     )
   | `LineSpacing(spacing) => setLineSpacing(txt, spacing)
   | `Color(({r, g, b, a}: Color.t)) => setColor(txt, r, g, b, a)
-  | _ => ()
   };

@@ -2,13 +2,13 @@
 
 @interface BriskButton : NSButton <BriskStylableText>
 
-@property(nonatomic, assign) value _callback;
-
 - (void)setCallback:(value)action;
 
 @end
 
-@implementation BriskButton
+@implementation BriskButton {
+  value onClick;
+}
 
 @synthesize attributedString;
 @synthesize attributedProps;
@@ -36,18 +36,19 @@
 }
 
 - (void)setCallback:(value)callback {
-  if (self._callback) {
-    value prevCallback = self._callback;
-    caml_remove_global_root(&prevCallback);
+  if (onClick) {
+    caml_modify_generational_global_root(&onClick, callback);
+  } else {
+    onClick = callback;
+    caml_register_generational_global_root(&onClick);
   }
-  caml_register_global_root(&callback);
-  self._callback = callback;
+
   [self setTarget:self];
   [self setAction:@selector(performCallback)];
 }
 
 - (void)performCallback {
-  brisk_caml_call(self._callback);
+  brisk_caml_call(onClick);
 }
 
 @end

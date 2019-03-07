@@ -86,11 +86,10 @@ let story = (~story: story, ~index, ~children as _: list(unit), ()) =>
           ]>
           <text
             style=[
+              height(20.),
               font(~size=13., ()),
               color(Color.hex("#B0B0B0")),
-              width(20.),
               /* Fixme, cannot fix any bc there'll be an exception */
-              padding4(~left=5., ~right=5., ~top=0., ~bottom=0., ()),
             ]
             value={string_of_int(index)}
           />
@@ -103,7 +102,10 @@ let story = (~story: story, ~index, ~children as _: list(unit), ()) =>
               {switch (formatUrl(story.url)) {
                | Some(url) =>
                  <text
-                   style=Brisk.Layout.[color(Color.hex("#ACACAC"))]
+                   style=Brisk.Layout.[
+                     width(100.),
+                     color(Color.hex("#ACACAC")),
+                   ]
                    value=url
                  />
                | None => Brisk.empty

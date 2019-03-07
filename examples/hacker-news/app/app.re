@@ -42,7 +42,6 @@ let examples = {
             style=EffectView.[blendingMode(`BehindWindow), width(74.)]
           />
           <scrollView
-          onReachedEnd=(() => print_endline("ThE END"))
             style=[flex(1.), padding4(~top=20., ~left=13., ())]>
             TopStories.component
           </scrollView>

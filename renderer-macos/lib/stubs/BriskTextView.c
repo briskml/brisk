@@ -1,6 +1,7 @@
 #import "BriskStylableText.h"
+#import "BriskViewable.h"
 
-@interface BriskTextView : NSTextView <BriskStylableText>
+@interface BriskTextView : NSTextView <BriskStylableText, BriskViewable>
 
 @end
 
@@ -20,9 +21,8 @@
 
     self.attributedProps[NSParagraphStyleAttributeName] = self.paragraphStyle;
     self.backgroundColor = [NSColor clearColor];
-
-    // Remove default left/right 5pt padding
-    self.textContainer.lineFragmentPadding = 0;
+    self.textContainer.widthTracksTextView = NO;
+    self.textContainer.heightTracksTextView = NO;
   }
   return self;
 }
@@ -40,7 +40,18 @@
 
   [self.attributedString setAttributes:self.attributedProps range:range];
   [[self textStorage] setAttributedString:self.attributedString];
-  [self.layoutManager ensureLayoutForTextContainer:self.textContainer];
+}
+
+- (void)brisk_setFrame:(CGRect)nextFrame {
+  CGFloat width = nextFrame.size.width + 1;
+  CGFloat height = nextFrame.size.height;
+  self.textContainer.containerSize = CGSizeMake(width, height);
+  [self setFrame:CGRectMake(nextFrame.origin.x, nextFrame.origin.y, width, height)];
+}
+
+- (void)brisk_insertNode:(NSView *)child position:(intnat)position {
+    assert(child);
+    assert(position);
 }
 
 @end
@@ -52,12 +63,17 @@ BriskTextView *ml_BriskTextView_make() {
   return txt;
 }
 
+void ml_BriskTextView_setTextContainerSize(BriskTextView *txt, double width, double height) {
+  txt.textContainer.containerSize = NSMakeSize(width, height);
+  [txt.layoutManager ensureLayoutForTextContainer:txt.textContainer];
+}
+
 double ml_BriskTextView_getTextWidth(BriskTextView *txt) {
-  return [txt.layoutManager usedRectForTextContainer:txt.textContainer].size.width;
+  return [txt.layoutManager usedRectForTextContainer:txt.textContainer].size.width + (txt.textContainerInset.width * 2);
 }
 
 double ml_BriskTextView_getTextHeight(BriskTextView *txt) {
-  return [txt.layoutManager usedRectForTextContainer:txt.textContainer].size.height;
+  return [txt.layoutManager usedRectForTextContainer:txt.textContainer].size.height + (txt.textContainerInset.height * 2);
 }
 
 CAMLprim value ml_BriskTextView_getTextWidth_bc(BriskTextView *txt) {

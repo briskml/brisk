@@ -1,6 +1,13 @@
 type hostContext = {
   view: BriskView.t,
-  /* Y coordinate could start from the bottom in AppKit */
+  /***
+   * Y coordinate could start from the bottom in AppKit.
+   * By setting `isYAxisFlipped` to `false`, we can manually flip the coordinate base
+   * to treat 0 as the top (we simply add the window content view height to account for flipping).
+   *
+   * This is not renderer-wide because some elements like NSScrollView, NSTextView, or NSButton
+   * use flipped Y axis, i.e their 0 start from the top. ¯\_(ツ)_/¯
+   */
   isYAxisFlipped: bool,
 };
 

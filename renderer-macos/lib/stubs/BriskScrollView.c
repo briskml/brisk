@@ -3,55 +3,58 @@
 @interface BriskScrollView: NSScrollView
 @end
 
-@interface BriskScrollView ()
-@property(nonatomic, assign) value _callback;
-@end
-
-@implementation BriskScrollView
+@implementation BriskScrollView {
+  value onScroll;
+}
 
 - (BOOL)isFlipped {
   return NO;
 }
 
 - (void)setOnScroll:(value)callbackOption {
-  if (self._callback) {
-    value prevCallback = self._callback;
-    caml_remove_global_root(&prevCallback);
-  }
-  if (Is_block(callbackOption)) {
+  if (onScroll) {
+    if (Is_block(callbackOption)) {
+      caml_modify_generational_global_root(&onScroll, Field(callbackOption, 0));
+    } else {
+      caml_remove_generational_global_root(&onScroll);
+      [[NSNotificationCenter defaultCenter] 
+        removeObserver:self 
+        name:NSViewBoundsDidChangeNotification
+        object:self.contentView]; 
+      self.contentView.postsBoundsChangedNotifications = NO;
+      onScroll = (value)NULL;
+    }
+  } else if (Is_block(callbackOption)) {
     self.contentView.postsBoundsChangedNotifications = YES;
     [[NSNotificationCenter defaultCenter] 
       addObserver:self 
       selector:@selector(boundsDidChange) 
       name:NSViewBoundsDidChangeNotification 
       object:self.contentView]; 
-    value callback = Field(callbackOption, 0);
-    caml_register_global_root(&callback);
-    self._callback = callback;
-  } else {
-    self._callback = 0;
-    [[NSNotificationCenter defaultCenter] 
-      removeObserver:self 
-      name:NSViewBoundsDidChangeNotification
-      object:self.contentView]; 
-    self.contentView.postsBoundsChangedNotifications = NO;
+    onScroll = Field(callbackOption, 0);
+    caml_register_generational_global_root(&onScroll);
   }
 }
 
 - (void)boundsDidChange {
-  if (self._callback) {
+  if (onScroll) {
     NSRect visibleRect = [self.contentView documentVisibleRect];
-    NSSize contentSize = self.contentSize;
+    /* I know - this is confusing. self.contentSize is the size of the whole scrollable content (including the invisible area) */
+    NSSize contentSize = self.documentView.frame.size;
+    /* The size of the content chunk visible to the user */
+    NSSize visibleAreaSize = self.contentSize;
     dispatch_async(dispatch_get_main_queue(), ^{
     value args[] = {
         caml_copy_double(visibleRect.origin.x),
         caml_copy_double(visibleRect.origin.y), 
         caml_copy_double(contentSize.width),
-        caml_copy_double(contentSize.height)
+        caml_copy_double(contentSize.height),
+        caml_copy_double(visibleAreaSize.width),
+        caml_copy_double(visibleAreaSize.height)
       };
     brisk_caml_call_n(
-      self._callback, 
-      4, 
+      onScroll, 
+      6, 
       args 
     );
   }

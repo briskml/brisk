@@ -15,8 +15,7 @@ let readResponse = responseBody => {
             | exception x => Lwt.wakeup_exn(onFinish, x)
             | json =>
               switch (Yojson.Basic.Util.member("data", json)) {
-              | `Null =>
-                Lwt.wakeup_exn(onFinish, Invalid_argument((string)));
+              | `Null => Lwt.wakeup_exn(onFinish, Invalid_argument(string))
               | data => Lwt.wakeup_later(onFinish, data)
               }
             };
@@ -57,23 +56,20 @@ let get = (query, ~variables, parse) => {
       >>= (
         fun
         | Ok((_, body)) => {
-          readResponse(body)
-          |> Lwt_result.map(x =>
-               switch (parse(x)) {
-               | exception x =>
-                 Printexc.to_string(x) |> print_endline;
-                 raise(x);
-               | x =>
-                 x;
-               }
-             )
-          |> Lwt_result.map_err(exc =>
-               Printexc.to_string(exc) |> print_endline
-             )
-
-        }
+            readResponse(body)
+            |> Lwt_result.map(x =>
+                 switch (parse(x)) {
+                 | exception x =>
+                   Printexc.to_string(x) |> print_endline;
+                   raise(x);
+                 | x => x
+                 }
+               )
+            |> Lwt_result.map_err(exc =>
+                 Printexc.to_string(exc) |> print_endline
+               );
+          }
         | Error(_) => {
-           print_endline("WTF2");
             Lwt_result.fail();
           }
       )

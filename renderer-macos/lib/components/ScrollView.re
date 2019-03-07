@@ -44,18 +44,20 @@ let scrollableArea = {
           },
           configureInstance: (~isFirstRender as _, {view} as node) => {
            (switch (onReachedEnd, onScroll) {
-            | (Some(onReachedEnd), Some(onScroll)) => Some((x, y, width, height) => {
-             if (lastScrollPosition^ +. 100. < height && y +. 100. > height) {
+            | (Some(onReachedEnd), Some(onScroll)) => Some((x, y, contentWidth, contentHeight, visibleWidth, visibleHeight) => {
+             let maxY = y +. visibleHeight; 
+             if (lastScrollPosition^ +. 100. < maxY && y +. 100. > maxY) {
               onReachedEnd();
              }
-            onScroll(x, y, width, height); 
-           lastScrollPosition := (y); 
+             onScroll(x, y, contentWidth, contentHeight, visibleWidth, visibleHeight); 
+             lastScrollPosition := (y); 
             })
-            | (Some(onReachedEnd), None) => Some((_, y, _, height) => {
-             if (lastScrollPosition^ +. 100. < height && y +. 100. > height) {
+            | (Some(onReachedEnd), None) => Some((_, y, _, contentHeight, _, visibleHeight) => {
+             let maxY = y +. visibleHeight; 
+             if (lastScrollPosition^ +. 100. < contentHeight && maxY +. 100. > contentHeight) {
               onReachedEnd();
              }
-           lastScrollPosition := (y); 
+           lastScrollPosition := maxY; 
             }) 
             | (None, Some(onScroll)) => Some(onScroll) 
             | (None, None) => None 

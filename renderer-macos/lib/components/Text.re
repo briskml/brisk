@@ -25,13 +25,13 @@ let measure = (node, width, widthMode, height, heightMode) => {
   let shouldCalculateWidth = shouldMeasureForMode(widthMode);
   let shouldCalculateHeight = shouldMeasureForMode(heightMode);
   if (shouldCalculateWidth || shouldCalculateHeight) {
-    let containerWidth = maxContainerSizeForMode(widthMode, width);
+    let containerWidth = maxContainerSizeForMode(widthMode, width) -. 1.;
     let containerHeight = maxContainerSizeForMode(heightMode, height);
     BriskTextView.setTextContainerSize(node.context.view, containerWidth, containerHeight);
     {
       width: (shouldCalculateWidth ? 
     
-    int_of_float(BriskTextView.getTextWidth(node.context.view)) : 
+    int_of_float(BriskTextView.getTextWidth(node.context.view)) + 1 : 
     width),
     height: (shouldCalculateHeight ? 
     (BriskTextView.getTextHeight(node.context.view) |> int_of_float) 

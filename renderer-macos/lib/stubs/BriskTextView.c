@@ -43,7 +43,7 @@
 }
 
 - (void)brisk_setFrame:(CGRect)nextFrame {
-  CGFloat width = nextFrame.size.width + 1;
+  CGFloat width = nextFrame.size.width;
   CGFloat height = nextFrame.size.height;
   self.textContainer.containerSize = CGSizeMake(width, height);
   [self setFrame:CGRectMake(nextFrame.origin.x, nextFrame.origin.y, width, height)];

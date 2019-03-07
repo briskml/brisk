@@ -9,6 +9,11 @@ type story = {
   descendants: int,
 };
 
+type storyWithRelativeTime = {
+  story,
+  timeAgo: string,
+};
+
 type poll = {title: string};
 type job = poll;
 
@@ -50,31 +55,37 @@ let timeAgoSince = date => {
   );
 };
 
-let formatDetails = (~username, ~score, ~commentCount) => {
-  Format.sprintf(
-    "%i points | %i comments | by %s",
-    score,
-    commentCount,
-    username,
-  );
-};
-
 let formatUrl = {
   let regex = Re.seq([Re.start, Re.str("www.")]) |> Re.compile;
-  let wrapInParens = str => Format.sprintf("(%s)", str);
   fun
   | Some(url) => {
       switch (Uri.host(Uri.of_string(url))) {
       | Some(url) when Re.execp(regex, url) =>
-        Some(wrapInParens(String.sub(url, 4, String.length(url) - 4)))
-      | Some(url) => Some(wrapInParens(url))
+        Some(String.sub(url, 4, String.length(url) - 4))
+      | Some(url) => Some(url)
       | None => None
       };
     }
   | None => None;
 };
 
-let story = (~story: story, ~index, ~children as _: list(unit), ()) =>
+let formatDetails = (~username, ~score, ~commentCount, ~url) => {
+  let commonDetails =
+    Format.sprintf(
+      "%i points | %i comments | by %s",
+      score,
+      commentCount,
+      username,
+    );
+  switch (formatUrl(url)) {
+  | Some(str) => Format.sprintf("%s | source: %s", commonDetails, str)
+
+  | None => commonDetails
+  };
+};
+
+let story =
+    (~story as {story, timeAgo}, ~index, ~children as _: list(unit), ()) =>
   Brisk_macos.(
     Brisk.Layout.(
       <view style=[height(47.), background(Color.hex("#FFFFFF"))]>
@@ -96,20 +107,13 @@ let story = (~story: story, ~index, ~children as _: list(unit), ()) =>
           <view style=[Brisk.Layout.flex(1.)]>
             <view style=Brisk.Layout.[flexDirection(`Row)]>
               <text
-                style=[font(~size=13., ()), color(Color.hex("#000000"))]
+                style=[
+                  flex(1.),
+                  font(~size=13., ()),
+                  color(Color.hex("#000000")),
+                ]
                 value={story.title}
               />
-              {switch (formatUrl(story.url)) {
-               | Some(url) =>
-                 <text
-                   style=Brisk.Layout.[
-                     width(100.),
-                     color(Color.hex("#ACACAC")),
-                   ]
-                   value=url
-                 />
-               | None => Brisk.empty
-               }}
             </view>
             <text
               style=Brisk.Layout.[color(Color.hex("#888888"))]
@@ -117,10 +121,11 @@ let story = (~story: story, ~index, ~children as _: list(unit), ()) =>
                 ~username=story.by.id,
                 ~score=story.score,
                 ~commentCount=story.descendants,
+                ~url=story.url,
               )}
             />
           </view>
-          <text value={string_of_int(story.time)} />
+          <text value=timeAgo />
         </view>
       </view>
     )
@@ -143,7 +148,7 @@ let paging = (makeRequest, pageSize, hooks) => {
     Hooks.state(RemoteAction.create(), hooks);
   let (offset, setOffset, hooks) = Hooks.state(0, hooks);
   let (results, setResults, hooks) = Hooks.state(Loading, hooks);
-  let loadNext = () =>
+  let loadNext = () => {
     makeRequest(~offset, ~pageSize)
     |> Lwt.map(
          fun
@@ -156,6 +161,7 @@ let paging = (makeRequest, pageSize, hooks) => {
            },
        )
     |> ignore;
+  };
   let hooks =
     Hooks.effect(
       OnMount,
@@ -193,7 +199,18 @@ let getStories = hn =>
 let fetchStories = (~offset, ~pageSize) => {
   let query = Query.make(~offset, ~limit=pageSize, ());
   let parser = result => {
-    getStories(query#parse(result)#hn);
+    getStories(query#parse(result)#hn)
+    |> List.map(story =>
+         {
+           story,
+           timeAgo:
+             timeAgoSince(
+               Core_kernel.Time.(
+                 of_span_since_epoch(Span.of_int_sec(story.time))
+               ),
+             ),
+         }
+       );
   };
 
   GraphQLClient.get(query#query, ~variables=query#variables, parser);
@@ -204,10 +221,16 @@ let component = {
   open Core_kernel.Sequence;
   let component = Brisk.component("TopStories");
   component(hooks => {
-    let (stories, _loadNextPage, hooks) = paging(fetchStories, 30, hooks);
+    let (stories, loadNextPage, hooks) = paging(fetchStories, 30, hooks);
     (
       hooks,
-      <view>
+      <scrollView
+        onReachedEnd=loadNextPage
+        style=Brisk.Layout.[
+          flex(1.),
+          padding4(~left=13., ()),
+          background(Color.hex("#fff")),
+        ]>
         ...{
              stories
              |> getResultList
@@ -220,7 +243,7 @@ let component = {
                 )
              |> to_list
            }
-      </view>,
+      </scrollView>,
     );
   });
 };

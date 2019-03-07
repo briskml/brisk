@@ -41,10 +41,7 @@ let examples = {
           <effectView
             style=EffectView.[blendingMode(`BehindWindow), width(74.)]
           />
-          <scrollView
-            style=[flex(1.), padding4(~top=20., ~left=13., ())]>
-            TopStories.component
-          </scrollView>
+          TopStories.component
         </view>,
       )
     );

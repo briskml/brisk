@@ -34,7 +34,6 @@
     "@opam/httpkit": "ostera/httpkit:httpkit.opam#5fd8ed4",
     "@opam/httpaf": "anmonteiro/httpaf:httpaf.opam#57e9dd2",
     "@opam/httpaf-lwt": "anmonteiro/httpaf:httpaf-lwt.opam#57e9dd2",
-    "@opam/zarith": "briskml/zarith#3fe8bfc",
-    "flex": "link-dev:../../../flex.nosync/"
+    "@opam/zarith": "briskml/zarith#3fe8bfc"
   }
 }

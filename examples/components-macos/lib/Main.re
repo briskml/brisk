@@ -24,11 +24,7 @@ let app = {
         hooks,
         {
           Tabs.(
-            <view
-              style=[
-                position(~top=0., ~left=0., ~right=0., ~bottom=0., `Absolute),
-                flexDirection(`Row),
-              ]>
+            <view style=[flex(1.), flexDirection(`Row)]>
               <effectView
                 style=EffectView.[blendingMode(`BehindWindow), width(185.)]>
                 <view style=[margin2(~v=37., ())]>
@@ -44,7 +40,11 @@ let app = {
                                       ? Color.hexa("#000000", 0.4)
                                       : Color.transparent,
                                   ),
-                                  ...Theme.sidebarItemStyle,
+                                  font(~size=15., ()),
+                                  kern(0.09),
+                                  align(`Left),
+                                  color(Color.hex("#282522")),
+                                  padding2(~h=25., ~v=4., ()),
                                 ]
                                 value={Tab.label(tab)}
                               />

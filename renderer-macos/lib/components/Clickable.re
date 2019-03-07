@@ -17,13 +17,15 @@ let component = {
         hooks,
         {
           make: () => {
-            let view = BriskClickable.make(~onClick, ());
+            let view = BriskClickable.make();
             let layoutNode =
               Layout.Node.make(~style, {view, isYAxisFlipped: false});
 
             {view, layoutNode};
           },
           configureInstance: (~isFirstRender as _, {view} as node) => {
+            BriskClickable.setOnClick(view, onClick);
+
             style
             |> List.iter(attribute =>
                  switch (attribute) {

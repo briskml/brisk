@@ -3,13 +3,14 @@
 @interface BriskClickable : NSView
 
 @property(nonatomic, retain) NSClickGestureRecognizer *handler;
-@property(nonatomic, assign) value _onClick;
 
 - (void)setOnClick:(value)callback;
 
 @end
 
-@implementation BriskClickable
+@implementation BriskClickable {
+  value onClick;
+}
 
 - (id)init {
   self = [super init];
@@ -25,12 +26,13 @@
 }
 
 - (void)setOnClick:(value)callback {
-  if (self._onClick) {
-    value prevCallback = self._onClick;
-    caml_remove_global_root(&prevCallback);
+
+  if (onClick) {
+    caml_modify_generational_global_root(&onClick, callback);
+  } else {
+    onClick = callback;
+    caml_register_generational_global_root(&onClick);
   }
-  caml_register_global_root(&callback);
-  self._onClick = callback;
 
   self.handler.target = self;
   self.handler.numberOfClicksRequired = 1;
@@ -38,7 +40,9 @@
 }
 
 - (void)performClick {
-  brisk_caml_call(self._onClick);
+  if (onClick) {
+    brisk_caml_call(onClick);
+  }
 }
 
 @end

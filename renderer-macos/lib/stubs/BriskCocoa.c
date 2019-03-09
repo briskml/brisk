@@ -17,10 +17,8 @@ void brisk_caml_call_n(value f, int argCount, value *args) {
 }
 
 void brisk_caml_call(value f) {
-  caml_c_thread_register();
-  caml_acquire_runtime_system();
-  caml_callback(f, Val_unit);
-  caml_release_runtime_system();
+  value args[] = {Val_unit};
+  brisk_caml_call_n(f, 1, args);
 }
 
 void retainView(NSView *view) { [view retain]; }

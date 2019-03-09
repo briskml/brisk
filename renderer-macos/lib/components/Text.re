@@ -4,22 +4,24 @@ type attribute = [ Layout.style | Styles.textStyle | Styles.viewStyle];
 
 type style = list(attribute);
 
-open Layout.FlexLayout.LayoutSupport.LayoutTypes; 
+open Layout.FlexLayout.LayoutSupport.LayoutTypes;
 
-let shouldMeasureForMode = 
-fun 
-| Exactly => false
-| CSS_MEASURE_MODE_NEGATIVE_ONE_WHATEVER_THAT_MEANS => raise(Invalid_argument("not implemented"))
-| Undefined => true
-| AtMost => true;
+let shouldMeasureForMode =
+  fun
+  | Exactly => false
+  | CSS_MEASURE_MODE_NEGATIVE_ONE_WHATEVER_THAT_MEANS =>
+    raise(Invalid_argument("not implemented"))
+  | Undefined => true
+  | AtMost => true;
 
 let maxContainerSizeForMode = (mode, size) =>
   switch (mode) {
-  | Exactly => float_of_int(size);
-  | CSS_MEASURE_MODE_NEGATIVE_ONE_WHATEVER_THAT_MEANS => raise(Invalid_argument("not implemented"));
-  | Undefined => max_float;
-  | AtMost => float_of_int(size);
-};
+  | Exactly => float_of_int(size)
+  | CSS_MEASURE_MODE_NEGATIVE_ONE_WHATEVER_THAT_MEANS =>
+    raise(Invalid_argument("not implemented"))
+  | Undefined => max_float
+  | AtMost => float_of_int(size)
+  };
 
 let measure = (node, width, widthMode, height, heightMode) => {
   let shouldCalculateWidth = shouldMeasureForMode(widthMode);
@@ -27,17 +29,23 @@ let measure = (node, width, widthMode, height, heightMode) => {
   if (shouldCalculateWidth || shouldCalculateHeight) {
     let containerWidth = maxContainerSizeForMode(widthMode, width) -. 1.;
     let containerHeight = maxContainerSizeForMode(heightMode, height);
-    BriskTextView.setTextContainerSize(node.context.view, containerWidth, containerHeight);
+    BriskTextView.setTextContainerSize(
+      node.context.view,
+      containerWidth,
+      containerHeight,
+    );
     {
-      width: (shouldCalculateWidth ? 
-    
-    int_of_float(BriskTextView.getTextWidth(node.context.view)) + 1 : 
-    width),
-    height: (shouldCalculateHeight ? 
-    (BriskTextView.getTextHeight(node.context.view) |> int_of_float) 
-    : height)};
+      width:
+        shouldCalculateWidth
+          ? int_of_float(BriskTextView.getTextWidth(node.context.view)) + 1
+          : width,
+      height:
+        shouldCalculateHeight
+          ? BriskTextView.getTextHeight(node.context.view) |> int_of_float
+          : height,
+    };
   } else {
-    {width, height}
+    {width, height};
   };
 };
 

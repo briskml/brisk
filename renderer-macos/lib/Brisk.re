@@ -147,8 +147,8 @@ module UI = {
 
   let renderAndMount =
       (~height, root: OutputTree.node, element: syntheticElement) => {
-    let rendered = 
-      RenderedElement.render(root, element) 
+    let rendered =
+      RenderedElement.render(root, element)
       |> RenderedElement.executePendingEffects;
     rootRef := Some(root);
     renderedRef := Some(rendered);

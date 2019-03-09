@@ -4,7 +4,8 @@ type t = CocoaTypes.view;
 
 [@noalloc]
 external setTextContainerSize: (t, [@unboxed] float, [@unboxed] float) => unit =
-  "ml_BriskTextView__setTextContainerSize_bc" "ml_BriskTextView_setTextContainerSize";
+  "ml_BriskTextView__setTextContainerSize_bc"
+  "ml_BriskTextView_setTextContainerSize";
 
 [@noalloc]
 external getTextWidth: t => [@unboxed] float =

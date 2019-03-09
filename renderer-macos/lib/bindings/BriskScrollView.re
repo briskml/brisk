@@ -8,11 +8,31 @@ type t = CocoaTypes.view;
   * setOnScroll [scrollView, (originX, origin.y, contentViewWidth, contentViewHeight, visibleWidth, visibleHeight)]
   *
   */
-external setOnScroll: (t, option((float, float, float, float, float, float) => unit)) => unit = "ml_BriskScrollView_setOnScroll";
+external setOnScroll:
+  (t, option((float, float, float, float, float, float) => unit)) => unit =
+  "ml_BriskScrollView_setOnScroll";
 
 let setOnScroll = (view, callback) => {
-  switch callback {
-  | Some(f) => setOnScroll(view, Some((x, y, contentWidth, contentHeight, visibleWidth, visibleHeight) => UIEventCallback.make(() => f(x, y, contentWidth, contentHeight, visibleWidth, visibleHeight), ())))
+  switch (callback) {
+  | Some(f) =>
+    setOnScroll(
+      view,
+      Some(
+        (x, y, contentWidth, contentHeight, visibleWidth, visibleHeight) =>
+          UIEventCallback.make(
+            () =>
+              f(
+                x,
+                y,
+                contentWidth,
+                contentHeight,
+                visibleWidth,
+                visibleHeight,
+              ),
+            (),
+          ),
+      ),
+    )
   | None => setOnScroll(view, None)
   };
-}; 
+};

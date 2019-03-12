@@ -9,11 +9,16 @@ void brisk_caml_memoize(const char *name, value **staticPointer) {
   }
 }
 
-void brisk_caml_call(value f) {
+void brisk_caml_call_n(value f, int argCount, value *args) {
   caml_c_thread_register();
   caml_acquire_runtime_system();
-  caml_callback(f, Val_unit);
+  caml_callbackN(f, argCount, args);
   caml_release_runtime_system();
+}
+
+void brisk_caml_call(value f) {
+  value args[] = {Val_unit};
+  brisk_caml_call_n(f, 1, args);
 }
 
 void retainView(NSView *view) { [view retain]; }

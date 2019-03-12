@@ -1,0 +1,39 @@
+{
+  "name": "hacker-news",
+  "version": "0.1.0",
+  "esy": {
+    "build": ["dune build @all -p hacker-news"],
+    "buildsInSource": "unsafe"
+  },
+  "scripts": {
+    "fmt": "dune build @fmt --auto-promote",
+    "clean": "dune clean",
+    "bundle": "dune build @bundle --only-packages hacker-news --root . --no-buffer --force",
+    "run": "dune build @run --only-packages hacker-news --root . --no-buffer --force",
+    "watch": "esy run --watch"
+  },
+  "dependencies": {
+    "@esy-ocaml/reason": ">=3.4.0",
+    "@brisk/macos": "*",
+    "@opam/dune": "^1.7.2",
+    "@opam/httpkit-lwt": "*",
+    "ocaml": "~4.7.1000",
+    "graphql_ppx": "briskml/graphql_ppx#ee86d23",
+    "@opam/core_kernel": "v0.11.1"
+  },
+  "devDependencies": {
+    "@opam/merlin": "^3.2.2",
+    "xcodegen": ">=2.2.0",
+    "xcpretty": "^0.2.8"
+  },
+  "resolutions": {
+    "@brisk/core": "link:../../core",
+    "@brisk/macos": "link:../../renderer-macos",
+    "brisk-reconciler": "briskml/brisk-reconciler#be325c5",
+    "@opam/httpkit-lwt": "ostera/httpkit:httpkit-lwt.opam#5fd8ed4",
+    "@opam/httpkit": "ostera/httpkit:httpkit.opam#5fd8ed4",
+    "@opam/httpaf": "anmonteiro/httpaf:httpaf.opam#57e9dd2",
+    "@opam/httpaf-lwt": "anmonteiro/httpaf:httpaf-lwt.opam#57e9dd2",
+    "@opam/zarith": "briskml/zarith#3fe8bfc"
+  }
+}

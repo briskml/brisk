@@ -1,5 +1,5 @@
 {
-  "checksum": "0d0cef34bdd2059eb70eb38a041b6084",
+  "checksum": "acf416df4c806ea965166c27fd78a73a",
   "root": "hacker-news@link-dev:./esy.json",
   "node": {
     "xcpretty@0.2.8001@d41d8cd9": {

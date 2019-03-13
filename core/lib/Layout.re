@@ -262,11 +262,11 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
         right: !isUndefined(right) ? right : style.right,
         bottom: !isUndefined(bottom) ? bottom : style.bottom,
       };
-    | `Flex(f) => {...style, flex: f}
+    | `Flex(flex) => {...style, flex}
     | `FlexDirection(flexDirection) => {...style, flexDirection}
-    | `FlexGrow(f) => {...style, flexGrow: f}
-    | `FlexShrink(f) => {...style, flexShrink: f}
-    | `FlexBasis(f) => {...style, flexBasis: f}
+    | `FlexGrow(flexGrow) => {...style, flexGrow}
+    | `FlexShrink(flexShrink) => {...style, flexShrink}
+    | `FlexBasis(flexBasis) => {...style, flexBasis}
     | `JustifyContent(justifyContent) => {...style, justifyContent}
     | `AlignContent(alignContent) => {...style, alignContent}
     | `AlignItems(alignItems) => {...style, alignItems}
@@ -371,4 +371,6 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
   let get0IfUndefined = x => {
     isUndefined(x) ? Encoding.zero : x;
   }
+
+  let cssUndefined = Encoding.cssUndefined;
 };

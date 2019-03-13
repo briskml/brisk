@@ -1,6 +1,7 @@
 #import "BriskStylableText.h"
 
-void ml_BriskStylableText_beginTextStyleChanges(NSObject<BriskStylableText>* txt) {
+void ml_BriskStylableText_beginTextStyleChanges(
+    NSObject<BriskStylableText> *txt) {
   if ([txt respondsToSelector:@selector(brisk_beginTextStyleChanges)]) {
     [txt brisk_beginTextStyleChanges];
   }
@@ -40,9 +41,11 @@ CAMLprim value ml_BriskStylableText_setFont(id<BriskStylableText> txt,
 
 void ml_BriskStylableText_setColor(id<BriskStylableText> txt, double red,
                                    double green, double blue, double alpha) {
-  [txt 
-      brisk_addAttribute:NSForegroundColorAttributeName 
-      value:[NSColor colorWithRed:red green:green blue:blue alpha:alpha]];
+  [txt brisk_addAttribute:NSForegroundColorAttributeName
+                    value:[NSColor colorWithRed:red
+                                          green:green
+                                           blue:blue
+                                          alpha:alpha]];
 }
 
 CAMLprim value ml_BriskStylableText_setColor_bc(id<BriskStylableText> txt,
@@ -89,7 +92,8 @@ CAMLprim value ml_BriskStylableText_setLineSpacing_bc(id<BriskStylableText> txt,
 }
 
 void ml_BriskStylableText_setKern(id<BriskStylableText> txt, double kern) {
-  [txt brisk_addAttribute:NSKernAttributeName value:[NSNumber numberWithDouble:kern]];
+  [txt brisk_addAttribute:NSKernAttributeName
+                    value:[NSNumber numberWithDouble:kern]];
 }
 
 CAMLprim value ml_BriskStylableText_setKern_bc(id<BriskStylableText> txt,

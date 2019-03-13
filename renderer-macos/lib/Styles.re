@@ -96,7 +96,7 @@ let setTextStyle = (txt: text, attribute: [< textStyle]) =>
       | `WordWrap => LineBreakMode.wordWrapping
       | `CharWrap => LineBreakMode.charWrapping
       | `Clip => LineBreakMode.clipping
-      | `TruncateHead => LineBreakMode.truncaingHead
+      | `TruncateHead => LineBreakMode.truncatingHead
       | `TruncateTail => LineBreakMode.truncatingTail
       | `TruncateMiddle => LineBreakMode.truncatingMiddle
       },

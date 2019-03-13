@@ -24,26 +24,17 @@ void ml_BriskView_insertSubview(NSView *view, NSView *child, intnat position) {
 
 void ml_BriskView_removeSubview(NSView *child) { [child removeFromSuperview]; }
 
-void ml_BriskView_setFrame(
-  NSView *view, 
-  double x, 
-  double y, 
-  double w,
-  double h, 
-  double paddingLeft, 
-  double paddingRight, 
-  double paddingBottom, 
-  double paddingTop
-) {
+void ml_BriskView_setFrame(NSView *view, double x, double y, double w, double h,
+                           double paddingLeft, double paddingRight,
+                           double paddingBottom, double paddingTop) {
   NSRect rect = NSMakeRect(x, y, w, h);
   if ([view conformsToProtocol:@protocol(BriskViewable)]) {
     NSView<BriskViewable> *viewable = (NSView<BriskViewable> *)view;
-    [viewable 
-      brisk_setFrame:rect 
-      paddingLeft:paddingLeft
-      paddingRight:paddingRight
-      paddingTop:paddingTop
-      paddingBottom:paddingBottom];
+    [viewable brisk_setFrame:rect
+                 paddingLeft:paddingLeft
+                paddingRight:paddingRight
+                  paddingTop:paddingTop
+               paddingBottom:paddingBottom];
   } else {
     [view setFrame:rect];
   }

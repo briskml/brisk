@@ -2,8 +2,8 @@
 
 @interface BriskButton : NSButton <BriskStylableText>
 
-@property (nonatomic, strong) NSMutableAttributedString *brisk_attributedString;
-@property (nonatomic, strong) NSMutableDictionary *brisk_textAttributes;
+@property(nonatomic, strong) NSMutableAttributedString *brisk_attributedString;
+@property(nonatomic, strong) NSMutableDictionary *brisk_textAttributes;
 
 - (void)setCallback:(value)action;
 
@@ -24,7 +24,8 @@
     self.brisk_paragraphStyle =
         [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
 
-    self.brisk_textAttributes[NSParagraphStyleAttributeName] = self.brisk_paragraphStyle;
+    self.brisk_textAttributes[NSParagraphStyleAttributeName] =
+        self.brisk_paragraphStyle;
   }
 
   return self;
@@ -37,15 +38,16 @@
 }
 
 - (void)brisk_addAttribute:(NSAttributedStringKey)key value:(id)value {
-  [self.brisk_attributedString 
-    addAttribute:key
-    value:value 
-    range:NSMakeRange(0, self.brisk_attributedString.length)];
+  [self.brisk_attributedString
+      addAttribute:key
+             value:value
+             range:NSMakeRange(0, self.brisk_attributedString.length)];
 }
 
 - (void)brisk_applyTextStyle {
   NSRange range = NSMakeRange(0, self.brisk_attributedString.length);
-  [self.brisk_attributedString setAttributes:self.brisk_textAttributes range:range];
+  [self.brisk_attributedString setAttributes:self.brisk_textAttributes
+                                       range:range];
   [self setAttributedTitle:self.brisk_attributedString];
 }
 

@@ -16,7 +16,7 @@
     self.wantsLayer = YES;
     /* This avoids automatic resizing by NSLayoutManager
      * based on NSTextContainer's calculated text size alone
-     * which conflicts with our manual frame setting inside 
+     * which conflicts with our manual frame setting inside
      * brisk_setFrame.
      */
     self.verticallyResizable = NO;
@@ -26,7 +26,7 @@
     self.backgroundColor = [NSColor clearColor];
     self.textContainer.widthTracksTextView = NO;
     self.textContainer.heightTracksTextView = NO;
-    /* It seems that if we don't track width and height of the view, 
+    /* It seems that if we don't track width and height of the view,
      * the text container inset has no result
      */
     self.textContainerInset = CGSizeZero;
@@ -58,41 +58,43 @@
 }
 
 - (void)brisk_applyTextStyle {
-  [self brisk_addAttribute:NSParagraphStyleAttributeName value:self.brisk_paragraphStyle];
+  [self brisk_addAttribute:NSParagraphStyleAttributeName
+                     value:self.brisk_paragraphStyle];
   [self.textStorage endEditing];
 }
 
 - (void)brisk_addAttribute:(NSAttributedStringKey)attribute value:(id)value {
-  [self.textStorage addAttribute:attribute value:value range:NSMakeRange(0, self.textStorage.length)];
+  [self.textStorage addAttribute:attribute
+                           value:value
+                           range:NSMakeRange(0, self.textStorage.length)];
 }
 
 #pragma mark - BriskViewable
 
-- (void)brisk_setFrame:(CGRect)nextFrame 
-          paddingLeft:(CGFloat)paddingLeft
-          paddingRight:(CGFloat)paddingRight 
-          paddingTop:(CGFloat)paddingTop
-          paddingBottom:(CGFloat)paddingBottom {
+- (void)brisk_setFrame:(CGRect)nextFrame
+           paddingLeft:(CGFloat)paddingLeft
+          paddingRight:(CGFloat)paddingRight
+            paddingTop:(CGFloat)paddingTop
+         paddingBottom:(CGFloat)paddingBottom {
   CGFloat width = nextFrame.size.width;
   CGFloat height = nextFrame.size.height;
-  self.textContainer.size = 
-      CGSizeMake(
-        width - paddingLeft - paddingRight, 
-        height - paddingBottom - paddingTop
-      );
+  self.textContainer.size = CGSizeMake(width - paddingLeft - paddingRight,
+                                       height - paddingBottom - paddingTop);
   self.paddingTop = paddingTop;
   self.paddingLeft = paddingLeft;
   [self setFrame:nextFrame];
 }
 
 - (NSPoint)textContainerOrigin {
-  return NSMakePoint(self.paddingLeft,self.paddingTop);
+  return NSMakePoint(self.paddingLeft, self.paddingTop);
 }
 
-- (void)brisk_insertNode:(NSView __unused *) child position:(intnat __unused) position {
-  @throw([NSException 
-          exceptionWithName:@"Cannot insert a node to a TextView" 
-          reason:@"Nesting views inside TextView is not supported" userInfo:nil]);
+- (void)brisk_insertNode:(NSView __unused *)child
+                position:(intnat __unused)position {
+  @throw([NSException
+      exceptionWithName:@"Cannot insert a node to a TextView"
+                 reason:@"Nesting views inside TextView is not supported"
+               userInfo:nil]);
 }
 
 @end
@@ -104,17 +106,20 @@ BriskTextView *ml_BriskTextView_make() {
   return txt;
 }
 
-void ml_BriskTextView_setTextContainerSize(BriskTextView *txt, double width, double height) {
+void ml_BriskTextView_setTextContainerSize(BriskTextView *txt, double width,
+                                           double height) {
   txt.textContainer.containerSize = NSMakeSize(width, height);
   [txt.layoutManager ensureLayoutForTextContainer:txt.textContainer];
 }
 
 double ml_BriskTextView_getTextWidth(BriskTextView *txt) {
-  return [txt.layoutManager usedRectForTextContainer:txt.textContainer].size.width;
+  return
+      [txt.layoutManager usedRectForTextContainer:txt.textContainer].size.width;
 }
 
 double ml_BriskTextView_getTextHeight(BriskTextView *txt) {
-  return [txt.layoutManager usedRectForTextContainer:txt.textContainer].size.height;
+  return [txt.layoutManager usedRectForTextContainer:txt.textContainer]
+      .size.height;
 }
 
 CAMLprim value ml_BriskTextView_getTextWidth_bc(BriskTextView *txt) {

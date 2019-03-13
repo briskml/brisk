@@ -128,8 +128,8 @@ module UI = {
       Layout.FlexLayout.(
         layoutNode(
           node,
-          Flex.FloatEncoding.cssUndefined,
-          Flex.FloatEncoding.cssUndefined,
+          Layout.cssUndefined,
+          Layout.cssUndefined,
           Ltr,
         )
       );

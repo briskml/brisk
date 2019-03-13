@@ -43,6 +43,9 @@
     NSSize contentSize = self.documentView.frame.size;
     /* The size of the content chunk visible to the user */
     NSSize visibleAreaSize = self.contentSize;
+    /* TODO: Fix this to happen synchronously. Otherwise we'll end up with
+     * issues similar to RN with one frame late updates.
+     */
     dispatch_async(dispatch_get_main_queue(), ^{
     value args[] = {
         caml_copy_double(visibleRect.origin.x),

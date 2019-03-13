@@ -10,7 +10,8 @@
     "clean": "dune clean",
     "bundle": "dune build @bundle --only-packages hacker-news --root . --no-buffer --force",
     "run": "dune build @run --only-packages hacker-news --root . --no-buffer --force",
-    "watch": "esy run --watch"
+    "watch": "esy run --watch",
+    "open-xcode": "open ./_build/default/macos_app_bundle/project.xcodeproj"
   },
   "dependencies": {
     "@esy-ocaml/reason": ">=3.4.0",
@@ -34,6 +35,7 @@
     "@opam/httpkit": "ostera/httpkit:httpkit.opam#5fd8ed4",
     "@opam/httpaf": "anmonteiro/httpaf:httpaf.opam#57e9dd2",
     "@opam/httpaf-lwt": "anmonteiro/httpaf:httpaf-lwt.opam#57e9dd2",
-    "@opam/zarith": "briskml/zarith#3fe8bfc"
+    "@opam/zarith": "briskml/zarith#3fe8bfc",
+    "flex": "briskml/flex#7042e49"
   }
 }

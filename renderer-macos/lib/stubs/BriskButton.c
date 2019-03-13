@@ -2,6 +2,9 @@
 
 @interface BriskButton : NSButton <BriskStylableText>
 
+@property (nonatomic, strong) NSMutableAttributedString *brisk_attributedString;
+@property (nonatomic, strong) NSMutableDictionary *brisk_textAttributes;
+
 - (void)setCallback:(value)action;
 
 @end
@@ -10,29 +13,40 @@
   value onClick;
 }
 
-@synthesize attributedString;
-@synthesize attributedProps;
-@synthesize paragraphStyle;
+@synthesize brisk_paragraphStyle;
 
 - (id)init {
   self = [super init];
 
   if (self) {
-    self.attributedString = [[NSMutableAttributedString alloc] init];
-    self.attributedProps = [NSMutableDictionary dictionary];
-    self.paragraphStyle =
+    self.brisk_attributedString = [[NSMutableAttributedString alloc] init];
+    self.brisk_textAttributes = [NSMutableDictionary dictionary];
+    self.brisk_paragraphStyle =
         [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
 
-    self.attributedProps[NSParagraphStyleAttributeName] = self.paragraphStyle;
+    self.brisk_textAttributes[NSParagraphStyleAttributeName] = self.brisk_paragraphStyle;
   }
 
   return self;
 }
 
-- (void)applyTextStyle {
-  NSRange range = NSMakeRange(0, self.attributedString.length);
-  [self.attributedString setAttributes:self.attributedProps range:range];
-  [self setAttributedTitle:self.attributedString];
+#pragma mark - BriskStylableText
+
+- (void)brisk_setLineBreakMode:(NSLineBreakMode)mode {
+  self.lineBreakMode = mode;
+}
+
+- (void)brisk_addAttribute:(NSAttributedStringKey)key value:(id)value {
+  [self.brisk_attributedString 
+    addAttribute:key
+    value:value 
+    range:NSMakeRange(0, self.brisk_attributedString.length)];
+}
+
+- (void)brisk_applyTextStyle {
+  NSRange range = NSMakeRange(0, self.brisk_attributedString.length);
+  [self.brisk_attributedString setAttributes:self.brisk_textAttributes range:range];
+  [self setAttributedTitle:self.brisk_attributedString];
 }
 
 - (void)setCallback:(value)callback {
@@ -73,7 +87,7 @@ CAMLprim value ml_BriskButton_setTitle(BriskButton *btn, value str_v) {
   CAMLparam1(str_v);
 
   NSString *str = [NSString stringWithUTF8String:String_val(str_v)];
-  [btn.attributedString.mutableString setString:str];
+  [btn.brisk_attributedString.mutableString setString:str];
 
   CAMLreturn(Val_unit);
 }

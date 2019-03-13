@@ -11,9 +11,21 @@ external insertSubview: (t, t, [@untagged] int) => unit =
 external setFrame:
   (
     t,
+    /* x */
     [@unboxed] float,
+    /* y */
     [@unboxed] float,
+    /* width */
     [@unboxed] float,
+    /* height */
+    [@unboxed] float,
+    /* paddingLeft */
+    [@unboxed] float,
+    /* paddingRight */
+    [@unboxed] float,
+    /* paddingBottom */
+    [@unboxed] float,
+    /* paddingTop */
     [@unboxed] float
   ) =>
   unit =

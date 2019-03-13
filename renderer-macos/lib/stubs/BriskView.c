@@ -24,25 +24,29 @@ void ml_BriskView_insertSubview(NSView *view, NSView *child, intnat position) {
 
 void ml_BriskView_removeSubview(NSView *child) { [child removeFromSuperview]; }
 
-void ml_BriskView_setFrame(NSView *view, double x, double y, double w,
-                           double h) {
+void ml_BriskView_setFrame(
+  NSView *view, 
+  double x, 
+  double y, 
+  double w,
+  double h, 
+  double paddingLeft, 
+  double paddingRight, 
+  double paddingBottom, 
+  double paddingTop
+) {
   NSRect rect = NSMakeRect(x, y, w, h);
   if ([view conformsToProtocol:@protocol(BriskViewable)]) {
     NSView<BriskViewable> *viewable = (NSView<BriskViewable> *)view;
-    [viewable brisk_setFrame:rect];
+    [viewable 
+      brisk_setFrame:rect 
+      paddingLeft:paddingLeft
+      paddingRight:paddingRight
+      paddingTop:paddingTop
+      paddingBottom:paddingBottom];
   } else {
     [view setFrame:rect];
   }
-}
-
-CAMLprim value ml_BriskView_setFrame_bc(NSView *view, value x_v, value y_v,
-                                        value w_v, value h_v) {
-  CAMLparam4(x_v, y_v, w_v, h_v);
-
-  ml_BriskView_setFrame(view, Double_val(x_v), Double_val(y_v), Double_val(w_v),
-                        Double_val(h_v));
-
-  CAMLreturn(Val_unit);
 }
 
 void ml_BriskView_setBorderWidth(NSView *view, double width) {

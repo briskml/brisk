@@ -93,11 +93,12 @@ let story =
           style=[
             alignItems(`Center),
             flexDirection(`Row),
-            position(~top=0., ~bottom=0., ~left=0., ~right=0., `Absolute),
           ]>
           <text
             style=[
               height(20.),
+              width(30.),
+              align(`Center),
               font(~size=13., ()),
               color(Color.hex("#B0B0B0")),
               /* Fixme, cannot fix any bc there'll be an exception */
@@ -110,13 +111,18 @@ let story =
                 style=[
                   flex(1.),
                   font(~size=13., ()),
+                  lineBreak(`TruncateTail),
+                  border(~width=1., ~color=Color.hex("#000000"), ()),
                   color(Color.hex("#000000")),
                 ]
                 value={story.title}
               />
             </view>
             <text
-              style=Brisk.Layout.[color(Color.hex("#888888"))]
+              style=Brisk.Layout.[color(Color.hex("#888888")),
+                  border(~width=1., ~color=Color.hex("#000000"), ()),
+              
+              ]
               value={formatDetails(
                 ~username=story.by.id,
                 ~score=story.score,
@@ -228,7 +234,6 @@ let component = {
         onReachedEnd=loadNextPage
         style=Brisk.Layout.[
           flex(1.),
-          padding4(~left=13., ()),
           background(Color.hex("#fff")),
         ]>
         ...{

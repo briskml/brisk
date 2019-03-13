@@ -2,27 +2,39 @@
 #import "BriskViewable.h"
 
 @interface BriskTextView : NSTextView <BriskStylableText, BriskViewable>
-
+@property(nonatomic, assign) CGFloat paddingLeft;
+@property(nonatomic, assign) CGFloat paddingTop;
 @end
 
 @implementation BriskTextView
 
-@synthesize attributedString;
-@synthesize attributedProps;
-@synthesize paragraphStyle;
+@synthesize brisk_paragraphStyle;
 
 - (id)init {
   self = [super init];
   if (self) {
-    self.attributedString = [[NSMutableAttributedString alloc] init];
-    self.attributedProps = [NSMutableDictionary dictionary];
-    self.paragraphStyle =
+    self.wantsLayer = YES;
+    /* This avoids automatic resizing by NSLayoutManager
+     * based on NSTextContainer's calculated text size alone
+     * which conflicts with our manual frame setting inside 
+     * brisk_setFrame.
+     */
+    self.verticallyResizable = NO;
+    self.horizontallyResizable = NO;
+    self.brisk_paragraphStyle =
         [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
-
-    self.attributedProps[NSParagraphStyleAttributeName] = self.paragraphStyle;
     self.backgroundColor = [NSColor clearColor];
     self.textContainer.widthTracksTextView = NO;
     self.textContainer.heightTracksTextView = NO;
+    /* It seems that if we don't track width and height of the view, 
+     * the text container inset has no result
+     */
+    self.textContainerInset = CGSizeZero;
+    // We calculate paddings manually and override textContainerOrigin
+    self.textContainer.lineFragmentPadding = 0.;
+
+    self.paddingLeft = 0.;
+    self.paddingTop = 0.;
   }
   return self;
 }
@@ -35,23 +47,52 @@
   return NO;
 }
 
-- (void)applyTextStyle {
-  NSRange range = NSMakeRange(0, self.attributedString.length);
+#pragma mark - BriskStylableText
 
-  [self.attributedString setAttributes:self.attributedProps range:range];
-  [[self textStorage] setAttributedString:self.attributedString];
+- (void)brisk_setLineBreakMode:(NSLineBreakMode)mode {
+  self.textContainer.lineBreakMode = mode;
 }
 
-- (void)brisk_setFrame:(CGRect)nextFrame {
+- (void)brisk_beginTextStyleChanges {
+  [self.textStorage beginEditing];
+}
+
+- (void)brisk_applyTextStyle {
+  [self brisk_addAttribute:NSParagraphStyleAttributeName value:self.brisk_paragraphStyle];
+  [self.textStorage endEditing];
+}
+
+- (void)brisk_addAttribute:(NSAttributedStringKey)attribute value:(id)value {
+  [self.textStorage addAttribute:attribute value:value range:NSMakeRange(0, self.textStorage.length)];
+}
+
+#pragma mark - BriskViewable
+
+- (void)brisk_setFrame:(CGRect)nextFrame 
+          paddingLeft:(CGFloat)paddingLeft
+          paddingRight:(CGFloat)paddingRight 
+          paddingTop:(CGFloat)paddingTop
+          paddingBottom:(CGFloat)paddingBottom {
   CGFloat width = nextFrame.size.width;
   CGFloat height = nextFrame.size.height;
-  self.textContainer.containerSize = CGSizeMake(width, height);
-  [self setFrame:CGRectMake(nextFrame.origin.x, nextFrame.origin.y, width, height)];
+  self.textContainer.size = 
+      CGSizeMake(
+        width - paddingLeft - paddingRight, 
+        height - paddingBottom - paddingTop
+      );
+  self.paddingTop = paddingTop;
+  self.paddingLeft = paddingLeft;
+  [self setFrame:nextFrame];
 }
 
-- (void)brisk_insertNode:(NSView *)child position:(intnat)position {
-    assert(child);
-    assert(position);
+- (NSPoint)textContainerOrigin {
+  return NSMakePoint(self.paddingLeft,self.paddingTop);
+}
+
+- (void)brisk_insertNode:(NSView __unused *) child position:(intnat __unused) position {
+  @throw([NSException 
+          exceptionWithName:@"Cannot insert a node to a TextView" 
+          reason:@"Nesting views inside TextView is not supported" userInfo:nil]);
 }
 
 @end
@@ -69,11 +110,11 @@ void ml_BriskTextView_setTextContainerSize(BriskTextView *txt, double width, dou
 }
 
 double ml_BriskTextView_getTextWidth(BriskTextView *txt) {
-  return [txt.layoutManager usedRectForTextContainer:txt.textContainer].size.width + (txt.textContainerInset.width * 2);
+  return [txt.layoutManager usedRectForTextContainer:txt.textContainer].size.width;
 }
 
 double ml_BriskTextView_getTextHeight(BriskTextView *txt) {
-  return [txt.layoutManager usedRectForTextContainer:txt.textContainer].size.height + (txt.textContainerInset.height * 2);
+  return [txt.layoutManager usedRectForTextContainer:txt.textContainer].size.height;
 }
 
 CAMLprim value ml_BriskTextView_getTextWidth_bc(BriskTextView *txt) {
@@ -92,8 +133,8 @@ CAMLprim value ml_BriskTextView_setStringValue(BriskTextView *txt,
 
   NSString *str = [NSString stringWithUTF8String:String_val(str_v)];
 
-  [txt.attributedString.mutableString setString:str];
-  [txt applyTextStyle];
+  [txt.textStorage.mutableString setString:str];
+  [txt brisk_applyTextStyle];
 
   CAMLreturn(Val_unit);
 }
@@ -115,23 +156,6 @@ CAMLprim value ml_BriskTextView_setBackgroundColor_bc(BriskTextView *txt,
   ml_BriskTextView_setBackgroundColor(txt, Double_val(red_v),
                                       Double_val(blue_v), Double_val(green_v),
                                       Double_val(alpha_v));
-
-  CAMLreturn(Val_unit);
-}
-
-void ml_BriskTextView_setPadding(BriskTextView *txt, double left, double top,
-                                 __unused double right,
-                                 __unused double bottom) {
-  txt.textContainerInset = CGSizeMake(left, top);
-}
-
-CAMLprim value ml_BriskTextView_setPadding_bc(BriskTextView *txt, value left_v,
-                                              value top_v, value right_v,
-                                              value bottom_v) {
-  CAMLparam4(left_v, top_v, right_v, bottom_v);
-
-  ml_BriskTextView_setPadding(txt, Double_val(left_v), Double_val(top_v),
-                              Double_val(right_v), Double_val(bottom_v));
 
   CAMLreturn(Val_unit);
 }

@@ -18,6 +18,7 @@ type textStyle = [
   | `LineSpacing(float)
 ];
 
+let beginTextStyleChanges = BriskStylableText.beginChanges;
 let commitTextStyle = BriskStylableText.applyChanges;
 
 let setViewStyle = (view: view, attribute: [< viewStyle]) =>
@@ -92,12 +93,12 @@ let setTextStyle = (txt: text, attribute: [< textStyle]) =>
     setLineBreak(
       txt,
       switch (mode) {
-      | `WordWrap => 0
-      | `CharWrap => 1
-      | `Clip => 2
-      | `TruncateHead => 3
-      | `TruncateTale => 4
-      | `TruncateMiddle => 5
+      | `WordWrap => LineBreakMode.wordWrapping
+      | `CharWrap => LineBreakMode.charWrapping
+      | `Clip => LineBreakMode.clipping
+      | `TruncateHead => LineBreakMode.truncatingHead
+      | `TruncateTail => LineBreakMode.truncatingTail
+      | `TruncateMiddle => LineBreakMode.truncatingMiddle
       },
     )
   | `LineSpacing(spacing) => setLineSpacing(txt, spacing)

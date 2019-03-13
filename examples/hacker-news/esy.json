@@ -10,7 +10,8 @@
     "clean": "dune clean",
     "bundle": "dune build @bundle --only-packages hacker-news --root . --no-buffer --force",
     "run": "dune build @run --only-packages hacker-news --root . --no-buffer --force",
-    "watch": "esy run --watch"
+    "watch": "esy run --watch",
+    "open-xcode": "open ./_build/default/macos_app_bundle/project.xcodeproj"
   },
   "dependencies": {
     "@esy-ocaml/reason": ">=3.4.0",

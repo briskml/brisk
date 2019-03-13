@@ -2,10 +2,12 @@
 
 @protocol BriskStylableText
 
-@property(nonatomic, retain) NSMutableAttributedString *attributedString;
-@property(nonatomic, retain) NSMutableDictionary *attributedProps;
-@property(nonatomic, retain) NSMutableParagraphStyle *paragraphStyle;
+@property(nonatomic, retain) NSMutableParagraphStyle *brisk_paragraphStyle;
 
-- (void)applyTextStyle;
+- (void)brisk_addAttribute:(NSAttributedStringKey)attributeName value:(id)value;
+- (void)brisk_applyTextStyle;
+- (void)brisk_setLineBreakMode:(NSLineBreakMode)mode;
+@optional
+- (void)brisk_beginTextStyleChanges;
 
 @end

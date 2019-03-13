@@ -83,23 +83,34 @@ module UI = {
   };
 
   module Layout = {
+    let get0IfUndefined = x => {
+      let floatValue = x;
+      Layout.isUndefined(floatValue) ? 0. : floatValue;
+    }
+
     let rec traverseAndApply = (~flip, ~height, node: Layout.Node.flexNode) => {
       let layout = node.layout;
 
-      let nodeHeight = layout.height |> float_of_int;
-      let nodeTop = nodeHeight +. float_of_int(layout.top);
+      let nodeHeight = layout.height;
+      let nodeTop = nodeHeight +. layout.top;
 
       let top =
         flip
           ? height >= nodeTop ? height -. nodeTop : height
-          : float_of_int(layout.top);
+          : layout.top;
+
+      let style = node.style;
 
       BriskView.setFrame(
         node.context.view,
-        layout.left |> float_of_int,
+        layout.left,
         top,
-        layout.width |> float_of_int,
+        layout.width,
         nodeHeight,
+        style.paddingLeft |> get0IfUndefined,
+        style.paddingRight |> get0IfUndefined,
+        style.paddingBottom |> get0IfUndefined,
+        style.paddingTop |> get0IfUndefined,
       );
 
       let flip = !node.context.isYAxisFlipped;
@@ -113,11 +124,12 @@ module UI = {
       let node = root.layoutNode.container;
       let flip = node.context.isYAxisFlipped;
 
+
       Layout.FlexLayout.(
         layoutNode(
           node,
-          Flex.FixedEncoding.cssUndefined,
-          Flex.FixedEncoding.cssUndefined,
+          Layout.cssUndefined,
+          Layout.cssUndefined,
           Ltr,
         )
       );

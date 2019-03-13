@@ -16,6 +16,11 @@
     "pkg-config": "briskml/pkg-config"
   },
   "devDependencies": {
-    "@reason-native/rely": "*"
+    "@reason-native/rely": "*",
+    "@opam/merlin": "^3.2.2"
+  },
+  "resolutions": {
+    "@brisk/core": "link-dev:../core",
+    "brisk-reconciler": "briskml/brisk-reconciler#be325c5"
   }
 }

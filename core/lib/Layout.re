@@ -76,7 +76,7 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
       | `CharWrap
       | `Clip
       | `TruncateHead
-      | `TruncateTale
+      | `TruncateTail
       | `TruncateMiddle
     ];
 
@@ -257,47 +257,47 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
       {
         ...style,
         positionType,
-        left: !isUndefined(left) ? int_of_scalar(left) : style.left,
-        top: !isUndefined(top) ? int_of_scalar(top) : style.top,
-        right: !isUndefined(right) ? int_of_scalar(right) : style.right,
-        bottom: !isUndefined(bottom) ? int_of_scalar(bottom) : style.bottom,
+        left: !isUndefined(left) ? left : style.left,
+        top: !isUndefined(top) ? top : style.top,
+        right: !isUndefined(right) ? right : style.right,
+        bottom: !isUndefined(bottom) ? bottom : style.bottom,
       };
-    | `Flex(f) => {...style, flex: int_of_scalar(f)}
+    | `Flex(flex) => {...style, flex}
     | `FlexDirection(flexDirection) => {...style, flexDirection}
-    | `FlexGrow(f) => {...style, flexGrow: int_of_scalar(f)}
-    | `FlexShrink(f) => {...style, flexShrink: int_of_scalar(f)}
-    | `FlexBasis(f) => {...style, flexBasis: int_of_scalar(f)}
+    | `FlexGrow(flexGrow) => {...style, flexGrow}
+    | `FlexShrink(flexShrink) => {...style, flexShrink}
+    | `FlexBasis(flexBasis) => {...style, flexBasis}
     | `JustifyContent(justifyContent) => {...style, justifyContent}
     | `AlignContent(alignContent) => {...style, alignContent}
     | `AlignItems(alignItems) => {...style, alignItems}
     | `AlignSelf(alignSelf) => {...style, alignSelf}
-    | `Width(w) => {...style, width: int_of_scalar(w)}
-    | `Height(h) => {...style, height: int_of_scalar(h)}
+    | `Width(w) => {...style, width: w}
+    | `Height(h) => {...style, height: h}
     | `Overflow(overflow) => {...style, overflow}
     | `Border({Border.width, _}) => {
         ...style,
-        border: !isUndefined(width) ? int_of_scalar(width) : style.border,
+        border: !isUndefined(width) ? width : style.border,
       }
     | `Padding({left, top, right, bottom}) => {
         ...style,
         paddingLeft:
-          !isUndefined(left) ? int_of_scalar(left) : style.paddingLeft,
+          !isUndefined(left) ? left : style.paddingLeft,
         paddingTop:
-          !isUndefined(top) ? int_of_scalar(top) : style.paddingTop,
+          !isUndefined(top) ? top : style.paddingTop,
         paddingRight:
-          !isUndefined(right) ? int_of_scalar(right) : style.paddingRight,
+          !isUndefined(right) ? right : style.paddingRight,
         paddingBottom:
-          !isUndefined(bottom) ? int_of_scalar(bottom) : style.paddingBottom,
+          !isUndefined(bottom) ? bottom : style.paddingBottom,
       }
     | `Margin({left, top, right, bottom}) => {
         ...style,
         marginLeft:
-          !isUndefined(left) ? int_of_scalar(left) : style.marginLeft,
-        marginTop: !isUndefined(top) ? int_of_scalar(top) : style.marginTop,
+          !isUndefined(left) ? left : style.marginLeft,
+        marginTop: !isUndefined(top) ? top : style.marginTop,
         marginRight:
-          !isUndefined(right) ? int_of_scalar(right) : style.marginRight,
+          !isUndefined(right) ? right : style.marginRight,
         marginBottom:
-          !isUndefined(bottom) ? int_of_scalar(bottom) : style.marginBottom,
+          !isUndefined(bottom) ? bottom : style.marginBottom,
       }
     | _ => style
     };
@@ -367,4 +367,10 @@ module Create = (Node: Flex.Spec.Node, Encoding: Flex.Spec.Encoding) => {
       markDirtyInternal(node);
     };
   };
+
+  let get0IfUndefined = x => {
+    isUndefined(x) ? Encoding.zero : x;
+  }
+
+  let cssUndefined = Encoding.cssUndefined;
 };

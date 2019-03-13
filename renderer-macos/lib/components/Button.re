@@ -28,6 +28,7 @@ let component = {
             {view, layoutNode};
           },
           configureInstance: (~isFirstRender as _, {view} as node) => {
+            Styles.beginTextStyleChanges(view);
             style
             |> List.iter(attribute =>
                  switch (attribute) {

@@ -9,7 +9,7 @@
     "@esy-ocaml/reason": ">=3.4.0",
     "@opam/color": "^0.2.0",
     "@opam/dune": "^1.7.2",
-    "flex": "^1.2.2",
+    "flex": "briskml/flex#7042e49",
     "ocaml": "~4.7.1000"
   }
 }

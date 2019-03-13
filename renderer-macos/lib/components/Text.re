@@ -16,32 +16,39 @@ let shouldMeasureForMode =
 
 let maxContainerSizeForMode = (mode, size) =>
   switch (mode) {
-  | Exactly => float_of_int(size)
+  | Exactly => size
   | CSS_MEASURE_MODE_NEGATIVE_ONE_WHATEVER_THAT_MEANS =>
     raise(Invalid_argument("not implemented"))
   | Undefined => max_float
-  | AtMost => float_of_int(size)
+  | AtMost => size
   };
 
 let measure = (node, width, widthMode, height, heightMode) => {
   let shouldCalculateWidth = shouldMeasureForMode(widthMode);
   let shouldCalculateHeight = shouldMeasureForMode(heightMode);
   if (shouldCalculateWidth || shouldCalculateHeight) {
-    let containerWidth = maxContainerSizeForMode(widthMode, width) -. 1.;
+    let containerWidth = maxContainerSizeForMode(widthMode, width);
     let containerHeight = maxContainerSizeForMode(heightMode, height);
     BriskTextView.setTextContainerSize(
       node.context.view,
       containerWidth,
       containerHeight,
     );
+    let paddingHorizontal =
+      Layout.get0IfUndefined(node.style.paddingLeft)
+      +. Layout.get0IfUndefined(node.style.paddingRight);
+    let paddingVertical =
+      Layout.get0IfUndefined(node.style.paddingTop)
+      +. Layout.get0IfUndefined(node.style.paddingBottom);
     {
       width:
         shouldCalculateWidth
-          ? int_of_float(BriskTextView.getTextWidth(node.context.view)) + 1
+          ? BriskTextView.getTextWidth(node.context.view)
+            +. paddingHorizontal
           : width,
       height:
         shouldCalculateHeight
-          ? BriskTextView.getTextHeight(node.context.view) |> int_of_float
+          ? BriskTextView.getTextHeight(node.context.view) +. paddingVertical
           : height,
     };
   } else {
@@ -72,8 +79,6 @@ let component = {
             style
             |> List.iter(attribute =>
                  switch (attribute) {
-                 | `Padding({left, top, right, bottom}) =>
-                   BriskTextView.setPadding(view, left, top, right, bottom)
                  | `Background(({r, g, b, a}: Color.t)) =>
                    BriskTextView.setBackgroundColor(view, r, g, b, a)
                  | #Styles.viewStyle as attr =>

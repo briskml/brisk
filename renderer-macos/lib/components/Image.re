@@ -9,8 +9,8 @@ let measure = (node, _, _, _, _) => {
 
   let {context: {view: img}}: node = node;
 
-  let width = BriskImage.getImageWidth(img) |> int_of_float;
-  let height = BriskImage.getImageHeight(img) |> int_of_float;
+  let width = BriskImage.getImageWidth(img);
+  let height = BriskImage.getImageHeight(img);
 
   {width, height};
 };

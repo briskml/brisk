@@ -16,7 +16,7 @@
   "dependencies": {
     "@esy-ocaml/reason": ">=3.4.0",
     "@brisk/macos": "*",
-    "@opam/dune": "^1.7.2",
+    "@opam/dune": "^1.8.2",
     "@opam/httpkit-lwt": "*",
     "ocaml": "~4.7.1000",
     "graphql_ppx": "briskml/graphql_ppx#ee86d23",

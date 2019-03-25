@@ -19,6 +19,8 @@ external getTextHeight: t => [@unboxed] float =
 external setStringValue: (t, string) => unit =
   "ml_BriskTextView_setStringValue";
 
+[@noalloc] external setHtml: (t, string) => unit = "ml_BriskTextView_setHtml";
+
 [@noalloc]
 external setBackgroundColor:
   (
@@ -32,9 +34,21 @@ external setBackgroundColor:
   "ml_BriskTextView_setBackgroundColor_bc"
   "ml_BriskTextView_setBackgroundColor";
 
-let make = str => {
+[@noalloc]
+external setSelectable: (t, [@untagged] int) => unit =
+  "ml_BriskTextView_setSelectable_bc" "ml_BriskTextView_setSelectable";
+
+let setSelectable = (txt, selectable) =>
+  setSelectable(txt, selectable ? 1 : 0);
+
+let make = (~html=false, str) => {
   let txt = make();
 
-  setStringValue(txt, str);
+  if (html) {
+    setHtml(txt, str);
+  } else {
+    setStringValue(txt, str);
+  };
+
   txt;
 };

@@ -43,8 +43,7 @@ let measure = (node, width, widthMode, height, heightMode) => {
     {
       width:
         shouldCalculateWidth
-          ? BriskTextView.getTextWidth(node.context.view)
-            +. paddingHorizontal
+          ? BriskTextView.getTextWidth(node.context.view) +. paddingHorizontal
           : width,
       height:
         shouldCalculateHeight
@@ -58,13 +57,20 @@ let measure = (node, width, widthMode, height, heightMode) => {
 
 let component = {
   let component = nativeComponent("text");
-  (~style: style=[], ~value, ~children as _: list(unit), ()) =>
+  (
+    ~style: style=[],
+    ~selectable=false,
+    ~html=false,
+    ~value,
+    ~children as _: list(unit),
+    (),
+  ) =>
     component(hooks =>
       (
         hooks,
         {
           make: () => {
-            let view = BriskTextView.make(value);
+            let view = BriskTextView.make(~html, value);
             let layoutNode =
               Layout.Node.make(
                 ~measure,
@@ -76,6 +82,9 @@ let component = {
           },
           configureInstance: (~isFirstRender as _, {view} as node) => {
             open Layout;
+
+            BriskTextView.setSelectable(view, selectable);
+
             style
             |> List.iter(attribute =>
                  switch (attribute) {

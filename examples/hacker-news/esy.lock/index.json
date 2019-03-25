@@ -1,5 +1,5 @@
 {
-  "checksum": "9855f05de07085e145ece80d0f4d6003",
+  "checksum": "17507738a130ed1cfc39ed4dcd734a80",
   "root": "hacker-news@link-dev:./esy.json",
   "node": {
     "xcpretty@0.2.8001@d41d8cd9": {
@@ -253,6 +253,34 @@
         "ocaml@4.7.1004@d41d8cd9", "@opam/ppxlib@opam:0.5.0@674193ca",
         "@opam/ocaml-migrate-parsetree@opam:1.2.0@23e55f71",
         "@opam/base@opam:v0.11.1@6ff71eb3"
+      ]
+    },
+    "@opam/uutf@opam:1.0.2@4440868f": {
+      "id": "@opam/uutf@opam:1.0.2@4440868f",
+      "name": "@opam/uutf",
+      "version": "opam:1.0.2",
+      "source": {
+        "type": "install",
+        "source": [
+          "archive:https://opam.ocaml.org/cache/md5/a7/a7c542405a39630c689a82bd7ef2292c#md5:a7c542405a39630c689a82bd7ef2292c",
+          "archive:http://erratique.ch/software/uutf/releases/uutf-1.0.2.tbz#md5:a7c542405a39630c689a82bd7ef2292c"
+        ],
+        "opam": {
+          "name": "uutf",
+          "version": "1.0.2",
+          "path": "esy.lock/opam/uutf.1.0.2"
+        }
+      },
+      "overrides": [],
+      "dependencies": [
+        "ocaml@4.7.1004@d41d8cd9", "@opam/uchar@opam:0.0.2@c8218eea",
+        "@opam/topkg@opam:1.0.0@61f4ccf9",
+        "@opam/ocamlfind@opam:1.8.0@f744a0c5",
+        "@opam/ocamlbuild@opam:0.14.0@427a2331",
+        "@esy-ocaml/substs@0.0.1@d41d8cd9"
+      ],
+      "devDependencies": [
+        "ocaml@4.7.1004@d41d8cd9", "@opam/uchar@opam:0.0.2@c8218eea"
       ]
     },
     "@opam/uri@opam:2.2.0@dfca6d0f": {
@@ -2119,6 +2147,33 @@
       ],
       "devDependencies": [ "ocaml@4.7.1004@d41d8cd9" ]
     },
+    "@opam/markup@opam:0.8.0@e4958f14": {
+      "id": "@opam/markup@opam:0.8.0@e4958f14",
+      "name": "@opam/markup",
+      "version": "opam:0.8.0",
+      "source": {
+        "type": "install",
+        "source": [
+          "archive:https://opam.ocaml.org/cache/md5/be/be0e44a8e8a540f633996e0e26109b4d#md5:be0e44a8e8a540f633996e0e26109b4d",
+          "archive:https://github.com/aantron/markup.ml/archive/0.8.0.tar.gz#md5:be0e44a8e8a540f633996e0e26109b4d"
+        ],
+        "opam": {
+          "name": "markup",
+          "version": "0.8.0",
+          "path": "esy.lock/opam/markup.0.8.0"
+        }
+      },
+      "overrides": [],
+      "dependencies": [
+        "ocaml@4.7.1004@d41d8cd9", "@opam/uutf@opam:1.0.2@4440868f",
+        "@opam/uchar@opam:0.0.2@c8218eea", "@opam/dune@opam:1.8.2@511996a8",
+        "@esy-ocaml/substs@0.0.1@d41d8cd9"
+      ],
+      "devDependencies": [
+        "ocaml@4.7.1004@d41d8cd9", "@opam/uutf@opam:1.0.2@4440868f",
+        "@opam/uchar@opam:0.0.2@c8218eea"
+      ]
+    },
     "@opam/lwt_ppx@opam:1.2.2@946c5ba2": {
       "id": "@opam/lwt_ppx@opam:1.2.2@946c5ba2",
       "name": "@opam/lwt_ppx",
@@ -3256,6 +3311,7 @@
         "pkg-config@archive:https://pkgconfig.freedesktop.org/releases/pkg-config-0.29.2.tar.gz#sha1:76e501663b29cb7580245720edfb6106164fad2b@6c89142d",
         "ocaml@4.7.1004@d41d8cd9",
         "brisk-reconciler@github:briskml/brisk-reconciler#be325c5@d41d8cd9",
+        "@opam/markup@opam:0.8.0@e4958f14",
         "@opam/lwt_ppx@opam:1.2.2@946c5ba2", "@opam/lwt@opam:4.2.0@3edaca61",
         "@opam/dune@opam:1.8.2@511996a8", "@esy-ocaml/reason@3.4.0@d41d8cd9",
         "@brisk/core@link:../../core"

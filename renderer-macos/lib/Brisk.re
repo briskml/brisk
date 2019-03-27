@@ -30,17 +30,11 @@ module OutputTree = {
     layoutNode: Layout.Node.t,
   };
 
-  let instanceMap: Hashtbl.t(int, node) = Hashtbl.create(1000);
-
   let isDirty = ref(false);
 
   let markAsStale = () => {
     isDirty := true;
   };
-
-  let beginChanges = () => ();
-
-  let commitChanges = () => ();
 
   let insertNode = (~parent: node, ~child: node, ~position: int) => {
     open Layout.Node;

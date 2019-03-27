@@ -34,3 +34,7 @@ module Clickable = Clickable;
 let clickable = Clickable.component;
 module EffectView = EffectView;
 let effectView = EffectView.component;
+module Toolbar = Toolbar;
+let toolbar = Toolbar.toolbar;
+module SegmentedControl = SegmentedControl;
+let segmentedControl = SegmentedControl.segmentedControl;

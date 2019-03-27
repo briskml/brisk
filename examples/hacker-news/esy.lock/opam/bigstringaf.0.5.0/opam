@@ -6,12 +6,12 @@ homepage: "https://github.com/inhabitedtype/bigstringaf"
 bug-reports: "https://github.com/inhabitedtype/bigstringaf/issues"
 dev-repo: "git+https://github.com/inhabitedtype/bigstringaf.git"
 build: [
-  ["jbuilder" "subst" "-p" name] {pinned}
-  ["jbuilder" "build" "-p" name "-j" jobs]
-  ["jbuilder" "runtest" "-p" name] {with-test}
+  ["dune" "subst"] {pinned}
+  ["dune" "build" "-p" name "-j" jobs]
+  ["dune" "runtest" "-p" name] {with-test}
 ]
 depends: [
-  "jbuilder" {build & >= "1.0+beta10"}
+  "dune" {build}
   "alcotest" {with-test}
   "base-bigarray"
   "ocaml" {>= "4.03.0"}
@@ -37,7 +37,6 @@ Bigstrings and other string-like types.
 So here they are. Go crazy.
 """
 url {
-  src:
-    "https://github.com/inhabitedtype/bigstringaf/releases/download/0.4.0/bigstringaf-0.4.0.tbz"
-  checksum: "md5=d1ff1ab40aad48627686f9b8c02d985a"
+  src: "https://github.com/inhabitedtype/bigstringaf/archive/0.5.0.tar.gz"
+  checksum: "md5=e6b5e7eb0469ef21b27d1c66feeac356"
 }

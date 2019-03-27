@@ -47,6 +47,8 @@ external contentHeight: window => [@unboxed] float =
   "ml_NSWindow_contentHeight_bc" "ml_NSWindow_contentHeight";
 external setOnWindowDidResize: (window, unit => unit) => unit =
   "ml_NSWindow_setOnWindowDidResize";
+external setToolbar: (window, BriskToolbar.t) => unit =
+  "ml_NSWindow_setToolbar_bc" "ml_NSWindow_setToolbar";
 
 let make =
     (
@@ -68,13 +70,10 @@ let make =
   | None => ()
   };
 
-  let contentView =
-    switch (contentView) {
-    | Some(view) => view
-    | None => BriskView.make()
-    };
-
-  setContentView(win, contentView);
+  switch (contentView) {
+  | Some(view) => setContentView(win, view)
+  | None => ()
+  };
 
   let isFullSize =
     switch (contentIsFullSize) {

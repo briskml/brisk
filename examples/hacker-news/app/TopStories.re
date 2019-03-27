@@ -85,15 +85,18 @@ let formatDetails = (~username, ~score, ~commentCount, ~url) => {
 };
 
 let story =
-    (~story as {story, timeAgo}, ~index, ~children as _: list(unit), ()) =>
+    (
+      ~story as {story, timeAgo},
+      ~index,
+      ~onClick,
+      ~children as _: list(unit),
+      (),
+    ) =>
   Brisk_macos.(
     Brisk.Layout.(
-      <view style=[height(47.), background(Color.hex("#FFFFFF"))]>
-        <view
-          style=[
-            alignItems(`Center),
-            flexDirection(`Row),
-          ]>
+      <clickable
+        onClick style=[height(47.), background(Color.hex("#FFFFFF"))]>
+        <view style=[alignItems(`Center), flexDirection(`Row)]>
           <text
             style=[
               height(20.),
@@ -119,9 +122,9 @@ let story =
               />
             </view>
             <text
-              style=Brisk.Layout.[color(Color.hex("#888888")),
-                  border(~width=1., ~color=Color.hex("#000000"), ()),
-              
+              style=Brisk.Layout.[
+                color(Color.hex("#888888")),
+                border(~width=1., ~color=Color.hex("#000000"), ()),
               ]
               value={formatDetails(
                 ~username=story.by.id,
@@ -133,7 +136,7 @@ let story =
           </view>
           <text value=timeAgo />
         </view>
-      </view>
+      </clickable>
     )
   );
 
@@ -221,34 +224,35 @@ let fetchStories = (~offset, ~pageSize) => {
 
   GraphQLClient.get(query#query, ~variables=query#variables, parser);
 };
-
 let component = {
   open Brisk_macos;
   open Core_kernel.Sequence;
   let component = Brisk.component("TopStories");
-  component(hooks => {
-    let (stories, loadNextPage, hooks) = paging(fetchStories, 30, hooks);
-    (
-      hooks,
-      <scrollView
-        onReachedEnd=loadNextPage
-        style=Brisk.Layout.[
-          flex(1.),
-          background(Color.hex("#fff")),
-        ]>
-        ...{
-             stories
-             |> getResultList
-             |> List.rev
-             |> of_list
-             |> map(~f=of_list)
-             |> concat
-             |> mapi(~f=(index, astory) =>
-                  <story story=astory index={index + 1} />
-                )
-             |> to_list
-           }
-      </scrollView>,
-    );
-  });
+  (~children as _: list(unit), ~showDetails, ()) =>
+    component(hooks => {
+      let (stories, loadNextPage, hooks) = paging(fetchStories, 30, hooks);
+      (
+        hooks,
+        <scrollView
+          onReachedEnd=loadNextPage
+          style=Brisk.Layout.[flex(1.), background(Color.hex("#fff"))]>
+          ...{
+               stories
+               |> getResultList
+               |> List.rev
+               |> of_list
+               |> map(~f=of_list)
+               |> concat
+               |> mapi(~f=(index, astory) =>
+                    <story
+                      story=astory
+                      index={index + 1}
+                      onClick={() => showDetails(astory)}
+                    />
+                  )
+               |> to_list
+             }
+        </scrollView>,
+      );
+    });
 };

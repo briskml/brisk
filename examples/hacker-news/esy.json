@@ -23,7 +23,7 @@
     "@opam/core_kernel": "v0.11.1"
   },
   "devDependencies": {
-    "@opam/merlin": "^3.2.2",
+    "@opam/merlin-lsp": "ocaml/merlin:merlin-lsp.opam#7cccd4f",
     "xcodegen": ">=2.2.0",
     "xcpretty": "^0.2.8"
   },
@@ -35,6 +35,7 @@
     "@opam/httpkit": "ostera/httpkit:httpkit.opam#5fd8ed4",
     "@opam/httpaf": "anmonteiro/httpaf:httpaf.opam#57e9dd2",
     "@opam/httpaf-lwt": "anmonteiro/httpaf:httpaf-lwt.opam#57e9dd2",
-    "@opam/zarith": "briskml/zarith#3fe8bfc"
+    "@opam/zarith": "briskml/zarith#3fe8bfc",
+    "@opam/yojson": "1.7.0"
   }
 }

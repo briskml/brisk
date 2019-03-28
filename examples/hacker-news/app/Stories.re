@@ -1,7 +1,7 @@
 let details =
     (
       ~children as _: list(unit),
-      ~story as _: StoryList.storyWithRelativeTime,
+      ~story as _: Story.storyWithRelativeTime,
       ~back as _: unit => unit,
       (),
     ) => Brisk_macos.Brisk.empty;
@@ -28,12 +28,19 @@ module StoryType = {
 
     type stories('a) = {hn: option('a)};
 
-    open StoryList;
+    open Story;
     module Top = [%graphql
       {|query stories($offset: Int!, $limit: Int!) {
   hn @bsRecord {
    topStories(offset: $offset, limit: $limit) {
      ... on Story @bsRecord {
+       kids @bsRecord {
+         text
+         by @bsRecord {
+	        id
+         }
+         time
+       }
        title
        url
        score
@@ -58,6 +65,13 @@ module StoryType = {
   hn @bsRecord {
    showStories(offset: $offset, limit: $limit) {
      ... on Story @bsRecord {
+       kids @bsRecord {
+         text
+         by @bsRecord {
+	        id
+         }
+         time
+       }
        title
        url
        score
@@ -82,6 +96,13 @@ module StoryType = {
   hn @bsRecord {
    jobStories(offset: $offset, limit: $limit) {
      ... on Story @bsRecord {
+       kids @bsRecord {
+         text
+         by @bsRecord {
+	        id
+         }
+         time
+       }
        title
        url
        score
@@ -106,6 +127,13 @@ module StoryType = {
   hn @bsRecord {
    newStories(offset: $offset, limit: $limit) {
      ... on Story @bsRecord {
+       kids @bsRecord {
+         text
+         by @bsRecord {
+	        id
+         }
+         time
+       }
        title
        url
        score
@@ -206,7 +234,8 @@ let component = {
                     <flexibleSpace />
                     <item>
                       <button
-                        style={[Brisk.Layout.width(100.)]}
+                        onClick={() => setSelectedStory(None)}
+                        style=[Brisk.Layout.width(100.)]
                         image={`System(`LeftFacingTriangleTemplate)}
                         bezel=Cocoa.BriskButton.BezelStyle.TexturedRounded
                       />
@@ -220,13 +249,17 @@ let component = {
         );
       (
         hooks,
-        StoryList.(
-          <component
-            showDetails={astory => setSelectedStory(Some(astory))}
-            resource={StoryType.toString(selectedStoryType)}
-            makeQuery={StoryType.Query.make(~storyType=selectedStoryType)}
-          />
-        ),
+        switch (selectedStory) {
+        | None =>
+          StoryList.(
+            <component
+              showDetails={astory => setSelectedStory(Some(astory))}
+              resource={StoryType.toString(selectedStoryType)}
+              makeQuery={StoryType.Query.make(~storyType=selectedStoryType)}
+            />
+          )
+        | Some(story) => StoryDetails.(<details story />)
+        },
       );
     });
 };

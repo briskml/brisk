@@ -1,63 +1,8 @@
-type by = {id: string};
-
-type story = {
-  title: string,
-  url: option(string),
-  score: int,
-  by,
-  time: int,
-  descendants: int,
-};
-
-type storyWithRelativeTime = {
-  story,
-  timeAgo: string,
-};
-
-type poll = {title: string};
-type job = poll;
-
-type stories = array([ | `Poll(poll) | `Story(story) | `Job(job)]);
-
-let timeAgoSince = date => {
-  Format.sprintf(
-    "%s ago",
-    Core_kernel.Time.(diff(now(), date) |> Span.to_string),
-  );
-};
-
-let formatUrl = {
-  let regex = Re.seq([Re.start, Re.str("www.")]) |> Re.compile;
-  fun
-  | Some(url) => {
-      switch (Uri.host(Uri.of_string(url))) {
-      | Some(url) when Re.execp(regex, url) =>
-        Some(String.sub(url, 4, String.length(url) - 4))
-      | Some(url) => Some(url)
-      | None => None
-      };
-    }
-  | None => None;
-};
-
-let formatDetails = (~username, ~score, ~commentCount, ~url) => {
-  let commonDetails =
-    Format.sprintf(
-      "%i points | %i comments | by %s",
-      score,
-      commentCount,
-      username,
-    );
-  switch (formatUrl(url)) {
-  | Some(str) => Format.sprintf("%s | source: %s", commonDetails, str)
-
-  | None => commonDetails
-  };
-};
+type stories = array([ | `Poll(Story.poll) | `Story(Story.story) | `Job(Story.job)]);
 
 let story =
     (
-      ~story as {story, timeAgo},
+      ~story as {Story.story, timeAgo},
       ~index,
       ~onClick,
       ~children as _: list(unit),
@@ -95,7 +40,7 @@ let story =
               style=Brisk.Layout.[
                 color(Color.hex("#888888")),
               ]
-              value={formatDetails(
+              value={Story.formatDetails(
                 ~username=story.by.id,
                 ~score=story.score,
                 ~commentCount=story.descendants,
@@ -140,9 +85,9 @@ let fetchStories =
       |> getStories
       |> List.map(story =>
            {
-             story,
+             Story.story,
              timeAgo:
-               timeAgoSince(
+               Story.timeAgoSince(
                  Core_kernel.Time.(
                    of_span_since_epoch(Span.of_int_sec(story.time))
                  ),

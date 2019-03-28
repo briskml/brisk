@@ -1,5 +1,9 @@
 module Error: {type t;};
 
-let get:
-  (string, ~variables: Yojson.Basic.t, Yojson.Basic.t => 'a) =>
-  Lwt_result.t('a, Error.t);
+type query('a) = {
+  parse: Yojson.Basic.t => 'a,
+  variables: Yojson.Basic.t,
+  query: string,
+};
+
+let get: query('a) => Lwt_result.t('a, Error.t);

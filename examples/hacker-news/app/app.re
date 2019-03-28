@@ -40,7 +40,7 @@ let () = {
       Toolbar.Reconciler.RenderedElement.executeHostViewUpdates(toolbar^),
     );
 
-    let _renderToolbar = nextToolbar => {
+    let renderToolbar = nextToolbar => {
       toolbar :=
         Toolbar.Reconciler.RenderedElement.update(
           ~previousElement=prevToolbar^,
@@ -71,7 +71,7 @@ let () = {
     UI.renderAndMount(
       ~height=Window.contentHeight(window),
       root,
-      Stories.(<component /* renderToolbar */ />),
+      Stories.(<component renderToolbar />),
     );
 
     RunLoop.spawn();

@@ -14,13 +14,14 @@ module Item = {
   external setOnClick: (t, unit => unit) => unit =
     "ml_NSSegmentedControl_Item_setOnClick_bc"
     "ml_NSSegmentedControl_Item_setOnClick";
+  let setOnClick = (item, handler) =>
+    setOnClick(item, UIEventCallback.make(handler));
 };
 
 type t = CocoaTypes.view;
 
 external make: unit => t =
-  "ml_NSSegmentedControl_make_bc"
-  "ml_NSSegmentedControl_make";
+  "ml_NSSegmentedControl_make_bc" "ml_NSSegmentedControl_make";
 
 external insertItem: (t, Item.t, [@untagged] int) => unit =
   "ml_NSSegmentedControl_insertItem_bc" "ml_NSSegmentedControl_insertItem";

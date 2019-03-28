@@ -42,36 +42,32 @@ let readResponse = responseBody => {
   readerPromise |> Lwt_result.catch;
 };
 
-let get = (query, ~variables, parse) => {
+type query('a) = {
+  parse: Yojson.Basic.t => 'a,
+  variables: Yojson.Basic.t,
+  query: string,
+};
+
+let get = ({variables, query, parse}: query('a)) => {
   open Httpkit_client;
   let uri =
     Uri.add_query_params'(
-      Uri.of_string("http://brisk-graphqlhub.herokuapp.com/graphql"),
+      Uri.of_string("http://localhost:3000/graphql"),
       [("query", query), ("variables", Yojson.Basic.to_string(variables))],
     );
   let request = Request.create(`POST, uri);
   Httpkit_lwt_client.(
-    Lwt.Infix.(
+    Lwt_result.Infix.(
       Http.send(request)
+      |> Lwt_result.map_err(ignore)
       >>= (
-        fun
-        | Ok((_, body)) => {
-            readResponse(body)
-            |> Lwt_result.map(x =>
-                 switch (parse(x)) {
-                 | exception x =>
-                   Printexc.to_string(x) |> print_endline;
-                   raise(x);
-                 | x => x
-                 }
-               )
-            |> Lwt_result.map_err(exc =>
-                 Printexc.to_string(exc) |> print_endline
-               );
-          }
-        | Error(_) => {
-            Lwt_result.fail();
-          }
+        ((_, body)) =>
+          Lwt_result.bind(readResponse(body), json => {
+            switch (parse(json)) {
+            | exception exc => Lwt_result.fail(exc)
+            | x => Lwt_result.return(x)
+            }
+          }) |> Lwt_result.map_err(ignore)
       )
     )
   );

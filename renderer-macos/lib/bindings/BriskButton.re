@@ -10,16 +10,37 @@ type buttonType =
   | OnOff
   | MomentaryPushIn;
 
-type bezelStyle =
-  | Rounded
-  | RegularSquare
-  | ThickSquare
-  | ThickerSquare
-  | Disclosure
-  | ShadowlessSquare
-  | Circular
-  | TexturedSquare
-  | HelpButton;
+module BezelStyle = {
+  type t =
+    | Rounded
+    | RegularSquare
+    | Disclosure
+    | ShadowlessSquare
+    | Circular
+    | TexturedSquare
+    | HelpButton
+    | SmallSquare
+    | TexturedRounded
+    | RoundedRect
+    | Recessed
+    | RoundedDisclosure
+    | Inline;
+
+  let rawValue = fun
+    | Rounded => 1
+    | RegularSquare => 2
+    | Disclosure => 5
+    | ShadowlessSquare => 6
+    | Circular => 7
+    | TexturedSquare => 8
+    | HelpButton => 9
+    | SmallSquare => 10
+    | TexturedRounded => 11
+    | RoundedRect => 12
+    | Recessed => 13
+    | RoundedDisclosure => 14
+    | Inline => 15;
+};
 
 [@noalloc] external make: unit => t = "ml_BriskButton_make";
 
@@ -32,7 +53,7 @@ external setButtonType: (t, buttonType) => unit =
   "ml_BriskButton_setButtonType_bc" "ml_BriskButton_setButtonType";
 
 [@noalloc]
-external setBezelStyle: (t, bezelStyle) => unit =
+external setBezelStyle: (t, [@untagged] int) => unit =
   "ml_BriskButton_setBezelStyle_bc" "ml_BriskButton_setBezelStyle";
 
 [@noalloc]
@@ -52,7 +73,7 @@ let make = (~type_=?, ~bezel=?, ~title=?, ~onClick=?, ()) => {
   };
 
   switch (bezel) {
-  | Some(bezelStyle) => setBezelStyle(btn, bezelStyle)
+  | Some(bezelStyle) => setBezelStyle(btn, BezelStyle.rawValue(bezelStyle))
   | None => ()
   };
 

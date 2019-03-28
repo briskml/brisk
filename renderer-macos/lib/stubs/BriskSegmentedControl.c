@@ -74,7 +74,6 @@ CAMLprim value ml_NSSegmentedControl_Item_setOnClick(
 
 - (void)didSelect:(NSSegmentedControl *)sender {
     value onClick = [self.items[sender.selectedSegment] onClick];
-    [self.contentView setSelected:YES forSegment:sender.selectedSegment];
     if (onClick) {
         brisk_caml_call(onClick);
     }
@@ -99,7 +98,6 @@ CAMLprim value ml_NSSegmentedControl_Item_setOnClick(
                       ofObject:(id)object
                         change:(NSDictionary __unused *)change
                        context:(void __unused *)context {
-    NSLog(@"%i", [object isSelected]);
     [self.contentView setSelected:[object isSelected]
                        forSegment:[self.items indexOfObject:object]];
 }

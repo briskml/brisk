@@ -11,7 +11,6 @@
                     BriskApplicationDelegate
                     BriskWindowDelegate
                     BriskStylableText
-                    BriskViewable
                     )
  (c_names BriskCocoa
           BriskApplication BriskApplicationDelegate
@@ -28,6 +27,7 @@
           BriskEffectView
           BriskSegmentedControl
           BriskToolbar
+          BriskViewable
           )
  (c_flags (:standard
           -Wextra -Wall -Werror -O -g -std=c99 -pedantic-errors -Wsign-compare -Wshadow

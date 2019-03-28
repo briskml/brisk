@@ -5,7 +5,8 @@ type t = CocoaTypes.view;
 external insertSubview: (t, t, [@untagged] int) => unit =
   "ml_BriskView_insertSubview_bc" "ml_BriskView_insertSubview";
 
-[@noalloc] external removeSubview: t => unit = "ml_BriskView_removeSubview";
+[@noalloc]
+external removeSubview: (t, t) => unit = "ml_BriskView_removeSubview";
 
 [@noalloc]
 external setFrame:

@@ -28,6 +28,31 @@ let () = {
 
     Window.setTitleIsHidden(window, true);
 
+    let prevToolbar = Toolbar.(ref(<toolbar />));
+    let toolbar =
+      Toolbar.Reconciler.RenderedElement.render(
+        Toolbar.OutputTree.Window(window),
+        prevToolbar^,
+      )
+      |> Toolbar.Reconciler.RenderedElement.executePendingEffects
+      |> ref;
+    ignore(
+      Toolbar.Reconciler.RenderedElement.executeHostViewUpdates(toolbar^),
+    );
+
+    let _renderToolbar = nextToolbar => {
+      toolbar :=
+        Toolbar.Reconciler.RenderedElement.update(
+          ~previousElement=prevToolbar^,
+          nextToolbar,
+          ~renderedElement=toolbar^
+        )
+        |> Toolbar.Reconciler.RenderedElement.executePendingEffects;
+      ignore(
+        Toolbar.Reconciler.RenderedElement.executeHostViewUpdates(toolbar^),
+      );
+      prevToolbar := nextToolbar;
+    };
 
     let root = {
       open Brisk.Layout;
@@ -46,7 +71,7 @@ let () = {
     UI.renderAndMount(
       ~height=Window.contentHeight(window),
       root,
-      Stories.component,
+      Stories.(<component /* renderToolbar */ />),
     );
 
     RunLoop.spawn();

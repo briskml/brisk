@@ -12,19 +12,65 @@ type storyType =
 let component = {
   open Brisk_macos;
   let component = Brisk.component("Stories");
-  component(hooks => {
-    let (_storyType, _, hooks) = Brisk.Hooks.state(Top, hooks);
-    let (selectedStory, setSelectedStory, hooks) =
-      Brisk.Hooks.state(None, hooks);
-    (
-      hooks,
-      switch (selectedStory) {
-      | Some(story) => <details story back={() => setSelectedStory(None)} />
-      | None =>
-        TopStories.(
-          <component showDetails={story => setSelectedStory(Some(story))} />
-        )
-      },
-    );
-  });
+  (~children as _: list(unit), /* ~renderToolbar, */ ()) =>
+    component(hooks => {
+      let (_storyType, _, hooks) = Brisk.Hooks.state(Top, hooks);
+      let (selectedStory, setSelectedStory, hooks) =
+        Brisk.Hooks.state(None, hooks);
+      /*
+       let hooks =
+         Brisk.Hooks.effect(
+           If((!==), selectedStory),
+           () => {
+             open Toolbar;
+             let () =
+               if (selectedStory === None) {
+                 renderToolbar(
+                   <toolbar>
+                     <flexibleSpace />
+                     <item>
+                       SegmentedControl.(
+                         <segmentedControl>
+                           <item onClick={() => print_endline("TOP")}>
+                             ..."Top"
+                           </item>
+                           <item onClick={() => print_endline("New")}>
+                             ..."New"
+                           </item>
+                           <item onClick={() => ()}> ..."Show" </item>
+                           <item onClick={() => ()}> ..."Jobs" </item>
+                         </segmentedControl>
+                       )
+                     </item>
+                     <flexibleSpace />
+                   </toolbar>,
+                 );
+               } else {
+                 renderToolbar(
+                   <toolbar>
+                     <item> <button /> </item>
+                     <flexibleSpace />
+                     <item> <button /> </item>
+                   </toolbar>,
+                 );
+               };
+             None;
+           },
+           hooks,
+         );
+         */
+      (
+        hooks,
+        switch (selectedStory) {
+        | Some(story) =>
+          <details story back={() => setSelectedStory(None)} />
+        | None =>
+          TopStories.(
+            <component
+              showDetails={story => setSelectedStory(Some(story))}
+            />
+          )
+        },
+      );
+    });
 };

@@ -58,7 +58,7 @@ module OutputTree = {
     let childNode = child.layoutNode.container;
 
     removeChild(parentNode, childNode);
-    BriskView.removeSubview(childNode.context.view);
+    BriskView.removeSubview(parentNode.context.view, childNode.context.view);
     parent;
   };
 

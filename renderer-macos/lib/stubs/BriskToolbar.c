@@ -1,3 +1,4 @@
+#import "BriskToolbar.h"
 #import "BriskCocoa.h"
 #import "BriskViewable.h"
 
@@ -7,7 +8,7 @@
 - (NSArray<NSToolbarItemIdentifier> *)identifiers;
 @end
 
-@interface BriskCustomToolbarItem : NSObject <BriskToolbarItem, BriskViewable>
+@interface BriskCustomToolbarItem : NSObject <BriskToolbarItem, BriskViewParent>
 @property(nonatomic, strong)
     NSMutableDictionary<NSToolbarItemIdentifier, NSView *> *views;
 @property(nonatomic, strong) NSMutableArray *identifiers;
@@ -27,13 +28,14 @@
     (NSToolbarItemIdentifier)identifier {
     NSToolbarItem *toolbarItem =
         [[NSToolbarItem alloc] initWithItemIdentifier:identifier];
-    toolbarItem.view = self.views[identifier];
+    toolbarItem.view = NSViewFromBriskView(self.views[identifier]);
+    toolbarItem.maxSize = toolbarItem.view.fittingSize;
     return toolbarItem;
 }
 
-#pragma mark - BriskViewable
+#pragma mark - BriskViewParent
 
-- (void)brisk_insertNode:(NSView *)child position:(intnat)position {
+- (void)brisk_insertNode:(id)child position:(intnat)position {
     NSString *uuid = [[NSUUID new] UUIDString];
     /* TODO: This won't work if we just add another child to an item when the
      * toolbar is already displayed because we don't notify the toolbar itself
@@ -44,21 +46,13 @@
     [self.views setObject:child forKey:uuid];
 }
 
-- (void)brisk_deleteNode:(NSView *)child {
+- (void)brisk_deleteNode:(id)child {
     NSString *uuid = [[self.views allKeysForObject:child] firstObject];
 
     if (uuid) {
         [self.identifiers removeObject:uuid];
         [self.views removeObjectForKey:uuid];
     }
-}
-
-- (void)brisk_setFrame:(__unused NSRect)rect
-           paddingLeft:(__unused CGFloat)left
-          paddingRight:(__unused CGFloat)right
-            paddingTop:(__unused CGFloat)top
-         paddingBottom:(__unused CGFloat)bottom {
-    NSAssert(false, @"cannot setFrame on an item");
 }
 
 @end
@@ -89,29 +83,42 @@ BriskFlexibleSpaceToolbarItem *ml_NSToolbarItem_makeFlexibleSpace() {
     return item;
 }
 
-@interface BriskToolbar : NSToolbar <NSToolbarDelegate>
-@property(nonatomic, strong) NSMutableArray *brisk_items;
+@interface BriskToolbar () <NSToolbarDelegate>
+@property(nonatomic, strong) NSToolbar *toolbar;
+@property(nonatomic, strong) NSMutableArray<id<BriskToolbarItem>> *items;
 @end
 
 @implementation BriskToolbar
 
 - (BriskToolbar *)init {
     self = [super init];
-    self.delegate = self;
-    self.brisk_items = [NSMutableArray new];
+    self.toolbar = [NSToolbar new];
+    self.toolbar.delegate = self;
+    self.items = [NSMutableArray new];
     return self;
 }
 
 - (void)insertItem:(id<BriskToolbarItem>)item index:(NSInteger)index {
-    [self.brisk_items insertObject:item atIndex:index];
+    [self.items insertObject:item atIndex:index];
     /* Tracking lifetimes is getting trickier.
      * This item has been retained by something else.
      */
-    releaseView((id)item);
+    for (NSUInteger i = 0; i < item.identifiers.count; i++) {
+        NSToolbarItemIdentifier identifier = item.identifiers[i];
+        [self.toolbar insertItemWithItemIdentifier:identifier
+                                           atIndex:i + index];
+    };
 }
 
 - (void)removeItem:(id<BriskToolbarItem>)item {
-    [self.brisk_items removeObject:item];
+    NSInteger index = [self.items indexOfObject:item];
+    [self.toolbar removeItemAtIndex:index];
+    [self.items removeObjectAtIndex:index];
+    releaseView((id)item);
+}
+
+- (NSToolbar *)NSToolbar {
+    return self.toolbar;
 }
 
 #pragma mark - NSToolbarDelegate
@@ -119,11 +126,9 @@ BriskFlexibleSpaceToolbarItem *ml_NSToolbarItem_makeFlexibleSpace() {
 - (NSToolbarItem *)toolbar:(NSToolbar __unused *)toolbar
         itemForItemIdentifier:(NSToolbarItemIdentifier)itemIdentifier
     willBeInsertedIntoToolbar:(BOOL __unused)flag {
-    for (id<BriskToolbarItem> item in self.brisk_items) {
-        NSToolbarItem *toolbarItem =
-            [item generateToolbarItemForIdentifier:itemIdentifier];
-        if (toolbarItem) {
-            return toolbarItem;
+    for (id<BriskToolbarItem> item in self.items) {
+        if ([item.identifiers containsObject:itemIdentifier]) {
+            return [item generateToolbarItemForIdentifier:itemIdentifier];
         }
     }
     return nil;
@@ -131,7 +136,7 @@ BriskFlexibleSpaceToolbarItem *ml_NSToolbarItem_makeFlexibleSpace() {
 
 - (NSArray<NSToolbarItemIdentifier> *)toolbarDefaultItemIdentifiers:
     (NSToolbar __unused *)toolbar {
-    return [self.brisk_items valueForKeyPath:@"@unionOfArrays.identifiers"];
+    return [self.items valueForKeyPath:@"@unionOfArrays.identifiers"];
 }
 
 - (NSArray<NSToolbarItemIdentifier> *)toolbarAllowedItemIdentifiers:

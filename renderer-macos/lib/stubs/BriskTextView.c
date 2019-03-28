@@ -1,7 +1,7 @@
 #import "BriskStylableText.h"
 #import "BriskViewable.h"
 
-@interface BriskTextView : NSTextView <BriskStylableText, BriskViewable>
+@interface BriskTextView : NSTextView <BriskStylableText, BriskMeasuredView>
 @property(nonatomic, assign) CGFloat paddingLeft;
 @property(nonatomic, assign) CGFloat paddingTop;
 @end
@@ -87,15 +87,6 @@
 
 - (NSPoint)textContainerOrigin {
     return NSMakePoint(self.paddingLeft, self.paddingTop);
-}
-
-- (void)brisk_insertNode:(NSView __unused *)child
-                position:(intnat __unused)position {
-    [self brisk_deleteNode:nil];
-}
-
-- (void)brisk_deleteNode:(NSView __unused *)child {
-    NSAssert(NO, @"Nesting views inside TextView is not supported");
 }
 
 @end

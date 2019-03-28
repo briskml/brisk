@@ -1,4 +1,5 @@
 #import "BriskCocoa.h"
+#import "BriskToolbar.h"
 #import "BriskWindowDelegate.h"
 #import <caml/threads.h>
 
@@ -48,9 +49,9 @@ void ml_NSWindow_setContentView(NSWindow *win, NSView *view) {
     [win setContentView:view];
 }
 
-void ml_NSWindow_setToolbar(NSWindow *win, NSToolbar *toolbar) {
+void ml_NSWindow_setToolbar(NSWindow *win, BriskToolbar *toolbar) {
     caml_release_runtime_system();
-    win.toolbar = toolbar;
+    win.toolbar = toolbar.NSToolbar;
     caml_acquire_runtime_system();
 }
 

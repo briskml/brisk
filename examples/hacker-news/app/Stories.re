@@ -1,11 +1,3 @@
-let details =
-    (
-      ~children as _: list(unit),
-      ~story as _: Story.storyWithRelativeTime,
-      ~back as _: unit => unit,
-      (),
-    ) => Brisk_macos.Brisk.empty;
-
 module StoryType = {
   type t =
     | Top
@@ -184,7 +176,7 @@ module StoryType = {
 
 let component = {
   open Brisk_macos;
-  let component = Brisk.component("Stories");
+  let component = Brisk.component("stories");
   (~children as _: list(unit), ~renderToolbar, ()) =>
     component(hooks => {
       let (selectedStoryType, setSelectedStoryType, hooks) =

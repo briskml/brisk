@@ -188,10 +188,3 @@ CAMLprim value ml_BriskTextView_setBackgroundColor_bc(BriskTextView *txt,
 void ml_BriskTextView_setSelectable(BriskTextView *txt, intnat selectable) {
   txt.brisk_isSelectable = (BOOL)selectable;
 }
-
-CAMLprim value ml_BriskTextView_setSelectable_bc(BriskTextView *txt,
-                                                 value selectable_v) {
-  CAMLparam1(selectable_v);
-  ml_BriskTextView_setSelectable(txt, Int_val(selectable_v));
-  CAMLreturn(Val_unit);
-}

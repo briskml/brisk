@@ -40,7 +40,7 @@ let details = (~story as {story, _}, ~children as _: list(unit), ()) => {
         padding4(~top=9., ~left=13., ~right=13., ()),
         background(Color.hex("#FFFFFF")),
       ]>
-      <view style=[]>
+      <view>
         <view style=[flex(1.)]>
           <view style=[padding4(~bottom=5., ())]>
             <text

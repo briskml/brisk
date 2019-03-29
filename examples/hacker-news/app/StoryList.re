@@ -21,12 +21,11 @@ let story =
               align(`Center),
               font(~size=13., ()),
               color(Color.hex("#B0B0B0")),
-              /* Fixme, cannot fix any bc there'll be an exception */
             ]
             value={string_of_int(index)}
           />
-          <view style=[Brisk.Layout.flex(1.)]>
-            <view style=Brisk.Layout.[flexDirection(`Row)]>
+          <view style=[flex(1.)]>
+            <view style=[flexDirection(`Row)]>
               <text
                 style=[
                   flex(1.),
@@ -38,7 +37,7 @@ let story =
               />
             </view>
             <text
-              style=Brisk.Layout.[color(Color.hex("#888888"))]
+              style=[color(Color.hex("#888888"))]
               value={Story.formatDetails(
                 ~username=story.by.id,
                 ~score=story.score,
@@ -100,6 +99,7 @@ let fetchStories =
 let component = {
   open Brisk_macos;
   open Core_kernel.Sequence;
+  open Brisk.Layout;
   let component = Brisk.component("StoryList");
   (
     ~children as _: list(unit),
@@ -115,11 +115,11 @@ let component = {
         hooks,
         <scrollView
           onReachedEnd=loadNextPage
-          style=Brisk.Layout.[flex(1.), background(Color.hex("#fff"))]>
+          style=[flex(1.), background(Color.hex("#fff"))]>
           {
                switch (stories) {
                | Loading =>
-                 <activityIndicator style=Brisk.Layout.[flex(1.)] />
+                 <activityIndicator style=[flex(1.)] />
                | stories =>
                  stories
                  |> Paging.getResultList

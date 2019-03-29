@@ -16,7 +16,7 @@
   "dependencies": {
     "@esy-ocaml/reason": ">=3.4.0",
     "@brisk/macos": "*",
-    "@opam/dune": "^1.7.2",
+    "@opam/dune": "^1.8.2",
     "@opam/httpkit-lwt": "*",
     "ocaml": "~4.7.1000",
     "graphql_ppx": "briskml/graphql_ppx#ee86d23",
@@ -24,6 +24,7 @@
   },
   "devDependencies": {
     "@opam/merlin": "^3.2.2",
+    "@opam/merlin-lsp": "ocaml/merlin:merlin-lsp.opam#7cccd4f",
     "xcodegen": ">=2.2.0",
     "xcpretty": "^0.2.8"
   },
@@ -35,6 +36,7 @@
     "@opam/httpkit": "ostera/httpkit:httpkit.opam#5fd8ed4",
     "@opam/httpaf": "anmonteiro/httpaf:httpaf.opam#57e9dd2",
     "@opam/httpaf-lwt": "anmonteiro/httpaf:httpaf-lwt.opam#57e9dd2",
-    "@opam/zarith": "briskml/zarith#3fe8bfc"
+    "@opam/zarith": "briskml/zarith#3fe8bfc",
+    "@opam/yojson": "1.7.0"
   }
 }

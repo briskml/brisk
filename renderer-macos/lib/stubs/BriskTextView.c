@@ -1,9 +1,12 @@
 #import "BriskStylableText.h"
 #import "BriskViewable.h"
 
-@interface BriskTextView : NSTextView <BriskStylableText, BriskViewable>
+@interface BriskTextView : NSTextView <BriskStylableText, BriskMeasuredView>
 @property(nonatomic, assign) CGFloat paddingLeft;
 @property(nonatomic, assign) CGFloat paddingTop;
+
+@property(nonatomic, assign) BOOL brisk_isSelectable;
+
 @end
 
 @implementation BriskTextView
@@ -35,6 +38,8 @@
 
     self.paddingLeft = 0.;
     self.paddingTop = 0.;
+
+    self.brisk_isSelectable = NO;
   }
   return self;
 }
@@ -44,7 +49,14 @@
 }
 
 - (BOOL)isSelectable {
-  return NO;
+  return self.brisk_isSelectable;
+}
+
+- (BOOL)resignFirstResponder {
+  // We're setting an invalid range so that if the Text view is selectable,
+  // 'blur' will deselect the current selection
+  [self setSelectedRange:NSMakeRange(NSUIntegerMax, 0)];
+  return YES;
 }
 
 #pragma mark - BriskStylableText
@@ -87,14 +99,6 @@
 
 - (NSPoint)textContainerOrigin {
   return NSMakePoint(self.paddingLeft, self.paddingTop);
-}
-
-- (void)brisk_insertNode:(NSView __unused *)child
-                position:(intnat __unused)position {
-  @throw([NSException
-      exceptionWithName:@"Cannot insert a node to a TextView"
-                 reason:@"Nesting views inside TextView is not supported"
-               userInfo:nil]);
 }
 
 @end
@@ -144,6 +148,22 @@ CAMLprim value ml_BriskTextView_setStringValue(BriskTextView *txt,
   CAMLreturn(Val_unit);
 }
 
+CAMLprim value ml_BriskTextView_setHtml(BriskTextView *txt, value str_v) {
+  CAMLparam1(str_v);
+
+  NSString *str = [NSString stringWithUTF8String:String_val(str_v)];
+  NSData *data =
+      [str dataUsingEncoding:NSUnicodeStringEncoding allowLossyConversion:YES];
+  NSAttributedString *html =
+      [[NSAttributedString alloc] initWithHTML:data documentAttributes:NULL];
+
+  [txt.textStorage setAttributedString:html];
+
+  [txt brisk_applyTextStyle];
+
+  CAMLreturn(Val_unit);
+}
+
 void ml_BriskTextView_setBackgroundColor(BriskTextView *txt, double red,
                                          double green, double blue,
                                          double alpha) {
@@ -163,4 +183,8 @@ CAMLprim value ml_BriskTextView_setBackgroundColor_bc(BriskTextView *txt,
                                       Double_val(alpha_v));
 
   CAMLreturn(Val_unit);
+}
+
+void ml_BriskTextView_setSelectable(BriskTextView *txt, intnat selectable) {
+  txt.brisk_isSelectable = (BOOL)selectable;
 }

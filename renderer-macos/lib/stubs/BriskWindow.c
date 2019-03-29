@@ -1,5 +1,7 @@
 #import "BriskCocoa.h"
+#import "BriskToolbar.h"
 #import "BriskWindowDelegate.h"
+#import <caml/threads.h>
 
 NSWindow *ml_NSWindow_makeWithContentRect(double x, double y, double w,
                                           double h) {
@@ -47,6 +49,12 @@ void ml_NSWindow_setContentView(NSWindow *win, NSView *view) {
   [win setContentView:view];
 }
 
+void ml_NSWindow_setToolbar(NSWindow *win, BriskToolbar *toolbar) {
+  caml_release_runtime_system();
+  win.toolbar = toolbar.NSToolbar;
+  caml_acquire_runtime_system();
+}
+
 double ml_NSWindow_contentHeight(NSWindow *win) {
   return (double)[win contentRectForFrameRect:win.frame].size.height;
 }
@@ -88,7 +96,7 @@ CAMLprim value ml_NSWindow_setTitle(NSWindow *win, value str_v) {
 void ml_NSWindow_setContentIsFullSize(NSWindow *win, intnat isFullSize) {
   if (isFullSize == 1) {
     win.styleMask |= NSWindowStyleMaskFullSizeContentView;
-  } else {
+  } else if (win.styleMask & NSWindowStyleMaskFullSizeContentView) {
     win.styleMask &= ~NSWindowStyleMaskFullSizeContentView;
   }
 }

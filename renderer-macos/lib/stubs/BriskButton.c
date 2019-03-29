@@ -1,6 +1,7 @@
+#import "BriskImageHostingView.h"
 #import "BriskStylableText.h"
 
-@interface BriskButton : NSButton <BriskStylableText>
+@interface BriskButton : NSButton <BriskStylableText, BriskImageHostingView>
 
 @property(nonatomic, strong) NSMutableAttributedString *brisk_attributedString;
 @property(nonatomic, strong) NSMutableDictionary *brisk_textAttributes;
@@ -67,6 +68,10 @@
   brisk_caml_call(onClick);
 }
 
+- (void)brisk_setImage:(NSImage *)image {
+  self.image = image;
+}
+
 @end
 
 BriskButton *ml_BriskButton_make() {
@@ -107,14 +112,6 @@ CAMLprim value ml_BriskButton_setButtonType_bc(BriskButton *btn, value type_v) {
 
 void ml_BriskButton_setBezelStyle(BriskButton *btn, intnat bezel) {
   [btn setBezelStyle:bezel];
-}
-
-CAMLprim value ml_BriskButton_setBezelStyle_bc(BriskButton *btn,
-                                               value bezel_v) {
-  CAMLparam1(bezel_v);
-
-  ml_BriskButton_setBezelStyle(btn, Int_val(bezel_v));
-  CAMLreturn(Val_unit);
 }
 
 void ml_BriskButton_setIsBordered(BriskButton *btn, intnat bordered) {

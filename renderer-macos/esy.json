@@ -11,6 +11,7 @@
     "@opam/dune": "^1.7.2",
     "@opam/lwt": "^4.1.0",
     "@opam/lwt_ppx": "^1.2.1",
+    "@opam/markup": "^0.8.0",
     "ocaml": "~4.7.1000",
     "brisk-reconciler": "*",
     "pkg-config": "briskml/pkg-config"

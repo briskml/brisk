@@ -10,61 +10,64 @@ NSView *ml_BriskView_make() {
   return view;
 }
 
-void ml_BriskView_insertSubview(NSView *view, NSView *child, intnat position) {
-  if ([view conformsToProtocol:@protocol(BriskViewable)]) {
-    NSView<BriskViewable> *viewable = (NSView<BriskViewable> *)view;
-    [viewable brisk_insertNode:child position:position];
+void ml_BriskView_insertSubview(id view, id child, intnat position) {
+  if ([view conformsToProtocol:@protocol(BriskViewParent)]) {
+    [view brisk_insertNode:NSViewFromBriskView(child) position:position];
   } else {
-    [view addSubview:child
-          positioned:NSWindowAbove
-          relativeTo:(position == 0 ? nil : view.subviews[position - 1])];
+    NSView *nsview = NSViewFromBriskView(view);
+    [nsview addSubview:NSViewFromBriskView(child)
+            positioned:NSWindowAbove
+            relativeTo:(position == 0 ? nil : nsview.subviews[position - 1])];
   }
+}
+
+void ml_BriskView_removeSubview(id parent, id child) {
+  if ([parent conformsToProtocol:@protocol(BriskViewParent)]) {
+    [parent brisk_deleteNode:child];
+  } else {
+    [NSViewFromBriskView(child) removeFromSuperview];
+  }
+  /* Trakcing lifetimes becomes even trickier with the introduction of
+   * BriskView We should move practically all of this logic to OCaml, but
+   * until then this plumbing should work. By releasing the ownership only
+   * when we delete the node, we won't release child until it's removed
+   */
   releaseView(child);
 }
 
-void ml_BriskView_removeSubview(NSView *child) { [child removeFromSuperview]; }
-
-void ml_BriskView_setFrame(NSView *view, double x, double y, double w, double h,
+void ml_BriskView_setFrame(id view, double x, double y, double w, double h,
                            double paddingLeft, double paddingRight,
                            double paddingBottom, double paddingTop) {
   NSRect rect = NSMakeRect(x, y, w, h);
-  if ([view conformsToProtocol:@protocol(BriskViewable)]) {
-    NSView<BriskViewable> *viewable = (NSView<BriskViewable> *)view;
-    [viewable brisk_setFrame:rect
-                 paddingLeft:paddingLeft
-                paddingRight:paddingRight
-                  paddingTop:paddingTop
-               paddingBottom:paddingBottom];
+  if ([view conformsToProtocol:@protocol(BriskMeasuredView)]) {
+    [view brisk_setFrame:rect
+             paddingLeft:paddingLeft
+            paddingRight:paddingRight
+              paddingTop:paddingTop
+           paddingBottom:paddingBottom];
   } else {
-    [view setFrame:rect];
+    [NSViewFromBriskView(view) setFrame:rect];
   }
 }
 
-void ml_BriskView_setBorderWidth(NSView *view, double width) {
-  [view.layer setBorderWidth:width];
+void ml_BriskView_setBorderWidth(id view, double width) {
+  [NSViewFromBriskView(view).layer setBorderWidth:width];
 }
 
-CAMLprim value ml_BriskView_setBorderWidth_bc(NSView *view, value width_v) {
-  CAMLparam1(width_v);
-
-  ml_BriskView_setBorderWidth(view, Double_val(width_v));
-
-  CAMLreturn(Val_unit);
-}
-
-void ml_BriskView_setBorderColor(NSView *view, double red, double green,
-                                 double blue, double alpha) {
+void ml_BriskView_setBorderColor(id view, double red, double green, double blue,
+                                 double alpha) {
   NSColor *color = [NSColor colorWithRed:red green:green blue:blue alpha:alpha];
-  [view.layer setBorderColor:[color CGColor]];
+  [NSViewFromBriskView(view).layer setBorderColor:[color CGColor]];
 }
 
-CAMLprim value ml_BriskView_setBorderColor_bc(NSView *view, value red_v,
+CAMLprim value ml_BriskView_setBorderColor_bc(id view, value red_v,
                                               value green_v, value blue_v,
                                               value alpha_v) {
   CAMLparam4(red_v, green_v, blue_v, alpha_v);
 
-  ml_BriskView_setBorderColor(view, Double_val(red_v), Double_val(green_v),
-                              Double_val(blue_v), Double_val(alpha_v));
+  ml_BriskView_setBorderColor(NSViewFromBriskView(view), Double_val(red_v),
+                              Double_val(green_v), Double_val(blue_v),
+                              Double_val(alpha_v));
 
   CAMLreturn(Val_unit);
 }

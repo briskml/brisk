@@ -1,6 +1,6 @@
 (executables
  (names app)
- (libraries brisk-macos yojson httpkit-lwt core_kernel)
+ (libraries brisk-macos httpkit-lwt yojson core_kernel markup)
  (modes object)
  (preprocess (pps graphql_ppx))
 )

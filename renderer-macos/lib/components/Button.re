@@ -10,6 +10,7 @@ let component = {
     ~type_=?,
     ~bezel=?,
     ~title=?,
+    ~image: option(BriskImageHostingView.source)=?,
     ~style: style=[],
     ~onClick=() => (),
     ~children as _: list(unit),
@@ -43,6 +44,7 @@ let component = {
                  }
                );
             Styles.commitTextStyle(view);
+            BriskImageHostingView.setSource(view, image);
             node;
           },
           children: Brisk.empty,

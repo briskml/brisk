@@ -8,32 +8,32 @@
 @implementation BriskImage
 
 - (id)init {
-    self = [super init];
-    if (self) {
-        self.src = [NSImage new];
-    }
-    return self;
+  self = [super init];
+  if (self) {
+    self.src = [NSImage new];
+  }
+  return self;
 }
 
 - (void)brisk_setImage:(NSImage *)source {
-    self.src = source;
-    self.wantsLayer = true;
-    [self.layer setContents:source];
+  self.src = source;
+  self.wantsLayer = true;
+  [self.layer setContents:source];
 }
 
 @end
 
 BriskImage *ml_BriskImage_make() {
-    BriskImage *img = [BriskImage new];
-    retainView(img);
+  BriskImage *img = [BriskImage new];
+  retainView(img);
 
-    return img;
+  return img;
 }
 
 double ml_BriskImage_getImageWidth(BriskImage *img) {
-    return (double)[img.src size].width;
+  return (double)[img.src size].width;
 }
 
 double ml_BriskImage_getImageHeight(BriskImage *img) {
-    return (double)[img.src size].height;
+  return (double)[img.src size].height;
 }

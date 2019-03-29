@@ -16,7 +16,8 @@
     "brisk-reconciler": "*"
   },
   "devDependencies": {
-    "@opam/merlin-lsp": "ocaml/merlin:merlin-lsp.opam#7cccd4f",
+    "@opam/merlin": "^3.2.2",
+    "@opam/merlin-lsp": "ocaml/merlin:merlin-lsp.opam#517f577",
     "ocaml": "~4.7.1000"
   },
   "resolutions": {

@@ -29,6 +29,7 @@
           BriskToolbar
           BriskViewable
           BriskImageHostingView
+          BriskProgressIndicator
           )
  (c_flags (:standard
           -Wextra -Wall -Werror -O -g -std=c99 -pedantic-errors -Wsign-compare -Wshadow

@@ -52,7 +52,7 @@ let get = ({variables, query, parse}: query('a)) => {
   open Httpkit_client;
   let uri =
     Uri.add_query_params'(
-      Uri.of_string("http://localhost:3000/graphql"),
+      Uri.of_string("http://brisk-graphqlhub.herokuapp.com/graphql"),
       [("query", query), ("variables", Yojson.Basic.to_string(variables))],
     );
   let request = Request.create(`POST, uri);

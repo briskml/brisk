@@ -118,9 +118,9 @@ let component =
   let scrollStyle = [flex(1.)];
   let contentStyle = [position(~top=0., ~left=0., ~right=0., `Absolute)];
 
-  <view style=scrollStyle>
+  <view style=style>
     <scrollableArea onScroll onReachedEnd style=scrollStyle contentStyle>
-      <view style> ...children </view>
+      <view style=scrollStyle> ...children </view>
     </scrollableArea>
   </view>;
 };

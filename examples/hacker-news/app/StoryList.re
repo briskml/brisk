@@ -1,6 +1,8 @@
 type stories =
   array([ | `Poll(Story.poll) | `Story(Story.story) | `Job(Story.job)]);
 
+let backgroundColor = Brisk_macos.Brisk.Layout.(background(Color.hex("#FFFFFF")));
+
 let story =
     (
       ~story as {Story.story, timeAgo},
@@ -12,7 +14,7 @@ let story =
   Brisk_macos.(
     Brisk.Layout.(
       <clickable
-        onClick style=[height(47.), background(Color.hex("#FFFFFF"))]>
+        onClick style=[height(47.), backgroundColor]>
         <view style=[alignItems(`Center), flexDirection(`Row)]>
           <text
             style=[
@@ -115,7 +117,7 @@ let component = {
         hooks,
         <scrollView
           onReachedEnd=loadNextPage
-          style=[flex(1.), background(Color.hex("#fff"))]>
+          style=[flex(1.), backgroundColor]>
           {
                switch (stories) {
                | Loading =>

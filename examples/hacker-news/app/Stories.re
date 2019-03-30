@@ -199,7 +199,8 @@ let component = {
               );
             let segmentedControl = SegmentedControl.segmentedControl;
             let () =
-              if (selectedStory === None) {
+              switch (selectedStory) {
+              | None =>
                 renderToolbar(
                   <toolbar>
                     <flexibleSpace />
@@ -213,16 +214,21 @@ let component = {
                     </item>
                     <flexibleSpace />
                   </toolbar>,
-                );
-              } else {
+                )
+              | Some({Story.story, _}) =>
                 renderToolbar(
                   <toolbar>
-                    <item>
-                      <button
-                        title="Open in Browser"
-                        bezel=Cocoa.BriskButton.BezelStyle.TexturedRounded
-                      />
-                    </item>
+                    {switch (story.url) {
+                     | Some(url) =>
+                       <item>
+                         <button
+                           title="Open in Browser"
+                           bezel=Cocoa.BriskButton.BezelStyle.TexturedRounded
+                           onClick={() => Brisk_macos.Std.openUrl(url)}
+                         />
+                       </item>
+                     | None => Toolbar.Reconciler.empty
+                     }}
                     <flexibleSpace />
                     <item>
                       <button
@@ -233,7 +239,7 @@ let component = {
                       />
                     </item>
                   </toolbar>,
-                );
+                )
               };
             None;
           },

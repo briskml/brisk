@@ -113,12 +113,16 @@ let component = {
         Paging.hook(fetchStories(~makeQuery), resource, 30, hooks);
       (
         hooks,
-        <scrollView
-          onReachedEnd=loadNextPage style=[flex(1.), backgroundColor]>
-          {switch (stories) {
-           | Loading => <activityIndicator style=[flex(1.)] />
-           | stories =>
-             stories
+        switch (stories) {
+        | Loading =>
+          <view
+            style=[justifyContent(`Center), alignItems(`Center), flex(1.)]>
+            <activityIndicator />
+          </view>
+        | stories =>
+          <scrollView
+            onReachedEnd=loadNextPage style=[flex(1.), backgroundColor]>
+            {stories
              |> Paging.getResultList
              |> List.rev
              |> of_list
@@ -132,9 +136,9 @@ let component = {
                   />
                 )
              |> to_list
-             |> Brisk.listToElement
-           }}
-        </scrollView>,
+             |> Brisk.listToElement}
+          </scrollView>
+        },
       );
     });
 };

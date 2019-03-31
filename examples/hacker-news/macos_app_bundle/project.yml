@@ -18,13 +18,10 @@ targets:
     sources:
       - Resources
       - Sources
-      - path: /Users/wczekalski/.esy/3______________________________________________________________/i/gmp-86f60d0f/lib/libgmp.dylib
-        buildPhase:
-          copyFiles:
-            destination: frameworks
     settings:
-      HEADER_SEARCH_PATHS: "$(STDLIB_PATH)"
-      OTHER_LDFLAGS: "-framework Cocoa"
+      HEADER_SEARCH_PATHS: '$(STDLIB_PATH)'
+      LIBRARY_SEARCH_PATHS: '$(ESY_LIBRARY_SEARCH_PATHS)'
+      OTHER_LDFLAGS: '-framework Cocoa -Wl,-no_pie $(ESY_LINK_FLAGS)'
     configFiles:
       Debug: env.xcconfig
       Release: env.xcconfig

@@ -17,15 +17,22 @@ let component = {
               Layout.Node.make(~style, {view, isYAxisFlipped: false});
             {view, layoutNode};
           },
-          configureInstance: (~isFirstRender as _, {view} as node) => {
-            style
-            |> List.iter(attribute =>
-                 switch (attribute) {
-                 | #Styles.viewStyle as attr =>
-                   Styles.setViewStyle(view, attr)
-                 | #Layout.style => ()
-                 }
-               );
+          configureInstance:
+            (~isFirstRender as _, {view, layoutNode: {container}} as node) => {
+            let style =
+              List.fold_left(
+                (acc, attribute) =>
+                  switch (attribute) {
+                  | #Styles.viewStyle as attr =>
+                    ignore(Styles.setViewStyle(view, attr));
+                    acc;
+                  | #Layout.style as attr =>
+                    Layout.applyCommonStyle(acc, attr)
+                  },
+                Layout.FlexLayout.LayoutSupport.defaultStyle,
+                style,
+              );
+            container.style = style;
             node;
           },
           children: listToElement(children),

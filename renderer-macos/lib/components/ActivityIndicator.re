@@ -1,9 +1,16 @@
-open Brisk; 
+open Brisk;
 
 let component = nativeComponent("activityIndicator");
 
-type attribute = [ Layout.style | Styles.viewStyle];
+type attribute = [ Layout.style];
 type style = list(attribute);
+
+let measure = (node, _width, _widthMode, _height, _heightMode) => {
+  Layout.FlexLayout.LayoutSupport.LayoutTypes.{
+    width: BriskProgressIndicator.fittingWidth(node.context.view),
+    height: BriskProgressIndicator.fittingHeight(node.context.view),
+  };
+};
 
 let activityIndicator = (~style: style=[], ~children as _: list(unit), ()) =>
   component(hooks =>
@@ -13,20 +20,10 @@ let activityIndicator = (~style: style=[], ~children as _: list(unit), ()) =>
         make: () => {
           let view = BriskProgressIndicator.make();
           let layoutNode =
-            Layout.Node.make(
-              ~style,
-              {view, isYAxisFlipped: false},
-            );
+            Layout.Node.make(~style, ~measure, {view, isYAxisFlipped: false});
           {view, layoutNode};
         },
-        configureInstance: (~isFirstRender as _, {view} as node) => {
-          style
-          |> List.iter(attribute =>
-               switch (attribute) {
-               | #Styles.viewStyle as attr => Styles.setViewStyle(view, attr)
-               | #Layout.style => ()
-               }
-             );
+        configureInstance: (~isFirstRender as _, node) => {
           node;
         },
         children: Brisk.empty,

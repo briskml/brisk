@@ -48,7 +48,7 @@ let story =
             )}
           />
         </view>
-        <text value=timeAgo />
+        <text style=[padding4(~left=3., ~right=3., ())] value=timeAgo />
       </view>
     </clickable>
   );
@@ -86,7 +86,7 @@ let fetchStories =
            {
              Story.story,
              timeAgo:
-               Story.timeAgoSince(
+               Story.timeAgoSinceNow(
                  Core_kernel.Time.(
                    of_span_since_epoch(Span.of_int_sec(story.time))
                  ),

@@ -26,10 +26,40 @@ type storyWithRelativeTime = {
 type poll = {title: string};
 type job = poll;
 
-let timeAgoSince = date => {
-  Format.sprintf(
-    "%s ago",
-    Core_kernel.Time.(diff(now(), date) |> Span.to_string),
+let unitOfTimeToString =
+  fun
+  | Core_kernel.Unit_of_time.Nanosecond => "nanosecond"
+  | Microsecond => "microsecond"
+  | Millisecond => "millisecond"
+  | Second => "second"
+  | Minute => "minute"
+  | Hour => "hour"
+  | Day => "day";
+
+let getTimeComponent = {
+  Core_kernel.Time.Span.(
+    fun
+    | Core_kernel.Unit_of_time.Nanosecond => to_ns
+    | Microsecond => to_us
+    | Millisecond => to_ms
+    | Second => to_sec
+    | Minute => to_min
+    | Hour => to_hr
+    | Day => to_day
+  );
+};
+
+let timeAgoSinceNow = date => {
+  let span = Core_kernel.Time.(diff(now(), date));
+  let unitOfTime = Core_kernel.Time.Span.to_unit_of_time(span);
+  let mostSignificantTimeComponent =
+    getTimeComponent(unitOfTime, span) |> int_of_float;
+  let unitOfTimeString = unitOfTimeToString(unitOfTime);
+  Printf.sprintf(
+    "%i %s ago",
+    mostSignificantTimeComponent,
+    mostSignificantTimeComponent > 1
+      ? unitOfTimeString ++ "s" : unitOfTimeString,
   );
 };
 
@@ -49,7 +79,6 @@ let formatUrl = {
 
 let formatComment = txt => {
   open Markup;
-
   /***
    * TODO: We need to process signals stream and
    * replace all <p> tags with a couple of \n\n
@@ -62,7 +91,7 @@ let formatComment = txt => {
 
 let formatCommentDetails = (~username, ~time) => {
   let time = Core_kernel.Time.(of_span_since_epoch(Span.of_int_sec(time)));
-  Format.sprintf("%s · %s", username, timeAgoSince(time));
+  Format.sprintf("%s · %s", username, timeAgoSinceNow(time));
 };
 
 let formatDetails = (~username, ~score, ~commentCount, ~url) => {

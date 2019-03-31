@@ -1,7 +1,9 @@
+open Brisk_macos;
+
 type stories =
   array([ | `Poll(Story.poll) | `Story(Story.story) | `Job(Story.job)]);
 
-let backgroundColor = Brisk_macos.Brisk.Layout.(background(Color.hex("#FFFFFF")));
+let backgroundColor = Brisk.Layout.(background(Color.hex("#FFFFFF")));
 
 let story =
     (
@@ -11,47 +13,44 @@ let story =
       ~children as _: list(unit),
       (),
     ) =>
-  Brisk_macos.(
-    Brisk.Layout.(
-      <clickable
-        onClick style=[height(47.), backgroundColor]>
-        <view style=[alignItems(`Center), flexDirection(`Row)]>
-          <text
-            style=[
-              height(20.),
-              width(30.),
-              align(`Center),
-              font(~size=13., ()),
-              color(Color.hex("#B0B0B0")),
-            ]
-            value={string_of_int(index)}
-          />
-          <view style=[flex(1.)]>
-            <view style=[flexDirection(`Row)]>
-              <text
-                style=[
-                  flex(1.),
-                  font(~size=13., ()),
-                  lineBreak(`TruncateTail),
-                  color(Color.hex("#000000")),
-                ]
-                value={story.title}
-              />
-            </view>
+  Brisk.Layout.(
+    <clickable onClick style=[height(47.), backgroundColor]>
+      <view style=[alignItems(`Center), flexDirection(`Row)]>
+        <text
+          style=[
+            height(20.),
+            width(30.),
+            align(`Center),
+            font(~size=13., ()),
+            color(Color.hex("#B0B0B0")),
+          ]
+          value={string_of_int(index)}
+        />
+        <view style=[flex(1.)]>
+          <view style=[flexDirection(`Row)]>
             <text
-              style=[color(Color.hex("#888888"))]
-              value={Story.formatDetails(
-                ~username=story.by.id,
-                ~score=story.score,
-                ~commentCount=story.descendants,
-                ~url=story.url,
-              )}
+              style=[
+                flex(1.),
+                font(~size=13., ()),
+                lineBreak(`TruncateTail),
+                color(Color.hex("#000000")),
+              ]
+              value={story.title}
             />
           </view>
-          <text value=timeAgo />
+          <text
+            style=[color(Color.hex("#888888"))]
+            value={Story.formatDetails(
+              ~username=story.by.id,
+              ~score=story.score,
+              ~commentCount=story.descendants,
+              ~url=story.url,
+            )}
+          />
         </view>
-      </clickable>
-    )
+        <text value=timeAgo />
+      </view>
+    </clickable>
   );
 
 let getStories = hn =>
@@ -99,7 +98,6 @@ let fetchStories =
 };
 
 let component = {
-  open Brisk_macos;
   open Core_kernel.Sequence;
   open Brisk.Layout;
   let component = Brisk.component("StoryList");
@@ -116,30 +114,26 @@ let component = {
       (
         hooks,
         <scrollView
-          onReachedEnd=loadNextPage
-          style=[flex(1.), backgroundColor]>
-          {
-               switch (stories) {
-               | Loading =>
-                 <activityIndicator style=[flex(1.)] />
-               | stories =>
-                 stories
-                 |> Paging.getResultList
-                 |> List.rev
-                 |> of_list
-                 |> map(~f=of_list)
-                 |> concat
-                 |> mapi(~f=(index, astory) =>
-                      <story
-                        story=astory
-                        index={index + 1}
-                        onClick={() => showDetails(astory)}
-                      />
-                    )
-                 |> to_list
-                 |> Brisk.listToElement
-               }
-             }
+          onReachedEnd=loadNextPage style=[flex(1.), backgroundColor]>
+          {switch (stories) {
+           | Loading => <activityIndicator style=[flex(1.)] />
+           | stories =>
+             stories
+             |> Paging.getResultList
+             |> List.rev
+             |> of_list
+             |> map(~f=of_list)
+             |> concat
+             |> mapi(~f=(index, astory) =>
+                  <story
+                    story=astory
+                    index={index + 1}
+                    onClick={() => showDetails(astory)}
+                  />
+                )
+             |> to_list
+             |> Brisk.listToElement
+           }}
         </scrollView>,
       );
     });

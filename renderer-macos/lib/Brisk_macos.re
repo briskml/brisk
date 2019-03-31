@@ -19,6 +19,8 @@ module Cocoa = {
   module BriskEffectView = BriskEffectView;
 };
 
+module Std = BriskCoreFoundation;
+
 /* Components */
 module View = View;
 let view = View.component;

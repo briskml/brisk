@@ -41,3 +41,5 @@ let toolbar = Toolbar.toolbar;
 module SegmentedControl = SegmentedControl;
 let segmentedControl = SegmentedControl.segmentedControl;
 let activityIndicator = ActivityIndicator.activityIndicator;
+
+module Menu = Menu;

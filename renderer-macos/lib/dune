@@ -31,7 +31,9 @@
           BriskImageHostingView
           BriskProgressIndicator
           BriskCoreFoundation
+          OCamlClosureEventTarget
           )
+ (c_library_flags (:standard -ObjC))
  (c_flags (:standard
           -Wextra -Wall -Werror -O -g -std=c99 -pedantic-errors -Wsign-compare -Wshadow
           -Wno-unguarded-availability-new

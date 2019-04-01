@@ -1,7 +1,8 @@
 open CocoaTypes;
 
+type t = menu;
+
 type kind =
-  | Apple
   | Main
   | Services
   | Windows;
@@ -45,66 +46,20 @@ type action =
   /* Custom callback */
   | Callback(unit => unit);
 
-type target =
-  | NSApp;
+external setMenu: (kind, t) => unit = "ml_NSApplication_setMenu";
 
-external _NSApplication_setMenu: (menu, kind) => unit =
-  "ml_NSApplication_setMenu";
-
-external _NSMenu_make: string => menu = "ml_NSMenu_make";
-external _NSMenu_addItem: (menu, string) => menuItem = "ml_NSMenu_addItem";
-external _NSMenuItem_setTarget: (menuItem, target) => unit =
-  "ml_NSMenuItem_setTarget";
-external _NSMenuItem_setAction: (menuItem, action) => unit =
-  "ml_NSMenuItem_setAction";
-external _NSMenuItem_setKeyEquivalent: (menuItem, string, bool) => unit =
-  "ml_NSMenuItem_setKeyEquivalent";
-
-[@noalloc]
-external _NSMenu_removeItem: (menu, menuItem) => unit = "ml_NSMenu_removeItem";
-[@noalloc]
-external _NSMenu_addSeparatorItem: menu => unit = "ml_NSMenu_addSeparatorItem";
-[@noalloc]
-external _NSMenu_setSubmenu: (menu, menu, menuItem) => unit =
-  "ml_NSMenu_setSubmenu";
-
-class type t = {
-  pub get: unit => menu;
-  pub addItem:
-    (~action: action=?, ~target: target=?, string, string) => menuItem;
-  pub removeItem: menuItem => unit;
-  pub addSeparatorItem: unit => unit;
-  pub setSubmenu: (menuItem, t) => unit;
+module Item = {
+  type t = menuItem;
+  external make: unit => t = "ml_NSMenuItem_make";
+  external makeSeparatorItem: unit => t = "ml_NSMenuItem_makeSeparatorItem";
+  external setTitle: (t, string) => unit = "ml_NSMenuItem_setTitle";
+  external setAction: (t, action) => unit = "ml_NSMenuItem_setAction";
+  external setKeyEquivalent: (t, string, bool) => unit =
+    "ml_NSMenuItem_setKeyEquivalent";
+  external setSubmenu: (menuItem, menu) => unit = "ml_NSMenuItem_setSubmenu";
 };
 
-let make = title => {
-  let menu = _NSMenu_make(title);
-
-  {
-    as _;
-    pub get = menu;
-    pub addItem =
-        (~action=?, ~target=?, ~key="", ~optionModifier=false, title) => {
-      let item = _NSMenu_addItem(menu, title);
-      switch (action) {
-      | Some(action) => _NSMenuItem_setAction(item, action)
-      | None => ()
-      };
-      switch (target) {
-      | Some(target) => _NSMenuItem_setTarget(item, target)
-      | None => ()
-      };
-      switch (key) {
-      | "" => ()
-      | key => _NSMenuItem_setKeyEquivalent(item, key, optionModifier)
-      };
-      item;
-    };
-    pub removeItem = item => _NSMenu_removeItem(menu, item);
-    pub addSeparatorItem = _NSMenu_addSeparatorItem(menu);
-    pub setSubmenu = (item, submenu) =>
-      _NSMenu_setSubmenu(menu, submenu#get, item)
-  };
-};
-
-let add = (~kind, menu) => _NSApplication_setMenu(menu#get, kind);
+external make: string => menu = "ml_NSMenu_make";
+external makeServicesMenu: unit => menu = "ml_NSMenu_makeServices";
+external makeWindowsMenu: unit => menu = "ml_NSMenu_makeWindows";
+external addItem: (menu, menuItem) => unit = "ml_NSMenu_addItem";

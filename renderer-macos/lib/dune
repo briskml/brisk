@@ -33,7 +33,11 @@
           BriskCoreFoundation
           OCamlClosureEventTarget
           )
- (c_library_flags (:standard -ObjC))
+ ;; We pass -ccopt -ObjC to the linker in order to inform it about objc categories container
+ ;; https://developer.apple.com/library/archive/qa/qa1490/_index.html
+ ;; We pass it via -ccopt -ObjC because using c_library_flags caused this flag to be added to
+ ;; ocamlmklib which isn't supported.
+ (library_flags (-ccopt -ObjC))
  (c_flags (:standard
           -Wextra -Wall -Werror -O -g -std=c99 -pedantic-errors -Wsign-compare -Wshadow
           -Wno-unguarded-availability-new

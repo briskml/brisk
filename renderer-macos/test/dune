@@ -1,5 +1,6 @@
 (executable
  (name test)
+ (link_flags (-ccopt -framework -ccopt AppKit))
  (libraries rely.lib brisk-macos))
 
 (alias

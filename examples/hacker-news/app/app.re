@@ -7,9 +7,9 @@ let () = {
 
   Application.willFinishLaunching(() => {
     open Brisk_macos.Menu;
-    setServicesMenu(TopMenu.servicesMenu);
-    setWindowsMenu(TopMenu.windowsMenu);
-    setMainMenu(TopMenu.menu);
+    setServicesMenu(MenuBar.servicesMenu);
+    setWindowsMenu(MenuBar.windowsMenu);
+    setMainMenu(MenuBar.menu);
   });
 
   Application.didFinishLaunching(() => {

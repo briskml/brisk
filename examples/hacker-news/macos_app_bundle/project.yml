@@ -28,8 +28,7 @@ targets:
       - framework: $(BUILD_PATH)/app/app.exe.o
         embed: false
       - framework: $(ESY_GMP_PATH)
-        link: false
-        embed: true
+        embed: false
     info:
       path: Info.plist
       properties:

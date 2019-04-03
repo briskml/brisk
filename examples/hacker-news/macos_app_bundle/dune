@@ -3,8 +3,7 @@
  (action (with-stdout-to %{targets} (progn
   (echo "STDLIB_PATH=%{ocaml_where}\n")
   (echo "BUILD_PATH=%{workspace_root}\n")
-  (bash "echo ESY_LIBRARY_SEARCH_PATHS=$(pkg-config gmp --variable=libdir)")
-  (bash "echo ESY_GMP_PATH=$(pkg-config gmp --libs-only-L | awk '{ print substr($0, 3, length($0)) \"/libgmp.a\"; }')")
+  (bash "echo ESY_LINK_FLAGS=$(pkg-config --libs gmp)")
  ))))
 
 (rule

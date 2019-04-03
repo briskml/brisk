@@ -20,14 +20,16 @@ targets:
       - Sources
     settings:
       HEADER_SEARCH_PATHS: '$(STDLIB_PATH)'
-      LIBRARY_SEARCH_PATHS: '$(ESY_LIBRARY_SEARCH_PATHS)'
-      OTHER_LDFLAGS: '-framework Cocoa -Wl,-no_pie $(ESY_LINK_FLAGS)'
+      OTHER_LDFLAGS: '-framework Cocoa '
     configFiles:
       Debug: env.xcconfig
       Release: env.xcconfig
     dependencies:
       - framework: $(BUILD_PATH)/app/app.exe.o
         embed: false
+      - framework: $(ESY_GMP_PATH)
+        link: false
+        embed: true
     info:
       path: Info.plist
       properties:

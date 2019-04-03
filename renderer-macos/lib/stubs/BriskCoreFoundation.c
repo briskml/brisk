@@ -2,7 +2,7 @@
 #import <ApplicationServices/ApplicationServices.h>
 #import <CoreFoundation/CFBundle.h>
 
-void ml_BriskCoreFoundation_openURL(value url_v) {
+CAMLprim value ml_BriskCoreFoundation_openURL(value url_v) {
   CAMLparam1(url_v);
 
   char *utf8string = String_val(url_v);
@@ -14,4 +14,5 @@ void ml_BriskCoreFoundation_openURL(value url_v) {
   );
   LSOpenCFURLRef(url, 0);
   CFRelease(url);
+  CAMLreturn(Val_unit);
 }

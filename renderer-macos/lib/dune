@@ -31,7 +31,13 @@
           BriskImageHostingView
           BriskProgressIndicator
           BriskCoreFoundation
+          OCamlClosureEventTarget
           )
+ ;; We pass -ccopt -ObjC to the linker in order to inform it about objc categories container
+ ;; https://developer.apple.com/library/archive/qa/qa1490/_index.html
+ ;; We pass it via -ObjC using c_library_flags which passes this flag to ocamlmklib.
+ ;; ocamlmklib does not support this flag and yields a warning but it's the only correct way I've found.
+ (c_library_flags (-ObjC))
  (c_flags (:standard
           -Wextra -Wall -Werror -O -g -std=c99 -pedantic-errors -Wsign-compare -Wshadow
           -Wno-unguarded-availability-new

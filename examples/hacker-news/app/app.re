@@ -3,13 +3,13 @@ open Brisk_macos;
 let () = {
   open Cocoa;
 
-  let appName = "BriskMac";
-
   Application.init();
 
   Application.willFinishLaunching(() => {
-    let menu = UiMenu.makeMainMenu(appName);
-    Menu.add(~kind=Main, menu);
+    open Brisk_macos.Menu;
+    setServicesMenu(MenuBar.servicesMenu);
+    setWindowsMenu(MenuBar.windowsMenu);
+    setMainMenu(MenuBar.menu);
   });
 
   Application.didFinishLaunching(() => {
@@ -45,7 +45,7 @@ let () = {
         Toolbar.Reconciler.RenderedElement.update(
           ~previousElement=prevToolbar^,
           nextToolbar,
-          ~renderedElement=toolbar^
+          ~renderedElement=toolbar^,
         )
         |> Toolbar.Reconciler.RenderedElement.executePendingEffects;
       ignore(

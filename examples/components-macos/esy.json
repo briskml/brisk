@@ -19,6 +19,7 @@
   },
   "devDependencies": {
     "@opam/merlin": "^3.2.2",
+    "@opam/merlin-lsp": "ocaml/merlin:merlin-lsp.opam#7cccd4f",
     "xcodegen": ">=2.2.0",
     "xcpretty": "^0.2.8"
   },

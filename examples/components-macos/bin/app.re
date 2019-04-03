@@ -9,8 +9,51 @@ let () = {
   Application.init();
 
   Application.willFinishLaunching(() => {
-    let menu = MainMenu.make(appName);
-    Menu.add(~kind=Main, menu);
+    open Brisk_macos.Menu;
+    let windowsMenu =
+      <menu title="Window">
+        <item title="Minimize" key="m" action=Minimize />
+        <item title="Zoom" action=Zoom />
+        <separatorItem />
+        <item title="Bring All In Front" action=BringAllInFront />
+      </menu>;
+    let servicesMenu = <menu title="Services" />;
+    setServicesMenu(servicesMenu);
+    setWindowsMenu(windowsMenu);
+    setMainMenu(
+      <>
+        <menu title="Hacker News">
+          <item
+            action=OrderFrontStandardAboutPanel
+            title="About Hacker News"
+          />
+          <separatorItem />
+          <submenu> ...servicesMenu </submenu>
+          <separatorItem />
+          <item action=Hide key="h" title="Hide Hacker News" />
+          <item
+            action=HideOtherApplications
+            key="h"
+            optionModifier=true
+            title="Hide Others"
+          />
+          <item action=UnhideAllApplications title="Show All" />
+          <separatorItem />
+          <item action=Terminate key="q" title="Quit Hacker News" />
+        </menu>
+        <menu title="File">
+          <item action=Close key="w" title="Close" />
+        </menu>
+        <menu title="Edit">
+          <item action=Copy key="c" title="Copy" />
+          <item action=Paste key="v" title="Paste" />
+        </menu>
+        windowsMenu
+        <menu title="Help">
+          <item action=Help key="?" title="Hacker News Help" />
+        </menu>
+      </>,
+    );
   });
 
   Application.didFinishLaunching(() => {

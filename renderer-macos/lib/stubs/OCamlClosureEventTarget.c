@@ -1,10 +1,6 @@
 #import "OCamlClosureEventTarget.h"
 #import <objc/runtime.h>
 
-@interface BriskOCamlClosureEventTarget : NSObject
-- (void)setCallback:(value)callbackOption;
-@end
-
 @implementation BriskOCamlClosureEventTarget {
   value callback;
 }
@@ -23,9 +19,16 @@
   }
 }
 
-- (void)performCallback {
+- (void)performCallback0 {
   if (callback) {
     brisk_caml_call(callback);
+  }
+}
+
+- (void)performCallback1:(value)arg {
+  if (callback) {
+    value args[] = {arg};
+    brisk_caml_call_n(callback, 1, args);
   }
 }
 
@@ -52,7 +55,7 @@
   [self.briskOCamlClosureTarget setCallback:callbackOption];
   if (callbackOption) {
     self.target = self.briskOCamlClosureTarget;
-    self.action = @selector(performCallback);
+    self.action = @selector(performCallback0);
   } else {
     self.target = nil;
     self.action = nil;

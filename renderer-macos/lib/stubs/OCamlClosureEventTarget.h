@@ -7,4 +7,10 @@
 - (void)brisk_unsafe_setClosureTarget:(value)callbackOption;
 @end
 
+@interface BriskOCamlClosureEventTarget : NSObject
+- (void)setCallback:(value)callbackOption;
+- (void)performCallback0;
+- (void)performCallback1:(value)arg;
+@end
+
 void ml_setOCamlClosureTarget(NSObject *object, value callbackOption);

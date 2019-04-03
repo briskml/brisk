@@ -8,7 +8,8 @@ let component = {
   let component = nativeComponent("clickable");
   (
     ~style: style=[],
-    ~onClick=() => (),
+    ~onClick=?,
+    ~onHover=?,
     ~children: list(Brisk.syntheticElement),
     (),
   ) =>
@@ -23,17 +24,25 @@ let component = {
 
             {view, layoutNode};
           },
-          configureInstance: (~isFirstRender as _, {view} as node) => {
+          configureInstance:
+            (~isFirstRender as _, {view, layoutNode: {container}} as node) => {
             BriskClickable.setOnClick(view, onClick);
+            BriskClickable.setOnHover(view, onHover);
 
-            style
-            |> List.iter(attribute =>
-                 switch (attribute) {
-                 | #Styles.viewStyle as attr =>
-                   Styles.setViewStyle(view, attr)
-                 | #Layout.style => ()
-                 }
-               );
+            let style =
+              List.fold_left(
+                (acc, attribute) =>
+                  switch (attribute) {
+                  | #Styles.viewStyle as attr =>
+                    ignore(Styles.setViewStyle(view, attr));
+                    acc;
+                  | #Layout.style as attr =>
+                    Layout.applyCommonStyle(acc, attr)
+                  },
+                Layout.FlexLayout.LayoutSupport.defaultStyle,
+                style,
+              );
+            container.style = style;
             node;
           },
           children: Brisk.listToElement(children),

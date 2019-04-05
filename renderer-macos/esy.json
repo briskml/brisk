@@ -13,7 +13,7 @@
     "@opam/lwt_ppx": "^1.2.1",
     "@opam/markup": "^0.8.0",
     "ocaml": "~4.7.1000",
-    "brisk-reconciler": "*",
+    "brisk-reconciler": "briskml/brisk-reconciler#44ed097",
     "pkg-config": "briskml/pkg-config"
   },
   "devDependencies": {
@@ -22,6 +22,6 @@
   },
   "resolutions": {
     "@brisk/core": "link-dev:../core",
-    "brisk-reconciler": "briskml/brisk-reconciler#dd933fc"
+    "brisk-reconciler": "briskml/brisk-reconciler#7b48451"
   }
 }

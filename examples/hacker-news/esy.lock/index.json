@@ -1,5 +1,5 @@
 {
-  "checksum": "f1403980d42c6b84e85fabc072eba2cb",
+  "checksum": "f67beb2b3f9098342d686981b0a20de6",
   "root": "hacker-news@link-dev:./esy.json",
   "node": {
     "xcpretty@0.2.8001@d41d8cd9": {
@@ -126,14 +126,14 @@
       ],
       "devDependencies": []
     },
-    "brisk-reconciler@github:briskml/brisk-reconciler#7b48451@d41d8cd9": {
+    "brisk-reconciler@github:briskml/brisk-reconciler#44ed097@d41d8cd9": {
       "id":
-        "brisk-reconciler@github:briskml/brisk-reconciler#7b48451@d41d8cd9",
+        "brisk-reconciler@github:briskml/brisk-reconciler#44ed097@d41d8cd9",
       "name": "brisk-reconciler",
-      "version": "github:briskml/brisk-reconciler#7b48451",
+      "version": "github:briskml/brisk-reconciler#44ed097",
       "source": {
         "type": "install",
-        "source": [ "github:briskml/brisk-reconciler#7b48451" ]
+        "source": [ "github:briskml/brisk-reconciler#44ed097" ]
       },
       "overrides": [],
       "dependencies": [
@@ -3402,7 +3402,7 @@
       "dependencies": [
         "pkg-config@archive:https://pkgconfig.freedesktop.org/releases/pkg-config-0.29.2.tar.gz#sha1:76e501663b29cb7580245720edfb6106164fad2b@6c89142d",
         "ocaml@4.7.1004@d41d8cd9",
-        "brisk-reconciler@github:briskml/brisk-reconciler#7b48451@d41d8cd9",
+        "brisk-reconciler@github:briskml/brisk-reconciler#44ed097@d41d8cd9",
         "@opam/markup@opam:0.8.0@e4958f14",
         "@opam/lwt_ppx@opam:1.2.2@946c5ba2", "@opam/lwt@opam:4.2.1@c1888ec9",
         "@opam/dune@opam:1.9.3@cccbbfe7", "@esy-ocaml/reason@3.4.0@d41d8cd9",

@@ -79,3 +79,33 @@ let details = (~story as {story, _}, ~children as _: list(unit), ()) => {
     </view>
   </scrollView>;
 };
+
+open Navigation;
+open Toolbar;
+let screen = (~goBack, ~story, ~children as _: list(unit), ()) =>
+  <screen
+    toolbarItems=
+      <>
+        {switch (story.story.url) {
+         | Some(url) =>
+           <item>
+             <button
+               title="Open in Browser"
+               bezel=Cocoa.BriskButton.BezelStyle.TexturedRounded
+               onClick={() => Brisk_macos.Std.openUrl(url)}
+             />
+           </item>
+         | None => Toolbar.Reconciler.empty
+         }}
+        <flexibleSpace />
+        <item>
+          <button
+            onClick=goBack
+            style=[Brisk.Layout.width(100.)]
+            image={`System(`LeftFacingTriangleTemplate)}
+            bezel=Cocoa.BriskButton.BezelStyle.TexturedRounded
+          />
+        </item>
+      </>
+    contentView={<details story />}
+  />;

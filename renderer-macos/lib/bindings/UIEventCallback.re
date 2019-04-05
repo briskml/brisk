@@ -1,3 +1,11 @@
+type callback = unit => unit;
+
+let hooks = ref([]);
+
+let addEventHandler = hook => hooks := [hook, ...hooks^];
+
+let apply = f => f();
+
 let make = (callback, ()) => {
   callback();
   /* This is a workaround for non-deterministic crashes 
@@ -6,7 +14,6 @@ let make = (callback, ()) => {
    * A very negative side effect is terrible performance.
    */
   Gc.minor();
-  Brisk.UI.flushPendingUpdates();
-  Brisk.UI.executeHostViewUpdatesAndLayout();
+  List.iter(apply, hooks^);
   LwtFakeIOEvent.send();
 };

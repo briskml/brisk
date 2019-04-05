@@ -21,11 +21,10 @@ module StoryType = {
     type stories('a) = {hn: option('a)};
 
     open Story;
-    module Top = [%graphql
-      {|query stories($offset: Int!, $limit: Int!) {
-  hn @bsRecord {
-   topStories(offset: $offset, limit: $limit) {
-     ... on Story @bsRecord {
+
+    module Fragments = [%graphql
+      {|
+  fragment story on Story @bsRecord {
        kids @bsRecord {
          text
          by @bsRecord {
@@ -41,6 +40,16 @@ module StoryType = {
        }
        time,
   descendants
+     }
+|}
+    ];
+
+    module Top = [%graphql
+      {|query stories($offset: Int!, $limit: Int!) {
+  hn @bsRecord {
+   topStories(offset: $offset, limit: $limit) {
+     ... on Story {
+       ...Fragments.Story
      }
      ... on Poll @bsRecord {
        title
@@ -56,22 +65,8 @@ module StoryType = {
       {|query stories($offset: Int!, $limit: Int!) {
   hn @bsRecord {
    showStories(offset: $offset, limit: $limit) {
-     ... on Story @bsRecord {
-       kids @bsRecord {
-         text
-         by @bsRecord {
-	        id
-         }
-         time
-       }
-       title
-       url
-       score
-       by @bsRecord {
-	      id
-       }
-       time,
-  descendants
+     ... on Story {
+       ...Fragments.Story
      }
      ... on Poll @bsRecord {
        title
@@ -87,22 +82,8 @@ module StoryType = {
       {|query stories($offset: Int!, $limit: Int!) {
   hn @bsRecord {
    jobStories(offset: $offset, limit: $limit) {
-     ... on Story @bsRecord {
-       kids @bsRecord {
-         text
-         by @bsRecord {
-	        id
-         }
-         time
-       }
-       title
-       url
-       score
-       by @bsRecord {
-	      id
-       }
-       time,
-  descendants
+     ... on Story {
+       ...Fragments.Story
      }
      ... on Poll @bsRecord {
        title
@@ -118,22 +99,8 @@ module StoryType = {
       {|query stories($offset: Int!, $limit: Int!) {
   hn @bsRecord {
    newStories(offset: $offset, limit: $limit) {
-     ... on Story @bsRecord {
-       kids @bsRecord {
-         text
-         by @bsRecord {
-	        id
-         }
-         time
-       }
-       title
-       url
-       score
-       by @bsRecord {
-	      id
-       }
-       time,
-  descendants
+     ... on Story {
+       ...Fragments.Story
      }
      ... on Poll @bsRecord {
        title
@@ -174,90 +141,55 @@ module StoryType = {
   };
 };
 
-let component = {
-  open Brisk_macos;
-  let component = Brisk.component("stories");
-  (~children as _: list(unit), ~renderToolbar, ()) =>
-    component(hooks => {
-      let (selectedStoryType, setSelectedStoryType, hooks) =
-        Brisk.Hooks.state(StoryType.Top, hooks);
-      let (selectedStory, setSelectedStory, hooks) =
-        Brisk.Hooks.state(None, hooks);
-      let hooks =
-        Brisk.Hooks.effect(
-          Always,
-          () => {
-            open StoryType;
-            open Toolbar;
-            let storyItem = (~children as _: list(unit), ~storyType, ()) =>
-              SegmentedControl.(
-                <item
-                  isSelected={storyType === selectedStoryType}
-                  onClick={() => setSelectedStoryType(storyType)}>
-                  ...{toString(storyType)}
-                </item>
-              );
-            let segmentedControl = SegmentedControl.segmentedControl;
-            let () =
-              switch (selectedStory) {
-              | None =>
-                renderToolbar(
-                  <toolbar>
-                    <flexibleSpace />
-                    <item>
-                      <segmentedControl>
-                        <storyItem storyType=Top />
-                        <storyItem storyType=New />
-                        <storyItem storyType=Show />
-                        <storyItem storyType=Jobs />
-                      </segmentedControl>
-                    </item>
-                    <flexibleSpace />
-                  </toolbar>,
-                )
-              | Some({Story.story, _}) =>
-                renderToolbar(
-                  <toolbar>
-                    {switch (story.url) {
-                     | Some(url) =>
-                       <item>
-                         <button
-                           title="Open in Browser"
-                           bezel=Cocoa.BriskButton.BezelStyle.TexturedRounded
-                           onClick={() => Brisk_macos.Std.openUrl(url)}
-                         />
-                       </item>
-                     | None => Toolbar.Reconciler.empty
-                     }}
-                    <flexibleSpace />
-                    <item>
-                      <button
-                        onClick={() => setSelectedStory(None)}
-                        style=[Brisk.Layout.width(100.)]
-                        image={`System(`LeftFacingTriangleTemplate)}
-                        bezel=Cocoa.BriskButton.BezelStyle.TexturedRounded
-                      />
-                    </item>
-                  </toolbar>,
-                )
-              };
-            None;
-          },
-          hooks,
-        );
-      (
-        hooks,
-        switch (selectedStory) {
-        | None =>
-          StoryList.(
-            <component
-              showDetails={astory => setSelectedStory(Some(astory))}
-              resource={StoryType.toString(selectedStoryType)}
-              makeQuery={StoryType.Query.make(~storyType=selectedStoryType)}
-            />
-          )
-        | Some(story) => StoryDetails.(<details story />)
-        },
+let storiesScreen = {
+  open Navigation;
+  open Reconciler;
+  let component = component("app");
+  component(hooks => {
+    open Brisk_macos;
+    let (selectedStoryType, setSelectedStoryType, hooks) =
+      Hooks.state(StoryType.Top, hooks);
+    let (selectedStory, setSelectedStory, hooks) = Hooks.state(None, hooks);
+    let storyItem = (~children as _: list(unit), ~storyType, ()) =>
+      SegmentedControl.(
+        <item
+          isSelected={storyType === selectedStoryType}
+          onClick={() => setSelectedStoryType(storyType)}>
+          ...{StoryType.toString(storyType)}
+        </item>
       );
-    });
+    let segmentedControl = SegmentedControl.segmentedControl;
+    Toolbar.(
+      hooks,
+      <screen
+        toolbarItems=
+          <>
+            <flexibleSpace />
+            <item>
+              <segmentedControl>
+                <storyItem storyType=Top />
+                <storyItem storyType=New />
+                <storyItem storyType=Show />
+                <storyItem storyType=Jobs />
+              </segmentedControl>
+            </item>
+            <flexibleSpace />
+          </>
+        contentView=StoryList.(
+          <component
+            showDetails={astory => setSelectedStory(Some(astory))}
+            resource={StoryType.toString(selectedStoryType)}
+            makeQuery={StoryType.Query.make(~storyType=selectedStoryType)}
+          />
+        )>
+        {switch (selectedStory) {
+         | None => empty
+         | Some(story) =>
+           StoryDetails.(
+             <screen goBack={() => setSelectedStory(None)} story />
+           )
+         }}
+      </screen>,
+    );
+  });
 };

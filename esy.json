@@ -13,7 +13,8 @@
   "dependencies": {
     "@esy-ocaml/reason": ">=3.4.0",
     "@brisk/macos": "*",
-    "brisk-reconciler": "*"
+    "brisk-reconciler": "*",
+    "@opam/dune": "^1.9.0"
   },
   "devDependencies": {
     "@opam/merlin": "^3.2.2",

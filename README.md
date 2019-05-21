@@ -29,7 +29,11 @@ npm -g i esy@next
 
 ##### Xcode
 
-In order to build the OSX binary you will need to install [`Xcode`](https://developer.apple.com/xcode/).
+In order to build the OSX binary you will need to install [`Xcode`](https://developer.apple.com/xcode/), as well as `Command Line Tools`:
+
+```
+xcode-select --install
+```
 
 ### Other Platforms
 

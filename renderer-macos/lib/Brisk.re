@@ -51,7 +51,7 @@ module OutputTree = {
     parent;
   };
 
-  let deleteNode = (~parent: node, ~child: node) => {
+  let deleteNode = (~parent: node, ~child: node, ~position as _) => {
     open Layout.Node;
 
     let parentNode = parent.layoutNode.content;

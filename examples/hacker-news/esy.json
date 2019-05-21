@@ -31,7 +31,7 @@
   "resolutions": {
     "@brisk/core": "link:../../core",
     "@brisk/macos": "link:../../renderer-macos",
-    "brisk-reconciler": "briskml/brisk-reconciler#be325c5",
+    "brisk-reconciler": "briskml/brisk-reconciler#dd933fc",
     "@opam/httpkit-lwt": "ostera/httpkit:httpkit-lwt.opam#5fd8ed4",
     "@opam/httpkit": "ostera/httpkit:httpkit.opam#5fd8ed4",
     "@opam/httpaf": "anmonteiro/httpaf:httpaf.opam#57e9dd2",

@@ -14,7 +14,7 @@ module OutputTree = {
     parent;
   };
 
-  let deleteNode = (~parent, ~child) => {
+  let deleteNode = (~parent, ~child, ~position as _) => {
     switch (parent, child) {
     | (SegmentedControl(parent), Item(child)) =>
       BriskSegmentedControl.deleteItem(parent, child)

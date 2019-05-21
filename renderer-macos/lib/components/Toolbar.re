@@ -19,7 +19,7 @@ module OutputTree = {
     };
   };
 
-  let deleteNode = (~parent: node, ~child: node) => {
+  let deleteNode = (~parent: node, ~child: node, ~position as _) => {
     switch (parent, child) {
     | (Toolbar(toolbar), Item(item)) =>
       BriskToolbar.removeItem(toolbar, item);

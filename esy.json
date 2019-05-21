@@ -23,6 +23,6 @@
   "resolutions": {
     "@brisk/core": "link-dev:./core",
     "@brisk/macos": "link-dev:./renderer-macos",
-    "brisk-reconciler": "briskml/brisk-reconciler#be325c5"
+    "brisk-reconciler": "briskml/brisk-reconciler#dd933fc"
   }
 }

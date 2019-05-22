@@ -27,9 +27,9 @@ npm -g i esy@next
 
 ### macOS
 
-##### XCode
+##### Xcode
 
-Install `Command Line Tools`.
+In order to build the OSX binary you will need to install [`Xcode`](https://developer.apple.com/xcode/), as well as `Command Line Tools`:
 
 ```
 xcode-select --install

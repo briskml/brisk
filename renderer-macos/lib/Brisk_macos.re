@@ -21,6 +21,9 @@ module Cocoa = {
 
 module Std = BriskCoreFoundation;
 
+module RunLoop = RunLoop;
+module UIRunner = UIRunner;
+
 /* Components */
 module View = View;
 let view = View.component;

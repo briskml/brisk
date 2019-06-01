@@ -24,14 +24,13 @@
   },
   "devDependencies": {
     "@opam/merlin": "^3.2.2",
-    "@opam/merlin-lsp": "ocaml/merlin:merlin-lsp.opam#7cccd4f",
+    "@opam/merlin-lsp": "ocaml/merlin:merlin-lsp.opam#517f577",
     "xcodegen": ">=2.2.0",
     "xcpretty": "^0.2.8"
   },
   "resolutions": {
     "@brisk/core": "link:../../core",
     "@brisk/macos": "link:../../renderer-macos",
-    "brisk-reconciler": "briskml/brisk-reconciler#dd933fc",
     "@opam/httpkit-lwt": "ostera/httpkit:httpkit-lwt.opam#5fd8ed4",
     "@opam/httpkit": "ostera/httpkit:httpkit.opam#5fd8ed4",
     "@opam/httpaf": "anmonteiro/httpaf:httpaf.opam#57e9dd2",

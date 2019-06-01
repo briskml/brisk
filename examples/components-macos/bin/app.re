@@ -1,6 +1,8 @@
 open Brisk_macos;
 open Components_macos;
 
+module UIRunLoop = RunLoop.Make(UIRunner);
+
 let () = {
   open Cocoa;
 
@@ -41,9 +43,7 @@ let () = {
           <separatorItem />
           <item action=Terminate key="q" title="Quit Hacker News" />
         </menu>
-        <menu title="File">
-          <item action=Close key="w" title="Close" />
-        </menu>
+        <menu title="File"> <item action=Close key="w" title="Close" /> </menu>
         <menu title="Edit">
           <item action=Copy key="c" title="Copy" />
           <item action=Paste key="v" title="Paste" />
@@ -67,7 +67,8 @@ let () = {
         ~title=appName,
         ~contentView=view,
         ~contentIsFullSize=true,
-        ~onResize=win => UI.setWindowHeight(Window.contentHeight(win)),
+        ~onResize=
+          window => UIRunner.setWindowHeight(Window.contentHeight(window)),
         (),
       );
 
@@ -89,13 +90,11 @@ let () = {
       {Brisk.OutputTree.view, layoutNode};
     };
 
-    UI.renderAndMount(
-      ~height=Window.contentHeight(window),
-      root,
-      Main.(<app />),
-    );
+    UIRunner.setWindowHeight(Window.contentHeight(window));
 
-    RunLoop.spawn();
+    UIRunLoop.renderAndMount(root, Main.(<app />));
+
+    UIRunLoop.spawn();
   });
 
   Application.run();

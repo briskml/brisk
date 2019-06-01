@@ -9,30 +9,49 @@ let getResultList =
   | Error(_, l) => l
   | Ok(l) => l;
 
+module Map = Core_kernel.Map;
+let emptyResourceMap = Core_kernel.Map.empty((module Core_kernel.String));
+
 let hook = (makeRequest, resource, pageSize, hooks) => {
   open Brisk_macos.Brisk;
-  let (currentResource, setResource, hooks) = Hooks.ref(resource, hooks);
+  let (cache, updateCache, hooks) = Hooks.state(emptyResourceMap, hooks);
+  let cachedData = Map.find(cache, resource);
   let (loadNextPageAction, _, hooks) =
     Hooks.state(RemoteAction.create(), hooks);
-  let (offset, setOffset, hooks) = Hooks.state(0, hooks);
-  let (results, setResults, hooks) = Hooks.state(Loading, hooks);
   let (offset, results) =
-    resource === currentResource ? (offset, results) : (0, Loading);
+    switch (cachedData) {
+    | Some((offset, results)) => (offset, results)
+    | None => (0, Loading)
+    };
   let loadNext = () => {
     makeRequest(~offset, ~pageSize)
     |> Lwt.map(
          fun
          | Result.Ok(next) => {
-             setResource(resource);
-             setResults(Ok([next, ...getResultList(results)]));
-             setOffset(offset + pageSize);
+             updateCache(
+               Map.set(
+                 cache,
+                 ~key=resource,
+                 ~data=(
+                   offset + pageSize,
+                   Ok([next, ...getResultList(results)]),
+                 ),
+               ),
+             );
            }
          | Result.Error(err) => {
-             setResource(resource);
-             setResults(Error(err, getResultList(results)));
+             updateCache(
+               Map.set(
+                 cache,
+                 ~key=resource,
+                 ~data=(
+                   offset + pageSize,
+                   Error(err, getResultList(results)),
+                 ),
+               ),
+             );
            },
        )
-
     |> ignore;
   };
   let hooks =

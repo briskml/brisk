@@ -44,7 +44,7 @@ xcode-select --install
 ### Examples
 
 This repository contains the core tooling, platform-specific renderers, and examples.
-To view examples, clone the repository and open an example project.
+To try the examples, clone the repository and run a project:
 
 ```
 git clone git@github.com:briskml/brisk.git

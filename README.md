@@ -20,7 +20,7 @@ The goal of the project is to allow developers efficiently create fast, native a
 Our development workflow is managed with [esy](https://esy.sh/). It's an incredibly fast package manager that provides reproducible, sandboxed environment for your projects and caches builds.
 
 ```
-npm -g i esy@next
+npm -g i esy@latest
 ```
 
 > We're open to contributions for supporting `opam` workflow

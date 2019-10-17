@@ -20,7 +20,7 @@ The goal of the project is to allow developers efficiently create fast, native a
 Our development workflow is managed with [esy](https://esy.sh/). It's an incredibly fast package manager that provides reproducible, sandboxed environment for your projects and caches builds.
 
 ```
-npm -g i esy@next
+npm -g i esy@latest
 ```
 
 > We're open to contributions for supporting `opam` workflow
@@ -44,17 +44,28 @@ xcode-select --install
 ### Examples
 
 This repository contains the core tooling, platform-specific renderers, and examples.
-To view examples, clone the repository and open an example project.
+To try the examples, clone the repository and run a project:
 
 ```
 git clone git@github.com:briskml/brisk.git
 cd brisk/examples/components-macos
-```
-
-Building and running the example is a breeze:
-
-```
 esy
+esy run
+
+# for esy >= 6.0.0
+esy run-script run
+```
+
+For the `hacker-news` example, you might hit esy/esy#943:
+
+```
+error: command failed: 'dune' 'build' '@all' '-p' 'hacker-news' (exited with 127)
+```
+
+In which case, as a stopgap, run the command directly:
+
+```
+esy dune build @all -p hacker-news
 esy run
 ```
 

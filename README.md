@@ -49,12 +49,23 @@ To try the examples, clone the repository and run a project:
 ```
 git clone git@github.com:briskml/brisk.git
 cd brisk/examples/components-macos
-```
-
-Building and running the example is a breeze:
-
-```
 esy
+esy run
+
+# for esy >= 6.0.0
+esy run-script run
+```
+
+For the `hacker-news` example, you might hit esy/esy#943:
+
+```
+error: command failed: 'dune' 'build' '@all' '-p' 'hacker-news' (exited with 127)
+```
+
+In which case, as a stopgap, run the command directly:
+
+```
+esy dune build @all -p hacker-news
 esy run
 ```
 

@@ -1,44 +1,37 @@
-module OutputTree = {
-  type node =
-    | SegmentedControl(CocoaTypes.view)
-    | Item(BriskSegmentedControl.Item.t);
+type node =
+  | SegmentedControl(CocoaTypes.view)
+  | Item(BriskSegmentedControl.Item.t);
 
-  let markAsStale = () => ();
+let markAsStale = () => ();
 
-  let insertNode = (~parent: node, ~child: node, ~position: int) => {
-    switch (parent, child) {
-    | (SegmentedControl(parent), Item(child)) =>
-      BriskSegmentedControl.insertItem(parent, child, position)
-    | _ => assert(false)
-    };
-    parent;
+let insertNode = (~parent: node, ~child: node, ~position: int) => {
+  switch (parent, child) {
+  | (SegmentedControl(parent), Item(child)) =>
+    BriskSegmentedControl.insertItem(parent, child, position)
+  | _ => assert(false)
   };
-
-  let deleteNode = (~parent, ~child, ~position as _) => {
-    switch (parent, child) {
-    | (SegmentedControl(parent), Item(child)) =>
-      BriskSegmentedControl.deleteItem(parent, child)
-    | _ => assert(false)
-    };
-    parent;
-  };
-
-  let moveNode = (~parent as _, ~child as _, ~from as _, ~to_ as _) => {
-    assert
-      (false);
-      /* TODO: Implement after adding position to delete node in brisk reconciler */
-  };
+  parent;
 };
 
-module Reconciler = Brisk_reconciler.Make(OutputTree);
+let deleteNode = (~parent, ~child, ~position as _) => {
+  switch (parent, child) {
+  | (SegmentedControl(parent), Item(child)) =>
+    BriskSegmentedControl.deleteItem(parent, child)
+  | _ => assert(false)
+  };
+  parent;
+};
 
-let item = {
-  open Reconciler;
-  let component = nativeComponent("segmentedControl.item");
-  (~key=?, ~isSelected: bool = false, ~children as text: string, ~onClick, ()) => {
-    component(~key?, hooks =>
+let moveNode = (~parent as _, ~child as _, ~from as _, ~to_ as _) => {
+  assert
+    (false);
+    /* TODO: Implement after adding position to delete node in brisk reconciler */
+};
+
+let%nativeComponent item =
+  (~isSelected: bool = false, ~children as text: string, ~onClick, ()) => 
+    (hooks =>
       (
-        hooks,
         {
           make: () => {
             Item(BriskSegmentedControl.Item.make());
@@ -58,21 +51,18 @@ let item = {
           },
           children: empty,
         },
+        hooks,
       )
     );
-  };
-};
 
-let segmentedControl = {
-  let component = Brisk.nativeComponent("segmentedControl");
+let%nativeComponent segmentedControl =
   (~children: list(Reconciler.syntheticElement), ()) =>
-    component(hooks => {
+    (hooks => {
       let (renderedItems, memoizeRenderedItems, hooks) =
         Reconciler.Hooks.ref(Obj.magic(), hooks);
       let (previousElement, setPreviousElement, hooks) =
         Reconciler.Hooks.ref(Reconciler.listToElement(children), hooks);
       (
-        hooks,
         {
           make: () => {
             open Brisk;
@@ -112,6 +102,6 @@ let segmentedControl = {
             },
           children: Brisk.empty,
         },
+        hooks,
       );
     });
-};

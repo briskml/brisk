@@ -20,49 +20,45 @@ module Layout =
     Flex.FloatEncoding,
   );
 
-module OutputTree = {
-  [@deriving (show({with_path: false}), eq)]
-  type hostElement = CocoaTypes.view;
+[@deriving (show({with_path: false}), eq)]
+type hostElement = CocoaTypes.view;
 
-  [@deriving (show({with_path: false}), eq)]
-  type node = {
-    view: hostElement,
-    layoutNode: Layout.Node.t,
-  };
-
-  let isDirty = ref(false);
-
-  let markAsStale = () => {
-    isDirty := true;
-  };
-
-  let insertNode = (~parent: node, ~child: node, ~position: int) => {
-    open Layout.Node;
-
-    let parentNode = parent.layoutNode.content;
-    let childNode = child.layoutNode.container;
-
-    insertChild(parentNode, childNode, position);
-    BriskView.insertSubview(
-      parentNode.context.view,
-      childNode.context.view,
-      position,
-    );
-    parent;
-  };
-
-  let deleteNode = (~parent: node, ~child: node, ~position as _) => {
-    open Layout.Node;
-
-    let parentNode = parent.layoutNode.content;
-    let childNode = child.layoutNode.container;
-
-    removeChild(parentNode, childNode);
-    BriskView.removeSubview(parentNode.context.view, childNode.context.view);
-    parent;
-  };
-
-  let moveNode = (~parent, ~child as _, ~from as _, ~to_ as _) => parent;
+[@deriving (show({with_path: false}), eq)]
+type node = {
+  view: hostElement,
+  layoutNode: Layout.Node.t,
 };
 
-include Brisk_reconciler.Make(OutputTree);
+let isDirty = ref(false);
+
+let markAsStale = () => {
+  isDirty := true;
+};
+
+let insertNode = (~parent: node, ~child: node, ~position: int) => {
+  open Layout.Node;
+
+  let parentNode = parent.layoutNode.content;
+  let childNode = child.layoutNode.container;
+
+  insertChild(parentNode, childNode, position);
+  BriskView.insertSubview(
+    parentNode.context.view,
+    childNode.context.view,
+    position,
+  );
+  parent;
+};
+
+let deleteNode = (~parent: node, ~child: node, ~position as _) => {
+  open Layout.Node;
+
+  let parentNode = parent.layoutNode.content;
+  let childNode = child.layoutNode.container;
+
+  removeChild(parentNode, childNode);
+  BriskView.removeSubview(parentNode.context.view, childNode.context.view);
+  parent;
+};
+
+let moveNode = (~parent, ~child as _, ~from as _, ~to_ as _) => parent;
